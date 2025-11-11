@@ -10,11 +10,13 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+
+// import { route } from 'ziggy-js';
 import { type MainNavItem, type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, User } from 'lucide-react';
 import AppLogo from './app-logo';
+import { dashboard } from '@/routes';
 import AppLogoIcon from './app-logo-icon';
 import { BorrowersIcon } from '@/components/icons/BorrowersIcon';
 import { UserIcon } from '@/components/icons/UserIcon';
@@ -32,7 +34,7 @@ const mainNavItems: MainNavItem[] = [
         subItems: [
             {
                 title: 'Overview',
-                href: dashboard(),
+                href: dashboard().url,
             },
         ],
     },
@@ -40,79 +42,46 @@ const mainNavItems: MainNavItem[] = [
         title: 'Borrowers',
         icon: BorrowersIcon,
         subItems: [
-            {
-                title: 'View All Borrowers',
-                href: '/borrowers',
-            },
+            { title: 'View All Borrowers', href: '/borrowers/index' },
+            { title: 'Add Borrower', href: '/borrowers/add' },
         ],
     },
     {
         title: 'Loans',
         icon: LoansIcon,
         subItems: [
-            {
-                title: 'View All Loans',
-                href: '/loans',
-            },
-            {
-                title: 'Past Maturity Date',
-                href: '/loans/past-maturity-date',
-            },
-            {
-                title: '1 Month Late Loans',
-                href: '/loans/1-month-late',
-            },
-            { 
-                title: '3 Month Late Loans',
-                href: '/loans/3-month-late',
-            },
-            {
-                title: 'Add Loan',
-                href: '/loans/1-month-late',
-            },
-            { 
-                title: 'View Loan Applications',
-                href: '/loans/view-loan-applications',
-            },
-            
+            { title: 'View All Loans', href: '/loans/index' },
+            { title: 'Past Maturity Date', href: '/loans/past-maturity' },
+            { title: '1 Month Late Loans', href: '/loans/late-1' },
+            { title: '3 Month Late Loans', href: '/loans/late-3' },
+            { title: 'Add Loan', href: '/loans/add' },
+            { title: 'Loan Applications', href: '/loans/applications' },
         ],
-
     },
     {
         title: 'Repayments',
         icon: RepaymentsIcon,
-        subItems: [
-            {
-                title: 'View Repayments',
-                href: '/repayments',
-            },
-        ],
+        subItems: [{ title: 'View Repayments', href: '/repayments' }],
     },
     {
         title: 'Daily Collections',
         icon: DailyCollectionsIcon,
-        subItems: [
-            {
-                title: 'Daily Collection Sheet',
-                href: '/daily-collections',
-            },
-        ],
+        subItems: [{ title: 'Daily Collection Sheet', href: '/collections/daily' }],
     },
-        {
+    {
         title: 'Reports',
         icon: ReportsIcon,
         subItems: [
             {
-                title: 'Daily Cash Position Report',
-                href: '/daily-cash-position-report',
+                title: 'Daily Cash Position Report', href: '/Reports/DCPR'
             },
             {
                 title: 'Monthly Report',
-                href: '/monthly-report',
+                href: '/Reports/MonthlyReport',
             },
             {
                 title: 'Income Statement Report',
-                href: '/income-statement-report',
+                href: '/Reports/IncomeStatementReport',
             },
         ],
     },
@@ -120,17 +89,10 @@ const mainNavItems: MainNavItem[] = [
         title: 'System Users',
         icon: UserIcon,
         subItems: [
-            {
-                title: 'View Users',
-                href: '/system-users',
-            },
-            {
-                title: 'Add User',
-                href: '/system-users/add',
-            },
+            { title: 'View Users', href: '/users' },
+            { title: 'Add User', href: '/users/add' },
         ],
     },
-
     
 ];
 
@@ -153,7 +115,7 @@ export function AppSidebar() {
                             asChild
                             className="bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent shadow-none hover:shadow-none"
                         >
-                            <Link href={dashboard()} prefetch className="no-underline hover:no-underline focus:no-underline">
+                            <Link href={'/dashboard'} prefetch className="no-underline hover:no-underline focus:no-underline">
                                 <AppLogoIcon />
                                 {/* <img src="/images/jamo-logo-1.jpg" alt="JAMO Lending Logo" className="h-10 rounded" /> */}
                             </Link>
