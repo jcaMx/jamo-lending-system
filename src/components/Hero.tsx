@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 
 const Hero = () => {
   return (
-    <section className="bg-gradient-hero py-16 md:py-24 px-6 md:px-12">
+    <section style={{ backgroundColor: '#EDEDED' }} className="py-16 md:py-24 px-6 md:px-12">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
@@ -48,9 +48,9 @@ const Hero = () => {
         </div>
 
         <div className="relative">
-          <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+          <div className="aspect-[4/3] rounded-lg overflow-hidden" style={{ backgroundColor: '#EDEDED' }}>
             {/* Placeholder for hero image - user will provide */}
-            <div className="w-full h-full bg-gradient-to-br from-golden/20 to-blue-200/30 flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#EDEDED', mixBlendMode: 'multiply' }}>
               <span className="text-muted-foreground">Hero Image Here</span>
             </div>
           </div>
