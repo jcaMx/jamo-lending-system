@@ -52,27 +52,27 @@ const mainNavItems: MainNavItem[] = [
         subItems: [
             {
                 title: 'View All Loans',
-                href: '/loans',
+                href: '/Loans/VAL',
             },
             {
                 title: 'Past Maturity Date',
-                href: '/loans/past-maturity-date',
+                href: '/Loans/PMD',
             },
             {
                 title: '1 Month Late Loans',
-                href: '/loans/1-month-late',
+                href: '/Loans/1MLL',
             },
             { 
                 title: '3 Month Late Loans',
-                href: '/loans/3-month-late',
+                href: '/Loans/3MLL',
             },
             {
                 title: 'Add Loan',
-                href: '/loans/1-month-late',
+                href: '/Loans/AddLoan',
             },
             { 
                 title: 'View Loan Applications',
-                href: '/loans/view-loan-applications',
+                href: '/Loans/VLA',
             },
             
         ],
