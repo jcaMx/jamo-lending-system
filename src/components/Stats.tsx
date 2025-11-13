@@ -7,14 +7,14 @@ const Stats = () => {
   ];
 
   return (
-    <section style={{ backgroundColor: '#F7F5F3' }} className="py-12 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+    <section className="bg-navy py-16 md:py-20 px-6 md:px-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
         {stats.map((stat, index) => (
-          <div key={index} className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-golden mb-2">
+          <div key={index}>
+            <div className="text-3xl md:text-4xl font-bold mb-2 text-white">
               {stat.value}
             </div>
-            <div className="text-navy text-sm md:text-base">
+            <div className="text-sm md:text-base text-white/80">
               {stat.label}
             </div>
           </div>

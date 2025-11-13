@@ -65,6 +65,7 @@ export default {
         'gradient-golden': 'var(--gradient-golden)',
         'gradient-hero': 'var(--gradient-hero)',
         'gradient-navy': 'var(--gradient-navy)',
+        'gradient-orange-subtle': 'var(--gradient-orange-subtle)',
       },
       borderRadius: {
         lg: "var(--radius)",

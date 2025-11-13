@@ -17,13 +17,13 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* Golden theme colors */
-    --primary: 45 93% 47%;
+    /* Golden/Orange theme colors */
+    --primary: 32 95% 55%;
     --primary-foreground: 0 0% 100%;
     
-    --golden: 38 92% 50%;
-    --golden-light: 45 97% 62%;
-    --golden-dark: 30 84% 43%;
+    --golden: 32 95% 55%;
+    --golden-light: 38 100% 65%;
+    --golden-dark: 28 85% 48%;
 
     --secondary: 36 100% 95%;
     --secondary-foreground: 0 0% 0%;
@@ -42,7 +42,7 @@ All colors MUST be HSL.
     --ring: 45 93% 47%;
 
     /* Navy/Dark sections */
-    --navy: 220 28% 13%;
+    --navy: 215 25% 17%;
     --navy-foreground: 0 0% 100%;
 
     /* Cream/Beige sections */
@@ -52,9 +52,10 @@ All colors MUST be HSL.
     --radius: 0.5rem;
 
     /* Custom gradients */
-    --gradient-golden: linear-gradient(135deg, hsl(45 93% 47%), hsl(38 92% 50%));
+    --gradient-golden: linear-gradient(135deg, hsl(32 95% 55%), hsl(38 100% 65%));
     --gradient-hero: linear-gradient(to right, hsl(45 97% 85%), hsl(45 97% 95%));
-    --gradient-navy: linear-gradient(180deg, hsl(220 28% 13%), hsl(220 28% 11%));
+    --gradient-navy: linear-gradient(180deg, hsl(215 25% 17%), hsl(215 25% 15%));
+    --gradient-orange-subtle: linear-gradient(to bottom, hsl(38 100% 90%), hsl(45 100% 95%));
   }
 }
 
