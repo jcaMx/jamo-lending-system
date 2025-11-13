@@ -25,7 +25,7 @@ const About = () => {
   ];
 
   return (
-    <section id="about" className="py-16 md:py-24 px-6 md:px-12" style={{ background: 'linear-gradient(180deg, #F5F1E8 0%, #EDE8DC 100%)' }}>
+    <section id="about" style={{ backgroundColor: '#F7F5F3' }} className="py-16 md:py-24 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -35,9 +35,9 @@ const About = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
-          <div className="aspect-[4/3] bg-white rounded-lg overflow-hidden">
+          <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
             {/* Placeholder for about image - user will provide */}
-            <div className="w-full h-full bg-gradient-to-br from-golden/20 to-blue-200/30 flex items-center justify-center">
+            <div className="w-full h-full bg-muted flex items-center justify-center">
               <span className="text-muted-foreground">About Image Here</span>
             </div>
           </div>

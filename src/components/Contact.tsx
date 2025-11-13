@@ -5,7 +5,7 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 const Contact = () => {
   return (
-    <section id="contact" className="py-16 md:py-24 px-6 md:px-12" style={{ background: 'linear-gradient(180deg, #F5F1E8 0%, #EDE8DC 100%)' }}>
+    <section id="contact" style={{ backgroundColor: '#F7F5F3' }} className="py-16 md:py-24 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -89,7 +89,7 @@ const Contact = () => {
 
         <div className="aspect-video bg-muted rounded-lg overflow-hidden">
           {/* Placeholder for map - user can integrate actual map */}
-          <div className="w-full h-full bg-gradient-to-br from-green-200/30 to-blue-200/30 flex items-center justify-center">
+          <div className="w-full h-full bg-muted flex items-center justify-center">
             <span className="text-muted-foreground">Map Location Here</span>
           </div>
         </div>

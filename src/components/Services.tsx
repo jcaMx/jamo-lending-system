@@ -19,7 +19,7 @@ const Services = () => {
   ];
 
   return (
-    <section id="services" className="bg-cream py-16 md:py-24 px-6 md:px-12">
+    <section id="services" style={{ backgroundColor: '#F7F5F3' }} className="py-16 md:py-24 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -31,7 +31,7 @@ const Services = () => {
         <div className="grid md:grid-cols-2 gap-6">
           {services.map((service, index) => (
             <div key={index} className="bg-white rounded-lg border-2 border-golden overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-[4/3] bg-gradient-to-br from-golden/20 to-blue-200/30 flex items-center justify-center">
+              <div className="aspect-[4/3] bg-muted flex items-center justify-center">
                 <span className="text-muted-foreground">Service Image {index + 1}</span>
               </div>
               <div className="p-6">
