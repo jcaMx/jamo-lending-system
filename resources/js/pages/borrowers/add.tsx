@@ -1,9 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Megaphone } from 'lucide-react';
 import React, { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -13,7 +11,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-export default function Index() {
+export default function BorrowerAdd() {
   const [formData, setFormData] = useState({
     borrowerFullName: '',
     dateOfBirth: '',
@@ -39,66 +37,61 @@ export default function Index() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Submitting Borrower Data:', formData);
-
-    // You can post to Laravel backend here using Inertia:
-    // router.post('/borrowers', formData);
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Borrowers" />
+      <Head title="New Borrower" />
 
-      {/* Page Header */}
-      <div className="p-6">
-        <Alert>
-          <Megaphone className="h-4 w-4" />
-          <AlertTitle>Borrowers Page</AlertTitle>
-          <AlertDescription>
-            Add new borrower information below.
-          </AlertDescription>
-        </Alert>
-      </div>
+      {/* Form Container */}
+      <div className=" w-full mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
+        {/* Header */}
+        <div className="border-b-4 border-[#FABF24] rounded-t-lg pb-3 mb-8 bg-[#FFF8E2] p-5">
+          <h2 className="text-3xl font-semibold text-gray-800">
+            New Borrower Information
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">
+            Please fill out the borrower’s personal information.
+          </p>
+        </div>
 
-      {/* Borrower Form */}
-      <div className="max-w-5xl mx-auto bg-white shadow-md rounded-xl p-8 mb-10">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">
-          New Borrower Information
-        </h2>
-
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
-          {/* Borrower Info */}
+        {/* Borrower Info */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-8 gap-y-5">
+          {/* Left Column */}
           <div>
-            <label className="block text-sm font-medium mb-1">Borrower Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Borrower Full Name
+            </label>
             <input
               type="text"
               name="borrowerFullName"
               value={formData.borrowerFullName}
               onChange={handleChange}
               placeholder="Enter full name"
-              className="w-full border rounded-md p-2"
+              className="w-full bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Date of Birth</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
             <input
               type="date"
               name="dateOfBirth"
               value={formData.dateOfBirth}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Marital Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
             <select
               name="maritalStatus"
               value={formData.maritalStatus}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             >
               <option value="">Select Status</option>
               <option value="Single">Single</option>
@@ -109,36 +102,38 @@ export default function Index() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Age</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
             <input
               type="number"
               name="age"
               value={formData.age}
               onChange={handleChange}
               placeholder="Enter age"
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Permanent Home Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Permanent Home Address
+            </label>
             <input
               type="text"
               name="permanentAddress"
               value={formData.permanentAddress}
               onChange={handleChange}
               placeholder="Enter address"
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Home Ownership</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Home Ownership</label>
             <select
               name="homeOwnership"
               value={formData.homeOwnership}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             >
               <option value="">Select</option>
               <option value="Owned">Owned</option>
@@ -148,75 +143,79 @@ export default function Index() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Mobile Number</label>
+            <label className=" block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
             <input
               type="text"
               name="mobileNumber"
               value={formData.mobileNumber}
               onChange={handleChange}
               placeholder="09XX XXX XXXX"
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">No. of Dependent Child</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Dependent Children</label>
             <input
               type="number"
               name="dependentChild"
               value={formData.dependentChild}
               onChange={handleChange}
               placeholder="Enter number"
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Occupation</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
             <input
               type="text"
               name="occupation"
               value={formData.occupation}
               onChange={handleChange}
               placeholder="Enter occupation"
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Net Pay</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Net Pay</label>
             <input
               type="number"
               name="netPay"
               value={formData.netPay}
               onChange={handleChange}
               placeholder="Enter net pay"
-              className="w-full border rounded-md p-2"
+              className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
             />
           </div>
 
           {/* Spouse Section */}
-          <div className="col-span-2 mt-6 border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">
-              Spouse’s Personal Data{' '}
-              <span className="text-sm text-gray-500">(If applicable)</span>
+          <div className="col-span-2 mt-10 border-t pt-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-5">
+              Spouse’s Personal Data
+              <span className="text-sm text-gray-500 font-normal ml-2">
+                (If applicable)
+              </span>
             </h3>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1">Spouse Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Spouse Full Name
+                </label>
                 <input
                   type="text"
                   name="spouseFullName"
                   value={formData.spouseFullName}
                   onChange={handleChange}
                   placeholder="Enter full name"
-                  className="w-full border rounded-md p-2"
+                  className="w-full bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Agency/Employer’s Address
                 </label>
                 <input
@@ -224,39 +223,47 @@ export default function Index() {
                   name="spouseAgencyAddress"
                   value={formData.spouseAgencyAddress}
                   onChange={handleChange}
-                  placeholder="Enter agency/address"
-                  className="w-full border rounded-md p-2"
+                  placeholder="Enter agency or address"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Occupation</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Spouse Occupation
+                </label>
                 <input
                   type="text"
                   name="spouseOccupation"
                   value={formData.spouseOccupation}
                   onChange={handleChange}
                   placeholder="Enter occupation"
-                  className="w-full border rounded-md p-2"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Mobile Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Spouse Mobile Number
+                </label>
                 <input
                   type="text"
                   name="spouseMobileNumber"
                   value={formData.spouseMobileNumber}
                   onChange={handleChange}
                   placeholder="09XX XXX XXXX"
-                  className="w-full border rounded-md p-2"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
             </div>
           </div>
 
-          <div className="col-span-2 mt-6 flex justify-end">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+          {/* Submit */}
+          <div className="col-span-2 mt-10 flex justify-end">
+            <Button
+              type="submit"
+              className="bg-[#FABF24]  hover:bg-[#f9b406] text-gray-900 font-semibold px-8 py-2 rounded-md shadow"
+            >
               Submit
             </Button>
           </div>

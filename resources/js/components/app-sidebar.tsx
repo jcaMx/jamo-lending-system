@@ -123,11 +123,11 @@ const mainNavItems: MainNavItem[] = [
         subItems: [
             {
                 title: 'View Users',
-                href: '/system-users',
+                href: '/users',
             },
             {
                 title: 'Add User',
-                href: '/system-users/add',
+                href: '/users/add',
             },
         ],
     },
