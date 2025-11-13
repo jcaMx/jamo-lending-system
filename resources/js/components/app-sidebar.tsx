@@ -11,6 +11,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+// import { route } from 'ziggy-js';
 import { type MainNavItem, type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, User } from 'lucide-react';
@@ -32,7 +33,7 @@ const mainNavItems: MainNavItem[] = [
         subItems: [
             {
                 title: 'Overview',
-                href: dashboard(),
+                href: dashboard().url,
             },
         ],
     },
@@ -44,6 +45,7 @@ const mainNavItems: MainNavItem[] = [
                 title: 'View All Borrowers',
                 href: '/borrowers',
             },
+            { title: 'Add Borrower', href: '/borrowers/add' },
         ],
     },
     {
@@ -98,7 +100,7 @@ const mainNavItems: MainNavItem[] = [
             },
         ],
     },
-        {
+    {
         title: 'Reports',
         icon: ReportsIcon,
         subItems: [
@@ -129,7 +131,6 @@ const mainNavItems: MainNavItem[] = [
             },
         ],
     },
-
     
 ];
 
@@ -152,7 +153,7 @@ export function AppSidebar() {
                             asChild
                             className="bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent shadow-none hover:shadow-none"
                         >
-                            <Link href={dashboard()} prefetch className="no-underline hover:no-underline focus:no-underline">
+                            <Link href={dashboard().url} prefetch className="no-underline hover:no-underline focus:no-underline">
                                 <AppLogoIcon />
                                 {/* <img src="/images/jamo-logo-1.jpg" alt="JAMO Lending Logo" className="h-10 rounded" /> */}
                             </Link>
