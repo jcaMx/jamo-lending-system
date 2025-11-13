@@ -25,7 +25,7 @@ const About = () => {
   ];
 
   return (
-    <section id="about" className="relative py-16 md:py-24 px-6 md:px-12" style={{ background: 'linear-gradient(to bottom, hsl(38 100% 90%) 0%, hsl(38 100% 90%) 15%, #F7F5F3 15%, #F7F5F3 100%)' }}>
+    <section id="about" style={{ backgroundColor: '#F7F5F3' }} className="py-16 md:py-24 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">

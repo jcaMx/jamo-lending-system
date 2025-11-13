@@ -93,9 +93,6 @@ const Contact = () => {
             <span className="text-muted-foreground">Map Location Here</span>
           </div>
         </div>
-
-        {/* Orange gradient section before footer */}
-        <div className="mt-12 h-24 rounded-lg" style={{ background: 'linear-gradient(135deg, hsl(32 95% 55%), hsl(38 100% 65%))' }}></div>
       </div>
     </section>
   );
