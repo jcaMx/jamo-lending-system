@@ -7,6 +7,8 @@ use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RepaymentController;
+use App\Http\Controllers\CollectionSheetController;
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
@@ -41,7 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Borrowers
+    // Borrowers - ayaw na ichange
     Route::prefix('borrowers')->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
@@ -59,6 +61,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
         Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
         Route::get('/VAL', fn() => Inertia::render('Loans/VAL'))->name('loans.view');
+    });
+    
+
+
+    Route::prefix('collection')->group(function () {
+        Route::get('/daily', [CollectionSheetController::class, 'index'])->name('daily-collections');
+    });
+
+    // Repayments
+    Route::prefix('Repayments')->group(function () {
+        Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
+        Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
     });
 
     // Reports

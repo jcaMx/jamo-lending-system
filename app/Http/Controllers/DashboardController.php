@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-            public function stats() {
+    public function stats() {
         return response()->json([
             'registered_borrowers' => DB::table('borrowers')->count(),
             'total_loans' => DB::table('loans')->sum('amount'),

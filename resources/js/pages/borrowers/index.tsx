@@ -31,11 +31,11 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   }, [borrowers, searchTerm, statusFilter]);
 
   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <AppLayout breadcrumbs={breadcrumbs} >
       <Head title="Borrowers List" />
 
       {/* Header & Actions Section */}
-      <div className="m-4 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+      <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">
           Borrowers
         </h1>
@@ -82,7 +82,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
       </div>
 
       {/* Table Container */}
-      <div className="m-4 overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
+      <div className="mx-10 overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

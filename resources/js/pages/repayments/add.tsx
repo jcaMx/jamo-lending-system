@@ -12,70 +12,30 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Add({ borrowers, collectors }) {
   const [search, setSearch] = useState("");
   const [selectedBorrower, setSelectedBorrower] = useState(null);
-
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
-  const [referenceNumber, setReferenceNumber] = useState("");
   const [collectedBy, setCollectedBy] = useState("");
   const [collectionDate, setCollectionDate] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState("");
 
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // Filter borrower results
   const filteredBorrowers = useMemo(() => {
     return borrowers.filter((b) =>
       b.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [search, borrowers]);
 
-  // Format peso input
-  const handleAmountChange = (e) => {
-    let val = e.target.value.replace(/[^\d]/g, "");
-    if (!val) return setAmount("");
-    val = (Number(val) / 100).toFixed(2);
-    setAmount("₱" + Number(val).toLocaleString());
-  };
-
-  // Check valid form
-  const isValid =
-    selectedBorrower &&
-    amount &&
-    method &&
-    collectedBy &&
-    collectionDate &&
-    (method === "Cash" || referenceNumber);
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!isValid) {
-      setErrorMsg("Please fill out all required fields.");
-      return;
-    }
-
-    router.post(
-      "/repayments/store",
-      {
-        borrower_id: selectedBorrower.id,
-        loanNo: selectedBorrower.loanNo,
-        amount,
-        method,
-        referenceNumber,
-        collectedBy,
-        collectionDate,
-      },
-      {
-        onSuccess: () => {
-          setSuccessMsg("Repayment recorded successfully.");
-          setErrorMsg("");
-        },
-        onError: () => {
-          setErrorMsg("Something went wrong. Try again.");
-          setSuccessMsg("");
-        },
-      }
-    );
+    router.post("/repayments/store", {
+      borrower_id: selectedBorrower?.id,
+      loanNo: selectedBorrower?.loanNo,
+      amount,
+      method,
+      collectedBy,
+      collectionDate,
+      referenceNumber,
+    });
   };
 
   return (
@@ -84,31 +44,15 @@ export default function Add({ borrowers, collectors }) {
 
       <div className="w-full h-full mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
         <form onSubmit={handleSubmit} className="space-y-10">
-          {/* Header */}
           <section>
             <div className="border-b-4 border-[#FABF24] rounded-t-lg pb-3 mb-6 bg-[#FFF8E2] p-5">
               <h2 className="text-2xl font-semibold text-gray-800">Repayment</h2>
             </div>
 
-            {/* Success / Error Messages */}
-            {successMsg && (
-              <p className="bg-green-100 text-green-700 p-2 mb-3 rounded">
-                {successMsg}
-              </p>
-            )}
-            {errorMsg && (
-              <p className="bg-red-100 text-red-700 p-2 mb-3 rounded">
-                {errorMsg}
-              </p>
-            )}
-
-            {/* Form Grid */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
               {/* Borrower Search */}
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Borrower
-                </label>
+                <label className="block text-sm font-medium mb-1">Borrower</label>
 
                 <div className="relative">
                   <input
@@ -133,7 +77,7 @@ export default function Add({ borrowers, collectors }) {
                           }}
                           className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                         >
-                          {b.name} — {b.loanNo}
+                          {b.name}
                         </div>
                       ))
                     ) : (
@@ -147,36 +91,29 @@ export default function Add({ borrowers, collectors }) {
 
               {/* Loan Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Loan Number
-                </label>
+                <label className="block text-sm font-medium mb-1">Loan Number</label>
                 <input
                   type="text"
                   value={selectedBorrower?.loanNo || ""}
                   readOnly
-                  className="w-full border rounded-lg p-2 bg-gray-100 cursor-not-allowed"
+                  className="w-full border rounded-lg p-2 bg-gray-100"
                 />
               </div>
 
               {/* Amount */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount
-                </label>
+                <label className="block text-sm font-medium mb-1">Amount</label>
                 <input
-                  type="text"
+                  type="number"
                   value={amount}
-                  onChange={handleAmountChange}
-                  placeholder="₱0.00"
+                  onChange={(e) => setAmount(e.target.value)}
                   className="w-full border rounded-lg p-2"
                 />
               </div>
 
               {/* Payment Method */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Payment Method
-                </label>
+                <label className="block text-sm font-medium mb-1">Payment Method</label>
                 <select
                   value={method}
                   onChange={(e) => setMethod(e.target.value)}
@@ -189,36 +126,33 @@ export default function Add({ borrowers, collectors }) {
                 </select>
               </div>
 
-              {/* Reference Number */}
-              {(method === "Gcash" || method === "Bank Transfer") && (
+              {/* Reference Number - Conditional */}
+              {(method === "Gcash" || method === "Bank Transfer" || method === "Gcash") && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Reference Number
                   </label>
                   <input
-                    type="text"
                     value={referenceNumber}
                     onChange={(e) => setReferenceNumber(e.target.value)}
+                    placeholder="Enter reference number"
                     className="w-full border rounded-lg p-2"
                   />
                 </div>
               )}
 
-              {/* Collector */}
+              {/* Collector Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Collected By
-                </label>
-
+                <label className="block text-sm font-medium mb-1">Collected By</label>
                 <select
                   value={collectedBy}
                   onChange={(e) => setCollectedBy(e.target.value)}
                   className="w-full border rounded-lg p-2"
                 >
                   <option value="">Select collector</option>
-                  {collectors.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {c.name}
+                  {collectors.map((c, index) => (
+                    <option key={index} value={c}>
+                      {c}
                     </option>
                   ))}
                 </select>
@@ -226,7 +160,7 @@ export default function Add({ borrowers, collectors }) {
 
               {/* Collection Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1">
                   Collection Date
                 </label>
                 <input
@@ -240,9 +174,10 @@ export default function Add({ borrowers, collectors }) {
           </section>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={!isValid} className="px-6 py-2">
-              Submit Repayment
-            </Button>
+
+            <button type="submit" className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-amber-600 " >
+               Submit Repayment
+            </button>
           </div>
         </form>
       </div>

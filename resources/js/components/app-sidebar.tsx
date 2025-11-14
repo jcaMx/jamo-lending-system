@@ -1,21 +1,15 @@
 import { NavFooter } from '@/components/nav-footer';
-import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-// import { route } from 'ziggy-js';
-import { type MainNavItem, type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, User } from 'lucide-react';
-import AppLogo from './app-logo';
+import { type NavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { Folder, LayoutGrid, ChevronDown, ChevronRight } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 import { BorrowersIcon } from '@/components/icons/BorrowersIcon';
 import { UserIcon } from '@/components/icons/UserIcon';
@@ -23,28 +17,16 @@ import { LoansIcon } from '@/components/icons/LoansIcon';
 import { RepaymentsIcon } from '@/components/icons/RepaymentsIcon';
 import { DailyCollectionsIcon } from '@/components/icons/DailyCollectionsIcon';
 import { ReportsIcon } from '@/components/icons/ReportsIcon';
+import { useState, useEffect } from 'react';
 
 
-
-const mainNavItems: MainNavItem[] = [
-    {
-        title: 'Dashboard',
-        icon: LayoutGrid,
-        subItems: [
-            {
-                title: 'Overview',
-                href: dashboard().url,
-            },
-        ],
-    },
+const mainNavItems: NavItem[] = [
+    { title: 'Dashboard', icon: LayoutGrid, href: dashboard().url },
     {
         title: 'Borrowers',
         icon: BorrowersIcon,
         subItems: [
-            {
-                title: 'View All Borrowers',
-                href: '/borrowers',
-            },
+            { title: 'View All Borrowers', href: '/borrowers' },
             { title: 'Add Borrower', href: '/borrowers/add' },
         ],
     },
@@ -52,118 +34,145 @@ const mainNavItems: MainNavItem[] = [
         title: 'Loans',
         icon: LoansIcon,
         subItems: [
-            {
-                title: 'View All Loans',
-                href: '/Loans/VAL',
-            },
-            {
-                title: 'Past Maturity Date',
-                href: '/Loans/PMD',
-            },
-            {
-                title: '1 Month Late Loans',
-                href: '/Loans/1MLL',
-            },
-            { 
-                title: '3 Month Late Loans',
-                href: '/Loans/3MLL',
-            },
-            {
-                title: 'Add Loan',
-                href: '/Loans/AddLoan',
-            },
-            { 
-                title: 'View Loan Applications',
-                href: '/Loans/VLA',
-            },
-            
+            { title: 'View All Loans', href: '/Loans/VAL' },
+            { title: 'Past Maturity Date', href: '/Loans/PMD' },
+            { title: '1 Month Late Loans', href: '/Loans/1MLL' },
+            { title: '3 Month Late Loans', href: '/Loans/3MLL' },
+            { title: 'Add Loan', href: '/Loans/AddLoan' },
+            { title: 'View Loan Applications', href: '/Loans/VLA' },
         ],
-
     },
     {
         title: 'Repayments',
         icon: RepaymentsIcon,
         subItems: [
-            {
-                title: 'View Repayments',
-                href: '/repayments',
-            },
+            { title: 'View Repayments', href: '/Repayments' },
+            { title: 'Add Repayment', href: '/Repayments/add' },
         ],
     },
-    {
-        title: 'Daily Collections',
-        icon: DailyCollectionsIcon,
-        subItems: [
-            {
-                title: 'Daily Collection Sheet',
-                href: '/daily-collections',
-            },
-        ],
-    },
+    { title: 'Daily Collection Sheet', icon: DailyCollectionsIcon, href: '/daily-collections' },
     {
         title: 'Reports',
         icon: ReportsIcon,
         subItems: [
-            {
-                title: 'Daily Cash Position Report', href: '/Reports/DCPR'
-            },
-            {
-                title: 'Monthly Report',
-                href: '/Reports/MonthlyReport',
-            },
-            {
-                title: 'Income Statement Report',
-                href: '/Reports/IncomeStatementReport',
-            },
+            { title: 'Daily Cash Position Report', href: '/Reports/DCPR' },
+            { title: 'Monthly Report', href: '/Reports/MonthlyReport' },
+            { title: 'Income Statement Report', href: '/Reports/IncomeStatementReport' },
         ],
     },
     {
         title: 'System Users',
         icon: UserIcon,
         subItems: [
-            {
-                title: 'View Users',
-                href: '/users',
-            },
-            {
-                title: 'Add User',
-                href: '/users/add',
-            },
+            { title: 'View Users', href: '/users' },
+            { title: 'Add User', href: '/users/add' },
         ],
     },
-    
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    }
+    { title: 'Repository', href: 'https://github.com/laravel/react-starter-kit', icon: Folder },
 ];
 
 export function AppSidebar() {
+    const { url } = usePage();
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+    // Open parent menus if current URL matches a subitem
+    useEffect(() => {
+        const newOpenMenus: Record<string, boolean> = {};
+        mainNavItems.forEach((item) => {
+            if (item.subItems?.some((s) => url.startsWith(s.href))) {
+                newOpenMenus[item.title] = true;
+            }
+        });
+        setOpenMenus(newOpenMenus);
+    }, [url]);
+
+    const toggleMenu = (title: string) => {
+        setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }));
+    };
+
     return (
-        <Sidebar collapsible="icon" variant="inset" className="bg-[#192132] text-white" >
+        <Sidebar collapsible="icon" variant="inset" className="bg-[#192132] text-white min-h-screen">
             <SidebarHeader className="bg-[#192132] text-white">
-                <SidebarMenu className="bg-[#192132] text-white" >
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            size="lg"
-                            asChild
-                            className="bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent shadow-none hover:shadow-none"
-                        >
-                            <Link href={dashboard().url} prefetch className="no-underline hover:no-underline focus:no-underline">
-                                <AppLogoIcon />
-                                {/* <img src="/images/jamo-logo-1.jpg" alt="JAMO Lending Logo" className="h-10 rounded" /> */}
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+                <Link href={dashboard().url}>
+                    <AppLogoIcon className="m-3" />
+                </Link>
             </SidebarHeader>
 
-            <SidebarContent className="bg-[#192132] text-white">
-                <NavMain items={mainNavItems} />
+            <SidebarContent className="px-2 bg-[#192132] text-white">
+                <div className="space-y-2">
+                    {mainNavItems.map((item) => {
+                        const isOpen = openMenus[item.title] ?? false;
+                        const isActiveParent =
+                            item.href && url === item.href;
+                        const hasActiveChild =
+                            item.subItems?.some((s) => url === s.href) ?? false;
+
+                        if (item.subItems) {
+                            return (
+                                <div key={item.title}>
+                                    {/* Parent */}
+                                    <button
+                                        onClick={() => toggleMenu(item.title)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition duration-200
+                                            ${isActiveParent || hasActiveChild
+                                                ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132]'
+                                                : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <item.icon className="w-5 h-5" />
+                                            <span>{item.title}</span>
+                                        </div>
+                                        <span className={`transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+                                            {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                        </span>
+                                    </button>
+
+                                    {/* Subitems */}
+                                    {isOpen && (
+                                        <div className="ml-6 mt-1 space-y-1">
+                                            {item.subItems.map((sub) => {
+                                                const isActiveSub = url === sub.href;
+                                                return (
+                                                    <Link
+                                                        key={sub.title}
+                                                        href={sub.href}
+                                                        className={`block px-3 py-1.5 rounded-lg text-sm transition duration-200 relative
+                                                            ${isActiveSub
+                                                                ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5'
+                                                                : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
+                                                            }`}
+                                                    >
+                                                        {sub.title}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
+                        // Single-level item
+                        return (
+                            <Link
+                                key={item.title}
+                                href={item.href!}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition duration-200
+                                    ${isActiveParent
+                                        ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132]'
+                                        : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
+                                    }`}
+                            >
+                                <item.icon className="w-5 h-5" />
+                                {item.title}
+                            </Link>
+                        );
+                    })}
+                </div>
             </SidebarContent>
 
             <SidebarFooter className="bg-[#192132] text-white">
