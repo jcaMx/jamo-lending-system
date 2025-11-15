@@ -140,7 +140,7 @@ const Input: React.FC<InputProps> = ({ label, ...props }) => (
 
         {/* === Borrower Information === */}
         <div className="bg-white rounded-lg shadow border text-black">
-          <SectionHeader title="Borrower Information" buttonLabel="New Borrower" />
+          <SectionHeader title={<><span>Borrower Information</span> <span className="text-sm text-gray-500">(Existing)</span></>} buttonLabel="New Borrower" /> 
           <div className="p-4 grid md:grid-cols-2 gap-4">
             <Input label="Borrower Name" name="borrowerName" value={form.borrowerName} onChange={handleChange} placeholder="Choose borrower" />
             <Input label="Membership Date" type="date" name="membershipDate" value={form.membershipDate} onChange={handleChange} />

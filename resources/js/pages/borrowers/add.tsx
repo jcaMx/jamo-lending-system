@@ -68,37 +68,37 @@ export default function Index() {
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           {/* Borrower Info */}
           <div>
-            <label className="block text-sm font-medium mb-1">Borrower Full Name</label>
+            <label className="block text-sm font-medium mb-1 text-black">Borrower Full Name</label>
             <input
               type="text"
               name="borrowerFullName"
               value={formData.borrowerFullName}
               onChange={handleChange}
               placeholder="Enter full name"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Date of Birth</label>
+            <label className="block text-sm font-medium mb-1 text-black">Date of Birth</label>
             <input
               type="date"
               name="dateOfBirth"
               value={formData.dateOfBirth}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Marital Status</label>
+            <label className="block text-sm font-medium mb-1 text-black">Marital Status</label>
             <select
               name="maritalStatus"
               value={formData.maritalStatus}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             >
               <option value="">Select Status</option>
               <option value="Single">Single</option>
@@ -109,36 +109,36 @@ export default function Index() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Age</label>
+            <label className="block text-sm font-medium mb-1 text-black">Age</label>
             <input
               type="number"
               name="age"
               value={formData.age}
               onChange={handleChange}
               placeholder="Enter age"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Permanent Home Address</label>
+            <label className="block text-sm font-medium mb-1 text-black">Permanent Home Address</label>
             <input
               type="text"
               name="permanentAddress"
               value={formData.permanentAddress}
               onChange={handleChange}
               placeholder="Enter address"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Home Ownership</label>
+            <label className="block text-sm font-medium mb-1 text-black">Home Ownership</label>
             <select
               name="homeOwnership"
               value={formData.homeOwnership}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             >
               <option value="">Select</option>
               <option value="Owned">Owned</option>
@@ -148,63 +148,63 @@ export default function Index() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Mobile Number</label>
+            <label className="block text-sm font-medium mb-1 text-black">Mobile Number</label>
             <input
               type="text"
               name="mobileNumber"
               value={formData.mobileNumber}
               onChange={handleChange}
               placeholder="09XX XXX XXXX"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">No. of Dependent Child</label>
+            <label className="block text-sm font-medium mb-1 text-black">No. of Dependent Child</label>
             <input
               type="number"
               name="dependentChild"
               value={formData.dependentChild}
               onChange={handleChange}
               placeholder="Enter number"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Occupation</label>
+            <label className="block text-sm font-medium mb-1 text-black">Occupation</label>
             <input
               type="text"
               name="occupation"
               value={formData.occupation}
               onChange={handleChange}
               placeholder="Enter occupation"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Net Pay</label>
+            <label className="block text-sm font-medium mb-1 text-black">Net Pay</label>
             <input
               type="number"
               name="netPay"
               value={formData.netPay}
               onChange={handleChange}
               placeholder="Enter net pay"
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-black"
             />
           </div>
 
           {/* Spouse Section */}
-          <div className="col-span-2 mt-6 border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">
+          <div className="col-span-2 mt-6 border-t pt-4 text-black">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3 ">
               Spouse’s Personal Data{' '}
               <span className="text-sm text-gray-500">(If applicable)</span>
             </h3>
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-1">Spouse Full Name</label>
+                <label className="block text-sm font-medium mb-1 text-black">Spouse Full Name</label>
                 <input
                   type="text"
                   name="spouseFullName"
@@ -216,7 +216,7 @@ export default function Index() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 text-black">
                   Agency/Employer’s Address
                 </label>
                 <input
@@ -230,7 +230,7 @@ export default function Index() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Occupation</label>
+                <label className="block text-sm font-medium mb-1 text-black">Occupation</label>
                 <input
                   type="text"
                   name="spouseOccupation"
@@ -242,10 +242,10 @@ export default function Index() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Mobile Number</label>
+                <label className="block text-sm font-medium mb-1 text-black">Mobile Number</label>
                 <input
                   type="text"
-                  name="spouseMobileNumber"
+                  name="spouseMobileNumber "
                   value={formData.spouseMobileNumber}
                   onChange={handleChange}
                   placeholder="09XX XXX XXXX"
@@ -256,7 +256,7 @@ export default function Index() {
           </div>
 
           <div className="col-span-2 mt-6 flex justify-end">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-yellow-600 hover:bg-yellow-700">
               Submit
             </Button>
           </div>
