@@ -28,6 +28,13 @@ export const loans = {
     view: () => ({ url: '/Loans/VAL', name: 'loans.view' }),
 };
 
+// Repayments
+export const repayments = {
+    index: () => ({ url: '/Repayments', name: 'repayments.index' }),
+    add: () => ({ url: '/Repayments/add', name: 'repayments.add' }),
+};
+
+
 // Reports
 export const reports = {
     dcpr: () => ({ url: '/Reports/DCPR', name: 'reports.dcpr' }),
@@ -37,7 +44,7 @@ export const reports = {
 
 // Collections
 export const collections = {
-    daily: () => ({ url: '/daily-collections', name: 'collections.daily' }),
+    daily: () => ({ url: '/daily-collections', name: 'daily-collections' }),
 };
 
 // Users
@@ -55,6 +62,7 @@ export const routes = {
     dashboard,
     borrowers,
     loans,
+    repayments,
     reports,
     collections,
     users,

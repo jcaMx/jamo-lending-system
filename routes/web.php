@@ -6,6 +6,9 @@ use App\Http\Controllers\BorrowerController;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RepaymentController;
+use App\Http\Controllers\CollectionSheetController;
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
@@ -40,13 +43,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Borrowers
+    // Borrowers - ayaw na ichange
     Route::prefix('borrowers')->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
         Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
-        Route::get('/{id}/loans', [BorrowerController::class, 'loans'])->name('borrowers.loans');
-        Route::get('/{id}/repayments', [BorrowerController::class, 'repayments'])->name('borrowers.repayments');
+        Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit');
+        // Route::get('borrowers/{id}/loans', [BorrowerController::class, 'loans'])->name('borrowers.loans');
+        // Route::get('borrowers/{id}/repayments', [BorrowerController::class, 'repayments'])->name('borrowers.repayments');
     });
 
     // Loans
@@ -58,6 +62,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
         Route::get('/VAL', fn() => Inertia::render('Loans/VAL'))->name('loans.view');
     });
+    
+
+
+    Route::prefix('collection')->group(function () {
+        Route::get('/daily', [CollectionSheetController::class, 'index'])->name('daily-collections');
+    });
+
+    // Repayments
+    Route::prefix('Repayments')->group(function () {
+        Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
+        Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
+    });
 
     // Reports
     Route::prefix('Reports')->group(function () {
@@ -65,6 +81,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/MonthlyReport', fn() => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
         Route::get('/IncomeStatement', fn() => Inertia::render('Reports/IncomeStatement'))->name('reports.income');
     });
+
+    // Users
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
+    Route::get('/users/new-user-credentials', [UserController::class, 'newUserCredentials'])->name('users.newUserCredentials');
+    Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{id}/edit', [UserController::class, 'show'])->name('users.edit');
+    
 
 });
 
