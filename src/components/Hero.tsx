@@ -18,19 +18,19 @@ const Hero = () => {
 
           <div className="space-y-3 mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-golden flex items-center justify-center">
                 <Check className="w-4 h-4 text-white" />
               </div>
               <span className="text-foreground">Quick approval process</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-golden flex items-center justify-center">
                 <Check className="w-4 h-4 text-white" />
               </div>
               <span className="text-foreground">Competitive interest rates</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-golden flex items-center justify-center">
                 <Check className="w-4 h-4 text-white" />
               </div>
               <span className="text-foreground">Flexible payment terms</span>
