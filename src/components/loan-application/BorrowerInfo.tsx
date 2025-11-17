@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StepIndicator from "./StepIndicator";
 import { User } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface BorrowerInfoProps {
   onNext: () => void;
@@ -128,7 +129,12 @@ const BorrowerInfo = ({ onNext }: BorrowerInfoProps) => {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-between gap-4">
+            <Link to="/">
+              <Button variant="outline" className="px-8">
+                Back to Home
+              </Button>
+            </Link>
             <Button onClick={onNext} className="bg-golden hover:bg-golden-dark text-white px-8">
               Next
             </Button>
