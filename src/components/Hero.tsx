@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -38,9 +39,11 @@ const Hero = () => {
           </div>
 
           <div className="flex gap-4">
-            <Button className="bg-golden hover:bg-golden-dark text-white px-8">
-              Apply Now
-            </Button>
+            <Link to="/apply">
+              <Button className="bg-golden hover:bg-golden-dark text-white px-8">
+                Apply Now
+              </Button>
+            </Link>
             <Button variant="link" className="text-foreground">
               Contact Us
             </Button>

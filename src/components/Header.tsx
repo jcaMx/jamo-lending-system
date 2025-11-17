@@ -25,7 +25,7 @@ const Header = () => {
           </a>
         </nav>
 
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6">
+        <Button className="bg-white hover:bg-white/90 text-golden px-6">
           Login
         </Button>
       </div>

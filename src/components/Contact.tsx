@@ -65,7 +65,7 @@ const Contact = () => {
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-lg">
+          <div className="bg-white p-8 rounded-lg border-2 border-golden">
             <h3 className="text-xl font-bold mb-6">Send Us a Message</h3>
             <form className="space-y-4">
               <div>
