@@ -9,6 +9,8 @@ use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\CollectionSheetController;
+use App\Http\Controllers\Reports\DCPRController;
+use App\Http\Controllers\Reports\MCPRController;
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
@@ -64,10 +66,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     
 
-
-    Route::prefix('collection')->group(function () {
-        Route::get('/daily', [CollectionSheetController::class, 'index'])->name('daily-collections');
-    });
+    // Daily Collection Sheets
+    Route::get('/daily-collections', [CollectionSheetController::class, 'index'])->name('daily-collections.index');
 
     // Repayments
     Route::prefix('Repayments')->group(function () {
@@ -78,13 +78,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Reports
     Route::prefix('Reports')->group(function () {
         Route::get('/DCPR', fn() => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
+    //     Route::post('/reports/dcpr/export-pdf', [\App\Http\Controllers\Reports\DCPRController::class, 'exportPdf'])
+    // ->name('reports.dcpr.export-pdf');
+    Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
+    Route::post('/dcpr/print', [DCPRController::class, 'printPreview'])->name('reports.dcpr.print');    
+
+
         Route::get('/MonthlyReport', fn() => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
-        Route::get('/IncomeStatement', fn() => Inertia::render('Reports/IncomeStatement'))->name('reports.income');
+        Route::post('/monthly/export-pdf', [MCPRController::class, 'exportPdf'])
+        ->name('reports.monthly.export');
+        Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
+
     });
 
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+
     Route::get('/users/new-user-credentials', [UserController::class, 'newUserCredentials'])->name('users.newUserCredentials');
     Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
     Route::get('/users/{id}/edit', [UserController::class, 'show'])->name('users.edit');

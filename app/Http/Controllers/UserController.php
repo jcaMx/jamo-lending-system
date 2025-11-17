@@ -72,10 +72,34 @@ class UserController extends Controller
 
     public function add()
     {
-        return Inertia::render('users/add');
+        $user_roles = ['manager', 'admin', 'cashier'];
+        return Inertia::render('users/add', [
+            'user_roles' => $user_roles,
+        ]);
+
     }
 
-    public function newUserCredentials($id)
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:manager,admin,cashier',
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($validated['password']),
+            'role' => $validated['role'],
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User created successfully.');
+    }
+
+
+    public function newUserCredentials($id) 
     {
         $user = [
             'ID' => $id,

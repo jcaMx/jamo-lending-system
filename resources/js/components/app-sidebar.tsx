@@ -50,14 +50,14 @@ const mainNavItems: NavItem[] = [
             { title: 'Add Repayment', href: '/Repayments/add' },
         ],
     },
-    { title: 'Daily Collection Sheet', icon: DailyCollectionsIcon, href: '/daily-collections' },
+    { title: 'Daily Collection Sheets', icon: DailyCollectionsIcon, href: '/daily-collections' },
     {
         title: 'Reports',
         icon: ReportsIcon,
         subItems: [
             { title: 'Daily Cash Position Report', href: '/Reports/DCPR' },
             { title: 'Monthly Report', href: '/Reports/MonthlyReport' },
-            { title: 'Income Statement Report', href: '/Reports/IncomeStatementReport' },
+            // { title: 'Income Statement Report', href: '/Reports/IncomeStatementReport' },
         ],
     },
     {

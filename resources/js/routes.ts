@@ -28,6 +28,11 @@ export const loans = {
     view: () => ({ url: '/Loans/VAL', name: 'loans.view' }),
 };
 
+// Daily collection sheet
+export const daily_collections = {
+    index: () => ({ url: '/daily-collections', name: 'daily-collections.index' }),
+};
+
 // Repayments
 export const repayments = {
     index: () => ({ url: '/Repayments', name: 'repayments.index' }),
@@ -49,8 +54,8 @@ export const collections = {
 
 // Users
 export const users = {
-    index: () => ({ url: '/system-users', name: 'users.index' }),
-    add: () => ({ url: '/system-users/add', name: 'users.add' }),
+    index: () => ({ url: '/users', name: 'users.index' }),
+    add: () => ({ url: '/users/add', name: 'users.add' }),
 };
 
 // Default export for easy destructuring
