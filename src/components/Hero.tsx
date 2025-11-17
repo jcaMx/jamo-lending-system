@@ -57,6 +57,12 @@ const Hero = () => {
               <span className="text-muted-foreground">Hero Image Here</span>
             </div>
           </div>
+          
+          {/* Orange stat overlay */}
+          <div className="absolute bottom-8 left-8 bg-golden text-white px-8 py-6 rounded-lg shadow-lg">
+            <div className="text-4xl font-bold mb-2">5+</div>
+            <div className="text-sm font-medium">Years Experience</div>
+          </div>
         </div>
       </div>
     </section>
