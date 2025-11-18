@@ -29,7 +29,7 @@ const About = () => {
       id="about" 
       className="py-16 md:py-24 px-6 md:px-12 relative"
       style={{ 
-        background: 'linear-gradient(180deg, #F7F5F3, rgba(252, 211, 77, 0.5))' 
+        background: 'linear-gradient(180deg, rgba(252, 211, 77, 0.5), #F7F5F3)' 
       }}
     >
       <div className="max-w-7xl mx-auto">
