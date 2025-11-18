@@ -6,7 +6,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-2xl font-bold text-white">JL</span>
+            {/* Placeholder for logo - user will provide */}
+            <span className="text-sm font-bold text-white">LOGO</span>
           </div>
         </div>
         

@@ -8,9 +8,10 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-full bg-golden flex items-center justify-center">
-                <span className="text-lg font-bold text-white">JL</span>
+                {/* Placeholder for logo - user will provide */}
+                <span className="text-sm font-bold text-white">LOGO</span>
               </div>
-              <span className="font-bold text-lg">JLMC Lending Corp</span>
+              <span className="font-bold text-lg">JAMO Lending Corp</span>
             </div>
             <p className="text-sm text-white/70 mb-4">
               Your trusted partner for finance and lending solutions. Experience a seamless lending future with us.
@@ -92,7 +93,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-white/10 pt-8 text-center text-sm text-white/70">
-          <p>© 2025 JLMC Lending Corporation. All rights reserved.</p>
+          <p>© 2025 JAMO Lending Corporation. All rights reserved.</p>
         </div>
       </div>
     </footer>
