@@ -7,7 +7,7 @@ const Stats = () => {
   ];
 
   return (
-    <section className="bg-navy py-16 md:py-20 px-6 md:px-12">
+    <section className="relative bg-navy py-16 md:py-20 px-6 md:px-12">
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
         {stats.map((stat, index) => (
           <div key={index}>
@@ -20,6 +20,14 @@ const Stats = () => {
           </div>
         ))}
       </div>
+      
+      {/* Gradient overlay blend */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+        style={{
+          background: 'linear-gradient(180deg, transparent, rgba(252, 211, 77, 0.5))'
+        }}
+      />
     </section>
   );
 };

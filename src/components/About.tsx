@@ -42,12 +42,7 @@ const About = () => {
             </div>
             
             {/* Orange stat overlay */}
-            <div 
-              className="absolute bottom-8 right-8 text-white px-8 py-6 rounded-lg shadow-lg"
-              style={{
-                background: 'linear-gradient(135deg, rgba(252, 211, 77, 0.5), rgba(251, 191, 36, 0.5))'
-              }}
-            >
+            <div className="absolute bottom-8 right-8 bg-golden text-white px-8 py-6 rounded-lg shadow-lg">
               <div className="text-4xl font-bold mb-2">5+</div>
               <div className="text-sm font-medium">Years Experience</div>
             </div>
