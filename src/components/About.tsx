@@ -35,17 +35,23 @@ const About = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
-          <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+          <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden">
             {/* Placeholder for about image - user will provide */}
             <div className="w-full h-full bg-muted flex items-center justify-center">
               <span className="text-muted-foreground">About Image Here</span>
+            </div>
+            
+            {/* Orange stat overlay */}
+            <div className="absolute bottom-8 left-8 bg-golden text-white px-8 py-6 rounded-lg shadow-lg">
+              <div className="text-4xl font-bold mb-2">5+</div>
+              <div className="text-sm font-medium">Years Experience</div>
             </div>
           </div>
 
           <div>
             <h3 className="text-2xl font-bold mb-4">Our Values</h3>
             <p className="text-muted-foreground mb-6">
-              At Lemo Lending Corporation, we believe that financial support should be simple and accessible for everyone. Our mission is to provide low-interest loans that help you achieve your goals. We value honesty, transparency, and support, ensuring you feel confident on your financial journey with us. Your success is our priority!
+              At JAMO Lending Corporation, we believe that financial support should be simple and accessible for everyone. Our mission is to provide low-interest loans that help you achieve your goals. We value honesty, transparency, and support, ensuring you feel confident on your financial journey with us. Your success is our priority!
             </p>
             <p className="text-muted-foreground">
               Join us today and experience lending future that truly cares about you and your dreams!
