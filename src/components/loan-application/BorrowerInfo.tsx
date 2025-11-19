@@ -111,9 +111,19 @@ const BorrowerInfo = ({ onNext }: BorrowerInfoProps) => {
             <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Spouse's personal data <span className="text-sm font-normal">(If applicable)</span></h3>
             
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="spouseName">Full Name</Label>
-                <Input id="spouseName" placeholder="Enter spouse's full name" className="bg-gray-50" />
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="spouseFirstName">First Name</Label>
+                  <Input id="spouseFirstName" placeholder="Enter first name" className="bg-gray-50" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="spouseMiddleName">Middle Name</Label>
+                  <Input id="spouseMiddleName" placeholder="Enter middle name" className="bg-gray-50" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="spouseLastName">Last Name</Label>
+                  <Input id="spouseLastName" placeholder="Enter last name" className="bg-gray-50" />
+                </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
