@@ -12,7 +12,7 @@ interface LoanDetailsProps {
 
 const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
   return (
-    <section className="py-8 md:py-16 px-6 md:px-12 bg-gradient-to-b from-golden/20 to-white">
+    <section className="py-8 md:py-16 px-6 md:px-12" style={{ backgroundColor: '#F7F5F3' }}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">

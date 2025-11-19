@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import heroImg from "../assets/hero/hero.png";
 
 const Hero = () => {
   return (
-    <section style={{ backgroundColor: '#F7F5F3' }} className="py-16 md:py-24 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-        <div>
+    <section style={{ backgroundColor: '#F7F5F3' }} className="relative overflow-hidden">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 items-center min-h-[600px]">
+        <div className="py-16 md:py-24 px-6 md:px-12 relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
             Low Rates,<br />
             <span className="text-golden">Big Dreams</span><br />
@@ -50,13 +51,18 @@ const Hero = () => {
           </div>
         </div>
 
-        <div className="relative">
-          <div className="aspect-[4/3] rounded-lg overflow-hidden" style={{ backgroundColor: '#F7F5F3' }}>
-            {/* Placeholder for hero image - user will provide */}
-            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#F7F5F3' }}>
-              <span className="text-muted-foreground">Hero Image Here</span>
-            </div>
-          </div>
+        <div className="relative h-full min-h-[600px] md:absolute md:right-0 md:top-0 md:w-1/2">
+          {/* Gradient overlay for smooth blend */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F7F5F3] via-[#F7F5F3]/50 to-transparent z-10 w-32 md:w-48"></div>
+          
+          {/* Hero image */}
+          <img
+            src={heroImg}
+            alt="Hero — JAMO Lending"
+            className="object-cover w-full h-full"
+            loading="lazy"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
         </div>
       </div>
     </section>

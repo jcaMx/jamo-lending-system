@@ -1,4 +1,5 @@
 import { Users, Shield, Heart, TrendingUp } from "lucide-react";
+import aboutImg from "../assets/about/about.png"; // <-- ADD THIS
 
 const About = () => {
   const values = [
@@ -42,11 +43,14 @@ const About = () => {
 
         <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
           <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden">
-            {/* Placeholder for about image - user will provide */}
-            <div className="w-full h-full bg-muted flex items-center justify-center">
-              <span className="text-muted-foreground">About Image Here</span>
-            </div>
-            
+
+            {/* INSERTED IMAGE */}
+            <img 
+              src={aboutImg} 
+              alt="About JAMO Lending Corporation" 
+              className="w-full h-full object-cover"
+            />
+
             {/* Orange stat overlay */}
             <div className="absolute bottom-8 right-8 bg-golden text-white px-8 py-6 rounded-lg shadow-lg">
               <div className="text-4xl font-bold mb-2">5+</div>
@@ -67,7 +71,10 @@ const About = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((value, index) => (
-            <div key={index} className="bg-white p-6 rounded-lg border-2 border-golden/20 hover:border-golden transition-colors">
+            <div 
+              key={index} 
+              className="bg-white p-6 rounded-lg border-2 border-golden/20 hover:border-golden transition-colors"
+            >
               <div className="w-12 h-12 bg-golden rounded-lg flex items-center justify-center mb-4">
                 <value.icon className="w-6 h-6 text-white" />
               </div>
