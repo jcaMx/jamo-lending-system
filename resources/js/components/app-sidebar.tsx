@@ -20,6 +20,7 @@ import { ReportsIcon } from '@/components/icons/ReportsIcon';
 import { useState, useEffect } from 'react';
 
 
+
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', icon: LayoutGrid, href: dashboard().url },
     {
@@ -46,8 +47,8 @@ const mainNavItems: NavItem[] = [
         title: 'Repayments',
         icon: RepaymentsIcon,
         subItems: [
-            { title: 'View Repayments', href: '/Repayments' },
-            { title: 'Add Repayment', href: '/Repayments/add' },
+            { title: 'View Repayments', href: '/repayments' },
+            { title: 'Add Repayment', href: '/repayments/add' },
         ],
     },
     { title: 'Daily Collection Sheet', icon: DailyCollectionsIcon, href: '/daily-collections' },

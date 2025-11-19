@@ -5,13 +5,37 @@ import { type BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 
+/* -------------------- Types -------------------- */
+
+interface Borrower {
+  id: number;
+  name: string;
+  loanNo: string;
+}
+
+interface Collector {
+  id: number;
+  name: string;
+}
+
+/* -------------------- Component -------------------- */
+
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: "Repayments", href: "/repayments" },
+  { title: "Add User", href: "/users/add" },
 ];
 
-export default function Add({ borrowers, collectors }) {
+export default function Add({
+  borrowers,
+  collectors,
+}: {
+  borrowers: Borrower[];
+  collectors: Collector[];
+}) {
+  /* -------------------- States -------------------- */
+
   const [search, setSearch] = useState("");
-  const [selectedBorrower, setSelectedBorrower] = useState(null);
+  const [selectedBorrower, setSelectedBorrower] =
+    useState<Borrower | null>(null);
 
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
@@ -22,31 +46,37 @@ export default function Add({ borrowers, collectors }) {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Filter borrower results
+  /* -------------------- Borrower Search -------------------- */
+
   const filteredBorrowers = useMemo(() => {
-    return borrowers.filter((b) =>
+    return borrowers.filter((b: Borrower) =>
       b.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [search, borrowers]);
 
-  // Format peso input
-  const handleAmountChange = (e) => {
-    let val = e.target.value.replace(/[^\d]/g, "");
-    if (!val) return setAmount("");
-    val = (Number(val) / 100).toFixed(2);
-    setAmount("₱" + Number(val).toLocaleString());
+  /* -------------------- Amount Formatting -------------------- */
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/[^\d]/g, "");
+    if (!raw) return setAmount("");
+
+    const number = (parseInt(raw, 10) / 100).toFixed(2);
+    setAmount("₱" + Number(number).toLocaleString());
   };
 
-  // Check valid form
+  /* -------------------- Form Validation -------------------- */
+
   const isValid =
     selectedBorrower &&
     amount &&
     method &&
     collectedBy &&
     collectionDate &&
-    (method === "Cash" || referenceNumber);
+    (method === "Cash" || referenceNumber.trim().length > 0);
 
-  const handleSubmit = (e) => {
+  /* -------------------- Submit Logic -------------------- */
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!isValid) {
@@ -59,7 +89,7 @@ export default function Add({ borrowers, collectors }) {
       {
         borrower_id: selectedBorrower.id,
         loanNo: selectedBorrower.loanNo,
-        amount,
+        amount: amount.replace(/[₱,]/g, ""), // cleaned numeric string
         method,
         referenceNumber,
         collectedBy,
@@ -78,6 +108,8 @@ export default function Add({ borrowers, collectors }) {
     );
   };
 
+  /* -------------------- JSX -------------------- */
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add Repayment" />
@@ -90,7 +122,6 @@ export default function Add({ borrowers, collectors }) {
               <h2 className="text-2xl font-semibold text-gray-800">Repayment</h2>
             </div>
 
-            {/* Success / Error Messages */}
             {successMsg && (
               <p className="bg-green-100 text-green-700 p-2 mb-3 rounded">
                 {successMsg}
@@ -102,7 +133,7 @@ export default function Add({ borrowers, collectors }) {
               </p>
             )}
 
-            {/* Form Grid */}
+            {/* Grid */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
               {/* Borrower Search */}
               <div className="col-span-2">
@@ -114,7 +145,9 @@ export default function Add({ borrowers, collectors }) {
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setSearch(e.target.value)
+                    }
                     placeholder="Search borrower..."
                     className="w-full border rounded-lg p-2 pr-10"
                   />
@@ -124,7 +157,7 @@ export default function Add({ borrowers, collectors }) {
                 {search.length > 0 && (
                   <div className="border rounded-lg mt-2 bg-white shadow max-h-32 overflow-y-auto">
                     {filteredBorrowers.length > 0 ? (
-                      filteredBorrowers.map((b) => (
+                      filteredBorrowers.map((b: Borrower) => (
                         <div
                           key={b.id}
                           onClick={() => {
@@ -152,7 +185,7 @@ export default function Add({ borrowers, collectors }) {
                 </label>
                 <input
                   type="text"
-                  value={selectedBorrower?.loanNo || ""}
+                  value={selectedBorrower?.loanNo ?? ""}
                   readOnly
                   className="w-full border rounded-lg p-2 bg-gray-100 cursor-not-allowed"
                 />
@@ -179,7 +212,9 @@ export default function Add({ borrowers, collectors }) {
                 </label>
                 <select
                   value={method}
-                  onChange={(e) => setMethod(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setMethod(e.target.value)
+                  }
                   className="w-full border rounded-lg p-2"
                 >
                   <option value="">Select method</option>
@@ -198,7 +233,9 @@ export default function Add({ borrowers, collectors }) {
                   <input
                     type="text"
                     value={referenceNumber}
-                    onChange={(e) => setReferenceNumber(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setReferenceNumber(e.target.value)
+                    }
                     className="w-full border rounded-lg p-2"
                   />
                 </div>
@@ -209,14 +246,15 @@ export default function Add({ borrowers, collectors }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Collected By
                 </label>
-
                 <select
                   value={collectedBy}
-                  onChange={(e) => setCollectedBy(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setCollectedBy(e.target.value)
+                  }
                   className="w-full border rounded-lg p-2"
                 >
                   <option value="">Select collector</option>
-                  {collectors.map((c) => (
+                  {collectors.map((c: Collector) => (
                     <option key={c.id} value={c.name}>
                       {c.name}
                     </option>
@@ -232,7 +270,9 @@ export default function Add({ borrowers, collectors }) {
                 <input
                   type="date"
                   value={collectionDate}
-                  onChange={(e) => setCollectionDate(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setCollectionDate(e.target.value)
+                  }
                   className="w-full border rounded-lg p-2"
                 />
               </div>

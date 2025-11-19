@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: "Repayments", href: "/repayments" },
+  { title: "Repayments", href: "/repayments/add" },
 ];
 
 export default function Add({ borrowers, collectors }) {
