@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // $middleware->alias([
+        //     'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
+        //     'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
+        //     'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+        // ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

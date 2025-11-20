@@ -1,7 +1,7 @@
 <?php
 namespace App\Repositories\Eloquent;
 
-use App\Models\Role;
+use Spatie\Permission\Models\Role;
 use App\Repositories\Interfaces\IRoleRepository;
 
 class RoleRepository implements IRoleRepository

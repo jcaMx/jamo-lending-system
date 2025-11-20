@@ -31,7 +31,7 @@ class RoleService
         return $saved;
     }
 
-    public function all(): array
+    public function getAllRoles(): array
     {
         return $this->roles->all();
     }

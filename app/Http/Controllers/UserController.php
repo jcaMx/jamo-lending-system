@@ -4,123 +4,71 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Borrower; 
 use Inertia\Inertia;
+use App\Services\UserService;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
 
-    public function index()
+    public function __construct(private UserService $service)
     {
-        // Dummy data for testing
-        $users = [
-            [
-                'ID' => 1,
-                'username' => 'jdelacruz',
-                'fName' => 'Juan',
-                'lName' => 'Dela Cruz',
-                'role' => 'Admin',
-                'status' => 'Active',
-                'lastLogin' => '2025-11-13 10:30 AM',
-            ],
-            [
-                'ID' => 2,
-                'username' => 'mgarcia',
-                'fName' => 'Maria',
-                'lName' => 'Garcia',
-                'role' => 'User',
-                'status' => 'Inactive',
-                'lastLogin' => '2025-11-10 03:15 PM',
-            ],
-            [
-                'ID' => 3,
-                'username' => 'pperez',
-                'fName' => 'Pedro',
-                'lName' => 'Perez',
-                'role' => 'User',
-                'status' => 'Closed',
-                'lastLogin' => '2025-11-01 09:45 AM',
-            ],
-        ];
-
-        return Inertia::render('users/index', [
-            'users' => $users
-            //uncomment if backend na
-            // 'users' => User::all() 
-        ]);
-            
+        // Only users with the Admin role can access any method in this controller
+        $this->service = $service;
+        // $this->middleware('role:admin');
     }
 
+    public function index()
+    {
+        $users = $this->service->getAll();
+        return Inertia::render('users/index', ['users' => $users]);
+    }
 
     public function show($id)
     {
-        $user = [
-            'ID' => $id,
-            'username' => 'jdelacruz',
-            'fName' => 'Juan',
-            'lName' => 'Dela Cruz',
-            'role' => 'Admin',
-            'email' => 'juan.delacruz@example.com',
-            'status' => 'Active',
-            'lastLogin' => '2025-11-13 10:30 AM',
-        ];
+        $user = $this->service->getById($id);
+        abort_if(!$user, 404);
 
-        return Inertia::render('users/show', [
-            'user' => $user,
-        ]);
+        return Inertia::render('users/show', ['user' => $user]);
     }
 
     public function add()
     {
-        $user_roles = ['manager', 'admin', 'cashier'];
-        return Inertia::render('users/add', [
-            'user_roles' => $user_roles,
-        ]);
+        // Only allow Admin role to be assigned when creating new users
+        $roles = Role::where('name', 'admin')->get();
 
+        return Inertia::render('users/add', [
+            'roles' => $roles,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:manager,admin,cashier',
+            'fName'   => 'required|string|max:50',
+            'lName'   => 'required|string|max:50',
+            'email'   => 'required|email|unique:users,email',
+            'role'    => 'required|in:admin,cashier',
         ]);
 
-        User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
-            'role' => $validated['role'],
-        ]);
+        $user = $this->service->createUser($validated);
 
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        return redirect()
+            ->route('users.newUserCredentials', $user->id)
+            ->with('success', 'User created successfully.');
     }
 
-
-    public function newUserCredentials($id) 
+    public function edit($id)
     {
-        $user = [
-            'ID' => $id,
-            'username' => 'jdelacruz',
-            'fName' => 'Juan',
-            'lName' => 'Dela Cruz',
-        ];
-        return Inertia::render('users/new-user-credentials', [
-            'user' => $user,
+        $user = $this->service->getById($id);
+        abort_if(!$user, 404);
+
+        // Admin can edit and assign any role
+        $roles = Role::all();
+
+        return Inertia::render('users/edit', [
+            'user'  => $user,
+            'roles' => $roles,
         ]);
     }
-
-    
-    public function edit(User $user)
-    {
-        dd($user);
-        return Inertia::render('Users/Edit', [
-            'user' => $user
-        ]);
-    }
-    
-
-
 }

@@ -14,15 +14,19 @@ class UserRepository implements IUserRepository
 
     public function findById(int $id): ?User
     {
-        return User::with(['roles','profile','teams'])->find($id);
+        // Spatie provides getRoleNames() and permissions via HasRoles trait
+        return User::with(['profile','teams'])->find($id);
     }
 
     public function findAll(array $filters = []): array
     {
-        $query = User::query()->with(['roles','profile']);
+        $query = User::query()->with(['profile']);
+
+        // Filter by role using Spatie's whereHas('roles')
         if (!empty($filters['role'])) {
             $query->whereHas('roles', fn($q) => $q->where('name', $filters['role']));
         }
+
         return $query->paginate($filters['per_page'] ?? 15)->toArray();
     }
 

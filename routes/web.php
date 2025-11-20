@@ -11,6 +11,7 @@ use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\CollectionSheetController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
+use Spatie\Permission\Middlewares\RoleMiddleware;
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
@@ -92,13 +93,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Users
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::middleware([RoleMiddleware::class . ':admin'])->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/new-user-credentials', [UserController::class, 'newUserCredentials'])
+            ->name('users.newUserCredentials');
+        Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+    });
 
-    Route::get('/users/new-user-credentials', [UserController::class, 'newUserCredentials'])->name('users.newUserCredentials');
-    Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
-    Route::get('/users/{id}/edit', [UserController::class, 'show'])->name('users.edit');
+
     
 
 });

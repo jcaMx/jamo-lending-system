@@ -3,28 +3,77 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Role;
-use App\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $perms = ['user.create','user.read','user.update','user.delete','role.manage','team.manage'];
-        $permIds = [];
-        foreach ($perms as $p) {
-            $perm = Permission::firstOrCreate(['code' => $p], ['description' => $p]);
-            $permIds[] = $perm->id;
+        // -----------------------------------------
+        // Define permissions by module
+        // -----------------------------------------
+
+        $permissions = [
+            // Loan
+            'loan.create',
+            'loan.view',
+            'loan.update',
+            'loan.delete',
+
+            // Loan
+            'borrower.create',
+            'borrower.view',
+            'borrower.update',
+            'borrower.delete',
+
+            // User
+            'user.create',
+            'user.view',
+            'user.update',
+            'user.delete',
+
+            // Repayment
+            'repayment.create',
+            'repayment.view',
+            'repayment.update',
+            'repayment.delete',
+
+            // Reports
+            'reports.view',
+
+            // Daily Collection Sheet
+            'collection.daily',
+        ];
+
+        // -----------------------------------------
+        // Create permissions if missing
+        // -----------------------------------------
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        $admin = Role::firstOrCreate(['name' => 'admin'], ['description' => 'Administrator']);
-        $admin->permissions()->sync($permIds);
+        // -----------------------------------------
+        // Create roles
+        // -----------------------------------------
+        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $cashier = Role::firstOrCreate(['name' => 'cashier']);
 
-        $manager = Role::firstOrCreate(['name' => 'manager'], ['description' => 'Manager']);
-        $manager->permissions()->sync(
-            Permission::whereIn('code',['user.read','user.update','team.manage'])->pluck('id')->toArray()
-        );
+        // -----------------------------------------
+        // Assign permissions
+        // -----------------------------------------
 
-        Role::firstOrCreate(['name' => 'staff'], ['description' => 'Staff']);
+        // Admin gets everything
+        $admin->syncPermissions(Permission::all());
+
+        // Cashier: view only + can add repayment
+        $cashier->syncPermissions([
+            'loan.view',
+            'borrower.view',
+            'repayment.view',
+            'repayment.create',    // cashier can add repayment
+            'collection.daily',    // can view daily collection sheet
+        ]);
     }
 }
+

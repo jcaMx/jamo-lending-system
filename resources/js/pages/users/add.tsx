@@ -27,20 +27,20 @@ export default function UserRoleCard({ user_roles }: UserRoleCardProps) {
       </div>
       <div className="p-4 grid md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-black" htmlFor="firstName">First Name</label>
+          <label className="block text-sm font-medium mb-1 text-black" htmlFor="fName">First Name</label>
           <input
-            id="firstName"
-            name="firstName"
+            id="fName"
+            name="fName"
             placeholder="Enter first name"
             className="w-full border rounded px-3 py-2 text-black placeholder-black"
             // value, onChange to be connected to form state
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-black" htmlFor="lastName">Last Name</label>
+          <label className="block text-sm font-medium mb-1 text-black" htmlFor="lName">Last Name</label>
           <input
-            id="lastName"
-            name="lastName"
+            id="lName"
+            name="lName"
             placeholder="Enter last name"
             className="w-full border rounded px-3 py-2 text-black placeholder-black"
           />
