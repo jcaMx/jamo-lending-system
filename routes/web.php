@@ -38,6 +38,10 @@ Route::middleware('guest')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+
+
+
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
@@ -76,23 +80,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
     });
 
-    // Reports
-    Route::prefix('Reports')->group(function () {
+    // Reports - only admin
+    Route::prefix('Reports')->middleware([RoleMiddleware::class . ':admin'])->group(function () {
         Route::get('/DCPR', fn() => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
-    //     Route::post('/reports/dcpr/export-pdf', [\App\Http\Controllers\Reports\DCPRController::class, 'exportPdf'])
-    // ->name('reports.dcpr.export-pdf');
-    Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
-    Route::post('/dcpr/print', [DCPRController::class, 'printPreview'])->name('reports.dcpr.print');    
-
+        Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
+        Route::post('/dcpr/print', [DCPRController::class, 'printPreview'])->name('reports.dcpr.print');
 
         Route::get('/MonthlyReport', fn() => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
-        Route::post('/monthly/export-pdf', [MCPRController::class, 'exportPdf'])
-        ->name('reports.monthly.export');
+        Route::post('/monthly/export-pdf', [MCPRController::class, 'exportPdf'])->name('reports.monthly.export');
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
-
     });
 
-    // Users
+    // Users - only admin
     Route::middleware([RoleMiddleware::class . ':admin'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
@@ -102,6 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     });
+
 
 
     
