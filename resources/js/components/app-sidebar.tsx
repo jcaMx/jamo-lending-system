@@ -21,39 +21,43 @@ import { useState, useEffect } from 'react';
 
 
 const mainNavItems: NavItem[] = [
-    { title: 'Dashboard', icon: LayoutGrid, href: dashboard().url },
+    { title: 'Dashboard', icon: LayoutGrid, href: dashboard().url, roles: ['admin', 'cashier'], },
     {
         title: 'Borrowers',
         icon: BorrowersIcon,
+        roles: ['admin', 'cashier'],
         subItems: [
             { title: 'View All Borrowers', href: '/borrowers' },
-            { title: 'Add Borrower', href: '/borrowers/add' },
+            { title: 'Add Borrower', roles: ['admin'], href: '/borrowers/add' },
         ],
     },
     {
         title: 'Loans',
         icon: LoansIcon,
+        roles: ['admin', 'cashier'],
         subItems: [
             { title: 'View All Loans', href: '/Loans/VAL' },
             { title: 'Past Maturity Date', href: '/Loans/PMD' },
             { title: '1 Month Late Loans', href: '/Loans/1MLL' },
             { title: '3 Month Late Loans', href: '/Loans/3MLL' },
-            { title: 'Add Loan', href: '/Loans/AddLoan' },
-            { title: 'View Loan Applications', href: '/Loans/VLA' },
+            { title: 'Add Loan', href: '/Loans/AddLoan', roles: ['admin']  },
+            { title: 'View Loan Applications', href: '/Loans/VLA', roles: ['admin']  },
         ],
     },
     {
         title: 'Repayments',
         icon: RepaymentsIcon,
+        roles: ['cashier', 'admin'],
         subItems: [
             { title: 'View Repayments', href: '/Repayments' },
             { title: 'Add Repayment', href: '/Repayments/add' },
         ],
     },
-    { title: 'Daily Collection Sheets', icon: DailyCollectionsIcon, href: '/daily-collections' },
+    { title: 'Daily Collection Sheets', icon: DailyCollectionsIcon, roles: ['cashier', 'admin'], href: '/daily-collections' },
     {
         title: 'Reports',
         icon: ReportsIcon,
+        roles: ['admin'],
         subItems: [
             { title: 'Daily Cash Position Report', href: '/Reports/DCPR' },
             { title: 'Monthly Report', href: '/Reports/MonthlyReport' },
@@ -63,6 +67,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'System Users',
         icon: UserIcon,
+        roles: ['admin'],
         subItems: [
             { title: 'View Users', href: '/users' },
             { title: 'Add User', href: '/users/add' },
@@ -71,28 +76,41 @@ const mainNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
-    { title: 'Repository', href: 'https://github.com/laravel/react-starter-kit', icon: Folder },
+    { title: 'Repository', href: 'https://github.com/jcaMx/jamo-lending-system', icon: Folder },
 ];
 
 export function AppSidebar() {
-    const { url } = usePage();
+    const { url, props } = usePage();
+    const userRoles: string[] = props.auth?.roles ?? [];
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
-    // Open parent menus if current URL matches a subitem
+    const canView = (item: NavItem & { roles?: string[]; subItems?: Array<NavItem & { roles?: string[] }> }) => {
+        // If item has no roles restriction, anyone can view it
+        if (!item.roles || item.roles.length === 0) {
+            return true;
+        }
+        // Check if user has at least one of the required roles
+        return item.roles.some((r) => userRoles.includes(r));
+    };
+
     useEffect(() => {
         const newOpenMenus: Record<string, boolean> = {};
         mainNavItems.forEach((item) => {
-            if (item.subItems?.some((s) => url.startsWith(s.href))) {
+            // Only check items that pass the canView filter
+            if (!canView(item)) {
+                return;
+            }
+            const visibleSubItems = item.subItems?.filter(canView);
+            if (visibleSubItems?.some((s) => url.startsWith(s.href))) {
                 newOpenMenus[item.title] = true;
             }
         });
         setOpenMenus(newOpenMenus);
-    }, [url]);
+    }, [url, userRoles]);
 
     const toggleMenu = (title: string) => {
         setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }));
     };
-
     return (
         <Sidebar collapsible="icon" variant="inset" className="bg-[#192132] text-white min-h-screen">
             <SidebarHeader className="bg-[#192132] text-white">
@@ -103,14 +121,15 @@ export function AppSidebar() {
 
             <SidebarContent className="px-2 bg-[#192132] text-white">
                 <div className="space-y-2">
-                    {mainNavItems.map((item) => {
-                        const isOpen = openMenus[item.title] ?? false;
-                        const isActiveParent =
-                            item.href && url === item.href;
-                        const hasActiveChild =
-                            item.subItems?.some((s) => url === s.href) ?? false;
+                {mainNavItems.filter(canView).map((item: NavItem & { roles?: string[]; subItems?: Array<NavItem & { roles?: string[] }> }   ) => {
+                    const visibleSubItems = item.subItems?.filter(canView);
+                    const isOpen = openMenus[item.title] ?? false;
+                    const isActiveParent =
+                        item.href && url === item.href;
+                    const hasActiveChild =
+                        visibleSubItems?.some((s) => url === s.href) ?? false;
 
-                        if (item.subItems) {
+                        if (visibleSubItems) {
                             return (
                                 <div key={item.title}>
                                     {/* Parent */}
@@ -132,9 +151,9 @@ export function AppSidebar() {
                                     </button>
 
                                     {/* Subitems */}
-                                    {isOpen && (
+                                    {isOpen && visibleSubItems &&(
                                         <div className="ml-6 mt-1 space-y-1">
-                                            {item.subItems.map((sub) => {
+                                            {visibleSubItems.map((sub: NavItem & { roles?: string[] }) => {
                                                 const isActiveSub = url === sub.href;
                                                 return (
                                                     <Link

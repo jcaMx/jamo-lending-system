@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\UserProfile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+
 
 class UserService
 {
@@ -35,32 +37,46 @@ class UserService
     /**
      * Create a new user and assign role.
      */
-    public function createUser(array $data): User
+    public function createUser(array $data)
     {
-        // 1. Generate username
         $username = $this->generateUsername($data['fName'], $data['lName']);
+        $generatedPassword = $this->generatePassword();
 
-        // 2. Generate password
-        $rawPassword = $this->generatePassword();
+        $user = null;
 
-        // 3. Create user
-        $user = User::create([
-            'name'     => "{$data['fName']} {$data['lName']}",
-            'email'    => $data['email'],
-            'username' => $username,
-            'password' => Hash::make($rawPassword),
-        ]);
+        DB::transaction(function () use ($data, $username, $generatedPassword, &$user) {
+            $user = User::create([
+                'name'     => "{$data['fName']} {$data['lName']}",
+                'fName'    => $data['fName'],
+                'lName'    => $data['lName'],
+                'email'    => $data['email'],
+                'username' => $username,
+                'password' => Hash::make($generatedPassword),
+                'status'   => 'Active',
+            ]);
 
-        // 4. Assign role via Spatie
-        if (!empty($data['role'])) {
-            $user->assignRole($data['role']); // expects role name string
-        }
+            if (!empty($data['role'])) {
+                $user->assignRole($data['role']);
+            }
 
-        // 5. Attach raw password for UI display
-        $user->rawPassword = $rawPassword;
+            if (!empty($data['phone'])) {
+                $user->profile()->create([
+                    'phone'      => $data['phone'],
+                    'email'      => $data['email'],
+                    'avatar_url' => $data['userPhoto'] ?? null,
+                ]);
+            }
+        }); // <-- make sure this closing brace is here
 
-        return $user;
-    }
+        return [
+            'user' => $user,
+            'password' => $generatedPassword,
+        ];
+    } // <-- make sure the method closes here
+
+    
+    
+    
 
     /**
      * Generate a unique username.
@@ -69,10 +85,31 @@ class UserService
     {
         $base = strtolower(substr($fname, 0, 1) . '.' . $lname);
         $base = str_replace(' ', '', $base);
-
+        
+        // Check if base username exists
         $count = User::where('username', 'LIKE', "$base%")->count();
-
-        return $count === 0 ? $base : $base . ($count + 1);
+        
+        if ($count === 0) {
+            $username = $base;
+        } else {
+            // Find the highest number suffix
+            $existingUsernames = User::where('username', 'LIKE', "$base%")
+                ->pluck('username')
+                ->map(function ($un) use ($base) {
+                    $suffix = str_replace($base, '', $un);
+                    return is_numeric($suffix) ? (int)$suffix : 0;
+                })
+                ->max();
+            
+            $username = $base . ($existingUsernames + 1);
+        }
+        
+        // Double-check uniqueness (in case of race condition)
+        while (User::where('username', $username)->exists()) {
+            $username = $base . (++$count);
+        }
+        
+        return $username;
     }
 
     /**

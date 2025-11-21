@@ -36,16 +36,36 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // Track last login
+        if ($request->user()) {
+            $request->user()->update(['last_login_at' => now()]);
+        }
+        // Generate quote
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
-        return [
-            ...parent::share($request),
+    
+        return array_merge(parent::share($request), [
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
-                'user' => $request->user(),
+    
+            'quote' => [
+                'message' => trim($message),
+                'author'  => trim($author),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-        ];
+    
+            'auth' => [
+                'user' => $request->user()
+                    ? $request->user()->only(['id', 'name', 'email'])
+                    : null,
+    
+                'roles' => $request->user()
+                    ? $request->user()->getRoleNames()->toArray()
+                    : [],
+
+            ],
+    
+            'sidebarOpen' =>
+                ! $request->hasCookie('sidebar_state') ||
+                $request->cookie('sidebar_state') === 'true',
+        ]);
     }
+    
 }
