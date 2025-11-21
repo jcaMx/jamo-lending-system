@@ -12,6 +12,9 @@ import { Link } from "@inertiajs/react";
 import { dashboard, login, register } from "@/routes";
 import { type SharedData } from "@/types";
 import { Head, usePage } from "@inertiajs/react";
+import { router } from "@inertiajs/react";
+
+
 
 
 export default function index({ canRegister = true }: { canRegister?: boolean }) {
@@ -32,7 +35,7 @@ const Header = () => (
         <div className="flex items-center justify-between">
             <Link href="/#home" className="flex items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">LOGO</span>
+                    <span className="text-sm font-bold text-black">LOGO</span>
                 </div>
             </Link>
             <nav className="hidden md:flex items-center gap-8">
@@ -84,8 +87,16 @@ const Hero = () => (
                 Join us today and experience a seamless lending process tailored to your needs. Your journey to financial freedom starts here!
             </p>
             <div className="flex gap-4 mt-4">
-                <Button className="bg-golden text-white px-6 py-2 hover:bg-yellow-500 transition-colors">Get Started</Button>
-                <Button className="bg-white text-golden px-6 py-2 hover:bg-white/90 border border-golden transition-colors">Learn More</Button>
+               <Button
+                 onClick={() => router.get("/apply")}
+                 className="bg-yellow-400 text-black px-6 py-2 hover:bg-yellow-500 transition-colors"
+               >
+                 Apply Now
+               </Button>
+
+               <Button className="bg-white text-golden px-6 py-2 hover:bg-white/90 border border-golden transition-colors">
+                 Learn More
+               </Button>
             </div>
         </div>
         <div className="flex-1">
@@ -96,7 +107,7 @@ const Hero = () => (
 
 const Stats = () => (
     <section className="bg-navy py-12 px-6 md:px-12 w-full max-w-[335px] lg:max-w-6xl">
-        <div className="flex flex-col md:flex-row justify-between text-white text-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between text-black text-center gap-4">
             {["5,000+ Clients", "₱2B+ Loans", "99% Approval", "24/7 Support"].map((stat, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center">
                     <div className="text-3xl font-bold">{stat.split(" ")[0]}</div>
@@ -173,3 +184,4 @@ return (
 );
 
 }
+    

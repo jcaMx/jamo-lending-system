@@ -1,4 +1,5 @@
 import { InertiaLinkProps } from '@inertiajs/react';
+import { ForwardRefExoticComponent, RefAttributes, SVGProps } from 'react';
 import { LucideIcon } from 'lucide-react';
 
 export interface Auth {
@@ -15,27 +16,19 @@ export interface NavGroup {
     items: NavItem[];
 }
 
+// Fixed NavItem type for sidebar usage
 export interface NavItem {
     title: string;
-    href: NonNullable<InertiaLinkProps['href']>;
-    icon?: LucideIcon | null;
-    isActive?: boolean;
+    href?: NonNullable<InertiaLinkProps['href']>;
+    icon?: React.ElementType | LucideIcon | null;
+    subItems?: SubItem[];
 }
 
-interface MainNavItem {
-    title: string;
-    icon?: import('react').ElementType | null;
-    isActive?: boolean;
-    subItems?: SubItems[];
-}
-
-export interface SubItems {
+export interface SubItem {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
-    isActive?: boolean;
 }
-
 
 export interface SharedData {
     name: string;
@@ -54,5 +47,14 @@ export interface User {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
-    [key: string]: unknown; // This allows for additional properties...
+    [key: string]: unknown;
 }
+export interface IconProps extends SVGProps<SVGSVGElement> {
+    size?: number | string;
+    color?: string;
+}
+
+// Example of LucideIcon usage
+export type LucideIconType = LucideIcon & {
+    (props: IconProps): JSX.Element;
+};
