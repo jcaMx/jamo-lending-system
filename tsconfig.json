@@ -1,26 +1,35 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM"],
     "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "allowJs": true,
-    "noEmit": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitAny": true,
     "skipLibCheck": true,
+    "composite": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
+
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": ["resources/js/*", "src/*"]   // ✅ FIXED ALIAS
+    },
+
+    "jsx": "react-jsx"
   },
+
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx"
+    "resources/js",               // ✔ include your React/TS code
+    "resources/js/routes",        // ✔ include Wayfinder generated routes
+    "resources/js/**/*.ts",
+    "resources/js/**/*.tsx",
+    "src"                         // ✔ optional if you still have src files
   ]
 }

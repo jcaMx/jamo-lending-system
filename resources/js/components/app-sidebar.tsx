@@ -95,7 +95,12 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar collapsible="icon" variant="inset" className="bg-[#192132] text-white min-h-screen">
+        <Sidebar
+  collapsible="icon"
+  variant="inset"
+  className="bg-[#192132] text-white w-64 min-h-screen overflow-y-auto"
+>
+
             <SidebarHeader className="bg-[#192132] text-white">
                 <Link href={dashboard().url}>
                     <AppLogoIcon className="m-3" />
@@ -105,74 +110,77 @@ export function AppSidebar() {
             <SidebarContent className="px-2 bg-[#192132] text-white">
                 <div className="space-y-2">
                     {mainNavItems.map((item) => {
-                        const isOpen = openMenus[item.title] ?? false;
-                        const isActiveParent =
-                            item.href && url === item.href;
-                        const hasActiveChild =
-                            item.subItems?.some((s) => url === s.href) ?? false;
+  const isOpen = openMenus[item.title] ?? false;
+  const isActiveParent = item.href && url === item.href;
+  const hasActiveChild = item.subItems?.some((s) => url === s.href) ?? false;
 
-                        if (item.subItems) {
-                            return (
-                                <div key={item.title}>
-                                    {/* Parent */}
-                                    <button
-                                        onClick={() => toggleMenu(item.title)}
-                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition duration-200
-                                            ${isActiveParent || hasActiveChild
-                                                ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132]'
-                                                : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <item.icon className="w-5 h-5" />
-                                            <span>{item.title}</span>
-                                        </div>
-                                        <span className={`transition-transform ${isOpen ? 'rotate-90' : ''}`}>
-                                            {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                        </span>
-                                    </button>
+  // ✅ Narrow the icon type before rendering
+  const Icon = item.icon;
 
-                                    {/* Subitems */}
-                                    {isOpen && (
-                                        <div className="ml-6 mt-1 space-y-1">
-                                            {item.subItems.map((sub) => {
-                                                const isActiveSub = url === sub.href;
-                                                return (
-                                                    <Link
-                                                        key={sub.title}
-                                                        href={sub.href}
-                                                        className={`block px-3 py-1.5 rounded-lg text-sm transition duration-200 relative
-                                                            ${isActiveSub
-                                                                ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5'
-                                                                : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
-                                                            }`}
-                                                    >
-                                                        {sub.title}
-                                                    </Link>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        }
+  if (item.subItems) {
+    return (
+      <div key={item.title}>
+        {/* Parent */}
+        <button
+          onClick={() => toggleMenu(item.title)}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition duration-200
+            ${isActiveParent || hasActiveChild
+              ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132]'
+              : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
+            }`}
+        >
+          <div className="flex items-center gap-3">
+            {Icon && <Icon className="w-5 h-5" />} {/* ✅ safe rendering */}
+            <span>{item.title}</span>
+          </div>
+          <span className={`transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+            {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </span>
+        </button>
 
-                        // Single-level item
-                        return (
-                            <Link
-                                key={item.title}
-                                href={item.href!}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition duration-200
-                                    ${isActiveParent
-                                        ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132]'
-                                        : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
-                                    }`}
-                            >
-                                <item.icon className="w-5 h-5" />
-                                {item.title}
-                            </Link>
-                        );
-                    })}
+        {/* Subitems */}
+        {isOpen && (
+          <div className="ml-6 mt-1 space-y-1">
+            {item.subItems.map((sub) => {
+              const isActiveSub = url === sub.href;
+              const SubIcon = sub.icon;
+              return (
+                <Link
+                  key={sub.title}
+                  href={sub.href}
+                  className={`block px-3 py-1.5 rounded-lg text-sm transition duration-200 relative
+                    ${isActiveSub
+                      ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5'
+                      : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
+                    }`}
+                >
+                  {SubIcon && <SubIcon className="w-4 h-4 mr-2 inline" />}
+                  {sub.title}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Single-level item
+  return (
+    <Link
+      key={item.title}
+      href={item.href!}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition duration-200
+        ${isActiveParent
+          ? 'bg-gradient-to-r from-[#3c4a6a] to-[#192132]'
+          : 'hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]'
+        }`}
+    >
+      {Icon && <Icon className="w-5 h-5" />} {/* ✅ safe rendering */}
+      {item.title}
+    </Link>
+  );
+})}
                 </div>
             </SidebarContent>
 

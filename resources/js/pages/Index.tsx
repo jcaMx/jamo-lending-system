@@ -6,10 +6,14 @@ import Services from "@/components/Services";
 import Testimonials from "@/components/Testimonials";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import { Head } from "@inertiajs/react"; // ✅ use Inertia's Head
 
-const Index = () => {
+export default function Index() {
   return (
     <div className="min-h-screen">
+      {/* ✅ Inertia Head for title/meta */}
+      <Head title="Welcome" />
+
       <Header />
       <Hero />
       <Stats />
@@ -20,6 +24,4 @@ const Index = () => {
       <Footer />
     </div>
   );
-};
-
-export default Index;
+}
