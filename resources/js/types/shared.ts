@@ -1,21 +1,30 @@
-// resources/js/types/inertia.d.ts
-import type { PageProps } from '@inertiajs/core';
-import type { SVGProps } from 'react';
+// resources/js/types/shared.ts
+import type { SVGProps } from "react";
 import { LucideIcon } from "lucide-react";
-// resources/js/types/index.ts
-export * from "./shared";
+// resources/js/types/shared.ts
+import type { PageProps } from "@inertiajs/core";
 
+export interface SharedData extends PageProps {
+  name: string;
+  quote: { message: string; author: string };
+  auth: {
+    user: User | null;
+    roles?: string[];
+  };
+  sidebarOpen: boolean;
+}
 
-declare module '@inertiajs/core' {
-  interface PageProps {
-    name: string;
-    quote: { message: string; author: string };
-    auth: {
-      user: User | null;
-      roles?: string[];
-    };
-    sidebarOpen: boolean;
-  }
+// --------------------
+// SharedData (for Inertia)
+// --------------------
+export interface SharedData {
+  name: string;
+  quote: { message: string; author: string };
+  auth: {
+    user: User | null;
+    roles?: string[];
+  };
+  sidebarOpen: boolean;
 }
 
 // --------------------

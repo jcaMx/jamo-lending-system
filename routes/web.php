@@ -12,24 +12,17 @@ use App\Http\Controllers\CollectionSheetController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use Spatie\Permission\Middleware\RoleMiddleware;
+
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return Inertia::render('Home');
-});
+
 Route::get('/', fn() => Inertia::render('index'))->name('home');
 
-<<<<<<< HEAD
-Route::get('/', fn() => Inertia::render('Index'))->name('home');
+Route::get('/apply', fn() => Inertia::render('BorrowerApplication'))->name('apply');
 
-=======
-Route::get('/apply', function () {
-    return Inertia::render('BorrowerApplication');
-});
->>>>>>> 98607ad6f9f7dad5f9c8f7a78b991690bde42747
 // Guest-only routes
 Route::middleware('guest')->group(function () {
     // Login
@@ -41,30 +34,21 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 });
 
-<<<<<<< HEAD
-
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
 
-
-
-
-
-=======
->>>>>>> 98607ad6f9f7dad5f9c8f7a78b991690bde42747
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', function() { return Inertia::render('dashboard'); })->name('dashboard');
+    // Dashboard (your Wayfinder dashboard().url likely resolves this name)
+    Route::get('/dashboard', fn() => Inertia::render('dashboard'))->name('dashboard');
 
-    // Logout (should be POST, and must redirect when called)
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
-        ->name('logout');
+    // Logout
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Borrowers - ayaw na ichange
+    // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
     });
@@ -74,33 +58,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit');
     });
 
-    // Loans
+    // Loans (match sidebar hrefs: /Loans/VAL, /Loans/PMD, etc.)
     Route::prefix('Loans')->middleware(['role:admin|cashier'])->group(function () {
-    
         Route::get('/1MLL', fn() => Inertia::render('Loans/1MLL'))->name('loans.one-month-late');
         Route::get('/3MLL', fn() => Inertia::render('Loans/3MLL'))->name('loans.three-month-late');
         Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
         Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
         Route::get('/VAL', fn() => Inertia::render('Loans/VAL'))->name('loans.view');
     });
-
     Route::prefix('Loans')->middleware(['role:admin'])->group(function () {
         Route::get('/AddLoan', fn() => Inertia::render('Loans/AddLoan'))->name('loans.add-loan');
     });
-    
 
     // Daily Collection Sheets
     Route::get('/daily-collections', [CollectionSheetController::class, 'index'])->name('daily-collections.index');
 
-    // Repayments - only cashier and admin
-    Route::prefix('Repayments')
-    ->middleware(['role:cashier|admin'])
-    ->group(function () {
+    // Repayments (match sidebar hrefs: /repayments, /repayments/add)
+    Route::prefix('repayments')
+        ->middleware(['role:cashier|admin'])
+        ->group(function () {
             Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
         });
 
-    // Reports - only admin
+    // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
     Route::prefix('Reports')->middleware([RoleMiddleware::class . ':admin'])->group(function () {
         Route::get('/DCPR', fn() => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
         Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
@@ -111,24 +92,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
     });
 
-    // Users - only admin
+    // Users
     Route::middleware([RoleMiddleware::class . ':admin'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        // Route::get('/users/{user}/new-user-credentials', [UserController::class, 'newUserCredentials'])
-        //     ->name('users.newUserCredentials');
-        Route::get('/users/credentials/{id}', [UserController::class, 'credentials'])
-->name('users.newUserCredentials');
+
+        Route::get('/users/credentials/{id}', [UserController::class, 'credentials'])->name('users.newUserCredentials');
 
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     });
-
-
-
-    
-
 });
 
 require __DIR__.'/settings.php';
