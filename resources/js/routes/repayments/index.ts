@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -11,13 +11,13 @@ export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 index.definition = {
     methods: ["get","head"],
-    url: '/Repayments',
+    url: '/repayments',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
@@ -26,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: index.url(options),
@@ -55,7 +55,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url(options),
@@ -64,7 +64,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\RepaymentController::index
  * @see app/Http/Controllers/RepaymentController.php:10
- * @route '/Repayments'
+ * @route '/repayments'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url({
@@ -80,7 +80,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
 export const add = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: add.url(options),
@@ -89,13 +89,13 @@ export const add = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 add.definition = {
     methods: ["get","head"],
-    url: '/Repayments/add',
+    url: '/repayments/add',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
 add.url = (options?: RouteQueryOptions) => {
     return add.definition.url + queryParams(options)
@@ -104,7 +104,7 @@ add.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
 add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: add.url(options),
@@ -113,7 +113,7 @@ add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
 add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: add.url(options),
@@ -123,7 +123,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
     const addForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: add.url(options),
@@ -133,7 +133,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
         addForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: add.url(options),
@@ -142,7 +142,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\RepaymentController::add
  * @see app/Http/Controllers/RepaymentController.php:57
- * @route '/Repayments/add'
+ * @route '/repayments/add'
  */
         addForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: add.url({

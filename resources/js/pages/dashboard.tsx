@@ -28,7 +28,7 @@ import axios from 'axios';
 
 // Breadcrumbs using fixed route
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Dashboard', href: routes.dashboard().url },
+  { title: 'Dashboard', href: routes.dashboard()},
 ];
 
 // Typing for stats card

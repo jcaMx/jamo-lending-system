@@ -38,7 +38,7 @@ type NavItem = LinkNavItem | GroupNavItem;
 
 
 const mainNavItems: NavItem[] = [
-  { type: "link", title: "Dashboard", icon: LayoutGrid, href: dashboard().url, roles: ["admin", "cashier"] },
+  { type: "link", title: "Dashboard", icon: LayoutGrid, href: dashboard(), roles: ["admin", "cashier"] },
 
   {
     type: "group",
@@ -141,10 +141,10 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" variant="inset" className="bg-[#192132] text-white w-64 min-h-screen overflow-y-auto">
+    <Sidebar collapsible="none" variant="floating" className="bg-[#192132] text-white w-64 min-h-screen overflow-y-auto">
       
       <SidebarHeader className="bg-[#192132] text-white">
-        <Link href={dashboard().url}>
+        <Link href={dashboard()}>
           <AppLogoIcon className="m-3" />
         </Link>
       </SidebarHeader>
