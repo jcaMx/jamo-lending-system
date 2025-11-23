@@ -60,6 +60,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+// Fixed NavItem type for sidebar usage
 export interface NavItem {
   title: string;
   href?: string;                  // optional for groups
@@ -89,3 +90,12 @@ export interface User {
   updated_at: string;
   [key: string]: unknown;
 }
+export interface IconProps extends SVGProps<SVGSVGElement> {
+    size?: number | string;
+    color?: string;
+}
+
+// Example of LucideIcon usage
+export type LucideIconType = LucideIcon & {
+    (props: IconProps): JSX.Element;
+};

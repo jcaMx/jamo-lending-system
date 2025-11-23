@@ -17,9 +17,19 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 | Public / Guest Routes
 |--------------------------------------------------------------------------
 */
+Route::get('/', function () {
+    return Inertia::render('Home');
+});
+Route::get('/', fn() => Inertia::render('index'))->name('home');
 
+<<<<<<< HEAD
 Route::get('/', fn() => Inertia::render('Index'))->name('home');
 
+=======
+Route::get('/apply', function () {
+    return Inertia::render('BorrowerApplication');
+});
+>>>>>>> 98607ad6f9f7dad5f9c8f7a78b991690bde42747
 // Guest-only routes
 Route::middleware('guest')->group(function () {
     // Login
@@ -31,6 +41,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 });
 
+<<<<<<< HEAD
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +53,8 @@ Route::middleware('guest')->group(function () {
 
 
 
+=======
+>>>>>>> 98607ad6f9f7dad5f9c8f7a78b991690bde42747
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
