@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\UserController::index
- * @see app/Http/Controllers/UserController.php:13
+ * @see app/Http/Controllers/UserController.php:15
  * @route '/users'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
 export const add = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ add.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
 add.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ add.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
 add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
 add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
     const addForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
         addForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\UserController::add
- * @see app/Http/Controllers/UserController.php:73
+ * @see app/Http/Controllers/UserController.php:38
  * @route '/users/add'
  */
         addForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -156,74 +156,148 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     add.form = addForm
 /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::store
+ * @see app/Http/Controllers/UserController.php:47
+ * @route '/users'
  */
-export const newUserCredentials = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: newUserCredentials.url(options),
-    method: 'get',
+export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: store.url(options),
+    method: 'post',
 })
 
-newUserCredentials.definition = {
-    methods: ["get","head"],
-    url: '/users/new-user-credentials',
-} satisfies RouteDefinition<["get","head"]>
+store.definition = {
+    methods: ["post"],
+    url: '/users',
+} satisfies RouteDefinition<["post"]>
 
 /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::store
+ * @see app/Http/Controllers/UserController.php:47
+ * @route '/users'
  */
-newUserCredentials.url = (options?: RouteQueryOptions) => {
-    return newUserCredentials.definition.url + queryParams(options)
+store.url = (options?: RouteQueryOptions) => {
+    return store.definition.url + queryParams(options)
 }
 
 /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::store
+ * @see app/Http/Controllers/UserController.php:47
+ * @route '/users'
  */
-newUserCredentials.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: newUserCredentials.url(options),
+store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: store.url(options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\UserController::store
+ * @see app/Http/Controllers/UserController.php:47
+ * @route '/users'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\UserController::store
+ * @see app/Http/Controllers/UserController.php:47
+ * @route '/users'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
+/**
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
+ */
+export const credentials = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: credentials.url(args, options),
+    method: 'get',
+})
+
+credentials.definition = {
+    methods: ["get","head"],
+    url: '/users/credentials/{id}',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
+ */
+credentials.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    
+    if (Array.isArray(args)) {
+        args = {
+                    id: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        id: args.id,
+                }
+
+    return credentials.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
+ */
+credentials.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: credentials.url(args, options),
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
  */
-newUserCredentials.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: newUserCredentials.url(options),
+credentials.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: credentials.url(args, options),
     method: 'head',
 })
 
     /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
  */
-    const newUserCredentialsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: newUserCredentials.url(options),
+    const credentialsForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: credentials.url(args, options),
         method: 'get',
     })
 
             /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
  */
-        newUserCredentialsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: newUserCredentials.url(options),
+        credentialsForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: credentials.url(args, options),
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\UserController::newUserCredentials
- * @see app/Http/Controllers/UserController.php:78
- * @route '/users/new-user-credentials'
+* @see \App\Http\Controllers\UserController::credentials
+ * @see app/Http/Controllers/UserController.php:131
+ * @route '/users/credentials/{id}'
  */
-        newUserCredentialsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: newUserCredentials.url({
+        credentialsForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: credentials.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -232,28 +306,28 @@ newUserCredentials.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
             method: 'get',
         })
     
-    newUserCredentials.form = newUserCredentialsForm
+    credentials.form = credentialsForm
 /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-const show3d7aae258ed911ef8bd3b1d2fc6768ef = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: show3d7aae258ed911ef8bd3b1d2fc6768ef.url(args, options),
+export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
     method: 'get',
 })
 
-show3d7aae258ed911ef8bd3b1d2fc6768ef.definition = {
+show.definition = {
     methods: ["get","head"],
     url: '/users/{id}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-show3d7aae258ed911ef8bd3b1d2fc6768ef.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
@@ -271,56 +345,56 @@ show3d7aae258ed911ef8bd3b1d2fc6768ef.url = (args: { id: string | number } | [id:
                         id: args.id,
                 }
 
-    return show3d7aae258ed911ef8bd3b1d2fc6768ef.definition.url
+    return show.definition.url
             .replace('{id}', parsedArgs.id.toString())
             .replace(/\/+$/, '') + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-show3d7aae258ed911ef8bd3b1d2fc6768ef.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: show3d7aae258ed911ef8bd3b1d2fc6768ef.url(args, options),
+show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-show3d7aae258ed911ef8bd3b1d2fc6768ef.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: show3d7aae258ed911ef8bd3b1d2fc6768ef.url(args, options),
+show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: show.url(args, options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-    const show3d7aae258ed911ef8bd3b1d2fc6768efForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show3d7aae258ed911ef8bd3b1d2fc6768ef.url(args, options),
+    const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-        show3d7aae258ed911ef8bd3b1d2fc6768efForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show3d7aae258ed911ef8bd3b1d2fc6768ef.url(args, options),
+        showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+ * @see app/Http/Controllers/UserController.php:28
  * @route '/users/{id}'
  */
-        show3d7aae258ed911ef8bd3b1d2fc6768efForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show3d7aae258ed911ef8bd3b1d2fc6768ef.url(args, {
+        showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -329,28 +403,28 @@ show3d7aae258ed911ef8bd3b1d2fc6768ef.head = (args: { id: string | number } | [id
             method: 'get',
         })
     
-    show3d7aae258ed911ef8bd3b1d2fc6768ef.form = show3d7aae258ed911ef8bd3b1d2fc6768efForm
-    /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+    show.form = showForm
+/**
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-const show0557520a33bf83c9b720ea312f77bea7 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: show0557520a33bf83c9b720ea312f77bea7.url(args, options),
+export const edit = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: edit.url(args, options),
     method: 'get',
 })
 
-show0557520a33bf83c9b720ea312f77bea7.definition = {
+edit.definition = {
     methods: ["get","head"],
     url: '/users/{id}/edit',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-show0557520a33bf83c9b720ea312f77bea7.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+edit.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
@@ -368,56 +442,56 @@ show0557520a33bf83c9b720ea312f77bea7.url = (args: { id: string | number } | [id:
                         id: args.id,
                 }
 
-    return show0557520a33bf83c9b720ea312f77bea7.definition.url
+    return edit.definition.url
             .replace('{id}', parsedArgs.id.toString())
             .replace(/\/+$/, '') + queryParams(options)
 }
 
 /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-show0557520a33bf83c9b720ea312f77bea7.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: show0557520a33bf83c9b720ea312f77bea7.url(args, options),
+edit.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: edit.url(args, options),
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-show0557520a33bf83c9b720ea312f77bea7.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: show0557520a33bf83c9b720ea312f77bea7.url(args, options),
+edit.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: edit.url(args, options),
     method: 'head',
 })
 
     /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-    const show0557520a33bf83c9b720ea312f77bea7Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show0557520a33bf83c9b720ea312f77bea7.url(args, options),
+    const editForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(args, options),
         method: 'get',
     })
 
             /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-        show0557520a33bf83c9b720ea312f77bea7Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show0557520a33bf83c9b720ea312f77bea7.url(args, options),
+        editForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, options),
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\UserController::show
- * @see app/Http/Controllers/UserController.php:55
+* @see \App\Http\Controllers\UserController::edit
+ * @see app/Http/Controllers/UserController.php:69
  * @route '/users/{id}/edit'
  */
-        show0557520a33bf83c9b720ea312f77bea7Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show0557520a33bf83c9b720ea312f77bea7.url(args, {
+        editForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -426,13 +500,7 @@ show0557520a33bf83c9b720ea312f77bea7.head = (args: { id: string | number } | [id
             method: 'get',
         })
     
-    show0557520a33bf83c9b720ea312f77bea7.form = show0557520a33bf83c9b720ea312f77bea7Form
-
-export const show = {
-    '/users/{id}': show3d7aae258ed911ef8bd3b1d2fc6768ef,
-    '/users/{id}/edit': show0557520a33bf83c9b720ea312f77bea7,
-}
-
-const UserController = { index, add, newUserCredentials, show }
+    edit.form = editForm
+const UserController = { index, add, store, credentials, show, edit }
 
 export default UserController

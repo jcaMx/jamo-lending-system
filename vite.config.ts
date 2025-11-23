@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
-    host: 'localhost',    // FIXED
+    host: 'localhost',
     port: 8080,
   },
 
@@ -15,10 +15,8 @@ export default defineConfig({
     laravel({
       input: [
         'resources/css/app.css',
-        'resources/js/app.tsx',
-        'src/App.tsx',    // include landing page app
+        'resources/js/app.tsx',   // ✅ main entry point
       ],
-      ssr: 'resources/js/ssr.tsx',
       refresh: true,
     }),
     reactSwc(),
@@ -28,8 +26,7 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      '@app': path.resolve(__dirname, 'resources/js'),     // main app
-      '@landing': path.resolve(__dirname, 'src'),   
+      '@app': path.resolve(__dirname, 'resources/js'), // ✅ main app alias
     },
   },
 

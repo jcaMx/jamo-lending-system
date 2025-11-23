@@ -7,6 +7,7 @@ import { Megaphone } from 'lucide-react';
 import { route } from 'ziggy-js';
 
 
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Borrowers',

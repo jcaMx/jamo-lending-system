@@ -14,7 +14,6 @@ const queryClient = new QueryClient();
 
 createInertiaApp({
   resolve: name => {
-    // Vite dynamic import for pages
     const pages = import.meta.glob('./pages/**/*.tsx', { eager: true });
     return pages[`./pages/${name}.tsx`];
   },

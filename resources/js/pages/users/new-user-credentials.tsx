@@ -24,14 +24,16 @@ type User = {
 export default function UserCredentials({ user }: { user: User }) {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="User Credentials" />
-      <HeadingSmall title="User Credentials" />
-
+      {/* <Head title="User Credentials" />
+      <HeadingSmall title="User Credentials" /> */}
+      <h2 className="mx-10 mt-10 text-3xl font-bold text-gray-800">
+        New User Created
+      </h2>
       <div className="w-full mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
         {/* Header */}
         <div className="border-b-4 border-[#FABF24] rounded-t-lg pb-3 mb-6 bg-[#FFF8E2] p-5">
           <h2 className="text-2xl font-semibold text-gray-800">
-            New User Created
+            User Credentials
           </h2>
         </div>
 
@@ -70,7 +72,7 @@ export default function UserCredentials({ user }: { user: User }) {
             <p className="text-sm font-medium text-gray-700">Status</p>
             <p
               className={`font-medium ${
-                user.status === 'Active'
+                user.status === 'active'
                   ? 'text-green-600'
                   : 'text-red-500'
               }`}
@@ -89,9 +91,9 @@ export default function UserCredentials({ user }: { user: User }) {
       </div>
 
       {/* Continue Button */}
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-end m-8">
         <Link href="/users">
-          <Button className="bg-[#FABF24] hover:bg-[#f9b406] text-gray-900 font-semibold px-8 py-2 rounded-md shadow">
+          <Button className="bg-[#FABF24] hover:bg-[#f9b406] text-gray-900 font-semibold px-8 py-2 rounded-md shadow ">
             Continue
           </Button>
         </Link>
