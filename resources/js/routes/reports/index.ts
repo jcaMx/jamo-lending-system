@@ -1,6 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import dcprE951ef from './dcpr'
+import monthlyC7a835 from './monthly'
 /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
 export const dcpr = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +16,7 @@ dcpr.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
 dcpr.url = (options?: RouteQueryOptions) => {
@@ -22,7 +24,7 @@ dcpr.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
 dcpr.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +32,7 @@ dcpr.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
 dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +41,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
     const dcprForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +50,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
         dcprForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +58,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:80
+ * @see routes/web.php:92
  * @route '/Reports/DCPR'
  */
         dcprForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -71,7 +73,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dcpr.form = dcprForm
 /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
 export const monthly = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -85,7 +87,7 @@ monthly.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
 monthly.url = (options?: RouteQueryOptions) => {
@@ -93,7 +95,7 @@ monthly.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
 monthly.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +103,7 @@ monthly.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
 monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -110,7 +112,7 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
     const monthlyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -119,7 +121,7 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
         monthlyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -127,7 +129,7 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:81
+ * @see routes/web.php:96
  * @route '/Reports/MonthlyReport'
  */
         monthlyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,81 +143,9 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     monthly.form = monthlyForm
-/**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-export const income = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: income.url(options),
-    method: 'get',
-})
-
-income.definition = {
-    methods: ["get","head"],
-    url: '/Reports/IncomeStatement',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-income.url = (options?: RouteQueryOptions) => {
-    return income.definition.url + queryParams(options)
-}
-
-/**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-income.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: income.url(options),
-    method: 'get',
-})
-/**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-income.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: income.url(options),
-    method: 'head',
-})
-
-    /**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-    const incomeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: income.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-        incomeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: income.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:82
- * @route '/Reports/IncomeStatement'
- */
-        incomeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: income.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    income.form = incomeForm
 const reports = {
-    dcpr: Object.assign(dcpr, dcpr),
-monthly: Object.assign(monthly, monthly),
-income: Object.assign(income, income),
+    dcpr: Object.assign(dcpr, dcprE951ef),
+monthly: Object.assign(monthly, monthlyC7a835),
 }
 
 export default reports

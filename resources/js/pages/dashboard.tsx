@@ -75,6 +75,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState<StatCard[]>(dummyStats);
   const [loanData, setLoanData] = useState<ChartData[]>(dummyLoanData);
   const [collectionData, setCollectionData] = useState<ChartData[]>(dummyCollectionData);
+  // const userRoles: string[] = props.auth?.roles ?? [];
+  // const isAdmin = userRoles.includes('admin');
+  // const isCashier = userRoles.includes('cashier');
+  
 
   useEffect(() => {
     // Fetch stats from API
@@ -132,12 +136,27 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Links */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {/* {isAdmin && (
+          <> 
+            <Link href={routes.borrowers.add().url} className="p-4 bg-green-500 text-white rounded-lg text-center hover:bg-green-600 transition">Add Borrower</Link>
+            <Link href={routes.loans.add().url} className="p-4 bg-orange-500 text-white rounded-lg text-center hover:bg-orange-600 transition">Add Loan</Link>
+            <Link href={routes.reports.monthly().url} className="p-4 bg-blue-500 text-white rounded-lg text-center hover:bg-blue-600 transition">Monthly Report</Link>
+            <Link href={routes.reports.incomeStatement().url} className="p-4 bg-purple-500 text-white rounded-lg text-center hover:bg-purple-600 transition">Income Statement</Link>
+          </>
+        )} */}
+        {/* <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           <Link href={routes.borrowers.add().url} className="p-4 bg-green-500 text-white rounded-lg text-center hover:bg-green-600 transition">Add Borrower</Link>
           <Link href={routes.loans.add().url} className="p-4 bg-orange-500 text-white rounded-lg text-center hover:bg-orange-600 transition">Add Loan</Link>
           <Link href={routes.reports.monthly().url} className="p-4 bg-blue-500 text-white rounded-lg text-center hover:bg-blue-600 transition">Monthly Report</Link>
           <Link href={routes.reports.incomeStatement().url} className="p-4 bg-purple-500 text-white rounded-lg text-center hover:bg-purple-600 transition">Income Statement</Link>
-        </div>
+          
+        {isCashier && (
+          <>
+            <Link href={routes.repayments.add().url} className="p-4 bg-indigo-500 text-white rounded-lg text-center hover:bg-indigo-600 transition">Add Repayment</Link>
+            <Link href={routes.dailyCollections().url} className="p-4 bg-teal-500 text-white rounded-lg text-center hover:bg-teal-600 transition">Daily Collections</Link>
+          </>
+        )}
+        </div> */}
       </div>
     </AppLayout>
   );

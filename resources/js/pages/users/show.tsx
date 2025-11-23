@@ -8,11 +8,13 @@ import { Card, CardContent } from '@/components/ui/card';
 // test using http://127.0.0.1:8000/users/1
 
 type User = {
-  ID: number;
+  id: number;          // change from ID -> id
   username: string;
   fName: string;
   lName: string;
-  role: string;
+  role: string;        // primary role
+  roles: string[];     // all roles
+  permissions: string[];
   email: string;
   status: string;
   lastLogin: string;
@@ -28,7 +30,7 @@ export default function Show({ user }: ShowProps) {
   // Breadcrumbs
   const breadcrumbs: BreadcrumbItem[] = [
     { title: 'System Users', href: '/users' },
-    { title: user.username, href: `/users/${user.ID}` },
+    { title: user.username, href: `/users/${user.id}` }, // id, not ID
   ];
 
   return (
@@ -50,7 +52,7 @@ export default function Show({ user }: ShowProps) {
 
             {/* Edit Button */}
             <Button asChild>
-              <Link href={`/users/${user.ID}/edit`}>Edit</Link>
+              <Link href={`/users/${user.id}/edit`}>Edit</Link>
             </Button>
           </div>
         </div>
@@ -79,7 +81,7 @@ export default function Show({ user }: ShowProps) {
               <CardContent className="p-4 space-y-2">
                 <p><strong>Username:</strong> {user.username}</p>
                 <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Role:</strong> {user.role}</p>
+                <p><strong>Role:</strong> {user.role || (user.roles && user.roles.length > 0 ? user.roles.join(', ') : 'None')}</p>
                 <p><strong>Status:</strong> {user.status}</p>
                 <p><strong>Last Login:</strong> {user.lastLogin}</p>
               </CardContent>
@@ -88,8 +90,32 @@ export default function Show({ user }: ShowProps) {
 
           {activeTab === 'roles' && (
             <Card>
-              <CardContent className="p-4">
-                <p>User roles and permissions will appear here.</p>
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <p className="font-semibold mb-1">Roles</p>
+                  {user.roles.length === 0 ? (
+                    <p className="text-sm text-gray-500">No roles assigned.</p>
+                  ) : (
+                    <ul className="list-disc list-inside text-sm">
+                      {user.roles.map((role) => (
+                        <li key={role}>{role}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div>
+                  <p className="font-semibold mb-1">Permissions</p>
+                  {user.permissions.length === 0 ? (
+                    <p className="text-sm text-gray-500">No permissions assigned.</p>
+                  ) : (
+                    <ul className="list-disc list-inside text-sm">
+                      {user.permissions.map((perm) => (
+                        <li key={perm}>{perm}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}

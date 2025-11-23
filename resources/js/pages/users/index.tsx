@@ -12,44 +12,60 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type User = {
-  ID: number;
+  id: number;
   username: string;
   fName: string;
   lName: string;
   role: string;
-  status: string;
+  status: string;      // 'active' | 'inactive'
   lastLogin: string;
+  email?: string;
 };
+type UsersProp = User[] | { data?: User[] };
 
-export default function Index({ users }: { users: User[] }) {
+export default function Index({ users }: { users: UsersProp }) {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'closed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
+  const list = useMemo<User[]>(() => {
+    if (Array.isArray(users)) {
+      return users;
+    }
+
+    if (users && Array.isArray(users.data)) {
+      return users.data;
+    }
+
+    return [];
+  }, [users]);
 
   const filteredUsers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    return users.filter((user) => {
+    return list.filter((user) => {
       const matchesSearch =
         normalizedSearch.length === 0 ||
         [
-          user.username,
-          user.fName,
-          user.lName,
-          `${user.fName} ${user.lName}`,
-          user.role,
-          user.status,
+          user.username || '',
+          user.fName || '',
+          user.lName || '',
+          `${user.fName || ''} ${user.lName || ''}`,
+          user.role || '',
+          user.status || '',
         ]
+          .filter(Boolean)
           .join(' ')
           .toLowerCase()
           .includes(normalizedSearch);
 
       const matchesStatus =
         statusFilter === 'all' ||
-        user.status.toLowerCase() === statusFilter;
-
+        (user.status && user.status.toLowerCase() === statusFilter);
+  
       return matchesSearch && matchesStatus;
     });
-  }, [users, search, statusFilter]);
+  }, [list, search, statusFilter]);
+  
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -79,7 +95,6 @@ export default function Index({ users }: { users: User[] }) {
               <option value="all">All</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="closed">Closed</option>
             </select>
           </div>
         </div>
@@ -107,39 +122,39 @@ export default function Index({ users }: { users: User[] }) {
                 ) : (
                   filteredUsers.map((user) => (
                     <tr
-                      key={user.ID}
+                      key={user.id}
                       onClick={(e) => {
                         // Prevent row click if a button inside was clicked
                             if ((e.target as HTMLElement).closest('a')) return;
-                            router.visit(route('users.show', user.ID));
+                            router.visit(route('users.show', user.id));
                             }}
                             className="border-b hover:bg-gray-50 cursor-pointer"
                       >
-                      <td className="px-4 py-2">{user.ID}</td>
+                      <td className="px-4 py-2">{user.id}</td>
                       <td className="px-4 py-2">{user.username}</td>
                       <td className="px-4 py-2">{`${user.fName} ${user.lName}`}</td>
                       <td className="px-4 py-2">{user.role}</td>
                       <td className="px-4 py-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            user.status.toLowerCase() === 'active'
+                            user.status?.toLowerCase() === 'active'
                               ? 'bg-green-100 text-green-800'
-                              : user.status.toLowerCase() === 'closed'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-red-100 text-red-800'
+                              : user.status?.toLowerCase() === 'inactive'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {user.status}
+                          {user.status || 'N/A'}
                         </span>
                       </td>
                       <td className="px-4 py-2">{user.lastLogin}</td>
                       <td className="px-4 py-2 text-center space-x-2">
-                        <Link href={`/users/${user.ID}`}>
+                        <Link href={`/users/${user.id}`}>
                           <Button variant="default" className="p-1">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Link href={`/users/${user.ID}/edit`}>
+                        <Link href={`/users/${user.id}/edit`}>
                           <Button variant="default" className="p-1">
                             <Edit className="h-4 w-4" />
                           </Button>

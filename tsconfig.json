@@ -19,7 +19,7 @@
     "baseUrl": ".",
 
     "paths": {
-      "@/*": ["resources/js/*", "src/*"]   // ✅ FIXED ALIAS
+      "@/*": ["resources/js/*", "src/*"]   // ✅ alias covers both app and landing
     },
 
     "jsx": "react-jsx"
@@ -30,6 +30,7 @@
     "resources/js/routes",        // ✔ include Wayfinder generated routes
     "resources/js/**/*.ts",
     "resources/js/**/*.tsx",
+    "resources/js/types/**/*.d.ts", // ✅ ensures inertia.d.ts augmentation is loaded
     "src"                         // ✔ optional if you still have src files
   ]
 }

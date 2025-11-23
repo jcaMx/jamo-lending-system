@@ -36,11 +36,11 @@ export default function RepaymentsIndex({ repayments }: Props) {
   return (
     <AppLayout>
       <Head title="Repayments" />
-      <div className="m-4 bg-white p-6 rounded-lg shadow space-y-4 border border-gray-100">
+      <div className="m-4 bg-white p-6 rounded-lg pace-y-4 ">
         {/* Breadcrumb */}
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Repayments</h2>
-          <div className="flex gap-2 items-center">
+          <h2 className="text-2xl font-bold">Repayments</h2>
+          <div className="flex gap-2 items-center m-4">
             <Search className="w-5 h-5 text-gray-400" />
             <input
               type="text"
