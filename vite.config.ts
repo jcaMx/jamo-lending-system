@@ -5,14 +5,19 @@ import laravel from 'laravel-vite-plugin';
 import path from 'path';
 import { defineConfig } from 'vite';
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   server: {
-    host: '::',
+    host: 'localhost',    // FIXED
     port: 8080,
   },
+
   plugins: [
     laravel({
-      input: ['resources/css/app.css', 'resources/js/app.tsx'],
+      input: [
+        'resources/css/app.css',
+        'resources/js/app.tsx',
+        'src/App.tsx',    // include landing page app
+      ],
       ssr: 'resources/js/ssr.tsx',
       refresh: true,
     }),
@@ -20,17 +25,21 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     wayfinder({ formVariants: true }),
   ],
+
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@app': path.resolve(__dirname, 'resources/js'),     // main app
+      '@landing': path.resolve(__dirname, 'src'),   
     },
   },
+
   esbuild: {
     jsx: 'automatic',
   },
+
   build: {
-    outDir: 'public/build',   // 👈 Laravel expects manifest.json here
-    manifest: true,           // 👈 generate manifest.json
-    emptyOutDir: true,        // clean old files before building
+    outDir: 'public/build',
+    manifest: true,
+    emptyOutDir: true,
   },
-}));
+});

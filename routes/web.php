@@ -15,7 +15,7 @@ use App\Http\Controllers\CollectionSheetController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', fn() => Inertia::render('welcome'))->name('home');
+Route::get('/', fn() => Inertia::render('Index'))->name('home');
 
 // Guest-only routes
 Route::middleware('guest')->group(function () {
