@@ -12,6 +12,7 @@ use App\Http\Controllers\CollectionSheetController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use App\Http\Controllers\ApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +104,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     });
+
+    // Applications
+        Route::post('/applications', [ApplicationController::class, 'storeBorrower'])->name('applications.store');
+        Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
+        Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
+        Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
+        Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
+        Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+
+
 });
 
 require __DIR__.'/settings.php';
