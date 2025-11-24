@@ -11,7 +11,6 @@ interface LoanDetailsProps {
 }
 
 const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
-  
   return (
     <section className="py-8 md:py-16 px-6 md:px-12" style={{ backgroundColor: '#F7F5F3' }}>
       <div className="max-w-4xl mx-auto">
@@ -27,43 +26,22 @@ const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
         <div className="bg-white rounded-lg p-6 md:p-8 space-y-6">
           <div className="space-y-2">
             <Label htmlFor="loanAmount">Loan Amount</Label>
-            <Input 
-            id="loanAmount" 
-            type="number" 
-            placeholder="Enter loan amount" 
-            className="bg-gray-50"
-            />
+            <Input id="loanAmount" type="number" placeholder="Enter loan amount" className="bg-gray-50" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="loanType">Loan Type</Label>
-            <Input 
-            id="loanType" 
-            placeholder="Enter loan type" 
-            className="bg-gray-50"
-            />
+            <Input id="loanType" placeholder="Enter loan type" className="bg-gray-50" />
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="interestRate">Interest Rate %</Label>
-              <Input 
-              id="interestRate" 
-              type="number" 
-              step="0.01" 
-              placeholder="Enter interest rate" 
-              className="bg-gray-50"
-              />
+              <Input id="interestRate" type="number" step="0.01" placeholder="Enter interest rate" className="bg-gray-50" />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="term">Term</Label>
-              <Input 
-              id="term" 
-              type="number" 
-              placeholder="Enter term (months)" 
-              className="bg-gray-50"
-              />
+              <Input id="term" type="number" placeholder="Enter term (months)" className="bg-gray-50" />
             </div>
           </div>
 
@@ -74,8 +52,8 @@ const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
                 <SelectValue placeholder="Select interest type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Compound">Compound</SelectItem>
-                <SelectItem value="Diminishing">Diminishing</SelectItem>
+                <SelectItem value="fixed">Fixed</SelectItem>
+                <SelectItem value="variable">Variable</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -87,9 +65,9 @@ const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
                 <SelectValue placeholder="Select repayment frequency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Weekly">Weekly</SelectItem>
-                <SelectItem value="Monthly">Monthly</SelectItem>
-                <SelectItem value="Yearly">Yearly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="annually">Annually</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -97,27 +75,19 @@ const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
-              <Input 
-              id="startDate" 
-              type="date" 
-              className="bg-gray-50" />
+              <Input id="startDate" type="date" className="bg-gray-50" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="endDate">End Date</Label>
-              <Input 
-              id="endDate" 
-              type="date" 
-              className="bg-gray-50"/>
+              <Input id="endDate" type="date" className="bg-gray-50" />
             </div>
           </div>
 
-          { /* Buttons */ }
           <div className="flex justify-between gap-4">
-            <Button variant="outline" className="px-8">
+            <Button onClick={onPrev} variant="outline" className="px-8">
               Previous
             </Button>
-            <Button className="bg-golden hover:bg-golden-dark text-white px-8">
+            <Button onClick={onNext} className="bg-golden hover:bg-golden-dark text-white px-8">
               Next
             </Button>
           </div>

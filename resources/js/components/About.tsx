@@ -12,7 +12,11 @@ const About = () => {
       icon: Shield,
       title: "Trust & Integrity",
       description: "We stand for honesty, transparency, and genuine care for your financial goals.",
+<<<<<<< HEAD
     },  
+=======
+    },
+>>>>>>> b5b34208aa4e8a8a2e825c9ff8d2c771a751bf3a
     {
       icon: Heart,
       title: "Client-Focused",
