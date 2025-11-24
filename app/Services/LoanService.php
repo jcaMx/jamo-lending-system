@@ -4,12 +4,12 @@
   use Illuminate\Support\Str;
   use App\Models\LoanStatus;
   use App\Models\ScheduleStatus;
-  use App\Models\InterestType;
   use App\Models\RepaymentFrequency;
   use App\Repositories\Interfaces\IAmortizationCalculator;
   use App\Services\Amortization\CompoundAmortizationCalculator;
   use App\Services\Amortization\DiminishingAmortizationCalculator;
   use App\Models\Loan;
+  use App\Models\InterestType;
   use App\Models\AmortizationSchedule;
   use App\Repositories\Interfaces\IHolidayService;
   use App\Services\FormulaService;
@@ -64,15 +64,15 @@
           RepaymentFrequency::Yearly => $today->copy()->addYear()
         };
 
-        $loan->processing_fee = round($loan->principal_amount * 0.03,2);
+        $processing_fee = round($loan->principal_amount * 0.03,2);
 
-        $loan->insurance_fee = round($loan->principal_amount * 0.02, 2);
+        $insurance_fee = round($loan->principal_amount * 0.02, 2);
 
-        $loan->notary_fee = round($loan->principal_amount * 0.01, 2);
+        $notary_fee = round($loan->principal_amount * 0.01, 2);
 
-        $loan->savings_contribution = round($loan->principal_amount * 0.02, 2);
+        $savings_contribution = round($loan->principal_amount * 0.02, 2);
 
-        $netPrincipal = $loan->principal_amount - ($loan->processing_fee + $loan->insurance_fee + $loan->notary_fee + $loan->savings_contribution
+        $netPrincipal = $loan->principal_amount - ($processing_fee + $insurance_fee + $notary_fee + $savings_contribution
       );
 
         $loan->balance_remaining = $netPrincipal;
@@ -152,7 +152,7 @@
           ]);
         }
 
-        $loan->balance_remaining = $loan->amortizationSchedules()->sum('installment_amount');
+        $remaining = $loan->balance_remaining;
 
         return $loan->amortizationSchedules()->orderBy('installment_no')->get();
       });
