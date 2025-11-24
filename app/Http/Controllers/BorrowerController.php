@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\CollateralService;
+use App\Models\Borrower;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BorrowerController extends Controller
 {
+    public function __construct(
+        private CollateralService $collateralService
+    ) {}
+
     public function index()
     {
         // Get borrowers data from centralized method
@@ -28,12 +34,46 @@ class BorrowerController extends Controller
     {
         // Get the same dataset as index
         $borrowers = $this->getBorrowersData();
-
-        // Find the borrower by ID
+            // Find the borrower by ID from mock data
         $borrower = collect($borrowers)->firstWhere('id', (int) $id);
 
+        if (!$borrower) {
+            abort(404, 'Borrower not found');
+        }
+
+
+        // If you have a real Borrower model, fetch collaterals from the active loan
+        // For now, we'll add mock collateral data, but you should replace this with:
+        // $loanId = $borrower->activeLoan->id ?? null;
+        // $collaterals = $loanId ? $this->collateralService->listAllCollateral($loanId) : [];
+        
+        // Mock collateral data for now (replace with real data later)
+        $collaterals = $this->getMockCollaterals($id);
+
+        // // Find the borrower by ID
+        // $borrower = Borrower::with([
+        //     'loans.collaterals.landDetails',
+        //     'loans.collaterals.vehicleDetails',
+        //     'loans.collaterals.atmDetails',
+        //     'loans.collaterals.appraisedBy',
+        //     'repayments',
+        //     'collateral',
+        //     'files',
+        //     'coBorrowers',
+        //     'comments'
+        // ])->findOrFail($id);
+
+        // $activeLoan = $borrower->loans()->where('status', 'Active')->first();
+        // $collaterals = $activeLoan 
+        //     ? $this->collateralService->listAllCollateral($activeLoan->id)
+        //     : [];
+    
+
+        // In BorrowerController.php, update the show method:
         return Inertia::render('borrowers/show', [
-            'borrower' => $borrower,
+            'borrower' => array_merge($borrower, ['collaterals' => $collaterals]), // ← Add collaterals to borrower
+            'activeLoan' => $borrower['activeLoan'] ?? null,
+            'repayments' => $borrower['repayments'] ?? [],
         ]);
     }
 
@@ -164,4 +204,49 @@ class BorrowerController extends Controller
             ],
         ];
     }
+        // Temporary mock method - replace with real data fetching
+    private function getMockCollaterals(int $borrowerId): array
+    {
+        // This should be replaced with:
+        // 1. Get borrower's active loan
+        // 2. Get all collaterals for that loan
+        // For now, return sample data
+        return [
+            [
+                'id' => 1,
+                'type' => 'Land',
+                'estimated_value' => 500000.00,
+                'appraisal_date' => '2025-01-15',
+                'status' => 'Pledged',
+                'description' => 'Residential lot in Davao City',
+                'remarks' => 'Title verified',
+                'land_details' => [
+                    'titleNo' => 12345,
+                    'lotNo' => 678,
+                    'location' => 'Ubalde, R. Castillo, Davao City',
+                    'areaSize' => '200 sqm',
+                ],
+            ],
+            [
+                'id' => 2,
+                'type' => 'Vehicle',
+                'estimated_value' => 350000.00,
+                'appraisal_date' => '2025-01-20',
+                'status' => 'Pledged',
+                'description' => '2020 Toyota Vios',
+                'remarks' => 'Vehicle in good condition',
+                'vehicle_details' => [
+                    'type' => 'Car',
+                    'brand' => 'Toyota',
+                    'model' => 'Vios',
+                    'year_model' => 2020,
+                    'plate_no' => 'ABC-1234',
+                    'engine_no' => 'ENG123456',
+                    'transmission_type' => 'Automatic',
+                    'fuel_type' => 'Gasoline',
+                ],
+            ],
+        ];
+    }
 }
+

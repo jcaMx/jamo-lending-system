@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // Borrowers
+        // Borrower
         Schema::create('borrower', function (Blueprint $table) {
             $table->id();
             $table->string('first_name', 20);
@@ -49,11 +49,11 @@ return new class extends Migration {
         Schema::create('borrower_ids', function (Blueprint $table) {
             $table->id();
             $table->string('id_type', 20);
-            $table->string('id_nummber', 20);
+            $table->string('id_number', 20); // FIXED TYPO
             $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
         });
 
-        // Co-borrower
+        // Co-Borrower
         Schema::create('co_borrower', function (Blueprint $table) {
             $table->id();
             $table->string('first_name', 20);
@@ -71,19 +71,7 @@ return new class extends Migration {
             $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
         });
 
-        // Files
-        Schema::create('files', function (Blueprint $table) {
-            $table->id();
-            $table->enum('file_type', ['id_document','photo','contract','collateral_documennt'])->nullable();
-            $table->string('file_name', 20);
-            $table->string('file_path', 100);
-            $table->timestamp('uploaded_at')->useCurrent();
-            $table->string('description', 100)->nullable();
-            $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
-            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
-        });
-
-        // SPOUSE TABLE
+        // Spouse
         Schema::create('spouse', function (Blueprint $table) {
             $table->id();
             $table->string('first_name', 20);
@@ -98,7 +86,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('files');
+        Schema::dropIfExists('spouse');
         Schema::dropIfExists('co_borrower');
         Schema::dropIfExists('borrower_ids');
         Schema::dropIfExists('borrower_employments');

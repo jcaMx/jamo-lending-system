@@ -14,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Interfaces\IUserRepository::class, \App\Repositories\Eloquent\UserRepository::class);
         $this->app->bind(\App\Repositories\Interfaces\IRoleRepository::class, \App\Repositories\Eloquent\RoleRepository::class);
         $this->app->bind(\App\Repositories\Interfaces\IPermissionRepository::class, \App\Repositories\Eloquent\PermissionRepository::class);
-
+        $this->app->bind(\App\Repositories\Interfaces\ICollateralRepository::class,\App\Repositories\Eloquent\CollateralRepository::class);
     }
 
     /**
