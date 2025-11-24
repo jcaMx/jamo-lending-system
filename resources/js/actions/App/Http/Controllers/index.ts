@@ -1,6 +1,16 @@
+import BorrowerController from './BorrowerController'
+import CollectionSheetController from './CollectionSheetController'
+import RepaymentController from './RepaymentController'
+import Reports from './Reports'
+import UserController from './UserController'
 import Settings from './Settings'
 const Controllers = {
-    Settings: Object.assign(Settings, Settings),
+    BorrowerController: Object.assign(BorrowerController, BorrowerController),
+CollectionSheetController: Object.assign(CollectionSheetController, CollectionSheetController),
+RepaymentController: Object.assign(RepaymentController, RepaymentController),
+Reports: Object.assign(Reports, Reports),
+UserController: Object.assign(UserController, UserController),
+Settings: Object.assign(Settings, Settings),
 }
 
 export default Controllers

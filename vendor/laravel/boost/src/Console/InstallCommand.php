@@ -19,7 +19,6 @@ use Laravel\Boost\Install\GuidelineComposer;
 use Laravel\Boost\Install\GuidelineConfig;
 use Laravel\Boost\Install\GuidelineWriter;
 use Laravel\Boost\Install\Herd;
-use Laravel\Boost\Install\Sail;
 use Laravel\Boost\Support\Config;
 use Laravel\Prompts\Concerns\Colors;
 use Laravel\Prompts\Terminal;
@@ -40,8 +39,6 @@ class InstallCommand extends Command
     private CodeEnvironmentsDetector $codeEnvironmentsDetector;
 
     private Herd $herd;
-
-    private Sail $sail;
 
     private Terminal $terminal;
 
@@ -84,7 +81,6 @@ class InstallCommand extends Command
     public function handle(
         CodeEnvironmentsDetector $codeEnvironmentsDetector,
         Herd $herd,
-        Sail $sail,
         Terminal $terminal,
     ): int {
         $this->installGuidelines = ! $this->option('ignore-guidelines');
@@ -96,7 +92,7 @@ class InstallCommand extends Command
             return self::FAILURE;
         }
 
-        $this->bootstrap($codeEnvironmentsDetector, $herd, $sail, $terminal);
+        $this->bootstrap($codeEnvironmentsDetector, $herd, $terminal);
         $this->displayBoostHeader();
         $this->discoverEnvironment();
         $this->collectInstallationPreferences();
@@ -106,11 +102,10 @@ class InstallCommand extends Command
         return self::SUCCESS;
     }
 
-    protected function bootstrap(CodeEnvironmentsDetector $codeEnvironmentsDetector, Herd $herd, Sail $sail, Terminal $terminal): void
+    protected function bootstrap(CodeEnvironmentsDetector $codeEnvironmentsDetector, Herd $herd, Terminal $terminal): void
     {
         $this->codeEnvironmentsDetector = $codeEnvironmentsDetector;
         $this->herd = $herd;
-        $this->sail = $sail;
         $this->terminal = $terminal;
 
         $this->terminal->initDimensions();
@@ -273,7 +268,7 @@ class InstallCommand extends Command
             $features->push('herd_mcp');
         }
 
-        if ($this->sail->isInstalled() && ($this->sail->isActive() || $this->shouldConfigureSail())) {
+        if ($this->isSailInstalled() && ($this->isRunningInsideSail() || $this->shouldConfigureSail())) {
             $features->push('sail');
         }
 
@@ -447,7 +442,6 @@ class InstallCommand extends Command
         $guidelineConfig->caresAboutLocalization = $this->detectLocalization();
         $guidelineConfig->hasAnApi = false;
         $guidelineConfig->aiGuidelines = $this->selectedAiGuidelines->values()->toArray();
-        $guidelineConfig->usesSail = $this->shouldUseSail();
 
         $composer = app(GuidelineComposer::class)->config($guidelineConfig);
         $guidelines = $composer->guidelines();
@@ -533,25 +527,30 @@ class InstallCommand extends Command
 
     protected function shouldUseSail(): bool
     {
-        if ($this->selectedBoostFeatures->isEmpty()) {
-            return $this->config->getSail();
-        }
-
         return $this->selectedBoostFeatures->contains('sail');
+    }
+
+    protected function isSailInstalled(): bool
+    {
+        return file_exists(base_path('vendor/bin/sail')) &&
+               (file_exists(base_path('docker-compose.yml')) || file_exists(base_path('compose.yaml')));
+    }
+
+    protected function isRunningInsideSail(): bool
+    {
+        return get_current_user() === 'sail' || getenv('LARAVEL_SAIL') === '1';
     }
 
     protected function buildMcpCommand(McpClient $mcpClient): array
     {
-        $serverName = 'laravel-boost';
-
         if ($this->shouldUseSail()) {
-            return $this->sail->buildMcpCommand($serverName);
+            return ['laravel-boost', './vendor/bin/sail', 'artisan', 'boost:mcp'];
         }
 
         $inWsl = $this->isRunningInWsl();
 
         return array_filter([
-            $serverName,
+            'laravel-boost',
             $inWsl ? 'wsl.exe' : false,
             $mcpClient->getPhpPath($inWsl),
             $mcpClient->getArtisanPath($inWsl),

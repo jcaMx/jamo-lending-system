@@ -80,7 +80,6 @@ class McpServiceProvider extends ServiceProvider
 
                 $request->setArguments($currentRequest->all());
                 $request->setSessionId($currentRequest->sessionId());
-                $request->setMeta($currentRequest->meta());
             }
         });
     }

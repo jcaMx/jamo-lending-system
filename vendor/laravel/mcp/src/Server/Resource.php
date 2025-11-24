@@ -34,25 +34,14 @@ abstract class Resource extends Primitive
         return ['uri' => $this->uri()];
     }
 
-    /**
-     * @return array{
-     *     name: string,
-     *     title: string,
-     *     description: string,
-     *     uri: string,
-     *     mimeType: string,
-     *     _meta?: array<string, mixed>
-     * }
-     */
     public function toArray(): array
     {
-        // @phpstan-ignore return.type
-        return $this->mergeMeta([
+        return [
             'name' => $this->name(),
             'title' => $this->title(),
             'description' => $this->description(),
             'uri' => $this->uri(),
             'mimeType' => $this->mimeType(),
-        ]);
+        ];
     }
 }

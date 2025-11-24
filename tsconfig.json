@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "composite": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+
+    "paths": {
+      "@/*": ["resources/js/*", "src/*"]   // ✅ alias covers both app and landing
+    },
+
+    "jsx": "react-jsx"
+  },
+
+  "include": [
+    "resources/js",               // ✔ include your React/TS code
+    "resources/js/routes",        // ✔ include Wayfinder generated routes
+    "resources/js/**/*.ts",
+    "resources/js/**/*.tsx",
+    "resources/js/types/**/*.d.ts", // ✅ ensures inertia.d.ts augmentation is loaded
+    "src"                         // ✔ optional if you still have src files
+  ]
+}

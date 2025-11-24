@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Laravel\Mcp\Server\Content;
 
 use InvalidArgumentException;
-use Laravel\Mcp\Server\Concerns\HasMeta;
 use Laravel\Mcp\Server\Contracts\Content;
 use Laravel\Mcp\Server\Prompt;
 use Laravel\Mcp\Server\Resource;
@@ -13,8 +12,6 @@ use Laravel\Mcp\Server\Tool;
 
 class Blob implements Content
 {
-    use HasMeta;
-
     public function __construct(protected string $content)
     {
         //
@@ -45,11 +42,13 @@ class Blob implements Content
      */
     public function toResource(Resource $resource): array
     {
-        return $this->mergeMeta([
+        return [
             'blob' => base64_encode($this->content),
             'uri' => $resource->uri(),
+            'name' => $resource->name(),
+            'title' => $resource->title(),
             'mimeType' => $resource->mimeType(),
-        ]);
+        ];
     }
 
     public function __toString(): string
@@ -62,9 +61,9 @@ class Blob implements Content
      */
     public function toArray(): array
     {
-        return $this->mergeMeta([
+        return [
             'type' => 'blob',
             'blob' => $this->content,
-        ]);
+        ];
     }
 }
