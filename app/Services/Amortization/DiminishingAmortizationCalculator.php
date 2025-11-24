@@ -2,7 +2,7 @@
   namespace App\Services\Amortization;
 
   use App\Repositories\Interfaces\IAmortizationCalculator;
-  use App\Repositories\Intefaces\IHolidayService;
+  use App\Repositories\Interfaces\IHolidayService;
   use App\Services\FormulaService;
   use App\Models\Formula;
   use App\Models\Loan;
