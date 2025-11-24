@@ -15,6 +15,10 @@
         "@eslint/js": "^9.19.0",
         "@laravel/vite-plugin-wayfinder": "^0.1.7",
         "@tailwindcss/postcss": "^4.1.17",
+<<<<<<< HEAD
+        "@tailwindcss/vite": "^4.1.17",
+=======
+>>>>>>> b5b34208aa4e8a8a2e825c9ff8d2c771a751bf3a
         "@types/node": "^22.13.5",
         "@types/recharts": "^1.8.29",
         "@vitejs/plugin-react": "^5.1.0",
@@ -65,7 +69,10 @@
         "@radix-ui/react-toggle": "^1.1.2",
         "@radix-ui/react-toggle-group": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.8",
+<<<<<<< HEAD
+=======
         "@tailwindcss/vite": "^4.1.11",
+>>>>>>> b5b34208aa4e8a8a2e825c9ff8d2c771a751bf3a
         "@tanstack/react-query": "^5.90.10",
         "@types/react": "^18.2.15",
         "@types/react-dom": "^18.2.7",

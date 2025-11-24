@@ -1,21 +1,82 @@
 <?php
+  namespace App\Models;
+  use Illuminate\Database\Eloquent\Model;
+  use Illuminate\Database\Eloquent\Factories\HasFactory;
+  use Illuminate\Database\Fascades\D;
+  use App\Models\Loan;
+  use Carbon\Carbon;
 
-namespace App\Models;
+  enum BorrowerStatus: string {
+    case Active = 'Active';
+    case Closed = 'Closed';
+    case Blacklisted = 'Blacklisted';
+  }
 
-use Illuminate\Database\Eloquent\Model;
+  enum HomeOwnerShip: string {
+    case Owned = 'Owned';
+    case Rented = 'Rented';
+    case Mortage = 'Mortgage';
+  }
 
-class Borrower extends Model
-{
+  class Borrower extends Model {
+
+    use HasFactory;
+
+    protected $table = 'borrower';
+    protected $primaryKey = 'ID';
     protected $fillable = [
-        'first_name','middle_name','last_name','dob','age','marital_status',
-        'address','mobile','dependents','home_ownership','occupation','position',
-        'employer_address','photo','spouse_first_name','spouse_middle_name',
-        'spouse_last_name','spouse_occupation','spouse_position',
-        'spouse_employer_address','spouse_mobile'
+      'first_name',
+      'last_name',
+      'age',
+      'gender',
+      'email',
+      'contact_no',
+      'city',
+      'address',
+      'land_line',
+      'marital_status',
+      'numof_dependentchild',
+      'home_ownership',
+      'membership_date',
+      'status',
+      'birth_date'
     ];
 
-    public function application()
-    {
-        return $this->hasOne(Application::class);
+    protected $casts = [
+      'homeOwnerShip' => 'string',
+      'status' => 'string'
+    ];
+
+    protected $dates = [
+      'membership_date',
+      'birth_date'
+    ];
+
+    public function loan() {
+      return $this->hasOne(Loan::class, 'Borrower_id', 'ID');
     }
-}
+
+    public function borrowerEmployment() {
+      return $this->hasOne(BorrowerEmployment::class, 'borrower_id', 'ID');
+    }
+
+    public function borrowerAddresses() {
+      return $this->hasOne(BorrowerAddresses::class, 'borrower_id', 'ID');
+    }
+
+    public function borrowerIds() {
+      return $this->hasOne(BorrowerIds::class, 'borrower_id', 'ID');
+    }
+
+    public function coBorrower() {
+      return $this->hasOne(CoBorrower::class, 'borrower_id', 'ID');
+    }
+  
+    public function files() {
+      return $this->hasMany(Files::class, 'borrower_id', 'ID');
+    }
+
+    public function spouse() {
+      return $this->hasOne(Spouse::class, 'borrower_id', 'ID');
+    }
+  }
