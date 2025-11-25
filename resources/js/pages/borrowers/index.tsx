@@ -53,20 +53,17 @@ return ( <AppLayout breadcrumbs={breadcrumbs} > <Head title="Borrowers List" />
     </h1>
 
     <div className="flex flex-1 flex-col md:flex-row gap-4 md:gap-3 md:items-center md:justify-end">
-      {/* Search Bar */}
-      <div className="relative w-full md:w-72">
-        <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        <input
-          type="search"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1); // 👉 ADD: Reset page on search
-          }}
-          placeholder="Search borrowers..."
-          className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] focus:outline-none transition"
-        />
-      </div>
+          {/* Search Bar */}
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search borrowers..."
+              className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] focus:outline-none transition"
+            />
+          </div>
 
       {/* Status Filter */}
       <div className="flex items-center gap-2">

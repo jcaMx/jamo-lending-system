@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Borrower;
 use App\Models\JamoUser;
+use App\Models\AmortizationSchedule;
+
 
 class RepaymentController extends Controller
 {
@@ -33,26 +35,37 @@ class RepaymentController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'borrower_id' => 'required|exists:borrower,ID',
-            'loanNo' => 'required|exists:loan,ID',
-            'amount' => 'required|numeric',
-            'method' => 'required|string',
-            'collectedBy' => 'required|exists:jamoUser,ID',
-            'collectionDate'=> 'required|date'
-        ]);
+         $request->validate([
+        'borrower_id' => 'required|exists:borrower,ID',
+        'loanNo' => 'required|exists:loan,ID',
+        'amount' => 'required|numeric',
+        'method' => 'required|string',
+        'collectedBy' => 'required|exists:jamoUser,ID',
+        'collectionDate'=> 'required|date'
+    ]);
 
-        $payment = Payment::create([
-            'loan_id' => $request->loanNo,
-            'amount' => $request->amount,
-            'payment_method' => $request->method,
-            'verified_by' => $request->collectedBy,
-            'payment_date' => $request->collectionDate,
-            'reference_no' => $request->referenceNumber ?? null,
-        ]);
+    // Find the next unpaid schedule for this loan
+    $schedule = AmortizationSchedule::where('loan_id', $request->loanNo)
+                ->where('status', 'Unpaid')
+                ->orderBy('installment_no', 'asc')
+                ->first();
 
-        return redirect()->back()->with('success', 'Repayment added succesfully.');
+    if (!$schedule) {
+        return redirect()->back()->withErrors(['No unpaid schedule found for this loan.']);
     }
+
+    $payment = Payment::create([
+        'loan_id' => $request->loanNo,
+        'amount' => $request->amount,
+        'payment_method' => $request->method,
+        'verified_by' => $request->collectedBy,
+        'payment_date' => $request->collectionDate,
+        'reference_no' => $request->referenceNumber ?? null,
+        'schedule_id' => $schedule->ID, // now guaranteed
+    ]);
+
+    return redirect()->back()->with('success', 'Repayment added successfully.');
+}
 
     public function index()
     {

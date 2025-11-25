@@ -2,10 +2,12 @@ import HeadingSmall from '@/components/heading-small';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Eye, Edit } from 'lucide-react';
 import React from 'react';
+import {route} from "ziggy-js";
+
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'System Users', href: '/users' },

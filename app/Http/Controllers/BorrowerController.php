@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrower;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Services\BorrowerService; // ✅ Add this
 
 
 class BorrowerController extends Controller

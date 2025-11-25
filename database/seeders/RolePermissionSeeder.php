@@ -21,7 +21,7 @@ class RolePermissionSeeder extends Seeder
             'loan.update',
             'loan.delete',
 
-            // Loan
+            // borrower
             'borrower.create',
             'borrower.view',
             'borrower.update',
@@ -72,7 +72,8 @@ class RolePermissionSeeder extends Seeder
             'borrower.view',
             'repayment.view',
             'repayment.create',    // cashier can add repayment
-            'collection.daily',    // can view daily collection sheet
+            'collection.daily',  // can view daily collection sheet
+            'user.view',                       
         ]);
     }
 }

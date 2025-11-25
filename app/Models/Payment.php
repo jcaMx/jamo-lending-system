@@ -1,4 +1,7 @@
 <?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+
 
   enum PaymentMethod: string {
     case BankTransfer = 'BankTransfer';
