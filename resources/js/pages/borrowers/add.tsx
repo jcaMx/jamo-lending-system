@@ -268,6 +268,7 @@ export default function BorrowerAdd() {
               onChange={(e) => setData('occupation', e.target.value)}
               placeholder="Enter occupation"
               className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
             />
           </div>
 
@@ -277,9 +278,20 @@ export default function BorrowerAdd() {
               type="number"
               name="netPay"
               value={data.netPay}
-              onChange={(e) => setData('netPay', e.target.value)}
+              onChange={(e) => {
+                // Parse input and limit to 0 - 10,000,000
+                let value = parseFloat(e.target.value);
+                if (isNaN(value)) value = 0;
+                if (value < 0) value = 0;
+                if (value > 10000000) value = 10000000;
+                setData('netPay', e.target.value);
+              }}
               placeholder="Enter net pay"
               className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
+              min={0}
+              max={10000000}
+              step={0.01}
             />
           </div>
 
