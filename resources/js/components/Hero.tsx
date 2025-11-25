@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { Link } from "@inertiajs/react"; // ✅ use Inertia's Link
 import heroImg from "../assets/hero/hero.png";
 
 const Hero = () => {
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section style={{ backgroundColor: "#F7F5F3" }} className="relative overflow-hidden">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 items-center min-h-[600px]">
@@ -41,16 +47,18 @@ const Hero = () => {
 
           <div className="flex gap-4">
             {/* ✅ Inertia navigation */}
-            <Link href="/applynow">
+            <a href="/applynow">
               <Button className="bg-[#FABF24] hover:bg-[#f8b80f] text-white px-8">
                 Apply Now
               </Button>
-            </Link>
-            <Link href="/contact">
-              <Button variant="link" className="text-foreground border-2 border-[#FABF24] hover:bg-[#FABF24] hover:text-white px-4">
-                Contact Us
-              </Button>
-            </Link>
+            </a>
+            <Button 
+              variant="link" 
+              className="text-foreground border-2 border-[#FABF24] hover:bg-[#FABF24] hover:text-white px-4"
+              onClick={scrollToContact}
+            >
+              Contact Us
+            </Button>
           </div>
         </div>
 

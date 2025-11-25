@@ -24,9 +24,19 @@ const CoBorrowerInfo = ({ onNext, onPrev }: CoBorrowerInfoProps) => {
         <StepIndicator currentStep={2} steps={["Borrower", "Co-Borrower", "Collateral", "Loan Details", "Payment"]} />
 
         <div className="bg-white rounded-lg p-6 md:p-8 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="coFullName">Full Name</Label>
-            <Input id="coFullName" placeholder="Enter full name" className="bg-gray-50" />
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="coFirstName">First Name</Label>
+              <Input id="coFirstName" placeholder="Enter first name" className="bg-gray-50" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="coMiddleName">Middle Name</Label>
+              <Input id="coMiddleName" placeholder="Enter middle name" className="bg-gray-50" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="coLastName">Last Name</Label>
+              <Input id="coLastName" placeholder="Enter last name" className="bg-gray-50" />
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
