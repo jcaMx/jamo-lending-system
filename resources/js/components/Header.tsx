@@ -46,7 +46,7 @@ export default function Header() {
   );
 
   return (
-    <header className="bg-gradient-golden py-4 px-6 md:px-12">
+    <header className="bg-[#FABF24] py-4 px-6 md:px-12">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -64,14 +64,14 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <Link href="/dashboard">
-              <Button className="bg-white hover:bg-white/90 text-golden px-6">
+              <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
                 Dashboard
               </Button>
             </Link>
           ) : (
             <>
               <Link href="/login">
-                <Button className="bg-white hover:bg-white/90 text-golden px-6">
+                <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
                   Log in
                 </Button>
               </Link>

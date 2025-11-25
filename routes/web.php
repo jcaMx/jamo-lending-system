@@ -22,6 +22,7 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 Route::get('/', fn() => Inertia::render('index'))->name('home');
 
 Route::get('/apply', fn() => Inertia::render('BorrowerApplication'))->name('apply');
+Route::get('/applynow', fn() => Inertia::render('LoanApplication'))->name('applynow');
 
 // Guest-only routes
 Route::middleware('guest')->group(function () {

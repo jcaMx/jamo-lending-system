@@ -8,10 +8,10 @@ const Hero = () => {
     <section style={{ backgroundColor: "#F7F5F3" }} className="relative overflow-hidden">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 items-center min-h-[600px]">
         <div className="py-16 md:py-24 px-6 md:px-12 relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
             Low Rates,<br />
             <span className="text-golden">Big Dreams</span><br />
-            Made Possible
+            <span className="text-golden">Made Possible</span>
           </h1>
 
           <p className="text-muted-foreground mb-6 text-lg">
@@ -41,13 +41,13 @@ const Hero = () => {
 
           <div className="flex gap-4">
             {/* ✅ Inertia navigation */}
-            <Link href="/apply">
-              <Button className="bg-golden hover:bg-golden-dark text-white px-8">
+            <Link href="/applynow">
+              <Button className="bg-[#FABF24] hover:bg-[#f8b80f] text-white px-8">
                 Apply Now
               </Button>
             </Link>
             <Link href="/contact">
-              <Button variant="link" className="text-foreground">
+              <Button variant="link" className="text-foreground border-2 border-[#FABF24] hover:bg-[#FABF24] hover:text-white px-4">
                 Contact Us
               </Button>
             </Link>

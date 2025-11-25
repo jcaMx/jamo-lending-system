@@ -19,15 +19,10 @@
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- Inline fallback to avoid flash-of-unstyled content while CSS loads. Uses HSL so older browsers render consistently. --}}
         <style>
-            html {
-                background-color: oklch(1 0 0);
-            }
-
-            html.dark {
-                background-color: oklch(0.145 0 0);
-            }
+            html { background-color: hsl(0 0% 100%); }
+            html.dark { background-color: hsl(215 10% 7%); }
         </style>
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>

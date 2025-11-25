@@ -40,7 +40,7 @@ const Services = () => {
 
         <div className="grid md:grid-cols-2 gap-6">
           {services.map((service, index) => (
-            <div key={index} className="bg-white rounded-lg border-2 border-golden overflow-hidden hover:shadow-lg transition-shadow">
+            <div key={index} className="bg-white rounded-lg border-2 border-[#D97706] overflow-hidden">
               <div className="aspect-[4/3] bg-muted">
   <img
     src={service.image}
