@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\BorrowerController::index
- * @see app/Http/Controllers/BorrowerController.php:11
+ * @see app/Http/Controllers/BorrowerController.php:12
  * @route '/borrowers'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
 export const add = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ add.definition = {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
 add.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ add.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
 add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
 add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
     const addForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
         addForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\BorrowerController::add
- * @see app/Http/Controllers/BorrowerController.php:21
+ * @see app/Http/Controllers/BorrowerController.php:56
  * @route '/borrowers/add'
  */
         addForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     add.form = addForm
 /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -200,7 +200,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +209,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -219,7 +219,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
     const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -229,7 +229,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
         showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -238,7 +238,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\BorrowerController::show
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}'
  */
         showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -254,7 +254,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
 export const edit = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -269,7 +269,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
 edit.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -297,7 +297,7 @@ edit.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
 edit.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -306,7 +306,7 @@ edit.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
 edit.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -316,7 +316,7 @@ edit.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
     const editForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -326,7 +326,7 @@ edit.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
         editForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -335,7 +335,7 @@ edit.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\BorrowerController::edit
- * @see app/Http/Controllers/BorrowerController.php:27
+ * @see app/Http/Controllers/BorrowerController.php:35
  * @route '/borrowers/{id}/edit'
  */
         editForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

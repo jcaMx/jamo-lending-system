@@ -65,27 +65,26 @@
         };
 
         $processing_fee = round($loan->principal_amount * 0.03,2);
-
         $insurance_fee = round($loan->principal_amount * 0.02, 2);
-
         $notary_fee = round($loan->principal_amount * 0.01, 2);
-
         $savings_contribution = round($loan->principal_amount * 0.02, 2);
 
-        $netPrincipal = $loan->principal_amount - ($processing_fee + $insurance_fee + $notary_fee + $savings_contribution
-      );
+        $netPrincipal = $loan->principal_amount - ($processing_fee + $insurance_fee + $notary_fee + $savings_contribution);
 
         $loan->balance_remaining = $netPrincipal;
+
         $loan->save();
 
         // Generate amortization schedules
-        $schedules = $this->generateAmortization($loan);
+        $schedules = $this->generateAmortization($loan, $netPrincipal);
+
+        $loan->balance_remaining = $schedules->sum('installment_amount');
 
         // Set emd date from last schedule
         if($schedules->isNotEmpty()) {
           $loan->end_date = $schedules->last()->due_date;
-          $loan->save();
         }
+        $loan->save();
       });
       return $loan->fresh();
     }
@@ -136,8 +135,9 @@
         // Delete old schedules if exist
         $loan->amortizationSchedules()->delete();
 
+        $baseAmount = $principalAmount ?? $loan->principal_amount;
         //Generate ne schedules
-        $schedules = $calculator->generate($loan, $loan->balance_remaining);
+        $schedules = $calculator->generate($loan, $baseAmount);
 
         foreach($schedules as $item) {
           $loan->amortizationSchedules()->create([
@@ -151,59 +151,7 @@
             'holiday_id' => $item['holiday_id'] ?? null
           ]);
         }
-
-        $remaining = $loan->balance_remaining;
-
         return $loan->amortizationSchedules()->orderBy('installment_no')->get();
       });
     }
-
-    public function applyPenalty(IHolidayService $holidayService): void 
-    {
-      DB::transaction(function () use ($holidayService) {
-
-        // Get all overdue schedules
-        $overdueSchedules = $this->amortizationSchedules()->where('status', ScheduleStatus::Overdue->value)->orderBy('due_date')->get();
-
-        foreach($overdueSchedules as $overdue) {
-
-          // Determine penalty base
-          if($overdue->interest_amount == $overdue->installment_amount) {
-            
-            // Only interest unpaid, apply penalty on principal
-            $penaltyBase = $overdue->installment_amount;
-          } else {
-
-            // Both principal & interest unpaid
-            $penaltyBase = $overdue->installment_amount;
-          }
-
-          $penaltyAmount = round($penaltyBase * self::PENALTY_RATE, 2);
-
-          $nextInstallment = $this->amortizationSchedules()->where('status', ScheduleStatus::Unpaid->value)->where('installment_no', '>', $overdue->installment_no)->orderBy('installment_no')->first();
-
-          if($nextInstallment) {
-            // Adjust next installment for penalty
-            $nextInstallment->installment_amount += $penaltyAmount;
-            $nextInstallment->penalty_amount += $penaltyAmount;
-
-            $nextInstallment->due_date = $holidayService->adjustDate($nextInstallment->due_date);
-
-            $nextInstallment->save();
-
-            $this->balance_remaining += $penaltyAmount;
-
-            Penalty::create([
-              'type' => PenaltyType::LatePayment->value,
-              'amount' => $penaltyAmount,
-              'date_applied' => Carbon::now(),
-              'status' => PenaltyStatus::Pending->value,
-              'schedule_id' => $nextInstallment->ID
-            ]);
-          }
-        }
-        $this->save();
-      }); 
-    }
-
   }

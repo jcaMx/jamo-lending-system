@@ -53,7 +53,7 @@
     ];
 
     public function loan() {
-      return $this->hasOne(Loan::class, 'Borrower_id', 'ID');
+      return $this->hasOne(Loan::class, 'borrower_id', 'ID')->latest('start_date');
     }
 
     public function borrowerEmployment() {

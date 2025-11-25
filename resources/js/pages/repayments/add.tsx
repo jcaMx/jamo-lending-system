@@ -4,14 +4,31 @@ import AppLayout from "@/layouts/app-layout";
 import { type BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { set } from "react-hook-form";
+
+type Borrower = {
+  id: number;
+  name: string;
+  loanNo: string;
+};
+
+type Collector = {
+  id: number;
+  name: string;
+};
+
+type Props = {
+  borrowers: Borrower[];
+  collectors: Collector[];
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Repayments", href: "/repayments/add" },
 ];
 
-export default function Add({ borrowers, collectors }) {
+export default function Add({ borrowers: initialBorrowers, collectors: initialCollectors }: Props) {
   const [search, setSearch] = useState("");
-  const [selectedBorrower, setSelectedBorrower] = useState(null);
+  const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(null);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
   const [collectedBy, setCollectedBy] = useState("");
@@ -19,22 +36,45 @@ export default function Add({ borrowers, collectors }) {
   const [referenceNumber, setReferenceNumber] = useState("");
 
   const filteredBorrowers = useMemo(() => {
-    return borrowers.filter((b) =>
+    return initialBorrowers.filter((b) =>
       b.name.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search, borrowers]);
+  }, [search, initialBorrowers]);
 
-  const handleSubmit = (e) => {
+  const collectorOptions: Collector[] = useMemo(() => {
+  return initialCollectors.map((c) => ({
+      id: c.id,
+      name: c.name
+    }));
+  }, [initialCollectors]);
+
+
+  const handleSelectBorrower = (b: Borrower) => {
+    setSelectedBorrower(b);
+    setSearch(b.name);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!selectedBorrower) return alert("Please select a borrower.");
+    if (!collectedBy) return alert("Please select a collector.");
+    if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
+    if (!method) return alert("Please select a payment method.");
+    if (!collectionDate) return alert("Please select a collection date.");
+
+    const collector = collectorOptions.find((c) => String(c.id) === String(collectedBy));
+
+    if (!collector) return alert("Collector not found");
+
     router.post("/repayments/store", {
-      borrower_id: selectedBorrower?.id,
-      loanNo: selectedBorrower?.loanNo,
+      borrower_id: selectedBorrower.id,
+      loanNo: selectedBorrower.loanNo,
       amount,
       method,
-      collectedBy,
+      collectedBy: collector?.id,
       collectionDate,
-      referenceNumber,
+      referenceNumber: referenceNumber || null,
     });
   };
 
@@ -71,10 +111,7 @@ export default function Add({ borrowers, collectors }) {
                       filteredBorrowers.map((b) => (
                         <div
                           key={b.id}
-                          onClick={() => {
-                            setSelectedBorrower(b);
-                            setSearch(b.name);
-                          }}
+                          onClick={() => handleSelectBorrower(b)}
                           className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {b.name}
@@ -127,7 +164,7 @@ export default function Add({ borrowers, collectors }) {
               </div>
 
               {/* Reference Number - Conditional */}
-              {(method === "Gcash" || method === "Bank Transfer" || method === "Gcash") && (
+              {(method === "Gcash" || method === "Bank Transfer" || method === "Cash") && (
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Reference Number
@@ -150,9 +187,9 @@ export default function Add({ borrowers, collectors }) {
                   className="w-full border rounded-lg p-2"
                 >
                   <option value="">Select collector</option>
-                  {collectors.map((c, index) => (
-                    <option key={index} value={c}>
-                      {c}
+                  {collectorOptions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>

@@ -3,11 +3,9 @@
   use Illuminate\Database\Eloquent\Model;
 
   enum PaymentMethod: string {
-    case Cheque = 'Cheque';
+    case BankTransfer = 'BankTransfer';
     case Cash = 'Cash';
     case GCash = 'GCash';
-    case Cebuana = 'Cebuana';
-    case Metrobank = 'Metrobank';
   }
 
   class Payment extends Model {

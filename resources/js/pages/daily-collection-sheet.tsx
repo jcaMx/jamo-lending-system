@@ -1,34 +1,53 @@
 import React, { useState, useRef } from 'react';
+import { router } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Daily Collection Sheet', href: '/dcs' },
+  { title: 'Daily Collection Sheet', href: '/daily-collections' },
 ];
 
-export default function DailyCollectionSheet({ due_loans }) {
+interface Loan {
+  id: number;
+  name: string;
+  loanNo: string;
+  principal: number;
+  interest: number;
+  penalty: number;
+  total_due: number;
+  collector: string;
+  collection_date: string;
+}
+
+interface Props {
+  due_loans: Loan[];
+  collectors: string[];
+}
+
+export default function DailyCollectionSheet({ due_loans, collectors }: Props) {
   const [searchCollector, setSearchCollector] = useState('');
   const [searchDate, setSearchDate] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Filtered loans (safe for undefined values)
-  const filteredLoans = due_loans.filter((loan) => {
-    const collector = loan.collector ?? '';
-    const collectionDate = loan.collection_date ?? '';
+  const loansToDisplay = due_loans;
 
-    const matchCollector = collector.toLowerCase().includes(searchCollector.toLowerCase());
-    const matchDate = searchDate ? collectionDate === searchDate : true;
-
-    return matchCollector && matchDate;
-  });
+  const handleFilterChange = () => {
+    router.get('/daily-collections', {
+      collector: searchCollector || undefined,
+      date: searchDate || undefined,
+    }, {
+      preserveState: true,
+      replace: true,
+    });
+  };
 
   // CSV Export
   const exportToCSV = () => {
     const headers = ['#', 'Borrower', 'Loan No', 'Principal', 'Interest', 'Penalty', 'Total Due (₱)'];
-    const rows = filteredLoans.map((loan, index) => [
+    const rows = loansToDisplay.map((loan, index) => [
       index + 1,
       loan.name ?? '',
       loan.loanNo ?? '',
@@ -37,7 +56,7 @@ export default function DailyCollectionSheet({ due_loans }) {
       loan.penalty ?? 0,
       loan.total_due ?? 0,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].map(r => r.join(',')).join('\n');
     const link = document.createElement('a');
     link.href = encodeURI(csvContent);
     link.download = 'Daily_Collection_Sheet.csv';
@@ -105,18 +124,23 @@ export default function DailyCollectionSheet({ due_loans }) {
               className="px-3 py-2 border rounded shadow-sm"
             >
               <option value="">All Collectors</option>
-              {[...new Set(due_loans.map((loan) => loan.collector ?? ''))].map((collector) => (
-                <option key={collector} value={collector}>
-                  {collector}
-                </option>
+              {collectors.map((collector) => (
+                <option key ={collector} value={collector}>{collector}</option>
               ))}
             </select>
+
             <input
               type="date"
               value={searchDate}
               onChange={(e) => setSearchDate(e.target.value)}
               className="px-3 py-2 border rounded shadow-sm"
             />
+            <Button
+              onClick={handleFilterChange}
+              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+            >
+              Filter
+            </Button>
           </div>
         </div>
 
@@ -134,22 +158,22 @@ export default function DailyCollectionSheet({ due_loans }) {
               </tr>
             </thead>
             <tbody>
-              {filteredLoans.length === 0 ? (
+              {loansToDisplay.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-6 text-gray-500">
                     No due loans found.
                   </td>
                 </tr>
               ) : (
-                filteredLoans.map((loan, index) => (
+                loansToDisplay.map((loan, index) => (
                   <tr key={loan.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-2">{index + 1}</td>
                     <td className="px-4 py-2">{loan.name ?? ''}</td>
                     <td className="px-4 py-2">{loan.loanNo ?? ''}</td>
-                    <td className="px-4 py-2">{loan.principal ?? 0}</td>
-                    <td className="px-4 py-2">{loan.interest ?? 0}</td>
-                    <td className="px-4 py-2">{loan.penalty ?? 0}</td>
-                    <td className="px-4 py-2">{(loan.total_due ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-2">{loan.principal.toLocaleString()}</td>
+                    <td className="px-4 py-2">{loan.interest.toLocaleString()}</td>
+                    <td className="px-4 py-2">{loan.penalty.toLocaleString()}</td>
+                    <td className="px-4 py-2">{loan.total_due.toLocaleString()}</td>
                   </tr>
                 ))
               )}

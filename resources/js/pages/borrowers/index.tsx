@@ -5,7 +5,19 @@ import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react'; // nice search icon
 
-type Borrower = any;
+type Borrower = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  city: string;
+  gender: string;
+  occupation: string;
+  contact_no: string;
+  loan?: {
+    status: string;
+  }
+}
 
 export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   const breadcrumbs: BreadcrumbItem[] = [{ title: 'Borrowers', href: '/borrowers' }];
@@ -16,15 +28,11 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   // Filter logic
   const filteredBorrowers = useMemo(() => {
     return borrowers.filter((b: Borrower) => {
-      const matchesSearch =
-        b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.city.toLowerCase().includes(searchTerm.toLowerCase());
+      const fullName = `${b.first_name} ${b.last_name}` .toLowerCase();
+      
+      const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || b.email.toLowerCase().includes(searchTerm.toLowerCase()) || b.city.toLowerCase().includes(searchTerm.toLowerCase())
 
-      const matchesStatus =
-        statusFilter === 'all'
-          ? true
-          : (b.activeLoan?.status ?? '').toLowerCase() === statusFilter.toLowerCase();
+      const matchesStatus = statusFilter === 'all' ? true : (b.loan?.status ?? '').toLowerCase() === statusFilter.toLowerCase();
 
       return matchesSearch && matchesStatus;
     });
@@ -65,9 +73,9 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] focus:outline-none transition"
             >
               <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="delinquent">Delinquent</option>
+              <option value = "active">Active</option>
+              <option value="closed">Closed</option>
+              <option value="blacklisted">Blacklisted</option>
             </select>
           </div>
 
@@ -109,13 +117,13 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
           <tbody className="divide-y divide-gray-100 bg-white">
             {filteredBorrowers.length > 0 ? (
               filteredBorrowers.map((b: Borrower, index: number) => {
-                const status = b.activeLoan?.status?.toLowerCase() ?? 'n/a';
+                const status = b.loan?.status?.toLowerCase() ?? 'N/A';
                 const statusClasses =
                   status === 'active'
                     ? 'bg-green-100 text-green-800'
-                    : status === 'completed'
+                    : status === 'closed'
                     ? 'bg-gray-100 text-gray-800'
-                    : status === 'delinquent'
+                    : status === 'blacklisted'
                     ? 'bg-red-100 text-red-800'
                     : 'bg-yellow-100 text-yellow-800';
 
@@ -126,17 +134,17 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                     onClick={() => router.visit(`/borrowers/${b.id}`)}
                   >
                     <td className="px-4 py-3 text-sm text-gray-600">{index + 1}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{b.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{b.first_name} {b.last_name}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{b.occupation}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{b.gender}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{b.city}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{b.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{b.mobile}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{b.contact_no}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses}`}
                       >
-                        {b.activeLoan?.status ?? 'N/A'}
+                        {b.loan?.status ?? 'N/A'}
                       </span>
                     </td>
                   </tr>

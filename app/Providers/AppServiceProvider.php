@@ -8,6 +8,8 @@ namespace App\Providers;
     use App\Services\CalendarHolidayService;
     use App\Services\Amortization\CompoundAmortizationCalculator;
     use App\Services\Amortization\DiminishingAmortizationCalculator;
+    use App\Repositories\Interfaces\IRepaymentRepository;
+    use App\Services\RepaymentService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(FormulaService::class, function ($app) {
             return new FormulaService();
         });
+
+        $this->app->bind(IRepaymentRepository::class, RepaymentService::class);
     }
 
     /**

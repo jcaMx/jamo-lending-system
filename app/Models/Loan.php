@@ -81,10 +81,14 @@
     //Add new Loan
     public static function addLoan(array $data): Loan
     {
+      if (!isset($data['principal_amount'])) {
+        throw new \Exception('principal_amount required');
+      }
+
       $data['status'] = $data['status'] ?? LoanStatus::Pending->value;
       $data['interest_rate'] = $data['interest_rate'] ?? 5.0;
       $data['interest_type'] = $data['interest_type'] ?? InterestType::Compound->value;
-      $data['principal_amount'] = $data['principal_amount'] ?? throw new \Exception('principal_amount required');
+
       $data['balance_remaining'] = $data['balance_remaining'] ?? $data['principal_amount'];
 
       if (isset($data['interest_type']) && !isset($data['formula_id'])) {
