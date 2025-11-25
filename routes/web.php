@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\BorrowerController;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
+use App\Http\Controllers\LoanController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RepaymentController;
@@ -61,11 +62,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Loans (match sidebar hrefs: /Loans/VAL, /Loans/PMD, etc.)
     Route::prefix('Loans')->middleware(['role:admin|cashier'])->group(function () {
+        Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.index');
+        Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.create');
         Route::get('/1MLL', fn() => Inertia::render('Loans/1MLL'))->name('loans.one-month-late');
         Route::get('/3MLL', fn() => Inertia::render('Loans/3MLL'))->name('loans.three-month-late');
         Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
         Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
         Route::get('/VAL', fn() => Inertia::render('Loans/VAL'))->name('loans.view');
+        Route::post('/loans', [LoanController::class, 'store'])->name('loans.store');
+        Route::get('/loans/{id}', [LoanController::class, 'show'])->name('loans.show');
+        Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.index');
+
     });
     Route::prefix('Loans')->middleware(['role:admin'])->group(function () {
         Route::get('/AddLoan', fn() => Inertia::render('Loans/AddLoan'))->name('loans.add-loan');

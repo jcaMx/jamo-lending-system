@@ -1,4 +1,5 @@
 import BorrowerController from './BorrowerController'
+import LoanController from './LoanController'
 import CollectionSheetController from './CollectionSheetController'
 import RepaymentController from './RepaymentController'
 import Reports from './Reports'
@@ -7,6 +8,7 @@ import ApplicationController from './ApplicationController'
 import Settings from './Settings'
 const Controllers = {
     BorrowerController: Object.assign(BorrowerController, BorrowerController),
+LoanController: Object.assign(LoanController, LoanController),
 CollectionSheetController: Object.assign(CollectionSheetController, CollectionSheetController),
 RepaymentController: Object.assign(RepaymentController, RepaymentController),
 Reports: Object.assign(Reports, Reports),
