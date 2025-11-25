@@ -66,6 +66,19 @@ class UserService
                     'avatar_url' => $data['userPhoto'] ?? null,
                 ]);
             }
+            
+            // 🔔 SEND NOTIFICATION (email + sms optional)
+            $message = "Welcome {$data['fName']}! Your account has been created.\n\n".
+           "Username: $username\nPassword: $generatedPassword";
+
+            $user->notify(new NotifyUser(
+                message: $message,
+                email: $user->email,
+                sms: $user->profile->phone ?? null
+            ));
+
+
+
         }); // <-- make sure this closing brace is here
 
         return [

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // Formula
+        // Formula Table
         Schema::create('formula', function (Blueprint $table) {
             $table->id();
             $table->string('name', 20);
@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->timestamp('createdAt')->useCurrent();
         });
 
-        // Loan
+        // Loan Table
         Schema::create('loan', function (Blueprint $table) {
             $table->id();
             $table->dateTime('start_date')->nullable();
@@ -36,7 +36,7 @@ return new class extends Migration {
             $table->foreignId('formula_id')->constrained('formula');
         });
 
-        // Amortization schedule
+        // Amortization table
         Schema::create('amortizationschedule', function (Blueprint $table) {
             $table->id();
             $table->integer('installment_no');
@@ -65,7 +65,7 @@ return new class extends Migration {
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
         });
 
-        // ATM Collateral Details
+        // ATM Collateral
         Schema::create('atmcollateraldetails', function (Blueprint $table) {
             $table->id();
             $table->enum('bank_name', ['BDO','BPI','LandBank','MetroBank']);
@@ -74,47 +74,40 @@ return new class extends Migration {
             $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
         });
 
-        // Land Collateral Details
+        // Land Collateral
         Schema::create('landcollateraldetails', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('titleNo');
             $table->bigInteger('lotNo');
             $table->string('location', 50);
             $table->string('areaSize', 20);
-            $table->foreignId('collateralID')->constrained('collateral')->cascadeOnDelete();
+            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
         });
 
-
+        // Vehicle Collateral
         Schema::create('vehiclecollateraldetails', function (Blueprint $table) {
-            $table->bigIncrements('ID'); // auto-increment primary key
-            $table->enum('type', ['Car', 'Motorcycle', 'Truck'])->nullable();
+            $table->id();
+            $table->enum('type', ['Car','Motorcycle','Truck'])->nullable();
             $table->string('brand', 20);
             $table->string('model', 20);
             $table->year('year_model')->nullable();
             $table->string('plate_no', 20)->nullable();
             $table->string('engine_no', 20)->nullable();
-            $table->enum('transmission_type', ['Manual', 'Automatic'])->nullable();
+            $table->enum('transmission_type', ['Manual','Automatic'])->nullable();
             $table->string('fuel_type', 20)->nullable();
-            $table->unsignedBigInteger('collateral_id');
-
-            // If collateral_id references another table, add a foreign key:
-            // $table->foreign('collateral_id')->references('id')->on('collaterals')->onDelete('cascade');
-
-            $table->timestamps(); // optional, adds created_at and updated_at
+            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
+            $table->timestamps();
         });
-
     }
-    
 
     public function down(): void
     {
+        Schema::dropIfExists('vehiclecollateraldetails');
         Schema::dropIfExists('landcollateraldetails');
         Schema::dropIfExists('atmcollateraldetails');
-        Schema::dropIfExists('vehiclecollateraldetails');
         Schema::dropIfExists('collateral');
         Schema::dropIfExists('amortizationschedule');
         Schema::dropIfExists('loan');
         Schema::dropIfExists('formula');
     }
-
 };

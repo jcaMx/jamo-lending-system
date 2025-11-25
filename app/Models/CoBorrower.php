@@ -2,18 +2,38 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CoBorrower extends Model
 {
+    use HasFactory;
+
+    protected $table = 'co_borrower';
+
     protected $fillable = [
-        'full_name','dob','age','marital_status','address','mobile',
-        'dependents','home_ownership','occupation','position','employer_address'
+        'first_name',
+        'last_name',
+        'age',
+        'birth_date',
+        'address',
+        'email',
+        'contact_no',
+        'occupation',
+        'position',
+        'agency_address',
+        'marital_status',
+        'home_ownership',
+        'borrower_id',
     ];
 
-    public function application()
+    protected $casts = [
+        'birth_date' => 'date',
+        'home_ownership' => 'string',
+    ];
+
+    public function borrower()
     {
-        return $this->hasOne(Application::class);
+        return $this->belongsTo(Borrower::class, 'borrower_id', 'ID');
     }
 }
-

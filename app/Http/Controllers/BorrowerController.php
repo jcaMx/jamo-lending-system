@@ -2,166 +2,101 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Services\BorrowerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Borrower;
+
 
 class BorrowerController extends Controller
 {
+    public function __construct(
+        private BorrowerService $borrowerService,
+    ) {}
+
     public function index()
     {
-        // Get borrowers data from centralized method
-        $borrowers = $this->getBorrowersData();
-
-        // Send all borrowers to index
         return Inertia::render('borrowers/index', [
-            'borrowers' => $borrowers,
+            'borrowers' => $this->borrowerService->getBorrowersForIndex(),
         ]);
     }
+
     public function add()
     {
         return Inertia::render('borrowers/add');
-        
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        // Get the same dataset as index
-        $borrowers = $this->getBorrowersData();
-
-        // Find the borrower by ID
-        $borrower = collect($borrowers)->firstWhere('id', (int) $id);
+        $payload = $this->borrowerService->getBorrowerForShow($id);
 
         return Inertia::render('borrowers/show', [
-            'borrower' => $borrower,
+            'borrower' => $payload['borrower'],
+            'collaterals' => $payload['collaterals'],
+            'activeLoan' => $payload['activeLoan'],
+            'repayments' => $payload['repayments'],
         ]);
     }
-
-    // Centralized dataset (to simulate backend DB)
-    private function getBorrowersData(): array
+    
+    public function store(Request $request)
     {
-        // Master dataset with all borrower data
-        return [
-            [
-                'id' => 1500154,
-                'name' => 'Maria Salem',
-                'occupation' => 'Software Developer',
-                'gender' => 'Female',
-                'age' => 20,
-                'address' => 'Ubalde, R. Castillo',
-                'city' => 'Davao City',
-                'zipcode' => '8000',
-                'email' => 'mirasol@gmail.com',
-                'mobile' => '09234354974',
-                'landline' => '01235306981',
-                'activeLoan' => [
-                    'loanNo' => 'A100651',
-                    'released' => '01/01/2025',
-                    'maturity' => '01/12/2025',
-                    'repayment' => 'Monthly',
-                    'principal' => 2000,
-                    'interest' => '5%',
-                    'interestType' => 'Compound',
-                    'penalty' => 0,
-                    'due' => 200,
-                    'balance' => 1855,
-                    'status' => 'Active',
-                ],
-                'repayments' => [
-                    [
-                        'id' => 1,
-                        'name' => 'Maria Salem',
-                        'loanNo' => 'A100651',
-                        'method' => 'Cash',
-                        'collectedBy' => 'RJ Arevalo',
-                        'collectionDate' => '10/15/2025',
-                        'paidAmount' => 8650,
-                    ],
-                    [
-                        'id' => 2,
-                        'name' => 'Maria Salem',
-                        'loanNo' => 'A100651',
-                        'method' => 'GCash',
-                        'collectedBy' => 'Alex Lopez',
-                        'collectionDate' => '11/01/2025',
-                        'paidAmount' => 5400,
-                    ],
-                ],
-            ],
-            [
-                'id' => 1500155,
-                'name' => 'Ramon Dela Peña',
-                'occupation' => 'Small Business Owner',
-                'gender' => 'Male',
-                'age' => 34,
-                'address' => 'Lizada, Toril',
-                'city' => 'Davao City',
-                'zipcode' => '8000',
-                'email' => 'ramon.dp@gmail.com',
-                'mobile' => '09124567890',
-                'landline' => '0821234567',
-                'activeLoan' => [
-                    'loanNo' => 'B203412',
-                    'released' => '02/05/2025',
-                    'maturity' => '02/05/2026',
-                    'repayment' => 'Weekly',
-                    'principal' => 50000,
-                    'interest' => '8%',
-                    'interestType' => 'Flat',
-                    'penalty' => 500,
-                    'due' => 2500,
-                    'balance' => 42000,
-                    'status' => 'Active',
-                ],
-                'repayments' => [
-                    [
-                        'id' => 1,
-                        'name' => 'Ramon Dela Peña',
-                        'loanNo' => 'B203412',
-                        'method' => 'Cash',
-                        'collectedBy' => 'Jenny Flores',
-                        'collectionDate' => '10/10/2025',
-                        'paidAmount' => 2500,
-                    ],
-                ],
-            ],
-            [
-                'id' => 1500156,
-                'name' => 'Angela Bautista',
-                'occupation' => 'Nurse',
-                'gender' => 'Female',
-                'age' => 29,
-                'address' => 'Ponciano Reyes Street',
-                'city' => 'Tagum City',
-                'zipcode' => '8100',
-                'email' => 'angela.b@gmail.com',
-                'mobile' => '09087651234',
-                'landline' => '0823345678',
-                'activeLoan' => [
-                    'loanNo' => 'C402555',
-                    'released' => '03/01/2025',
-                    'maturity' => '03/01/2026',
-                    'repayment' => 'Monthly',
-                    'principal' => 80000,
-                    'interest' => '6%',
-                    'interestType' => 'Diminishing',
-                    'penalty' => 0,
-                    'due' => 4000,
-                    'balance' => 60000,
-                    'status' => 'Active',
-                ],
-                'repayments' => [
-                    [
-                        'id' => 1,
-                        'name' => 'Angela Bautista',
-                        'loanNo' => 'C402555',
-                        'method' => 'Bank Transfer',
-                        'collectedBy' => 'Jose Ramos',
-                        'collectionDate' => '11/01/2025',
-                        'paidAmount' => 6000,
-                    ],
-                ],
-            ],
-        ];
+        $validated = $request->validate([
+            // Borrower fields
+            'borrowerFirstName' => 'required|string|max:255',
+            'borrowerLastName'  => 'required|string|max:255',
+            'gender'            => 'required|string|max:255',
+            'dateOfBirth'       => 'required|date|before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
+            'maritalStatus'     => 'nullable|string|in:Single,Married,Separated,Widowed',
+            'homeOwnership'     => 'nullable|string|in:Owned,Mortgage,Rented',
+            'permanentAddress'  => 'nullable|string|max:255',
+            'city'              => 'nullable|string|max:255',
+            'mobileNumber'      => ['required','regex:/^09\d{9}$/'],
+            'landlineNumber'    => ['nullable','regex:/^0\d{1,2}-\d{7,8}$/'],
+            'email'             => ['required','email'],
+            'occupation'        => 'nullable|string|max:255',
+            'dependentChild'    => 'nullable|integer|min:0',
+            'netPay'            => 'nullable|numeric|min:0',
+
+            // Spouse fields (optional)
+            'spouseFirstName'       => 'nullable|string|max:255',
+            'spouseLastName'        => 'nullable|string|max:255',
+            'spouseMobileNumber'    => ['nullable','regex:/^09\d{9}$/'],
+            'spouseOccupation'      => 'nullable|string|max:255',
+            'spousePosition'        => 'nullable|string|max:255',
+            'spouseAgencyAddress'   => 'nullable|string|max:255',
+        ]);
+
+        $exists = Borrower::where('first_name', $validated['borrowerFirstName'])
+        ->where('last_name', $validated['borrowerLastName'])
+        ->where('birth_date', $validated['dateOfBirth'])
+        ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['borrowerFirstName' => 'Borrower already exists.'])->withInput();
+        }
+
+        $borrower = $this->borrowerService->createBorrower($validated);
+
+        return redirect()->route('borrowers.show', $borrower->ID)
+            ->with('success', 'Borrower added successfully!');
+    }
+    
+    public function update(Request $request, Borrower $borrower)
+    {
+        $validated = $request->validate([
+            'address' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'zipcode' => 'nullable|string|max:10',
+            'email' => 'nullable|email|max:100',
+            'mobile' => 'nullable|string|max:20',
+            'landline' => 'nullable|string|max:20',
+            'occupation' => 'nullable|string|max:50',
+            'gender' => 'nullable|string|in:Male,Female',
+            'age' => 'nullable|integer|min:0',
+        ]);
+
+        $this->service->update($borrower, $validated);
+
+        return redirect()->back()->with('success', 'Borrower updated successfully');
     }
 }

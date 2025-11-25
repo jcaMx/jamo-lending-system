@@ -4,8 +4,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { initializeTheme } from './hooks/use-appearance';
-import LoanApplication from "./pages/BorrowerApplication";
-import { Home } from 'lucide-react';
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,8 +14,8 @@ const queryClient = new QueryClient();
 
 createInertiaApp({
   resolve: name => {
-    const pages = import.meta.glob('./pages/**/*.tsx', { eager: true });
-    return pages[`./pages/${name}.tsx`];
+    const pages = import.meta.glob<{ default: React.ComponentType<any> }>('./pages/**/*.tsx', { eager: true });
+    return pages[`./pages/${name}.tsx`]?.default;
   },
   setup({ el, App, props }) {
     createRoot(el).render(

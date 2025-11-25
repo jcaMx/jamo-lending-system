@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import React from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -12,31 +12,37 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function BorrowerAdd() {
-  const [formData, setFormData] = useState({
-    borrowerFullName: '',
+  const { data, setData, post, processing, errors } = useForm({
+    borrowerFirstName: '',
+    borrowerLastName: '',
+    gender:'',
     dateOfBirth: '',
     maritalStatus: '',
-    age: '',
     homeOwnership: '',
     permanentAddress: '',
+    city:'',
     mobileNumber: '',
+    landlineNumber:'',
+    email:'',
     occupation: '',
     dependentChild: '',
     netPay: '',
-    spouseFullName: '',
+    spouseFirstName: '',
+    spouseLastName: '',
     spouseAgencyAddress: '',
     spouseOccupation: '',
+    spousePosition: '',
     spouseMobileNumber: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting Borrower Data:', formData);
+    post('/borrowers', {
+      preserveScroll: true,
+      onSuccess: () => {
+        // Success handled by redirect in controller
+      },
+    });
   };
 
   return (
@@ -59,37 +65,138 @@ export default function BorrowerAdd() {
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-8 gap-y-5">
           {/* Left Column */}
           <div>
-            <label className="block text-sm font-medium mb-1">Borrower Full Name</label>
+            <label className="block text-sm font-medium mb-1"> First Name</label>
             <input
               type="text"
-              name="borrowerFullName"
-              value={formData.borrowerFullName}
-              onChange={handleChange}
-              placeholder="Enter full name"
-              className="w-full border rounded-md p-2"
+              name="borrowerFirstName"
+              value={data.borrowerFirstName}
+              onChange={(e) => setData('borrowerFirstName', e.target.value)}
+              placeholder="Enter first name"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
               required
             />
+            {errors.borrowerFirstName && (
+              <p className="text-red-500 text-xs mt-1">{errors.borrowerFirstName}</p>
+            )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Last Name</label>
+            <input
+              type="text"
+              name="borrowerLastName"
+              value={data.borrowerLastName}
+              onChange={(e) => setData('borrowerLastName', e.target.value)}
+              placeholder="Enter last name"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
+            />
+            {errors.borrowerLastName && (
+              <p className="text-red-500 text-xs mt-1">{errors.borrowerLastName}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Gender</label>
+            <select
+              name="gender"
+              value={data.gender}
+              onChange={(e) => setData('gender', e.target.value)}
+              className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+              required
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            {errors.gender && (
+              <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
+            )}
+          </div>
+
 
           <div>
             <label className="block text-sm font-medium mb-1">Date of Birth</label>
             <input
               type="date"
               name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              value={data.dateOfBirth}
+              onChange={(e) => setData('dateOfBirth', e.target.value)}
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
+              max={new Date(
+                new Date().setFullYear(new Date().getFullYear() - 18)
+              )
+                .toISOString()
+                .split("T")[0]}
+            />
+            {errors.dateOfBirth && (
+              <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Mobile Number</label>
+            <input
+              type="text"
+              name="mobileNumber"
+              value={data.mobileNumber}
+              onChange={(e) => setData('mobileNumber', e.target.value)}
+              placeholder="09XX XXX XXXX"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              pattern="09\d{9}"
+              maxLength={11}
+              title="Mobile number must start with 09 and be 11 digits"
               required
             />
+            {errors.mobileNumber && (
+              <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>
+            )}
           </div>
+          <div>
+              <label className="block text-sm font-medium mb-1">Landline Number</label>
+              <input
+                type="text"
+                name="landlineNumber"
+                value={data.landlineNumber}
+                onChange={(e) => setData('landlineNumber', e.target.value)}
+                placeholder="02-12345678"
+                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+                pattern="0\d{1,2}-\d{7,8}"
+                title="Landline number format: AreaCode-Number (e.g., 02-12345678)"
+              />
+              {errors.landlineNumber && (
+                <p className="text-red-500 text-xs mt-1">{errors.landlineNumber}</p>
+              )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={data.email}
+              onChange={(e) => setData('email', e.target.value)}
+              placeholder="Enter email address"
+              className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+              required
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+              title="Please enter a valid email address"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
+          </div>
+
+
 
           <div>
             <label className="block text-sm font-medium mb-1">Marital Status</label>
             <select
               name="maritalStatus"
-              value={formData.maritalStatus}
-              onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              value={data.maritalStatus}
+              onChange={(e) => setData('maritalStatus', e.target.value)}
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             >
               <option value="">Select Status</option>
               <option value="Single">Single</option>
@@ -99,27 +206,27 @@ export default function BorrowerAdd() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Age</label>
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              placeholder="Enter age"
-              className="w-full border rounded-md p-2"
-            />
-          </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Permanent Home Address</label>
             <input
               type="text"
               name="permanentAddress"
-              value={formData.permanentAddress}
-              onChange={handleChange}
+              value={data.permanentAddress}
+              onChange={(e) => setData('permanentAddress', e.target.value)}
               placeholder="Enter address"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">City</label>
+            <input
+              type="text"
+              name="city"
+              value={data.city}
+              onChange={(e) => setData('city', e.target.value)}
+              placeholder="Enter city"
+              className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -127,9 +234,9 @@ export default function BorrowerAdd() {
             <label className="block text-sm font-medium mb-1">Home Ownership</label>
             <select
               name="homeOwnership"
-              value={formData.homeOwnership}
-              onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              value={data.homeOwnership}
+              onChange={(e) => setData('homeOwnership', e.target.value)}
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             >
               <option value="">Select</option>
               <option value="Owned">Owned</option>
@@ -138,27 +245,17 @@ export default function BorrowerAdd() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Mobile Number</label>
-            <input
-              type="text"
-              name="mobileNumber"
-              value={formData.mobileNumber}
-              onChange={handleChange}
-              placeholder="09XX XXX XXXX"
-              className="w-full border rounded-md p-2"
-            />
-          </div>
+
 
           <div>
             <label className="block text-sm font-medium mb-1">No. of Dependent Child</label>
             <input
               type="number"
               name="dependentChild"
-              value={formData.dependentChild}
-              onChange={handleChange}
+              value={data.dependentChild}
+              onChange={(e) => setData('dependentChild', e.target.value)}
               placeholder="Enter number"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -167,10 +264,11 @@ export default function BorrowerAdd() {
             <input
               type="text"
               name="occupation"
-              value={formData.occupation}
-              onChange={handleChange}
+              value={data.occupation}
+              onChange={(e) => setData('occupation', e.target.value)}
               placeholder="Enter occupation"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
             />
           </div>
 
@@ -179,10 +277,21 @@ export default function BorrowerAdd() {
             <input
               type="number"
               name="netPay"
-              value={formData.netPay}
-              onChange={handleChange}
+              value={data.netPay}
+              onChange={(e) => {
+                // Parse input and limit to 0 - 10,000,000
+                let value = parseFloat(e.target.value);
+                if (isNaN(value)) value = 0;
+                if (value < 0) value = 0;
+                if (value > 10000000) value = 10000000;
+                setData('netPay', e.target.value);
+              }}
               placeholder="Enter net pay"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
+              min={0}
+              max={10000000}
+              step={0.01}
             />
           </div>
 
@@ -195,13 +304,24 @@ export default function BorrowerAdd() {
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1">Spouse Full Name</label>
+                <label className="block text-sm font-medium mb-1">Spouse First Name</label>
                 <input
                   type="text"
-                  name="spouseFullName"
-                  value={formData.spouseFullName}
-                  onChange={handleChange}
-                  placeholder="Enter full name"
+                  name="spouseFirstName"
+                  value={data.spouseFirstName}
+                  onChange={(e) => setData('spouseFirstName', e.target.value)}
+                  placeholder="Enter first name"
+                  className="w-full bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Spouse Last Name</label>
+                <input
+                  type="text"
+                  name="spouseLastName"
+                  value={data.spouseLastName}
+                  onChange={(e) => setData('spouseLastName', e.target.value)}
+                  placeholder="Enter last name"
                   className="w-full bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
@@ -213,8 +333,8 @@ export default function BorrowerAdd() {
                 <input
                   type="text"
                   name="spouseAgencyAddress"
-                  value={formData.spouseAgencyAddress}
-                  onChange={handleChange}
+                  value={data.spouseAgencyAddress}
+                  onChange={(e) => setData('spouseAgencyAddress', e.target.value)}
                   placeholder="Enter agency or address"
                   className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
@@ -225,9 +345,20 @@ export default function BorrowerAdd() {
                 <input
                   type="text"
                   name="spouseOccupation"
-                  value={formData.spouseOccupation}
-                  onChange={handleChange}
+                  value={data.spouseOccupation}
+                  onChange={(e) => setData('spouseOccupation', e.target.value)}
                   placeholder="Enter occupation"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Position</label>
+                <input
+                  type="text"
+                  name="spousePosition"
+                  value={data.spousePosition}
+                  onChange={(e) => setData('spousePosition', e.target.value)}
+                  placeholder="Enter position"
                   className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
@@ -236,19 +367,26 @@ export default function BorrowerAdd() {
                 <label className="block text-sm font-medium mb-1">Mobile Number</label>
                 <input
                   type="text"
-                  name="spouseMobileNumber "
-                  value={formData.spouseMobileNumber}
-                  onChange={handleChange}
+                  name="spouseMobileNumber"
+                  value={data.spouseMobileNumber}
+                  onChange={(e) => setData('spouseMobileNumber', e.target.value)}
                   placeholder="09XX XXX XXXX"
-                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+                  pattern="09\d{9}"
+                  maxLength={11}
+                  title="Mobile number must start with 09 and be 11 digits"
                 />
               </div>
             </div>
           </div>
 
           <div className="col-span-2 mt-6 flex justify-end">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Submit
+            <Button 
+              type="submit" 
+              disabled={processing}
+              className="text-black bg-[#FABF24] hover:bg-amber-700 hover:text-white disabled:opacity-50"
+            >
+              {processing ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </form>
