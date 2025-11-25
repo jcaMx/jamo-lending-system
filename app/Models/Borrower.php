@@ -61,11 +61,8 @@ class Borrower extends Model
         'birth_date',
     ];
 
-    // Relationships
-
-    public function loan(): HasOne
-    {
-        return $this->hasOne(Loan::class, 'borrower_id', 'ID');
+    public function loan() {
+      return $this->hasOne(Loan::class, 'borrower_id', 'ID')->latest('start_date');
     }
 
     public function borrowerEmployment(): HasOne

@@ -11,12 +11,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 type Repayment = {
   id: number;
-  name: string;
+  borrowerName: string;
   loanNo: string;
   method: string;
   collectedBy: string;
   collectionDate: string;
-  paidAmount: number;
+  amount: number;
 };
 
 type Props = {
@@ -28,7 +28,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
 
   const filteredRepayments = useMemo(() => {
     return repayments.filter(r =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
+      r.borrowerName.toLowerCase().includes(search.toLowerCase()) ||
       r.loanNo.toLowerCase().includes(search.toLowerCase())
     );
   }, [repayments, search]);
@@ -36,7 +36,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
   return (
     <AppLayout>
       <Head title="Repayments" />
-      <div className="m-4 bg-white p-6 rounded-lg pace-y-4 ">
+      <div className="m-4 bg-white p-6 rounded-lg space-y-4 ">
         {/* Breadcrumb */}
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">Repayments</h2>
@@ -70,12 +70,12 @@ export default function RepaymentsIndex({ repayments }: Props) {
               {filteredRepayments.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50">
                   <td className="px-4 py-2 border">{r.id}</td>
-                  <td className="px-4 py-2 border">{r.name}</td>
+                  <td className="px-4 py-2 border">{r.borrowerName}</td>
                   <td className="px-4 py-2 border">{r.loanNo}</td>
                   <td className="px-4 py-2 border">{r.method}</td>
                   <td className="px-4 py-2 border">{r.collectedBy}</td>
-                  <td className="px-4 py-2 border">{r.collectionDate}</td>
-                  <td className="px-4 py-2 border">{r.paidAmount.toLocaleString()}</td>
+                  <td className="px-4 py-2 border">{new Date (r.collectionDate).toLocaleString('en-PH')}</td>
+                  <td className="px-4 py-2 border">{r.amount.toLocaleString('en-PH', {style: 'currency', currency: 'PHP'})}</td>
                 </tr>
               ))}
             </tbody>

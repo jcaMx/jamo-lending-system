@@ -1,7 +1,7 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,8 +15,8 @@ index.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -24,8 +24,8 @@ index.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -33,8 +33,8 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -43,8 +43,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -53,8 +53,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -62,8 +62,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\CollectionSheetController::index
- * @see app/Http/Controllers/CollectionSheetController.php:10
+* @see \App\Http\Controllers\DailyCollectionController::index
+ * @see app/Http/Controllers/DailyCollectionController.php:13
  * @route '/daily-collections'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -77,8 +77,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     index.form = indexForm
-const dailyCollections = {
-    index: Object.assign(index, index),
-}
+const DailyCollectionController = { index }
 
-export default dailyCollections
+export default DailyCollectionController

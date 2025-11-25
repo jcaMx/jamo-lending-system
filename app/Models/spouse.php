@@ -2,25 +2,19 @@
   namespace App\Models;
   use Illuminate\Database\Eloquent\Model;
 
-  class CoBorrower extends Model {
+  class Spouse extends Model {
 
-    protected $table = 'co_borrower';
+    protected $table = 'spouse';
     protected $primaryKey = 'ID';
 
     protected $fillable = [
 
-      'first_name', 
-      'last_name', 
-      'age',
-      'birth_date',
-      'address',
-      'email',
+      'first_name',
+      'last_name',
       'contact_no',
       'occupation',
       'position',
       'agency_address',
-      'marital_status',
-      'home_ownership',
       'borrower_id'
 
     ];

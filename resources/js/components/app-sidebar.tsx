@@ -166,8 +166,8 @@ export function AppSidebar() {
                   <button
                     onClick={() => toggleMenu(item.title)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition duration-200
-                      ${hasActiveChild ? "bg-gradient-to-r from-[#3c4a6a] to-[#192132]" :
-                        "hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]"}`}
+                      ${hasActiveChild ? "bg-linear-to-r from-[#3c4a6a] to-[#192132]" :
+                        "hover:bg-linear-to-r hover:from-[#2f3b57] hover:to-[#192132]"}`}
                   >
                     <div className="flex items-center gap-3">
                       {Icon && <Icon className="w-5 h-5" />}
@@ -190,8 +190,8 @@ export function AppSidebar() {
                             href={sub.href}
                             className={`block px-3 py-1.5 rounded-lg text-sm transition duration-200 relative
                               ${active
-                                ? "bg-gradient-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5"
-                                : "hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]"
+                                ? "bg-linear-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5"
+                                : "hover:bg-linear-to-r hover:from-[#030916] hover:to-[#192132]"
                               }`}
                           >
                             {sub.title}
@@ -213,8 +213,8 @@ export function AppSidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition duration-200
                   ${isActiveParent
-                    ? "bg-gradient-to-r from-[#3c4a6a] to-[#192132]"
-                    : "hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]"
+                    ? "bg-linear-to-r from-[#3c4a6a] to-[#192132]"
+                    : "hover:bg-linear-to-r hover:from-[#2f3b57] hover:to-[#192132]"
                   }`}
               >
                 {Icon && <Icon className="w-5 h-5" />}

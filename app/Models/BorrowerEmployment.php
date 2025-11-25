@@ -1,36 +1,36 @@
 <?php
+  namespace app\Models;
+  use Illuminate\Database\Eloquent\Model;
 
-namespace App\Models;
+  enum EmploymentStatus: string {
+    case Employed = 'Employed';
+    case UnEmployed = 'UnEmployed';
+  }
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class BorrowerEmployment extends Model
-{
-    use HasFactory;
+  class BorrowerEmployment extends Model {
 
     protected $table = 'borrower_employments';
+    protected $primaryKey = 'ID';
 
     protected $fillable = [
-        'borrower_id',
-        'employment_status',
-        'income_source',
-        'occupation',
-        'position',
-        'agency_address',
-        'monthly_income',
+
+      'employment_status',
+      'income_source',
+      'occupation',
+      'position',
+      'agency_address',
+      'monthly_income',
+      'borrower_id'
+
     ];
-    public $timestamps = false;
 
     protected $casts = [
-        'monthly_income' => 'decimal:2',
+
+      'employmentStatus' => EmploymentStatus::class
+
     ];
 
-
-
-
-    public function borrower()
-    {
-        return $this->belongsTo(Borrower::class);
+    public function borrower() {
+      return $this->belongsTo(Borrower::class, 'borrowerID', 'ID');
     }
-}
+  }

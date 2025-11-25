@@ -11,11 +11,10 @@ use App\Http\Controllers\DashboardController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RepaymentController;
-use App\Http\Controllers\CollectionSheetController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use Spatie\Permission\Middleware\RoleMiddleware;
-use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\DailyCollectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,7 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Daily Collection Sheets
-    Route::get('/daily-collections', [CollectionSheetController::class, 'index'])->name('daily-collections.index');
+    Route::get('/daily-collections', [DailyCollectionController::class, 'index'])->name('index');
 
     // Repayments (match sidebar hrefs: /repayments, /repayments/add)
     Route::prefix('repayments')
@@ -95,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->group(function () {
             Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
+            Route::post('/store', [RepaymentController::class, 'store'])->name('repayments.store');
         });
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
@@ -119,15 +119,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     });
-
-    // Applications
-        Route::post('/applications', [ApplicationController::class, 'storeBorrower'])->name('applications.store');
-        Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
-        Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
-        Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
-        Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
-        Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
-
 
 });
 

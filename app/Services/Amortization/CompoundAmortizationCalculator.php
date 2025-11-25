@@ -18,21 +18,23 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loan, $formula);
+      $principal = $principalAmount ?? $loan->principal_amount;
+
+      return $this->calculateSchedules($loan, $formula, $principal);
     }
 
     public function recalculate(Loan $loan): array
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loan, $formula, false);
+      return $this->calculateSchedules($loann, $formula, $loan->principal_amount, false);
     }
 
-    protected function calculateSchedules(Loan $loan, Formula $formula, bool $isNewLoan = true)
+    protected function calculateSchedules(Loan $loan, Formula $formula, float $principal, bool $isNewLoan = true)
     {
-        $remaining = $loan->principal_amount;
-        $frequency = $loan->repayment_frequency;
-        $rate = $loan->interest_rate / 100;
+      $remaining = $principal;
+      $frequency = $loan->repayment_frequency;
+      $rate = $loan->interest_rate / 100;
 
         // Determine total installments
         $totalInstallments = match ($frequency) {
@@ -50,12 +52,12 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
         $dueDate = $loan->start_date->copy();
         $results = [];
 
-        for ($i = 1; $i <= $totalInstallments; $i++) {
-            $installmentAmount = $this->formulaService->evaluate($formula, [
-                'principal' => $loan->principal_amount,
-                'rate' => $periodRate,
-                'term' => $totalInstallments,
-            ]);
+      for($i = 1; $i <= $totalInstallments; $i++) {
+        $installmentAmount = $this->formulaService->evaluate($formula, [
+          'principal' => $principal,
+          'rate' => $periodRate,
+          'term' => $totalInstallments
+        ]);
 
             $interest = $remaining * $periodRate;
             $principalPayment = $installmentAmount - $interest;

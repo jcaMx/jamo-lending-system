@@ -19,21 +19,23 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
         // Fetch formula from DB
         $formula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loan, $formula);
+      $principal = $principalAmount ?? $loan->principal_amount;
+
+      return $this->calculateSchedules($loan, $formula, $principal);
     }
 
     public function recalculate(Loan $loan): array
     {
         $formula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loan, $formula, false);
+      return $this->calculateSchedules($loan, $formula, $loan->principal_amount, false);
     }
 
-    protected function calculateSchedules(Loan $loan, Formula $formula, bool $isNewLoan = true): array
+    protected function calculateSchedules(Loan $loan, Formula $formula, float $principal, bool $isNewLoan = true): array 
     {
-        $remaining = $loan->principal_amount;
-        $frequency = $loan->repayment_frequency;
-        $rate = $loan->interest_rate / 100;
+      $remaining = $principal;
+      $frequency = $loan->repayment_frequency;
+      $rate = $loan->interest_rate / 100;
 
         // Determine total installments
         $totalInstallments = match ($frequency) {
@@ -46,15 +48,15 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
         $dueDate = $loan->start_date->copy();
         $results = [];
 
-        for ($i = 1; $i <= $totalInstallments; $i++) {
-
-            // FormulaService Calculates interest or total installment
-            $interest = $this->formulaService->evaluate($formula, [
-                'principal' => $loan->principal_amount,
-                'remaining_principal' => $remaining,
-                'rate' => $rate,
-                'total_terms' => $totalInstallments,
-            ]);
+      for($i = 1; $i <= $totalInstallments; $i++) {
+        
+        //FormulaService Calculates interest or total installment
+        $interest = $this->formulaService->evaluate($formula, [
+          'principal' => $principal,
+          'remaining_principal' => $remaining,
+          'rate' => $rate,
+          'total_terms' => $totalInstallments
+        ]);
 
             $principalPayment = $principalPerInstallment;
 

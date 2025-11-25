@@ -81,11 +81,15 @@ class Loan extends Model
     // Add new Loan
     public static function addLoan(array $data): Loan
     {
-        $data['status'] = $data['status'] ?? LoanStatus::Pending->value;
-        $data['interest_rate'] = $data['interest_rate'] ?? 5.0;
-        $data['interest_type'] = $data['interest_type'] ?? InterestType::Compound->value;
-        $data['principal_amount'] = $data['principal_amount'] ?? throw new \Exception('principal_amount required');
-        $data['balance_remaining'] = $data['balance_remaining'] ?? $data['principal_amount'];
+      if (!isset($data['principal_amount'])) {
+        throw new \Exception('principal_amount required');
+      }
+
+      $data['status'] = $data['status'] ?? LoanStatus::Pending->value;
+      $data['interest_rate'] = $data['interest_rate'] ?? 5.0;
+      $data['interest_type'] = $data['interest_type'] ?? InterestType::Compound->value;
+
+      $data['balance_remaining'] = $data['balance_remaining'] ?? $data['principal_amount'];
 
         if (isset($data['interest_type']) && ! isset($data['formula_id'])) {
             $interestType = $data['interest_type'] instanceof InterestType ? $data['interest_type']->value : $data['interest_type'];

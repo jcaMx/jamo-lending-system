@@ -1,20 +1,14 @@
 <?php
 
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-enum PaymentMethod: string
-{
-    case Cheque = 'Cheque';
+  enum PaymentMethod: string {
+    case BankTransfer = 'BankTransfer';
     case Cash = 'Cash';
     case GCash = 'GCash';
-    case Cebuana = 'Cebuana';
-    case Metrobank = 'Metrobank';
-}
+  }
 
-class Payment extends Model
-{
+  class Payment extends Model {
+
+
     public $timestamps = false;
 
     protected $table = 'payment';
