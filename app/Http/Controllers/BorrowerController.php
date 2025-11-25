@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Services\BorrowerService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Borrower;
+
 
 class BorrowerController extends Controller
 {
@@ -34,34 +37,46 @@ class BorrowerController extends Controller
             'repayments' => $payload['repayments'],
         ]);
     }
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
             // Borrower fields
             'borrowerFirstName' => 'required|string|max:255',
             'borrowerLastName'  => 'required|string|max:255',
+            'gender'            => 'required|string|max:255',
             'dateOfBirth'       => 'required|date|before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
             'maritalStatus'     => 'nullable|string|in:Single,Married,Separated,Widowed',
-            'age'               => 'nullable|integer|min:18',
             'homeOwnership'     => 'nullable|string|in:Owned,Mortgage,Rented',
             'permanentAddress'  => 'nullable|string|max:255',
             'mobileNumber'      => ['required','regex:/^09\d{9}$/'],
+            'landlineNumber'    => ['nullable','regex:/^0\d{1,2}-\d{7,8}$/'],
+            'email'             => ['required','email'],
             'occupation'        => 'nullable|string|max:255',
             'dependentChild'    => 'nullable|integer|min:0',
             'netPay'            => 'nullable|numeric|min:0',
 
-            // Spouse fields
-            'spouseFirstName'       => 'required|string|max:255',
-            'spouseLastName'        => 'required|string|max:255',
-            'spouseMobileNumber'    => ['required','regex:/^09\d{9}$/'],
+            // Spouse fields (optional)
+            'spouseFirstName'       => 'nullable|string|max:255',
+            'spouseLastName'        => 'nullable|string|max:255',
+            'spouseMobileNumber'    => ['nullable','regex:/^09\d{9}$/'],
             'spouseOccupation'      => 'nullable|string|max:255',
             'spousePosition'        => 'nullable|string|max:255',
             'spouseAgencyAddress'   => 'nullable|string|max:255',
         ]);
 
-        $this->borrowerService->createBorrower($validated);
+        $exists = Borrower::where('first_name', $validated['borrowerFirstName'])
+        ->where('last_name', $validated['borrowerLastName'])
+        ->where('birth_date', $validated['dateOfBirth'])
+        ->exists();
 
-        return redirect()->route('borrowers.show', $borrower->id)
+        if ($exists) {
+            return back()->withErrors(['borrowerFirstName' => 'Borrower already exists.'])->withInput();
+        }
+
+        $borrower = $this->borrowerService->createBorrower($validated);
+
+        return redirect()->route('borrowers.show', $borrower->ID)
             ->with('success', 'Borrower added successfully!');
     }
 }

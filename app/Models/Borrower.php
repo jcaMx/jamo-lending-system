@@ -48,6 +48,8 @@ class Borrower extends Model
         'birth_date',
     ];
 
+    public $timestamps= false; 
+
     protected $casts = [
         'home_ownership' => 'string',
         'status' => 'string',

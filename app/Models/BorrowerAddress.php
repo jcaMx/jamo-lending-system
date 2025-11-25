@@ -17,8 +17,11 @@ class BorrowerAddress extends Model
         'city',
     ];
 
+    public $timestamps = false;
+
+
     public function borrower()
     {
-        return $this->belongsTo(Borrower::class);
+        return $this->belongsTo(Borrower::class, 'borrower_id', 'ID');
     }
 }

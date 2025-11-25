@@ -20,6 +20,8 @@ class Spouse extends Model
         'agency_address',
         'borrower_id',
     ];
+    public $timestamps = false;
+
 
     public function borrower()
     {

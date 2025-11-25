@@ -54,9 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
+        Route::post('/', [BorrowerController::class, 'store'])->name('borrowers.store');
         Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
         Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit');
-        Route::post('/borrowers', [BorrowerController::class, 'store'])->name('borrowers.store');
     });
 
     // Loans (match sidebar hrefs: /Loans/VAL, /Loans/PMD, etc.)

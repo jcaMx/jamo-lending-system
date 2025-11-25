@@ -20,10 +20,14 @@ class BorrowerEmployment extends Model
         'agency_address',
         'monthly_income',
     ];
+    public $timestamps = false;
 
     protected $casts = [
         'monthly_income' => 'decimal:2',
     ];
+
+
+
 
     public function borrower()
     {

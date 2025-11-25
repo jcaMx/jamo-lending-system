@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Models\Borrower;
+use App\Models\BorrowerAddress;
+use App\Models\BorrowerEmployment;
 use App\Models\Collateral;
 use App\Models\Loan;
 use App\Models\Payment;
 use App\Models\CoBorrower;
 use App\Models\LoanComment;
+use App\Models\Spouse;
 use Illuminate\Support\Collection;
 
 class BorrowerService
@@ -236,28 +239,44 @@ class BorrowerService
     public function createBorrower(array $data): Borrower
     {
         $borrower = Borrower::create([
-            'first_name'        => $data['borrowerFirstName'],
-            'last_name'        => $data['borrowerLastName'],
-            'date_of_birth'    => $data['dateOfBirth'],
-            'marital_status'   => $data['maritalStatus'] ?? null,
-            'age'              => $data['age'] ?? null,
-            'home_ownership'   => $data['homeOwnership'] ?? null,
-            'permanent_address'=> $data['permanentAddress'] ?? null,
-            'mobile_number'    => $data['mobileNumber'],
-            'occupation'       => $data['occupation'] ?? null,
-            'dependent_child'  => $data['dependentChild'] ?? null,
-            'net_pay'          => $data['netPay'] ?? null,
+            'first_name' => $data['borrowerFirstName'],
+            'last_name' => $data['borrowerLastName'],
+            'birth_date' => $data['dateOfBirth'],
+            'gender' => $data['gender'],
+            'marital_status' => $data['maritalStatus'] ?? null,
+            'home_ownership' => $data['homeOwnership'] ?? null,
+            'contact_no' => $data['mobileNumber'],
+            'landline' => $data['landlineNumber'] ?? null,
+            'email' => $data['email'],
+            'numof_dependentchild' => $data['dependentChild'] ?? null,
+            'membership_date' => now(),
         ]);
 
-        
-        if (!empty($data['phone'])) {
+        // Create borrower address if provided
+        if (!empty($data['permanentAddress']) && trim($data['permanentAddress']) !== '') {
+            $borrower->borrowerAddresses()->create([
+                'address' => trim($data['permanentAddress']),
+                'city' => trim($data['city'] ?? ''),
+            ]);
+        }
+
+        // Create borrower employment if occupation or netPay provided
+        if (!empty($data['occupation']) || !empty($data['netPay'])) {
+            $borrower->borrowerEmployment()->create([
+                'occupation' => $data['occupation'] ?? null,
+                'monthly_income' => $data['netPay'] ?? null,
+            ]);
+        }
+
+        // Create spouse if spouse data provided
+        if (!empty($data['spouseFirstName']) && !empty($data['spouseLastName'])) {
             $borrower->spouse()->create([
                 'first_name' => $data['spouseFirstName'],
                 'last_name' => $data['spouseLastName'],
-                'contact_no' => $data['spouseMobileNumber'],
-                'occupation' => $data['spouseOccupation'],
-                'position' => $data['spousePosition'],
-                'agency_address' => $data['spouseAgencyAddress'],
+                'contact_no' => $data['spouseMobileNumber'] ?? null,
+                'occupation' => $data['spouseOccupation'] ?? null,
+                'position' => $data['spousePosition'] ?? null,
+                'agency_address' => $data['spouseAgencyAddress'] ?? null,
             ]);
         }
 
