@@ -59,14 +59,26 @@ export default function BorrowerAdd() {
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-8 gap-y-5">
           {/* Left Column */}
           <div>
-            <label className="block text-sm font-medium mb-1">Borrower Full Name</label>
+            <label className="block text-sm font-medium mb-1"> First Name</label>
             <input
               type="text"
               name="borrowerFullName"
               value={formData.borrowerFullName}
               onChange={handleChange}
-              placeholder="Enter full name"
-              className="w-full border rounded-md p-2"
+              placeholder="Enter first name"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1"> Last Name</label>
+            <input
+              type="text"
+              name="borrowerLastName"
+              value={formData.borrowerFullName}
+              onChange={handleChange}
+              placeholder="Enter first name"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
               required
             />
           </div>
@@ -78,8 +90,13 @@ export default function BorrowerAdd() {
               name="dateOfBirth"
               value={formData.dateOfBirth}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
               required
+              max={new Date(
+                new Date().setFullYear(new Date().getFullYear() - 18)
+              )
+                .toISOString()
+                .split("T")[0]}
             />
           </div>
 
@@ -89,7 +106,7 @@ export default function BorrowerAdd() {
               name="maritalStatus"
               value={formData.maritalStatus}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             >
               <option value="">Select Status</option>
               <option value="Single">Single</option>
@@ -107,7 +124,7 @@ export default function BorrowerAdd() {
               value={formData.age}
               onChange={handleChange}
               placeholder="Enter age"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -119,7 +136,7 @@ export default function BorrowerAdd() {
               value={formData.permanentAddress}
               onChange={handleChange}
               placeholder="Enter address"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -129,7 +146,7 @@ export default function BorrowerAdd() {
               name="homeOwnership"
               value={formData.homeOwnership}
               onChange={handleChange}
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             >
               <option value="">Select</option>
               <option value="Owned">Owned</option>
@@ -146,7 +163,11 @@ export default function BorrowerAdd() {
               value={formData.mobileNumber}
               onChange={handleChange}
               placeholder="09XX XXX XXXX"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+              pattern="09\d{9}"
+              maxLength={11}
+              title="Mobile number must start with 09 and be 11 digits"
+              required
             />
           </div>
 
@@ -158,7 +179,7 @@ export default function BorrowerAdd() {
               value={formData.dependentChild}
               onChange={handleChange}
               placeholder="Enter number"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -170,7 +191,7 @@ export default function BorrowerAdd() {
               value={formData.occupation}
               onChange={handleChange}
               placeholder="Enter occupation"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -182,7 +203,7 @@ export default function BorrowerAdd() {
               value={formData.netPay}
               onChange={handleChange}
               placeholder="Enter net pay"
-              className="w-full border rounded-md p-2"
+              className=" bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
             />
           </div>
 
@@ -195,11 +216,22 @@ export default function BorrowerAdd() {
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1">Spouse Full Name</label>
+                <label className="block text-sm font-medium mb-1">Spouse First Name</label>
                 <input
                   type="text"
-                  name="spouseFullName"
-                  value={formData.spouseFullName}
+                  name="spouseFirstName"
+                  value={formData.spouseFirstName}
+                  onChange={handleChange}
+                  placeholder="Enter full name"
+                  className="w-full bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Spouse Last Name</label>
+                <input
+                  type="text"
+                  name="spouseLastName"
+                  value={formData.spouseLastName}
                   onChange={handleChange}
                   placeholder="Enter full name"
                   className="w-full bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
@@ -231,16 +263,31 @@ export default function BorrowerAdd() {
                   className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Position</label>
+                <input
+                  type="text"
+                  name="spousePosition"
+                  value={formData.spousePosition}
+                  onChange={handleChange}
+                  placeholder="Enter position"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Mobile Number</label>
                 <input
                   type="text"
-                  name="spouseMobileNumber "
+                  name="spouseMobileNumber"
                   value={formData.spouseMobileNumber}
                   onChange={handleChange}
                   placeholder="09XX XXX XXXX"
-                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md p-2.5 focus:ring-[#FABF24] focus:border-[#FABF24]"
+                  className="w-full  bg-[#F7F5F3] border-gray-300 rounded-md w-full border rounded-md p-2"
+                  pattern="09\d{9}"
+                  maxLength={11}
+                  title="Mobile number must start with 09 and be 11 digits"
+                  required
                 />
               </div>
             </div>

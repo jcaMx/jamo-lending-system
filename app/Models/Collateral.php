@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Collateral extends Model
 {
@@ -42,23 +41,23 @@ class Collateral extends Model
     // Polymorphic relationships to detail tables
     public function landDetails(): HasOne
     {
-        return $this->hasOne(LandCollateralDetails::class, 'collateral_id');
+        return $this->hasOne(LandCollateralDetails::class, 'collateral_id', 'id');
     }
 
     public function vehicleDetails(): HasOne
     {
-        return $this->hasOne(VehicleCollateralDetails::class, 'collateral_id');
+        return $this->hasOne(VehicleCollateralDetails::class, 'collateral_id', 'id');
     }
 
     public function atmDetails(): HasOne
     {
-        return $this->hasOne(AtmCollateralDetails::class, 'collateral_id');
+        return $this->hasOne(AtmCollateralDetails::class, 'collateral_id', 'id');
     }
 
     // Get details based on type
     public function getDetailsAttribute()
     {
-        return match($this->type) {
+        return match ($this->type) {
             'Land' => $this->landDetails,
             'Vehicle' => $this->vehicleDetails,
             'ATM' => $this->atmDetails,
@@ -69,7 +68,7 @@ class Collateral extends Model
     // Get formatted details string
     public function getCollateralDetails(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'Land' => $this->getLandDetailsString(),
             'Vehicle' => $this->getVehicleDetailsString(),
             'ATM' => $this->getAtmDetailsString(),
@@ -80,9 +79,10 @@ class Collateral extends Model
     private function getLandDetailsString(): string
     {
         $details = $this->landDetails;
-        if (!$details) {
+        if (! $details) {
             return 'Land - No details';
         }
+
         return sprintf(
             'Land - Title: %s, Lot: %s, Location: %s, Area: %s',
             $details->titleNo,
@@ -95,9 +95,10 @@ class Collateral extends Model
     private function getVehicleDetailsString(): string
     {
         $details = $this->vehicleDetails;
-        if (!$details) {
+        if (! $details) {
             return 'Vehicle - No details';
         }
+
         return sprintf(
             'Vehicle - %s %s %s (%s), Plate: %s',
             $details->brand,
@@ -111,9 +112,10 @@ class Collateral extends Model
     private function getAtmDetailsString(): string
     {
         $details = $this->atmDetails;
-        if (!$details) {
+        if (! $details) {
             return 'ATM - No details';
         }
+
         return sprintf(
             'ATM - %s, Account: %s, Card: ****%s',
             $details->bank_name,

@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 createInertiaApp({
   resolve: name => {
-    const pages = import.meta.glob('./pages/**/*.tsx', { eager: true });
+    const pages = import.meta.glob<{ default: React.ComponentType<any> }>('./pages/**/*.tsx', { eager: true });
     return pages[`./pages/${name}.tsx`]?.default;
   },
   setup({ el, App, props }) {

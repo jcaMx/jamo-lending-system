@@ -28,7 +28,6 @@ class File extends Model
     /**
      * Relationships
      */
-
     public function borrower()
     {
         return $this->belongsTo(Borrower::class, 'borrower_id');
@@ -36,6 +35,6 @@ class File extends Model
 
     public function collateral()
     {
-        return $this->belongsTo(Collateral::class, 'collateral_id');
+        return $this->belongsTo(Collateral::class, 'collateral_id', 'ID');
     }
 }
