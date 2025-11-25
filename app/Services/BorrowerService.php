@@ -3,15 +3,13 @@
 namespace App\Services;
 
 use App\Models\Borrower;
-use App\Models\BorrowerAddress;
-use App\Models\BorrowerEmployment;
 use App\Models\Collateral;
 use App\Models\Loan;
-use App\Models\Payment;
-use App\Models\CoBorrower;
 use App\Models\LoanComment;
+use App\Models\Payment;
 use App\Models\Spouse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class BorrowerService
 {
@@ -94,7 +92,6 @@ class BorrowerService
                 ->orderByDesc('comment_date')
                 ->get()
             : collect();
-
 
         return [
             'borrower' => [
@@ -202,7 +199,6 @@ class BorrowerService
             ->values()
             ->all();
     }
-    
 
     private function formatAmortizationSchedule(?Loan $loan): array
     {
@@ -223,6 +219,7 @@ class BorrowerService
             ->values()
             ->all();
     }
+
     private function formatFiles($files)
     {
         return $files->map(function ($f) {
@@ -253,7 +250,7 @@ class BorrowerService
         ]);
 
         // Create borrower address if provided
-        if (!empty($data['permanentAddress']) && trim($data['permanentAddress']) !== '') {
+        if (! empty($data['permanentAddress']) && trim($data['permanentAddress']) !== '') {
             $borrower->borrowerAddresses()->create([
                 'address' => trim($data['permanentAddress']),
                 'city' => trim($data['city'] ?? ''),
@@ -261,7 +258,7 @@ class BorrowerService
         }
 
         // Create borrower employment if occupation or netPay provided
-        if (!empty($data['occupation']) || !empty($data['netPay'])) {
+        if (! empty($data['occupation']) || ! empty($data['netPay'])) {
             $borrower->borrowerEmployment()->create([
                 'occupation' => $data['occupation'] ?? null,
                 'monthly_income' => $data['netPay'] ?? null,
@@ -269,7 +266,7 @@ class BorrowerService
         }
 
         // Create spouse if spouse data provided
-        if (!empty($data['spouseFirstName']) && !empty($data['spouseLastName'])) {
+        if (! empty($data['spouseFirstName']) && ! empty($data['spouseLastName'])) {
             $borrower->spouse()->create([
                 'first_name' => $data['spouseFirstName'],
                 'last_name' => $data['spouseLastName'],
@@ -283,4 +280,66 @@ class BorrowerService
         return $borrower;
     }
 
+    public function update(Borrower $borrower, array $data): void
+    {
+        DB::transaction(function () use ($borrower, $data) {
+            $borrowerPayload = [];
+
+            if (array_key_exists('email', $data)) {
+                $borrowerPayload['email'] = $data['email'];
+            }
+
+            if (array_key_exists('mobile', $data)) {
+                $borrowerPayload['contact_no'] = $data['mobile'];
+            }
+
+            if (array_key_exists('landline', $data)) {
+                $borrowerPayload['land_line'] = $data['landline'];
+            }
+
+            if (array_key_exists('gender', $data)) {
+                $borrowerPayload['gender'] = $data['gender'];
+            }
+
+            // if (array_key_exists('age', $data)) {
+            //     $borrowerPayload['age'] = $data['age'];
+            // }
+
+            if (! empty($borrowerPayload)) {
+                $borrower->fill($borrowerPayload);
+                $borrower->save();
+            }
+
+            if ($this->hasAddressInput($data)) {
+                $address = $borrower->borrowerAddresses()->firstOrNew([]);
+
+                if (array_key_exists('address', $data)) {
+                    $address->address = $data['address'];
+                }
+
+                if (array_key_exists('city', $data)) {
+                    $address->city = $data['city'];
+                }
+
+                // if (array_key_exists('zipcode', $data)) {
+                //     $address->postal_code = $data['zipcode'];
+                // }
+
+                $address->save();
+            }
+
+            if (array_key_exists('occupation', $data)) {
+                $employment = $borrower->borrowerEmployment()->firstOrNew([]);
+                $employment->occupation = $data['occupation'];
+                $employment->save();
+            }
+        });
+    }
+
+    private function hasAddressInput(array $data): bool
+    {
+        return array_key_exists('address', $data)
+            || array_key_exists('city', $data)
+            || array_key_exists('zipcode', $data);
+    }
 }

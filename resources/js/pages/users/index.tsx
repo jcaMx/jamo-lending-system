@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { Eye, Edit } from 'lucide-react';
+import { Eye, Edit, Trash } from 'lucide-react';
 import React from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -159,6 +159,19 @@ export default function Index({ users }: { users: UsersProp }) {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
+                        <Button
+                          variant="destructive"
+                          className="p-1"
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent row click navigation
+
+                            if (!confirm("Are you sure you want to delete this user?")) return;
+
+                            router.delete(route("users.destroy", user.id));
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))

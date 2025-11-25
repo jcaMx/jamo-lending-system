@@ -7,6 +7,8 @@ use Inertia\Inertia;
 use App\Services\UserService;
 use Spatie\Permission\Models\Role;
 use App\Models\User;
+use Illuminate\Validation\Rule;
+
 
 class UserController extends Controller
 {
@@ -47,12 +49,23 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'fName' => 'required|string',
-            'lName' => 'required|string',
-            'email' => 'required|email',
-            'phone' => 'nullable|string',
-            'role' => 'required|string',
+            'fName' => ['required', 'string', 'max:255'],
+            'lName' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'], // ensures email is unique
+            'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone'], // optional unique phone
+            'role'  => ['required', 'string', Rule::in(['admin','user','collector'])],
+            'userPhoto' => ['nullable', 'file', 'image', 'max:2048'], // optional image upload
         ]);
+
+            // Check if email already exists
+        if ($this->service->emailExists($validated['email'])) {
+            return back()->with('error', 'This email is already in use.');
+        }
+
+        // Check phone if needed
+        if (!empty($validated['phone']) && $this->service->phoneExists($validated['phone'])) {
+            return back()->with('error', 'This phone number is already in use.');
+        }
 
         // Create user through service
         $result = $this->service->createUser($validated);
@@ -61,8 +74,17 @@ class UserController extends Controller
             return back()->with('error', 'User could not be created.');
         }
 
-        return redirect()->route('users.newUserCredentials', $result['user']->id)
-    ->with('rawPassword', $result['password']);
+        // try {
+        //     $result = $this->service->createUser($validated);
+        // } catch (\Exception $e) {
+        //     return back()->with('error', 'User could not be created: ' . $e->getMessage());
+        // }
+        
+
+        return redirect()
+        ->route('users.newUserCredentials', $result['user']->id)
+        ->with('rawPassword', $result['password']);
+    
 
     }
 
@@ -164,4 +186,28 @@ class UserController extends Controller
             ]
         ]);
     }
+    public function destroy($id)
+    {
+        $deleted = $this->service->deleteUser($id);
+
+        if (!$deleted) {
+            return back()->with('error', 'Failed to delete user.');
+        }
+
+        return redirect()->route('users.index')
+            ->with('success', 'User deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $restored = $this->service->restoreUser($id);
+
+        if (!$restored) {
+            return back()->with('error', 'Failed to restore user.');
+        }
+
+        return redirect()->route('users.index')
+            ->with('success', 'User restored successfully.');
+    }
+
 }

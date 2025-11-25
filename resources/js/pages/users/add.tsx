@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { Head, router, Form } from "@inertiajs/react";
+import { Head, router, Form, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { type BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Plus, Trash2 } from 'lucide-react';
+
 
 /* -------------------- Types -------------------- */
 
@@ -19,51 +20,81 @@ interface Collector {
   name: string;
 }
 
+interface AddUserProps {
+  roles?: string[];
+}
+
+interface FormData {
+  fName: string;
+  lName: string;
+  email: string;
+  phone: string;
+  userPhoto?: File | null;
+}
+interface Errors {
+  fName?: string;
+  lName?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  userPhoto?: string;
+}
+
+
 /* -------------------- Component -------------------- */
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Add Users", href: "/users/add" },
 ];
 
-interface AddUserProps {
-  roles?: string[]; // Changed from array of objects to array of strings
-}
 
 export default function Add({ roles = [] }: AddUserProps) {
+  const { errors } = usePage<{ errors: Errors }>().props;
+
   const [selectedRole, setSelectedRole] = useState('');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     fName: '',
     lName: '',
     email: '',
-    phone: '',        // was mobileNumber
+    phone: '',
+    userPhoto: null,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.post('/users', {
-      fName: formData.fName,
-      lName: formData.lName,
-      email: formData.email,
-      phone: formData.phone,   // send to backend
-      role: selectedRole,
-    });
+
+    const data = new FormData();
+    data.append('fName', formData.fName);
+    data.append('lName', formData.lName);
+    data.append('email', formData.email);
+    data.append('phone', formData.phone);
+    data.append('role', selectedRole);
+    if (formData.userPhoto) {
+      data.append('userPhoto', formData.userPhoto);
+    }
+
+    router.post('/users', data);
   };
 
-  /* -------------------- JSX -------------------- */
 
+  /* -------------------- JSX -------------------- */
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add User" />
       <h1 className="text-2xl font-bold mt-7 ml-5">Add User</h1>
-      
+
       <form onSubmit={handleSubmit}>
+        {/* User Profile */}
         <div className="m-4 bg-white rounded-lg shadow border text-black">
           <div className="flex justify-between items-center bg-yellow-50 border-b-2 border-yellow-400 px-4 py-2 rounded-t">
             <h2 className="font-semibold text-lg">User Profile</h2>
           </div>
           <div className="p-4 grid md:grid-cols-2 gap-4">
+            {/* First Name */}
             <div>
-              <label className="block text-sm font-medium mb-1 text-black" htmlFor="fName">First Name</label>
+              <label htmlFor="fName" className="block text-sm font-medium mb-1 text-black">
+                First Name
+              </label>
               <input
                 id="fName"
                 name="fName"
@@ -73,9 +104,14 @@ export default function Add({ roles = [] }: AddUserProps) {
                 className="w-full border rounded px-3 py-2 text-black placeholder-black"
                 required
               />
+              {errors.fName && <p className="text-red-500 text-sm">{errors.fName}</p>}
             </div>
+
+            {/* Last Name */}
             <div>
-              <label className="block text-sm font-medium mb-1 text-black" htmlFor="lName">Last Name</label>
+              <label htmlFor="lName" className="block text-sm font-medium mb-1 text-black">
+                Last Name
+              </label>
               <input
                 id="lName"
                 name="lName"
@@ -85,9 +121,14 @@ export default function Add({ roles = [] }: AddUserProps) {
                 className="w-full border rounded px-3 py-2 text-black placeholder-black"
                 required
               />
+              {errors.lName && <p className="text-red-500 text-sm">{errors.lName}</p>}
             </div>
+
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-1 text-black" htmlFor="email">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium mb-1 text-black">
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
@@ -98,30 +139,43 @@ export default function Add({ roles = [] }: AddUserProps) {
                 className="w-full border rounded px-3 py-2 text-black placeholder-black"
                 required
               />
+              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
+
+            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium mb-1 text-black" htmlFor="mobileNumber">Mobile Number</label>
+              <label htmlFor="phone" className="block text-sm font-medium mb-1 text-black">
+                Mobile Number
+              </label>
               <input
-                id="mobileNumber"
-                name="phone"      // important: send as "phone"
+                id="phone"
+                name="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="Enter mobile number"
                 className="w-full border rounded px-3 py-2 text-black placeholder-black"
               />
+              {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
             </div>
+
+            {/* User Photo */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1 text-black" htmlFor="userPhoto">User Photo</label>
+              <label htmlFor="userPhoto" className="block text-sm font-medium mb-1 text-black">
+                User Photo
+              </label>
               <input
                 type="file"
                 id="userPhoto"
                 name="userPhoto"
                 className="w-full border rounded px-3 py-2"
+                onChange={(e) => setFormData({ ...formData, userPhoto: e.target.files?.[0] || null })}
               />
+              {errors.userPhoto && <p className="text-red-500 text-sm">{errors.userPhoto}</p>}
             </div>
           </div>
         </div>
 
+        {/* User Role */}
         <div className="m-4 bg-white rounded-lg shadow border text-black">
           <div className="flex justify-between items-center bg-yellow-50 border-b-2 border-yellow-400 px-4 py-2 rounded-t">
             <h2 className="font-semibold text-lg">User Role</h2>
@@ -146,15 +200,14 @@ export default function Add({ roles = [] }: AddUserProps) {
                   </option>
                 ))}
               </select>
+              {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
             </div>
           </div>
         </div>
 
+        {/* Submit Button */}
         <div className="flex justify-end m-4">
-          <Button
-            type="submit"
-            className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-amber-600"
-          >
+          <Button type="submit" className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-amber-600">
             Create
           </Button>
         </div>
@@ -162,3 +215,4 @@ export default function Add({ roles = [] }: AddUserProps) {
     </AppLayout>
   );
 }
+

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Borrower;
 use App\Services\BorrowerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Borrower;
-
 
 class BorrowerController extends Controller
 {
@@ -37,39 +36,39 @@ class BorrowerController extends Controller
             'repayments' => $payload['repayments'],
         ]);
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             // Borrower fields
             'borrowerFirstName' => 'required|string|max:255',
-            'borrowerLastName'  => 'required|string|max:255',
-            'gender'            => 'required|string|max:255',
-            'dateOfBirth'       => 'required|date|before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
-            'maritalStatus'     => 'nullable|string|in:Single,Married,Separated,Widowed',
-            'homeOwnership'     => 'nullable|string|in:Owned,Mortgage,Rented',
-            'permanentAddress'  => 'nullable|string|max:255',
-            'city'              => 'nullable|string|max:255',
-            'mobileNumber'      => ['required','regex:/^09\d{9}$/'],
-            'landlineNumber'    => ['nullable','regex:/^0\d{1,2}-\d{7,8}$/'],
-            'email'             => ['required','email'],
-            'occupation'        => 'nullable|string|max:255',
-            'dependentChild'    => 'nullable|integer|min:0',
-            'netPay'            => 'nullable|numeric|min:0',
+            'borrowerLastName' => 'required|string|max:255',
+            'gender' => 'required|string|max:255',
+            'dateOfBirth' => 'required|date|before_or_equal:'.now()->subYears(18)->format('Y-m-d'),
+            'maritalStatus' => 'nullable|string|in:Single,Married,Separated,Widowed',
+            'homeOwnership' => 'nullable|string|in:Owned,Mortgage,Rented',
+            'permanentAddress' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'mobileNumber' => ['required', 'regex:/^09\d{9}$/'],
+            'landlineNumber' => ['nullable', 'regex:/^0\d{1,2}-\d{7,8}$/'],
+            'email' => ['required', 'email'],
+            'occupation' => 'nullable|string|max:255',
+            'dependentChild' => 'nullable|integer|min:0',
+            'netPay' => 'nullable|numeric|min:0',
 
             // Spouse fields (optional)
-            'spouseFirstName'       => 'nullable|string|max:255',
-            'spouseLastName'        => 'nullable|string|max:255',
-            'spouseMobileNumber'    => ['nullable','regex:/^09\d{9}$/'],
-            'spouseOccupation'      => 'nullable|string|max:255',
-            'spousePosition'        => 'nullable|string|max:255',
-            'spouseAgencyAddress'   => 'nullable|string|max:255',
+            'spouseFirstName' => 'nullable|string|max:255',
+            'spouseLastName' => 'nullable|string|max:255',
+            'spouseMobileNumber' => ['nullable', 'regex:/^09\d{9}$/'],
+            'spouseOccupation' => 'nullable|string|max:255',
+            'spousePosition' => 'nullable|string|max:255',
+            'spouseAgencyAddress' => 'nullable|string|max:255',
         ]);
 
         $exists = Borrower::where('first_name', $validated['borrowerFirstName'])
-        ->where('last_name', $validated['borrowerLastName'])
-        ->where('birth_date', $validated['dateOfBirth'])
-        ->exists();
+            ->where('last_name', $validated['borrowerLastName'])
+            ->where('birth_date', $validated['dateOfBirth'])
+            ->exists();
 
         if ($exists) {
             return back()->withErrors(['borrowerFirstName' => 'Borrower already exists.'])->withInput();
@@ -80,7 +79,7 @@ class BorrowerController extends Controller
         return redirect()->route('borrowers.show', $borrower->ID)
             ->with('success', 'Borrower added successfully!');
     }
-    
+
     public function update(Request $request, Borrower $borrower)
     {
         $validated = $request->validate([
@@ -95,7 +94,7 @@ class BorrowerController extends Controller
             'age' => 'nullable|integer|min:0',
         ]);
 
-        $this->service->update($borrower, $validated);
+        $this->borrowerService->update($borrower, $validated);
 
         return redirect()->back()->with('success', 'Borrower updated successfully');
     }

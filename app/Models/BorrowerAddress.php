@@ -15,10 +15,10 @@ class BorrowerAddress extends Model
         'borrower_id',
         'address',
         'city',
+        'postal_code',
     ];
 
     public $timestamps = false;
-
 
     public function borrower()
     {

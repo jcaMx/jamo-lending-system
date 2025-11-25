@@ -1,4 +1,6 @@
 import React from 'react';
+import { SquarePen, Trash } from 'lucide-react';
+import useInlineEdit from '@/hooks/useInlineEdit';
 
 type Collateral = {
   id: number;
@@ -8,176 +10,130 @@ type Collateral = {
   status: 'Pledged' | 'Released' | 'Forfeited' | 'Pending';
   description?: string;
   remarks?: string;
-  land_details?: {
-    titleNo: number;
-    lotNo: number;
-    location: string;
-    areaSize: string;
-  };
-  vehicle_details?: {
-    type: 'Car' | 'Motorcycle' | 'Truck';
-    brand: string;
-    model: string;
-    year_model?: number;
-    plate_no?: string;
-    engine_no?: string;
-    transmission_type?: 'Manual' | 'Automatic';
-    fuel_type?: string;
-  };
-  atm_details?: {
-    bank_name: 'BDO' | 'BPI' | 'LandBank' | 'MetroBank';
-    account_no: string;
-    cardno_4digits: number;
-  };
+  land_details?: Record<string, any>;
+  vehicle_details?: Record<string, any>;
+  atm_details?: Record<string, any>;
 };
 
 interface LoanCollateralTabProps {
   collaterals: Collateral[];
+  onDeleteCollateral?: (id: number) => void;
 }
 
-export default function LoanCollateralTab({ collaterals }: LoanCollateralTabProps) {
-  if (!collaterals.length) {
+export default function LoanCollateralTab({ collaterals, onDeleteCollateral }: LoanCollateralTabProps) {
+  const [editMode, setEditMode] = React.useState(false);
+  const [data, setData] = React.useState(collaterals);
+
+  const { editingField, editedValue, startEditing, setEditedValue, saveField } = useInlineEdit(
+    data,
+    (field, value, collateralId) => {
+      setData((prev) =>
+        prev.map((c) =>
+          c.id === collateralId
+            ? { ...c, [field]: value }
+            : c
+        )
+      );
+    }
+  );
+
+  const renderEditable = (collateralId: number, fieldKey: string, value: any, type: 'number' | 'text' = 'text') => {
+    const fieldName = `${fieldKey}_${collateralId}`;
+    if (editMode && editingField === fieldName) {
+      return (
+        <input
+          type={type}
+          value={editedValue}
+          onChange={(e) => setEditedValue(type === 'number' ? parseFloat(e.target.value) : e.target.value)}
+          onBlur={() => saveField(fieldName, collateralId)}
+          className="border rounded p-1 w-full"
+        />
+      );
+    }
     return (
-      <div className="text-center py-8 text-gray-500">
-        <p>No collaterals registered for this loan.</p>
-      </div>
+      <span
+        className="cursor-pointer"
+        onClick={() => editMode && startEditing(fieldName, value, collateralId)}
+      >
+        {type === 'number' ? Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value || 'N/A'}
+      </span>
     );
-  }
+  };
+
+  const handleDelete = (id: number) => {
+    // Remove from local state
+    setData((prev) => prev.filter((c) => c.id !== id));
+    // Call parent handler if provided
+    onDeleteCollateral?.(id);
+  };
 
   return (
     <div className="space-y-4">
-      {collaterals.map((collateral) => (
-        <div
-          key={collateral.id}
-          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-        >
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
-                  {collateral.type}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    collateral.status === 'Pledged'
-                      ? 'bg-green-100 text-green-800'
-                      : collateral.status === 'Released'
-                      ? 'bg-blue-100 text-blue-800'
-                      : collateral.status === 'Forfeited'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {collateral.status}
-                </span>
-              </div>
-              <h4 className="font-semibold text-gray-900">{collateral.description || 'No description'}</h4>
+      <button
+        onClick={() => setEditMode((s) => !s)}
+        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      >
+        <SquarePen className="w-4 h-4" /> {editMode ? 'Close Edit' : 'Edit Collaterals'}
+      </button>
+
+      {data.map((c) => (
+        <div key={c.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
+          {editMode && (
+            <button
+              className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+              onClick={() => handleDelete(c.id)}
+            >
+              <Trash className="w-4 h-4" />
+            </button>
+          )}
+
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-2 items-center">
+              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">{c.type}</span>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  c.status === 'Pledged'
+                    ? 'bg-green-100 text-green-800'
+                    : c.status === 'Released'
+                    ? 'bg-blue-100 text-blue-800'
+                    : c.status === 'Forfeited'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {c.status}
+              </span>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-gray-900">
-                ₱
-                {parseFloat(String(collateral.estimated_value || 0)).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-              {collateral.appraisal_date && (
-                <p className="text-sm text-gray-500">
-                  Appraised: {new Date(collateral.appraisal_date).toLocaleDateString()}
-                </p>
-              )}
-            </div>
+            <div className="text-right">{renderEditable(c.id, 'estimated_value', c.estimated_value, 'number')}</div>
           </div>
 
-          {collateral.type === 'Land' && collateral.land_details && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Title No:</span>
-                  <p className="font-medium">{collateral.land_details.titleNo}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Lot No:</span>
-                  <p className="font-medium">{collateral.land_details.lotNo}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Location:</span>
-                  <p className="font-medium">{collateral.land_details.location}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Area Size:</span>
-                  <p className="font-medium">{collateral.land_details.areaSize}</p>
-                </div>
-              </div>
+          <div>
+            <span className="font-medium">Description: </span>
+            {renderEditable(c.id, 'description', c.description || '')}
+          </div>
+
+          {c.remarks && (
+            <div className="mt-2">
+              <span className="font-medium">Remarks: </span>
+              {renderEditable(c.id, 'remarks', c.remarks)}
             </div>
           )}
 
-          {collateral.type === 'Vehicle' && collateral.vehicle_details && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Brand/Model:</span>
-                  <p className="font-medium">
-                    {collateral.vehicle_details.brand} {collateral.vehicle_details.model}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Year:</span>
-                  <p className="font-medium">{collateral.vehicle_details.year_model ?? 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Plate No:</span>
-                  <p className="font-medium">{collateral.vehicle_details.plate_no || 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Type:</span>
-                  <p className="font-medium">{collateral.vehicle_details.type}</p>
-                </div>
-                {collateral.vehicle_details.engine_no && (
-                  <div>
-                    <span className="text-gray-500">Engine No:</span>
-                    <p className="font-medium">{collateral.vehicle_details.engine_no}</p>
+          {/* Render details for Land / Vehicle / ATM */}
+          {['land_details', 'vehicle_details', 'atm_details'].map((key) =>
+            c[key as keyof Collateral] ? (
+              <div key={key} className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                {Object.entries(c[key as keyof Collateral]!).map(([k, v]) => (
+                  <div key={k}>
+                    <span className="text-gray-500">{k}:</span>
+                    {renderEditable(c.id, k, v)}
                   </div>
-                )}
-                {collateral.vehicle_details.transmission_type && (
-                  <div>
-                    <span className="text-gray-500">Transmission:</span>
-                    <p className="font-medium">{collateral.vehicle_details.transmission_type}</p>
-                  </div>
-                )}
+                ))}
               </div>
-            </div>
-          )}
-
-          {collateral.type === 'ATM' && collateral.atm_details && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Bank:</span>
-                  <p className="font-medium">{collateral.atm_details.bank_name}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Account No:</span>
-                  <p className="font-medium">{collateral.atm_details.account_no}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Card (Last 4):</span>
-                  <p className="font-medium">****{collateral.atm_details.cardno_4digits}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {collateral.remarks && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Remarks:</span> {collateral.remarks}
-              </p>
-            </div>
+            ) : null
           )}
         </div>
       ))}
     </div>
   );
 }
-
