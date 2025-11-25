@@ -30,12 +30,12 @@ export default function LoanTermsTab({ loan }: LoanTermsTabProps) {
   return (
     
     <div className="bg-white shadow-md rounded-lg border-white overflow-hidden border">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end ">
         <Button className="bg-[#FABF24] text-black">Print Statement</Button>
       </div>
-      <div className="flex justify-end mb-4">
+      {/* <div className="flex justify-end mb-4">
         <Button className="border-2 bg-white border-[#FABF24] text-[#FABF24]">Edit Loan</Button>
-      </div>
+      </div> */}
  
 
 

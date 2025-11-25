@@ -53,6 +53,7 @@ class Borrower extends Model
     protected $casts = [
         'home_ownership' => 'string',
         'status' => 'string',
+        'birth_date' => 'date',
     ];
 
     protected $dates = [

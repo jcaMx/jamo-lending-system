@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { SquarePen } from "lucide-react";
 
+import BorrowerInfoCard from './BorrowerInfoCard';
 import RepaymentsTab from './components/Tabs/RepaymentsTab';
 import LoanTermsTab from './components/Tabs/LoanTermsTab';
 import LoanScheduleTab from './components/Tabs/LoanScheduleTab';
@@ -10,6 +12,7 @@ import LoanCollateralTab from './components/Tabs/LoanCollateralTab';
 import LoanFilesTab from './components/Tabs/LoanFilesTab';
 import CoBorrowerTab from './components/Tabs/CoBorrowerTab';
 import LoanCommentsTab from './components/Tabs/LoanCommentsTab';
+
 
 
 type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
@@ -166,54 +169,8 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={`Borrower: ${borrower.name}`} />
 
-      {/* Borrower Info Card */}
-      <div className="m-4 bg-white p-6 rounded-lg shadow space-y-2 mb-6 border border-gray-100">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden">
-            <img src="https://via.placeholder.com/80" alt={borrower.name} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-2 w-full">
-            {/* Name full width on top */}
-            <div className="col-span-1 md:col-span-3 font-semibold text-lg mb-1">{borrower.name}</div>
-            {/* Column 1 */}
-            <div className="flex flex-col gap-1">
-              <p>
-                <span className="font-medium">Occupation:</span> {borrower.occupation}
-              </p>
-              <p>
-                <span className="font-medium">Gender:</span> {borrower.gender}
-              </p>
-              <p>
-                <span className="font-medium">Age:</span> {borrower.age} yrs old
-              </p>
-            </div>
-            {/* Column 2 */}
-            <div className="flex flex-col gap-1">
-              <p>
-                <span className="font-medium">Address:</span> {borrower.address}
-              </p>
-              <p>
-                <span className="font-medium">City:</span> {borrower.city}
-              </p>
-              <p>
-                <span className="font-medium">Zipcode:</span> {borrower.zipcode}
-              </p>
-            </div>
-            {/* Column 3 */}
-            <div className="flex flex-col gap-1">
-              <p>
-                <span className="font-medium">Email:</span> {borrower.email}
-              </p>
-              <p>
-                <span className="font-medium">Mobile:</span> {borrower.mobile}
-              </p>
-              <p>
-                <span className="font-medium">Landline:</span> {borrower.landline}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Just render the card with the borrower prop */}
+      <BorrowerInfoCard borrower={borrower} />
 
       {/* Active Loan Table */}
       <div className="m-4 overflow-x-auto mb-4">

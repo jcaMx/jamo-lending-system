@@ -49,6 +49,7 @@ class BorrowerController extends Controller
             'maritalStatus'     => 'nullable|string|in:Single,Married,Separated,Widowed',
             'homeOwnership'     => 'nullable|string|in:Owned,Mortgage,Rented',
             'permanentAddress'  => 'nullable|string|max:255',
+            'city'              => 'nullable|string|max:255',
             'mobileNumber'      => ['required','regex:/^09\d{9}$/'],
             'landlineNumber'    => ['nullable','regex:/^0\d{1,2}-\d{7,8}$/'],
             'email'             => ['required','email'],
@@ -78,5 +79,24 @@ class BorrowerController extends Controller
 
         return redirect()->route('borrowers.show', $borrower->ID)
             ->with('success', 'Borrower added successfully!');
+    }
+    
+    public function update(Request $request, Borrower $borrower)
+    {
+        $validated = $request->validate([
+            'address' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'zipcode' => 'nullable|string|max:10',
+            'email' => 'nullable|email|max:100',
+            'mobile' => 'nullable|string|max:20',
+            'landline' => 'nullable|string|max:20',
+            'occupation' => 'nullable|string|max:50',
+            'gender' => 'nullable|string|in:Male,Female',
+            'age' => 'nullable|integer|min:0',
+        ]);
+
+        $this->service->update($borrower, $validated);
+
+        return redirect()->back()->with('success', 'Borrower updated successfully');
     }
 }
