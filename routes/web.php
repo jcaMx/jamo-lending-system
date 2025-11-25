@@ -27,7 +27,7 @@ Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
 Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
 Route::get('/', fn() => Inertia::render('index'))->name('home');
 
-Route::get('/apply', fn() => Inertia::render('BorrowerApplication'))->name('apply');
+Route::get('/applynow', fn() => Inertia::render('BorrowerApplication'))->name('apply');
 
 // Guest-only routes
 Route::middleware('guest')->group(function () {

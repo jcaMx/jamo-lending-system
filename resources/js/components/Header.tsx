@@ -46,11 +46,7 @@ export default function Header() {
   );
 
   return (
-<<<<<<< HEAD
-    <header className="bg-gradient-yellow py-4 px-6 md:px-12">
-=======
     <header className="bg-[#FABF24] py-4 px-6 md:px-12">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -68,32 +64,18 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <Link href="/dashboard">
-<<<<<<< HEAD
-              <Button className="bg-white hover:bg-white/90 text-golden px-6">
-=======
               <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                 Dashboard
               </Button>
             </Link>
           ) : (
             <>
               <Link href="/login">
-<<<<<<< HEAD
-                <Button className="bg-white hover:bg-white/90 text-golden px-6">
-=======
                 <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                   Log in
                 </Button>
               </Link>
               <Link href="/register">
-                <Button
-                  variant="outline"
-                  className="text-white border-white hover:bg-white/10"
-                >
-                  Register
-                </Button>
               </Link>
             </>
           )}
@@ -116,9 +98,6 @@ export default function Header() {
                   <>
                     <Link href="/login" onClick={() => setOpen(false)}>
                       Log in
-                    </Link>
-                    <Link href="/register" onClick={() => setOpen(false)}>
-                      Register
                     </Link>
                   </>
                 )}

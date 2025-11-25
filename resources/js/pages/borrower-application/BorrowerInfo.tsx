@@ -311,7 +311,6 @@ const BorrowerInfo = ({ onNext }: BorrowerInfoProps) => {
           {/* Navigation buttons */}
           <div className="flex justify-between gap-4">
             <Link href="/">
-            <Link href="/">
               <Button variant="outline" className="px-8">
                 Back to Home
               </Button>

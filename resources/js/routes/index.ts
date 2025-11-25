@@ -269,7 +269,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     home.form = homeForm
 /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
 export const apply = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: apply.url(options),
@@ -278,12 +278,12 @@ export const apply = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 apply.definition = {
     methods: ["get","head"],
-    url: '/apply',
+    url: '/applynow',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
 apply.url = (options?: RouteQueryOptions) => {
     return apply.definition.url + queryParams(options)
@@ -291,7 +291,7 @@ apply.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
 apply.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: apply.url(options),
@@ -299,7 +299,7 @@ apply.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
 apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: apply.url(options),
@@ -308,7 +308,7 @@ apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
     const applyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: apply.url(options),
@@ -317,7 +317,7 @@ apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
         applyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: apply.url(options),
@@ -325,7 +325,7 @@ apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
  * @see routes/web.php:30
- * @route '/apply'
+ * @route '/applynow'
  */
         applyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: apply.url({

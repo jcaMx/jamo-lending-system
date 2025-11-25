@@ -41,22 +41,13 @@ const Hero = () => {
 
           <div className="flex gap-4">
             {/* ✅ Inertia navigation */}
-<<<<<<< HEAD
-            <Link href="/apply">
-              <Button className="bg-yellow-400 hover:bg-golden-dark text-black px-8">
-=======
             <Link href="/applynow">
               <Button className="bg-[#FABF24] hover:bg-[#f8b80f] text-white px-8">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                 Apply Now
               </Button>
             </Link>
             <Link href="/contact">
-<<<<<<< HEAD
-              <Button variant="link" className="text-foreground">
-=======
               <Button variant="link" className="text-foreground border-2 border-[#FABF24] hover:bg-[#FABF24] hover:text-white px-4">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                 Contact Us
               </Button>
             </Link>

@@ -141,11 +141,7 @@ export function AppSidebar() {
   };
 
   return (
-<<<<<<< HEAD
     <Sidebar collapsible="none" variant="floating" className="bg-[#192132] text-white w-64 h-screen flex flex-col">
-=======
-    <Sidebar collapsible="none" variant="floating" className="bg-[#192132] text-white w-64 min-h-screen overflow-y-auto">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
       
       <SidebarHeader className="bg-[#192132] text-white">
         <Link href={dashboard()}>
@@ -153,12 +149,8 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-<<<<<<< HEAD
         <SidebarContent className="px-2 bg-[#192132] text-white flex-1 overflow-y-auto">
         
-=======
-      <SidebarContent className="px-2 bg-[#192132] text-white">
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
         <div className="space-y-2">
           {mainNavItems.filter(canView).map(item => {
             const Icon = item.icon;
@@ -174,13 +166,8 @@ export function AppSidebar() {
                   <button
                     onClick={() => toggleMenu(item.title)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition duration-200
-<<<<<<< HEAD
                       ${hasActiveChild ? "bg-linear-to-r from-[#3c4a6a] to-[#192132]" :
                         "hover:bg-linear-to-r hover:from-[#2f3b57] hover:to-[#192132]"}`}
-=======
-                      ${hasActiveChild ? "bg-gradient-to-r from-[#3c4a6a] to-[#192132]" :
-                        "hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]"}`}
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                   >
                     <div className="flex items-center gap-3">
                       {Icon && <Icon className="w-5 h-5" />}
@@ -203,13 +190,8 @@ export function AppSidebar() {
                             href={sub.href}
                             className={`block px-3 py-1.5 rounded-lg text-sm transition duration-200 relative
                               ${active
-<<<<<<< HEAD
                                 ? "bg-linear-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5"
                                 : "hover:bg-linear-to-r hover:from-[#030916] hover:to-[#192132]"
-=======
-                                ? "bg-gradient-to-r from-[#3c4a6a] to-[#192132] border-l-4 border-gray-400 pl-5"
-                                : "hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]"
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                               }`}
                           >
                             {sub.title}
@@ -231,13 +213,8 @@ export function AppSidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition duration-200
                   ${isActiveParent
-<<<<<<< HEAD
                     ? "bg-linear-to-r from-[#3c4a6a] to-[#192132]"
                     : "hover:bg-linear-to-r hover:from-[#2f3b57] hover:to-[#192132]"
-=======
-                    ? "bg-gradient-to-r from-[#3c4a6a] to-[#192132]"
-                    : "hover:bg-gradient-to-r hover:from-[#2f3b57] hover:to-[#192132]"
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
                   }`}
               >
                 {Icon && <Icon className="w-5 h-5" />}

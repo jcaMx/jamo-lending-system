@@ -26,7 +26,7 @@ interface ConfirmationProps {
 
 const Confirmation = ({ onPrev, application }: ConfirmationProps) => {
   const { data, setData, post, errors } = useForm({
-    payment_method: application.payment_method || "",
+    payment_method: application?.payment_method || "",
   });
 
   const handleSubmit = () => {
