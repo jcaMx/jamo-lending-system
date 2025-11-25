@@ -1,0 +1,477 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  
+  /* Map theme tokens to Tailwind colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  
+  /* Custom theme colors */
+  --color-golden: var(--golden);
+  --color-navy: var(--navy);
+  --color-cream: var(--cream);
+}
+
+:root {
+  /* Base colors in HSL format */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --border: 0 0% 89.8%;
+  
+  /* Golden/Orange primary colors */
+  --primary: 38 92% 50%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 36 45% 92%;
+  --secondary-foreground: 0 0% 9%;
+  
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  
+  --accent: 36 45% 92%;
+  --accent-foreground: 0 0% 9%;
+  
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --radius: 0.625rem;
+  
+  /* Custom theme colors for navbar/footer */
+  /* Golden set to #D97706 (HSL approx: 33 95% 44%) */
+  --golden: 33 95% 44%;
+  --golden-light: 36 98% 58%;
+  --golden-dark: 30 85% 36%;
+  --navy: 215 28% 17%;
+  --navy-light: 215 28% 25%;
+  --cream: 36 44% 94%;
+  --cream-dark: 36 35% 88%;
+}
+
+.dark {
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --border: 0 0% 14.9%;
+  
+  --primary: 38 92% 50%;
+  --primary-foreground: 0 0% 9%;
+  
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  
+  --accent: 0 0% 14.9%;
+  --accent-foreground: 0 0% 98%;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Custom Color Utilities */
+  .bg-golden {
+    background-color: hsl(var(--golden));
+  }
+  
+  .bg-golden-light {
+    background-color: hsl(var(--golden-light));
+  }
+  
+  .bg-golden-dark {
+    background-color: hsl(var(--golden-dark));
+  }
+  
+  .bg-navy {
+    background-color: hsl(var(--navy));
+  }
+  
+  .bg-navy-light {
+    background-color: hsl(var(--navy-light));
+  }
+  
+  .bg-cream {
+    background-color: hsl(var(--cream));
+  }
+  
+  .bg-cream-dark {
+    background-color: hsl(var(--cream-dark));
+  }
+  
+  .text-golden {
+    color: hsl(var(--golden));
+  }
+  
+  .text-golden-light {
+    color: hsl(var(--golden-light));
+  }
+  
+  .text-golden-dark {
+    color: hsl(var(--golden-dark));
+  }
+  
+  .text-navy {
+    color: hsl(var(--navy));
+  }
+  
+  .text-cream {
+    color: hsl(var(--cream));
+  }
+  
+  .border-golden {
+    border-color: hsl(var(--golden));
+  }
+  
+  .border-navy {
+    border-color: hsl(var(--navy));
+  }
+  
+  /* Gradient Utilities */
+  .bg-gradient-golden {
+    background: linear-gradient(135deg, hsl(var(--golden)), hsl(var(--golden-light)));
+  }
+  
+  .bg-gradient-hero {
+    background: linear-gradient(to right, hsl(var(--cream)), hsl(var(--cream-dark)));
+  }
+  
+  .bg-gradient-navy {
+    background: linear-gradient(180deg, hsl(var(--navy)), hsl(var(--navy-light)));
+  }
+  
+  /* Card Hover Effects with Orange Border */
+  .card-hover-border {
+    border: 2px solid hsl(var(--border));
+    transition: all 0.3s ease;
+  }
+  
+  .card-hover-border:hover {
+    border-color: hsl(var(--golden));
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Mission/Values Card Style */
+  .mission-card {
+    background-color: hsl(var(--card));
+    border-radius: 0.75rem; /* rounded-xl approx */
+    padding: 2rem; /* p-8 */
+    transition: all 0.3s ease; /* transition-all duration-300 */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
+
+.mission-card:hover {
+  border-color: hsl(var(--golden));
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+  
+  /* Icon Box Style */
+  .icon-box {
+    width: 3.5rem;
+    height: 3.5rem;
+    background-color: hsl(var(--golden));
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Testimonial Card Style */
+  .testimonial-card {
+    background: white;
+    border: 3px solid hsl(180 100% 50%);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    position: relative;
+  }
+  
+  .testimonial-quote {
+    font-size: 4rem;
+    line-height: 1;
+    color: hsl(var(--cream-dark));
+    font-family: Georgia, serif;
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+  }
+  
+  /* Star Rating */
+  .star-rating {
+    color: hsl(var(--golden));
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Contact Info Box */
+  .contact-info-box {
+    background: white;
+    border: 2px solid hsl(var(--golden));
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .contact-info-box:hover {
+    background: hsl(var(--cream));
+    transform: translateX(5px);
+  }
+  
+  .contact-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: hsl(var(--golden));
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+  
+  /* Animation Utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-in forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+  
+  .animate-fade-in-down {
+    animation: fadeInDown 0.8s ease-out forwards;
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-out forwards;
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-out forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.8s ease-out forwards;
+  }
+  
+  /* Animation delays */
+  .animation-delay-100 {
+    animation-delay: 0.1s;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .hover-golden {
+    transition: all 0.3s ease;
+  }
+  
+  .hover-golden:hover {
+    background-color: hsl(var(--golden-light));
+    transform: scale(1.05);
+  }
+  
+  /* Glassmorphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Card shadow */
+  .card-shadow {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Section Title Underline */
+  .section-title {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 0.5rem;
+  }
+  
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 3px;
+    background-color: hsl(var(--golden));
+  }
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--cream));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--golden));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--golden-dark));
+}

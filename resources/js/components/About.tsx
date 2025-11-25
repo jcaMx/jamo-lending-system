@@ -71,14 +71,17 @@ const About = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((value, index) => (
-            <div 
-              key={index} 
-              className="bg-white p-6 rounded-lg border-2 border-golden/20 hover:border-golden transition-colors"
+            <div
+              key={index}
+              className="bg-white p-6 rounded-lg border-2 border-transparent hover:border-[#D97706] transition-colors"
             >
-              <div className="w-12 h-12 bg-golden rounded-lg flex items-center justify-center mb-4">
-                <value.icon className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-golden rounded-lg flex items-center justify-center">
+                  <value.icon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="font-bold text-lg m-0">{value.title}</h4>
               </div>
-              <h4 className="font-bold text-lg mb-2">{value.title}</h4>
+
               <p className="text-sm text-muted-foreground">{value.description}</p>
             </div>
           ))}

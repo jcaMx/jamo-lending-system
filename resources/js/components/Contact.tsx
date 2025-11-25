@@ -86,14 +86,14 @@ const Contact = () => {
               <div>
                 <Textarea placeholder="Message" rows={6} className="bg-cream/50" />
               </div>
-              <Button className="w-full bg-golden hover:bg-golden-dark text-white">
+              <Button className="w-full border-2 border-[#D97706] bg-white text-[#D97706] hover:bg-[#D97706] hover:text-white">
                 Send Message
               </Button>
             </form>
           </div>
         </div>
 
-        <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+        <div className="aspect-video bg-muted rounded-lg overflow-hidden max-h-[360px]">
           {/* Placeholder for map - user can integrate actual map */}
           <div className="w-full h-full bg-muted flex items-center justify-center">
             <span className="text-muted-foreground">Map Location Here</span>

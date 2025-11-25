@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { NavLink as RouterNavLink, NavLinkProps } from "react-router-dom";
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,30 @@ const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
         }
         {...props}
       />
+=======
+import { Link } from "@inertiajs/react";
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
+
+interface NavLinkProps {
+  href: string;
+  className?: string;
+  activeClassName?: string;
+  children: React.ReactNode;
+}
+
+const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(
+  ({ className, activeClassName, href, children, ...props }, ref) => {
+    return (
+      <Link
+        href={href}
+        ref={ref}
+        className={cn(className)}
+        {...props}
+      >
+        {children}
+      </Link>
+>>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
     );
   },
 );

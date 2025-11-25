@@ -119,7 +119,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     });
-
 });
 
 require __DIR__.'/settings.php';
