@@ -6,6 +6,8 @@ use App\Http\Controllers\BorrowerController;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\DashboardController;
+
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RepaymentController;
@@ -21,6 +23,9 @@ use App\Http\Controllers\ApplicationController;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
+Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
+Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
 Route::get('/', fn() => Inertia::render('index'))->name('home');
 
 Route::get('/apply', fn() => Inertia::render('BorrowerApplication'))->name('apply');

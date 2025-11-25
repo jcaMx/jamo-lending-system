@@ -4,36 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Borrower;
 
 class DashboardController extends Controller
 {
     public function stats() {
+        $totalBorrowers = \App\Models\Borrower::count(); // Count all borrowers
+
         return response()->json([
-            'registered_borrowers' => DB::table('borrowers')->count(),
-            'total_loans' => DB::table('loans')->sum('amount'),
-            'total_collections' => DB::table('payments')->sum('amount'),
-            'to_review_loans' => DB::table('loans')->where('status', 'pending')->count(),
-            'open_loans' => DB::table('loans')->where('status', 'open')->count(),
-            'fully_paid' => DB::table('loans')->where('status', 'paid')->count(),
-            'restructured' => DB::table('loans')->where('status', 'restructured')->count(),
-            'defaulted' => DB::table('loans')->where('status', 'defaulted')->count(),
+            'totalBorrowers' => $totalBorrowers,
+
         ]);
     }
 
-    public function loans() {
-        // Example: sum of loans grouped by month
-        return DB::table('loans')
-            ->selectRaw("MONTH(created_at) as month, SUM(amount) as value")
-            ->groupByRaw("MONTH(created_at)")
-            ->orderBy("month")
-            ->get();
-    }
+    public function loans()
+{
+    $loans = Loan::selectRaw('MONTHNAME(created_at) as month, COUNT(*) as value')
+        ->groupBy('month')
+        ->orderByRaw('MIN(created_at)')
+        ->get();
 
-    public function collections() {
-        return DB::table('payments')
-            ->selectRaw("MONTH(created_at) as month, SUM(amount) as value")
-            ->groupByRaw("MONTH(created_at)")
-            ->orderBy("month")
-            ->get();
-    }
+    return response()->json($loans);
+}
+
+
+    public function collections()
+{
+    $collections = Collection::selectRaw('MONTHNAME(created_at) as month, SUM(amount) as value')
+        ->groupBy('month')
+        ->orderByRaw('MIN(created_at)')
+        ->get();
+
+    return response()->json($collections);
+}
+
+
+    
 }

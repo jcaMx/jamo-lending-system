@@ -43,7 +43,7 @@
     ];
 
     protected $casts = [
-      'homeOwnerShip' => 'string',
+      'home_ownerShip' => 'string',
       'status' => 'string'
     ];
 
