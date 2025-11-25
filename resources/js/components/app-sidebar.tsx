@@ -141,7 +141,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="none" variant="floating" className="bg-[#192132] text-white w-64 min-h-screen overflow-y-auto">
+    <Sidebar collapsible="none" variant="floating" className="bg-[#192132] text-white w-64 h-screen flex flex-col">
       
       <SidebarHeader className="bg-[#192132] text-white">
         <Link href={dashboard()}>
@@ -149,7 +149,8 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 bg-[#192132] text-white">
+        <SidebarContent className="px-2 bg-[#192132] text-white flex-1 overflow-y-auto">
+        
         <div className="space-y-2">
           {mainNavItems.filter(canView).map(item => {
             const Icon = item.icon;

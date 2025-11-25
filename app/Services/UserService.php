@@ -9,7 +9,7 @@ use App\Models\UserProfile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-
+use App\Notifications\NotifyUser;
 
 class UserService
 {

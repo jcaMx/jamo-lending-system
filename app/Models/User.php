@@ -8,6 +8,8 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\UserProfile; // if not already imported
+use App\Models\User; // if not already imported
+use App\Notifications\NotifyUser; // if not already imported
 
 class User extends Authenticatable
 {

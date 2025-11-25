@@ -19,7 +19,7 @@ class NotifyUser extends Notification
     {
         $this->message = $message;
         $this->email = $email;
-        $this->sms = $sms;
+        // $this->sms = $sms;
     }
 
     /**
@@ -33,9 +33,9 @@ class NotifyUser extends Notification
             $channels[] = 'mail';
         }
 
-        if ($this->sms) {
-            $channels[] = 'vonage';
-        }
+        // if ($this->sms) {
+        //     $channels[] = 'vonage';
+        // }
 
         return $channels;
     }
@@ -53,11 +53,11 @@ class NotifyUser extends Notification
     /**
      * SMS Notification
      */
-    public function toVonage(object $notifiable): VonageMessage
-    {
-        return (new VonageMessage)
-            ->content($this->sms);
-    }
+    // public function toVonage(object $notifiable): VonageMessage
+    // {
+    //     return (new VonageMessage)
+    //         ->content($this->sms);
+    // }
 
     public function toArray(object $notifiable): array
     {
