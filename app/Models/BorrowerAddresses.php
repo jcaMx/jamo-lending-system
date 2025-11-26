@@ -1,15 +1,17 @@
 <?php
-  namespace app\Models;
+  namespace App\Models;
   use Illuminate\Database\Eloquent\Model;
 
   class BorrowerAddresses extends Model {
 
+    public $timestamps = false;
     protected $table = 'borrower_addresses';
     protected $primaryKey = 'ID';
 
     protected $fillable = [
 
       'address',
+      'city',
       'borrower_id'
       
     ];

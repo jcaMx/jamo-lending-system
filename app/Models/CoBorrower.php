@@ -4,6 +4,7 @@
 
   class CoBorrower extends Model {
 
+    public $timestamps = false;
     protected $table = 'co_borrower';
     protected $primaryKey = 'ID';
 

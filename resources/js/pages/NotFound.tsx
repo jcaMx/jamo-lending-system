@@ -1,12 +1,11 @@
-import { useLocation } from "react-router-dom";
+import { usePage } from "@inertiajs/react";
 import { useEffect } from "react";
-
 const NotFound = () => {
-  const location = useLocation();
+  const { url } = usePage(); // Inertia gives you the current URL
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+    console.error("404 Error: User attempted to access non-existent route:", url);
+  }, [url]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">

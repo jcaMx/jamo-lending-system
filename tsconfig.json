@@ -16,10 +16,10 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
+    "baseUrl": "resources/js",
 
     "paths": {
-      "@/*": ["resources/js/*", "src/*"]   // ✅ alias covers both app and landing
+      "@/*": ["resources/js/*", "src/*", "*"]   // ✅ alias covers both app and landing
     },
 
     "jsx": "react-jsx"

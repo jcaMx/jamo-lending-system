@@ -6,37 +6,32 @@
 
     protected $table = 'files';
     protected $primaryKey = 'ID';
-    protected $timestamps = true;
+    public $timestamps = true;
 
     protected $fillable = [
 
-      'fileType',
-      'fileName',
-      'filePath',
-      'uploadedAt',
+      'file_type',
+      'file_name',
+      'file_path',
+      'uploaded_at',
       'description',
-      'borrowerID',
-      'collateralID'
+      'borrower_id',
+      'collateral_id'
 
     ];
 
     protected $casts = [
 
-      'fileTy[e' => 'string'
+      'file_type' => 'string'
 
     ];
 
-    const fileType_idDocuments = 'id_document';
-    const fileType_Photo = 'photo';
-    const fileType_Contract = 'Contract';
-    const fileType_Collateral = 'Collateral';
-
     public function collateral() {
-      return $this->belongsTo(Collateral::class, 'collateralID', 'ID');
+      return $this->belongsTo(Collateral::class, 'collateral_id', 'ID');
     }
 
     public function borrower() {
-      return $this->belongsTo(Borrower::class, 'borrowerID', 'ID');
+      return $this->belongsTo(Borrower::class, 'borrower_id', 'ID');
     }
 
   }

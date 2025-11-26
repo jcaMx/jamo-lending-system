@@ -4,6 +4,8 @@
 
   class BorrowerIds extends Model {
 
+
+    public $timestamps = false;
     protected $table = 'borrower_Ids';
     protected $primaryKey = 'ID';
 

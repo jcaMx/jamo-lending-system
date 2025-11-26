@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
+import { LoanApplicationsPageProps } from '@/types/loan'; // <-- import the interface
+import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -11,54 +13,30 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function ViewLoanApplications() {
+  const { props } = usePage<LoanApplicationsPageProps>();
+  const loanApplications = props.loanApplications || [];
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [loanApplications] = useState([
-    {
-      borrower: 'Ash Alainne',
-      loanNo: 'A100365',
-      principal: '1,000',
-      interest: '9% per month',
-      term: '6 months',
-      repayment: 'Biweekly',
-      interestType: 'Fixed',
-      hasCollateral: true,
-      hasCoborrower: false,
-    },
-    {
-      borrower: 'John Doe',
-      loanNo: 'A100366',
-      principal: '2,000',
-      interest: '8% per month',
-      term: '12 months',
-      repayment: 'Monthly',
-      interestType: 'Variable',
-      hasCollateral: false,
-      hasCoborrower: true,
-    },
-    {
-      borrower: 'Jane Smith',
-      loanNo: 'A100367',
-      principal: '1,500',
-      interest: '10% per month',
-      term: '6 months',
-      repayment: 'Biweekly',
-      interestType: 'Fixed',
-      hasCollateral: true,
-      hasCoborrower: true,
-    },
-  ]);
+  const filteredApplications = loanApplications
+    .filter((loan) => loan.status === 'Pending') // Only Pending loans
+    .filter((loan) =>
+      `${loan.borrower.first_name} ${loan.borrower.last_name}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+    );
 
-  const filteredApplications = loanApplications.filter((loan) =>
-    loan.borrower.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleApprove = (loanNo: string) => {
-    console.log(`Approved Loan: ${loanNo}`);
+  const handleApprove = (loanId: number) => {
+    router.post(route('loans.approve', loanId), {}, {
+      onSuccess: () => alert(`Loan ${loanId} approved successfully!`),
+      onError: (errors) => console.error(errors),
+    });
   };
 
-  const handleReject = (loanNo: string) => {
-    console.log(`Rejected Loan: ${loanNo}`);
+  const handleReject = (loanId: number) => {
+    router.post(route('loans.reject', loanId), {}, {
+      onSuccess: () => alert(`Loan ${loanId} rejected successfully!`),
+      onError: (errors) => console.error(errors),
+    });
   };
 
   return (
@@ -105,26 +83,30 @@ export default function ViewLoanApplications() {
             </tr>
           </thead>
           <tbody className="text-sm text-gray-800">
-            {filteredApplications.map((loan, idx) => (
-              <tr key={idx} className="border-b last:border-none">
-                <td className="px-4 py-2">{loan.borrower}</td>
-                <td className="px-4 py-2">{loan.loanNo}</td>
-                <td className="px-4 py-2">{loan.principal}</td>
-                <td className="px-4 py-2">{loan.interest}</td>
-                <td className="px-4 py-2">{loan.term}</td>
-                <td className="px-4 py-2">{loan.repayment}</td>
-                <td className="px-4 py-2">{loan.interestType}</td>
-                <td className="px-4 py-2">{loan.hasCollateral ? 'Yes' : 'No'}</td>
-                <td className="px-4 py-2">{loan.hasCoborrower ? 'Yes' : 'No'}</td>
+            {filteredApplications.map((loan) => (
+              <tr key={loan.id} className="border-b last:border-none">
+                <td className="px-4 py-2">
+                  {loan.borrower.first_name} {loan.borrower.last_name}
+                </td>
+                <td className="px-4 py-2">{loan.id}</td>
+                <td className="px-4 py-2">{loan.principal_amount}</td>
+                <td className="px-4 py-2">{loan.interest_rate}%</td>
+                <td className="px-4 py-2">{loan.term_months} months</td>
+                <td className="px-4 py-2">{loan.repayment_frequency}</td>
+                <td className="px-4 py-2">{loan.interest_type}</td>
+                <td className="px-4 py-2">{loan.collateral ? 'Yes' : 'No'}</td>
+                <td className="px-4 py-2">
+                  {loan.borrower.co_borrowers?.length ? 'Yes' : 'No'}
+                </td>
                 <td className="px-4 py-2 flex gap-2">
                   <Button
-                    onClick={() => handleApprove(loan.loanNo)}
+                    onClick={() => handleApprove(loan.id)}
                     className="bg-green-600 text-white hover:bg-green-700"
                   >
                     Approve
                   </Button>
                   <Button
-                    onClick={() => handleReject(loan.loanNo)}
+                    onClick={() => handleReject(loan.id)}
                     className="bg-red-600 text-white hover:bg-red-700"
                   >
                     Reject

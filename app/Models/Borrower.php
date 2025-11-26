@@ -22,6 +22,8 @@
 
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'borrower';
     protected $primaryKey = 'ID';
     protected $fillable = [
@@ -31,8 +33,6 @@
       'gender',
       'email',
       'contact_no',
-      'city',
-      'address',
       'land_line',
       'marital_status',
       'numof_dependentchild',
@@ -68,8 +68,8 @@
       return $this->hasOne(BorrowerIds::class, 'borrower_id', 'ID');
     }
 
-    public function coBorrower() {
-      return $this->hasOne(CoBorrower::class, 'borrower_id', 'ID');
+    public function coBorrowers() {
+      return $this->hasMany(CoBorrower::class, 'borrower_id', 'ID');
     }
   
     public function files() {
