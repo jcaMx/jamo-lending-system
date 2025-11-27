@@ -2,29 +2,13 @@ import React, { useState, useMemo } from "react";
 import { Head, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { type BreadcrumbItem } from "@/types";
-import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { set } from "react-hook-form";
 
-type Borrower = {
-  id: number;
-  name: string;
-  loanNo: string;
-};
+type Borrower = { id: number; name: string; loanNo: string };
+type Collector = { id: number; name: string };
+type Props = { borrowers: Borrower[]; collectors: Collector[] };
 
-type Collector = {
-  id: number;
-  name: string;
-};
-
-type Props = {
-  borrowers: Borrower[];
-  collectors: Collector[];
-};
-
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: "Repayments", href: "/repayments/add" },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: "Repayments", href: "/repayments/add" }];
 
 export default function Add({ borrowers: initialBorrowers, collectors: initialCollectors }: Props) {
   const [search, setSearch] = useState("");
@@ -34,20 +18,15 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
   const [collectedBy, setCollectedBy] = useState("");
   const [collectionDate, setCollectionDate] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
+  const [submittedRefs, setSubmittedRefs] = useState<string[]>([]); // store submitted reference numbers
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const filteredBorrowers = useMemo(() => {
-    return initialBorrowers.filter((b) =>
-      b.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, initialBorrowers]);
+  const filteredBorrowers = useMemo(
+    () => initialBorrowers.filter((b) => b.name.toLowerCase().includes(search.toLowerCase())),
+    [search, initialBorrowers]
+  );
 
-  const collectorOptions: Collector[] = useMemo(() => {
-  return initialCollectors.map((c) => ({
-      id: c.id,
-      name: c.name
-    }));
-  }, [initialCollectors]);
-
+  const collectorOptions: Collector[] = useMemo(() => initialCollectors, [initialCollectors]);
 
   const handleSelectBorrower = (b: Borrower) => {
     setSelectedBorrower(b);
@@ -57,16 +36,22 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validation checks
     if (!selectedBorrower) return alert("Please select a borrower.");
     if (!collectedBy) return alert("Please select a collector.");
     if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
+    if (Number(amount) > 10000000) return alert("Amount cannot exceed 10,000,000.");
     if (!method) return alert("Please select a payment method.");
     if (!collectionDate) return alert("Please select a collection date.");
 
-    const collector = collectorOptions.find((c) => String(c.id) === String(collectedBy));
+    if (referenceNumber && submittedRefs.includes(referenceNumber)) {
+      return alert("This reference number has already been used.");
+    }
 
+    const collector = collectorOptions.find((c) => String(c.id) === String(collectedBy));
     if (!collector) return alert("Collector not found");
 
+    // Post data
     router.post("/repayments/store", {
       borrower_id: selectedBorrower.id,
       loanNo: selectedBorrower.loanNo,
@@ -76,6 +61,21 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
       collectionDate,
       referenceNumber: referenceNumber || null,
     });
+
+    // Mark reference as submitted if provided
+    if (referenceNumber) setSubmittedRefs((prev) => [...prev, referenceNumber]);
+
+    // Show success message
+    setSuccessMessage("Payment submitted successfully!");
+
+    // Reset form
+    setSelectedBorrower(null);
+    setSearch("");
+    setAmount("");
+    setMethod("");
+    setCollectedBy("");
+    setCollectionDate("");
+    setReferenceNumber("");
   };
 
   return (
@@ -93,7 +93,6 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
               {/* Borrower Search */}
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Borrower</label>
-
                 <div className="relative">
                   <input
                     type="text"
@@ -118,9 +117,7 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                         </div>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-gray-500">
-                        No results found
-                      </div>
+                      <div className="px-3 py-2 text-gray-500">No results found</div>
                     )}
                   </div>
                 )}
@@ -143,7 +140,14 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                 <input
                   type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => {
+                    let value = parseFloat(e.target.value);
+                    if (isNaN(value)) value = 0;
+                    if (value < 0) value = 0;
+                    if (value > 10000000) value = 10000000;
+                    setAmount(value.toString());
+                  }}
+                  placeholder="Enter amount"
                   className="w-full border rounded-lg p-2"
                 />
               </div>
@@ -163,12 +167,10 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                 </select>
               </div>
 
-              {/* Reference Number - Conditional */}
+              {/* Reference Number */}
               {(method === "Gcash" || method === "Bank Transfer" || method === "Cash") && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Reference Number
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Reference Number</label>
                   <input
                     value={referenceNumber}
                     onChange={(e) => setReferenceNumber(e.target.value)}
@@ -197,9 +199,7 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
 
               {/* Collection Date */}
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Collection Date
-                </label>
+                <label className="block text-sm font-medium mb-1">Collection Date</label>
                 <input
                   type="date"
                   value={collectionDate}
@@ -210,10 +210,16 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
             </div>
           </section>
 
-          <div className="flex justify-end">
+          {successMessage && (
+            <div className="bg-green-100 text-green-800 p-3 rounded-md">{successMessage}</div>
+          )}
 
-            <button type="submit" className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-amber-600 " >
-               Submit Repayment
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-amber-600"
+            >
+              Submit Repayment
             </button>
           </div>
         </form>

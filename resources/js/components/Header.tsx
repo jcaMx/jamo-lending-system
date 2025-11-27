@@ -50,9 +50,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-sm font-bold text-white">LOGO</span>
-          </div>
+          <img src="/images/jamo-logo-2.png" alt="Jamo Logo" className="h-12 w-auto max-w-[10rem]object-contain" />
+
         </Link>
 
         {/* Desktop nav */}

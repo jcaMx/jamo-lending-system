@@ -22,10 +22,14 @@ const Footer: FC = () => {
           {/* Logo + socials */}
           <div>
             <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4 justify-center md:justify-start">
-              <div className="w-10 h-10 rounded-full bg-golden flex items-center justify-center mx-auto md:mx-0">
-                <span className="text-sm font-bold text-white">LOGO</span>
+              <div className="justify-center mx-auto md:mx-0">
+                        {/* Logo */}
+                <Link href="/" className="flex items-center gap-2">
+                  <img src="/images/jamo-logo-1.png" alt="Jamo Logo" className="h-12 w-auto max-w-[10rem]object-contain" />
+
+                </Link>
               </div>
-              <span className="font-bold text-lg">JAMO Lending Corp</span>
+              {/* <span className="font-bold text-lg">JAMO Lending Corp</span> */}
             </div>
             <p className="text-sm text-white/70 mb-4">
               Your trusted partner for finance and lending solutions. Experience a seamless lending future with us.

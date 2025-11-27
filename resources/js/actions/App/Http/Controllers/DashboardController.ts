@@ -79,7 +79,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     stats.form = statsForm
 /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
 export const loans = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ loans.definition = {
 
 /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
 loans.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ loans.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
 loans.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ loans.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
 loans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ loans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
     const loansForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ loans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
         loansForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ loans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\DashboardController::loans
- * @see app/Http/Controllers/DashboardController.php:20
+ * @see app/Http/Controllers/DashboardController.php:23
  * @route '/dashboard-loans'
  */
         loansForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ loans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     loans.form = loansForm
 /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
 export const collections = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ collections.definition = {
 
 /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
 collections.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ collections.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
 collections.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ collections.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
 collections.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ collections.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
     const collectionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ collections.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
         collectionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ collections.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\DashboardController::collections
- * @see app/Http/Controllers/DashboardController.php:31
+ * @see app/Http/Controllers/DashboardController.php:34
  * @route '/dashboard-collections'
  */
         collectionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

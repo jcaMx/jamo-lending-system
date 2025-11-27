@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [
     laravel({
       input: [
-        'resources/css/app.css',
+        'resources/css/index.css',
         'resources/js/app.tsx',   // ✅ main entry point
       ],
       refresh: true,
