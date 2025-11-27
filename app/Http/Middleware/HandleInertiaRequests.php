@@ -36,9 +36,13 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        // Track last login
+        // Track last login (only update if more than 5 minutes have passed)
         if ($request->user()) {
-            $request->user()->update(['last_login_at' => now()]);
+            $user = $request->user();
+            // Only update if last_login_at is null or more than 5 minutes ago
+            if (!$user->last_login_at || $user->last_login_at->diffInMinutes(now()) >= 5) {
+                $user->update(['last_login_at' => now()]);
+            }
         }
         // Generate quote
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
@@ -69,3 +73,4 @@ class HandleInertiaRequests extends Middleware
     }
     
 }
+

@@ -21,7 +21,7 @@ export default defineConfig({
     }),
     reactSwc(),
     tailwindcss(),
-    wayfinder({ formVariants: true }),
+    // wayfinder({ formVariants: true }),
   ],
 
   resolve: {

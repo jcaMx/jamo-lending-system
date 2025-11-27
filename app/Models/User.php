@@ -27,6 +27,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $casts = [
+    'last_login_at' => 'datetime',
+    ];
+
+
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);

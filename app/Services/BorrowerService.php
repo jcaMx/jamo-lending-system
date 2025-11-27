@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Borrower;
 use App\Models\BorrowerAddress;
 use App\Models\BorrowerEmployment;
+use App\Models\BorrowerId;
 use App\Models\Collateral;
 use App\Models\Loan;
 use App\Models\Payment;
@@ -12,13 +13,17 @@ use App\Models\CoBorrower;
 use App\Models\LoanComment;
 use App\Models\Spouse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
+use App\Models\File;
+
 
 class BorrowerService
 {
     public function getBorrowersForIndex(): Collection
     {
         return Borrower::query()
-            ->with(['borrowerEmployment', 'borrowerAddresses', 'loan'])
+            ->with(['borrowerEmployment', 'borrowerAddress', 'loan'])
             ->orderBy('last_name')
             ->get()
             ->map(fn (Borrower $borrower) => [
@@ -27,9 +32,9 @@ class BorrowerService
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
                 'age' => $borrower->age,
-                'address' => $borrower->borrowerAddresses?->address,
-                'city' => $borrower->borrowerAddresses?->city,
-                'zipcode' => $borrower->borrowerAddresses?->postal_code ?? '',
+                'address' => $borrower->borrowerAddress?->address,
+                'city' => $borrower->borrowerAddress?->city,
+                'zipcode' => $borrower->borrowerAddress?->postal_code ?? '',
                 'email' => $borrower->email,
                 'mobile' => $borrower->contact_no,
                 'landline' => $borrower->land_line,
@@ -44,7 +49,7 @@ class BorrowerService
         $borrower = Borrower::query()
             ->with([
                 'borrowerEmployment',
-                'borrowerAddresses',
+                'borrowerAddress',
                 'files',
                 'coBorrowers',
                 'loans.borrower',
@@ -102,10 +107,10 @@ class BorrowerService
                 'name' => $borrower->name,
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
-                'age' => $borrower->birth_date ? $borrower->birth_date->age : null,
-                'address' => $borrower->borrowerAddresses?->address,
-                'city' => $borrower->borrowerAddresses?->city ?? $borrower->city,
-                'zipcode' => $borrower->borrowerAddresses?->postal_code ?? '',
+                'age' => computeAge($borrower->birth_date),
+                'address' => $borrower->borrowerAddress?->address,
+                'city' => $borrower->borrowerAddress?->city,
+                'zipcode' => $borrower->borrowerAddress?->postal_code ?? '',
                 'email' => $borrower->email,
                 'mobile' => $borrower->contact_no,
                 'landline' => $borrower->land_line,
@@ -238,49 +243,118 @@ class BorrowerService
 
     public function createBorrower(array $data): Borrower
     {
-        $borrower = Borrower::create([
-            'first_name' => $data['borrowerFirstName'],
-            'last_name' => $data['borrowerLastName'],
-            'birth_date' => $data['dateOfBirth'],
-            'gender' => $data['gender'],
-            'marital_status' => $data['maritalStatus'] ?? null,
-            'home_ownership' => $data['homeOwnership'] ?? null,
-            'contact_no' => $data['mobileNumber'],
-            'landline' => $data['landlineNumber'] ?? null,
-            'email' => $data['email'],
-            'numof_dependentchild' => $data['dependentChild'] ?? null,
-            'membership_date' => now(),
-        ]);
-
-        // Create borrower address if provided
-        if (!empty($data['permanentAddress']) && trim($data['permanentAddress']) !== '') {
-            $borrower->borrowerAddresses()->create([
-                'address' => trim($data['permanentAddress']),
-                'city' => trim($data['city'] ?? ''),
+        // Helper to trim and convert empty strings to null
+        $clean = fn ($value) => isset($value) && trim($value) !== '' ? trim($value) : null;
+       
+        return DB::transaction(function() use ($data, $clean) {
+            // -------------------------------
+            // Borrower main info
+            // -------------------------------
+            $borrower = Borrower::create([
+                'first_name'             => $clean($data['borrower_first_name'] ?? null),
+                'last_name'              => $clean($data['borrower_last_name'] ?? null),
+                'birth_date'             => $clean($data['date_of_birth'] ?? null),
+                'gender'                 => $clean($data['gender'] ?? null),
+                'age'                    => $this->computeAge($clean($data['date_of_birth'] ?? null)),
+                'marital_status'         => $clean($data['marital_status'] ?? null),
+                'home_ownership'         => $clean($data['home_ownership'] ?? null),
+                'contact_no'             => $clean($data['contact_no'] ?? null),
+                'land_line'              => $clean($data['landline_number'] ?? null),
+                'email'                  => $clean($data['email'] ?? null),
+                'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
+                'membership_date'        => now(),
             ]);
-        }
 
-        // Create borrower employment if occupation or netPay provided
-        if (!empty($data['occupation']) || !empty($data['netPay'])) {
-            $borrower->borrowerEmployment()->create([
-                'occupation' => $data['occupation'] ?? null,
-                'monthly_income' => $data['netPay'] ?? null,
+            // -------------------------------
+            // Borrower Address
+            // -------------------------------
+            if (!empty($clean($data['permanent_address'] ?? null))) {
+                $borrower->borrowerAddress()->create([
+                    'address'       => $clean($data['permanent_address']),
+                    'city'          => $clean($data['city'] ?? null),
+                    'postal_code'   => $clean($data['postal_code'] ?? null),
+                ]);
+            }
+
+            // -------------------------------
+            // Borrower Employment
+            // -------------------------------
+            if (!empty($clean($data['occupation'] ?? null)) || !empty($clean($data['monthly_income'] ?? null))) {
+                $borrower->borrowerEmployment()->create([
+                    'employment_status' => $clean($data['employment_status'] ?? null),
+                    'income_source'     => $clean($data['income_source'] ?? null),
+                    'occupation'        => $clean($data['occupation'] ?? null),
+                    'position'          => $clean($data['position'] ?? null),
+                    'monthly_income'    => $clean($data['monthly_income'] ?? null),
+                    'agency_address'    => $clean($data['agency_address'] ?? null),
+                ]);
+            }
+
+            // -------------------------------
+            // Spouse (if married)
+            // -------------------------------
+            if (($data['marital_status'] ?? null) === 'Married' &&
+                !empty($clean($data['spouse_first_name'] ?? null)) &&
+                !empty($clean($data['spouse_last_name'] ?? null))
+            ) {
+                $borrower->spouse()->create([
+                    'first_name'     => $clean($data['spouse_first_name'] ?? null),
+                    'last_name'      => $clean($data['spouse_last_name'] ?? null),
+                    'contact_no'     => $clean($data['spouse_mobile_number'] ?? null),
+                    'occupation'     => $clean($data['spouse_occupation'] ?? null),
+                    'position'       => $clean($data['spouse_position'] ?? null),
+                    'agency_address' => $clean($data['spouse_agency_address'] ?? null),
+                ]);
+            }
+
+            // -------------------------------
+            // Borrower ID
+            // -------------------------------
+            BorrowerId::create([
+                'borrower_id' => $borrower->ID,
+                'id_type'     => $clean($data['valid_id_type'] ?? null),
+                'id_number'   => $clean($data['valid_id_number'] ?? null),
             ]);
-        }
 
-        // Create spouse if spouse data provided
-        if (!empty($data['spouseFirstName']) && !empty($data['spouseLastName'])) {
-            $borrower->spouse()->create([
-                'first_name' => $data['spouseFirstName'],
-                'last_name' => $data['spouseLastName'],
-                'contact_no' => $data['spouseMobileNumber'] ?? null,
-                'occupation' => $data['spouseOccupation'] ?? null,
-                'position' => $data['spousePosition'] ?? null,
-                'agency_address' => $data['spouseAgencyAddress'] ?? null,
-            ]);
-        }
+            // -------------------------------
+            // Files
+            // -------------------------------
+            if (!empty($data['files']) && is_array($data['files'])) {
+                $allowedTypes = ['jpg', 'jpeg', 'png', 'pdf'];
+                $maxSize = 5 * 1024 * 1024; // 5MB
+                
+                foreach ($data['files'] as $file) {
+                    if ($file instanceof UploadedFile && 
+                        $file->getSize() <= $maxSize &&
+                        in_array(strtolower($file->getClientOriginalExtension()), $allowedTypes)) {
+                        
+                        $path = $file->store('borrowers', 'public');
+                        
+                        File::create([
+                            'borrower_id' => $borrower->ID,
+                            'file_type'   => 'ID',
+                            'file_name'   => $file->getClientOriginalName(),
+                            'file_path'   => $path,
+                            'uploaded_at' => now(),
+                            'description' => 'Borrower ID Upload',
+                        ]);
+                    }
+                }
+}
 
-        return $borrower;
+            return $borrower;
+        });
+    }
+
+    public function update(Borrower $borrower, array $data): void
+    {
+        $borrower->update($data);
+    }
+
+
+    public function computeAge($date_of_birth)
+    {
+        return $date_of_birth ? now()->diffInYears($date_of_birth) : null;
     }
 
 }

@@ -10,6 +10,7 @@
   class BorrowerEmployment extends Model {
 
     public $timestamps = false;
+    
     protected $table = 'borrower_employments';
     protected $primaryKey = 'ID';
 
