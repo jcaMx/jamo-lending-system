@@ -756,6 +756,7 @@ class ComposerStaticInite4da68f5563b64a94ea3d58a56a18d8a
         'App\\Models\\Permission' => __DIR__ . '/../..' . '/app/Models/Permission.php',
         'App\\Models\\Role' => __DIR__ . '/../..' . '/app/Models/Role.php',
         'App\\Models\\Session' => __DIR__ . '/../..' . '/app/Models/Session.php',
+        'App\\Models\\Spouse' => __DIR__ . '/../..' . '/app/Models/Spouse.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
         'App\\Models\\UserAccount' => __DIR__ . '/../..' . '/app/Models/UserAccount.php',
         'App\\Models\\UserProfile' => __DIR__ . '/../..' . '/app/Models/UserProfile.php',

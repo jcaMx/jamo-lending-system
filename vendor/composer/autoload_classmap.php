@@ -59,6 +59,7 @@ return array(
     'App\\Models\\Permission' => $baseDir . '/app/Models/Permission.php',
     'App\\Models\\Role' => $baseDir . '/app/Models/Role.php',
     'App\\Models\\Session' => $baseDir . '/app/Models/Session.php',
+    'App\\Models\\Spouse' => $baseDir . '/app/Models/Spouse.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',
     'App\\Models\\UserAccount' => $baseDir . '/app/Models/UserAccount.php',
     'App\\Models\\UserProfile' => $baseDir . '/app/Models/UserProfile.php',
