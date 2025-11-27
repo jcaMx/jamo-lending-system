@@ -19,6 +19,7 @@ class RepaymentController extends Controller
                 'id' => $b->ID,
                 'name' => $b->first_name . ' ' . $b->last_name,
                 'loanNo' => $b->loan?->ID,
+                'amortizationSchedule' => $b->loan ? fn($first = false) => $b->loan->amortizationSchedules->filter(fn($s) => $s->status === 'Unpaid')->when($first, fn($s) => $s->first())->sum('amount_due') : 0,  
             ];  
         });
 
@@ -27,9 +28,10 @@ class RepaymentController extends Controller
             'name' => $c->first_name . ' ' . $c->last_name
         ]);
 
+
         return Inertia::render('repayments/add', [
             'borrowers' => $borrowers,
-            'collectors' => $collectors
+            'collectors' => $collectors,
         ]); 
     }
 
@@ -73,7 +75,7 @@ class RepaymentController extends Controller
             return ['id' => $p->ID,
             'borrowerName' => $p->loan?->borrower ? $p->loan->borrower->first_name . ' ' . $p->loan->borrower->last_name : "N/A",
             'loanNo' => $p->loan?->ID ?? 'N/A',
-            'method' => $p->payment_method->value ?? $p->payment_method,
+            'method' => $p->payment_method ?: 'Cash', 
             'collectedBy' => $p->jamoUser?->first_name ? $p->jamoUser->first_name . ' ' . $p->jamoUser->last_name : 'N/A',
             'collectionDate' => $p->payment_date?->toDateString() ?? null,
             'amount' => $p->amount,

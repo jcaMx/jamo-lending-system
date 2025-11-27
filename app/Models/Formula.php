@@ -19,21 +19,19 @@ class Formula extends Model
 
     protected $primaryKey = 'ID';
 
-    public $timestamps = true;
+    public $timestamps = false;
 
     protected $fillable = [
         'name',
         'description',
         'expression',
         'variables',
-        'created_at',
+        'createdAt',
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
+        'createdAt' => 'datetime',
     ];
-
-    const CREATED_AT = 'created_at';
 
     public function loan()
     {
