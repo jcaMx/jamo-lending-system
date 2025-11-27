@@ -1,30 +1,25 @@
 <?php
+  namespace App\Models;
+  use Illuminate\Database\Eloquent\Model;
 
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Spouse extends Model
-{
-    use HasFactory;
+  class Spouse extends Model {
 
     protected $table = 'spouse';
+    protected $primaryKey = 'ID';
 
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'contact_no',
-        'occupation',
-        'position',
-        'agency_address',
-        'borrower_id',
+
+      'first_name',
+      'last_name',
+      'contact_no',
+      'occupation',
+      'position',
+      'agency_address',
+      'borrower_id'
+
     ];
-    public $timestamps = false;
 
-
-    public function borrower()
-    {
-        return $this->belongsTo(Borrower::class, 'borrower_id', 'ID');
+    public function borrower() {
+      return $this->belongsTo(Borrower::class, 'borrower_id', 'ID');
     }
-}
+  }
