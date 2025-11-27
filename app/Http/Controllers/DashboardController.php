@@ -10,6 +10,9 @@ class DashboardController extends Controller
 {
     public function stats() {
         $totalBorrowers = \App\Models\Borrower::count(); // Count all borrowers
+        $totalcollections = \App\Models\Payment::count(); // Count all borrowers
+
+
 
         return response()->json([
             'totalBorrowers' => $totalBorrowers,

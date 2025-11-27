@@ -1,32 +1,20 @@
 {
-  "resources/css/app.css": {
-<<<<<<< HEAD
-    "file": "assets/app-DKRAU7SE.css",
-=======
-    "file": "assets/app-tn0RQdqM.css",
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
-    "src": "resources/css/app.css",
+  "resources/css/index.css": {
+    "file": "assets/index-BVVtlvJC.css",
+    "src": "resources/css/index.css",
     "isEntry": true,
-    "name": "app",
     "names": [
+      "index.css",
       "app.css"
     ]
   },
   "resources/js/app.tsx": {
-<<<<<<< HEAD
-    "file": "assets/app-C1CTBgpf.js",
-=======
-    "file": "assets/app-Dr0z8E6g.js",
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
+    "file": "assets/app-DXZUdoaS.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
     "css": [
-<<<<<<< HEAD
-      "assets/app-DKRAU7SE.css"
-=======
-      "assets/app-CGKiP2Am.css"
->>>>>>> 3869eaf26b98506d32e24861b6c63faefc1a0448
+      "assets/index-BVVtlvJC.css"
     ],
     "assets": [
       "assets/hero-Bxiewug7.png",
