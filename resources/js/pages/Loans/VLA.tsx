@@ -17,9 +17,13 @@ export default function ViewLoanApplications() {
   const loanApplications = props.loanApplications || [];
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredApplications = loanApplications.filter((loan) =>
-    loan.borrower.first_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredApplications = loanApplications
+    .filter((loan) => loan.status === 'Pending') // Only Pending loans
+    .filter((loan) =>
+      `${loan.borrower.first_name} ${loan.borrower.last_name}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+    );
 
   const handleApprove = (loanId: number) => {
     router.post(route('loans.approve', loanId), {}, {
@@ -92,7 +96,7 @@ export default function ViewLoanApplications() {
                 <td className="px-4 py-2">{loan.interest_type}</td>
                 <td className="px-4 py-2">{loan.collateral ? 'Yes' : 'No'}</td>
                 <td className="px-4 py-2">
-                  {loan.co_borrowers?.length  ? 'Yes' : 'No'}
+                  {loan.borrower.co_borrowers?.length ? 'Yes' : 'No'}
                 </td>
                 <td className="px-4 py-2 flex gap-2">
                   <Button

@@ -1,11 +1,7 @@
 // resources/js/types/loans.ts
 import type { PageProps } from '@inertiajs/core';
 
-export interface LoanApplicationsPageProps extends PageProps {
-  loanApplications: Loan[];
-  flash?: { success?: string };
-}
-
+// Add `co_borrowers` to Borrower so TypeScript knows about it
 export interface Borrower {
   id: number;
   first_name: string;
@@ -14,6 +10,7 @@ export interface Borrower {
   contact_no?: string;
   address?: string;
   city?: string;
+  co_borrowers?: CoBorrower[]; // <-- add this
 }
 
 export interface Spouse {
@@ -64,10 +61,11 @@ export interface Loan {
   borrower: Borrower;
   spouse?: Spouse;
   collateral?: Collateral;
-  co_borrowers?: CoBorrower[];
+  co_borrowers?: CoBorrower[]; // optional, because not all loans have them
 }
 
-export interface LoanApplicationsPageProps {
+// Keep only one definition of LoanApplicationsPageProps
+export interface LoanApplicationsPageProps extends PageProps {
   loanApplications: Loan[];
   flash?: { success?: string };
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Http\Controllers\DailyCollectionController;
+use App\Http\Controllers\ApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,17 +73,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.index');
         Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.create');
         Route::get('/1MLL', fn() => Inertia::render('Loans/1MLL'))->name('loans.one-month-late');
-        Route::get('/3MLL', fn() => Inertia::render('Loans/3MLL'))->name('loans.three-month-late');
-        Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
-        Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
-        Route::get('/VAL', fn() => Inertia::render('Loans/VAL'))->name('loans.view');
-        Route::post('/loans', [LoanController::class, 'store'])->name('loans.store');
-        Route::get('/loans/{id}', [LoanController::class, 'show'])->name('loans.show');
-        Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.index');
 
-    });
-    Route::prefix('Loans')->middleware(['role:admin'])->group(function () {
-        Route::get('/AddLoan', fn() => Inertia::render('Loans/AddLoan'))->name('loans.add-loan');
+        Route::get('/3MLL', fn() => Inertia::render('Loans/3MLL'))->name('loans.three-month-late');
+
+        Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
+        
+        Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
+
+        Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.applications');
+
+        Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.view');
+
+        Route::post('/', [LoanController::class, 'store'])->name('loans.store');
+
+        Route::get('/AddLoan', fn() => Inertia::render('Loans/AddLoan'))->name('loans.add');
+
+        Route::middleware(['role:admin'])->group(function () 
+        {
+
+            Route::post('/approve/{loan}', [LoanController::class, 'approve'])->name('loans.approve');
+
+            Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
+
+            Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
+        });
     });
 
     // Daily Collection Sheets
@@ -119,6 +133,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     });
+
+    // Applications
+        Route::post('/applications', [ApplicationController::class, 'storeBorrower'])->name('applications.store');
+        Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
+        Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
+        Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
+        Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
+        Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+
+
 });
 
 require __DIR__.'/settings.php';

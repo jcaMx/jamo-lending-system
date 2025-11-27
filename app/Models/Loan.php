@@ -12,22 +12,21 @@ enum LoanStatus: string
     case BadDebt = 'Bad_Debt';
     case Rejected = 'Rejected';
     case Pending = 'Pending';
-}
-enum RepaymentFrequency: string
-{
+  }
+
+  enum InterestType: string {
+    case Compound = 'Compound';
+    case Diminishing = 'Diminishing';   
+  }
+
+  enum RepaymentFrequency: string {
     case Weekly = 'Weekly';
     case Monthly = 'Monthly';
     case Yearly = 'Yearly';
-}
-
-enum InterestType: string
-{
-    case Compound = 'Compound';
-    case Diminishing = 'Diminishing';
-}
-
-class Loan extends Model
-{
+  }
+  
+  class Loan extends Model
+  {
     use HasFactory;
 
     protected $table = 'loan';
@@ -73,12 +72,7 @@ class Loan extends Model
 
     const UPDATED_AT = 'updated_at';
 
-    protected static array $interestTypeToFormulaId = [
-        InterestType::Compound->value => 1,
-        InterestType::Diminishing->value => 2,
-    ];
-
-    // Add new Loan
+    //Add new Loan
     public static function addLoan(array $data): Loan
     {
       if (!isset($data['principal_amount'])) {
@@ -91,13 +85,7 @@ class Loan extends Model
 
       $data['balance_remaining'] = $data['balance_remaining'] ?? $data['principal_amount'];
 
-        if (isset($data['interest_type']) && ! isset($data['formula_id'])) {
-            $interestType = $data['interest_type'] instanceof InterestType ? $data['interest_type']->value : $data['interest_type'];
-
-            $data['formula_id'] = self::$interestTypeToFormulaId[$interestType] ?? null;
-        }
-
-        return self::create($data);
+      return self::create($data);
     }
 
     public function editLoan(array $data): void
@@ -140,8 +128,6 @@ class Loan extends Model
         return $this->belongsTo(JamoUser::class, 'approved_by', 'ID');
     }
 
-    public function formula()
-    {
-        return $this->belongsTo(Formula::class, 'formula_id', 'ID');
-    }
-}
+    public function formula() {return $this->belongsTo(Formula::class, 'formula_id', 'ID');}
+
+  }

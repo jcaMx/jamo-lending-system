@@ -26,29 +26,28 @@ class Borrower extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'borrower';
 
     protected $primaryKey = 'ID';
 
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'age',
-        'gender',
-        'email',
-        'contact_no',
-        'city',
-        'address',
-        'land_line',
-        'marital_status',
-        'numof_dependentchild',
-        'home_ownership',
-        'membership_date',
-        'status',
-        'birth_date',
+      'first_name',
+      'last_name',
+      'age',
+      'gender',
+      'email',
+      'contact_no',
+      'land_line',
+      'marital_status',
+      'numof_dependentchild',
+      'home_ownership',
+      'membership_date',
+      'status',
+      'birth_date'
     ];
 
-    public $timestamps= false; 
 
     protected $casts = [
         'home_ownership' => 'string',
@@ -80,50 +79,12 @@ class Borrower extends Model
         return $this->hasOne(BorrowerId::class, 'borrower_id', 'ID');
     }
 
-    public function coBorrower(): HasOne
-    {
-        return $this->hasOne(CoBorrower::class, 'borrower_id', 'ID');
+    public function coBorrowers() {
+      return $this->hasMany(CoBorrower::class, 'borrower_id', 'ID');
+    }
+  
+    public function files() {
+      return $this->hasMany(Files::class, 'borrower_id', 'ID');
     }
 
-    public function files(): HasMany
-    {
-        return $this->hasMany(File::class, 'borrower_id', 'ID');
-    }
-
-    public function spouse(): HasOne
-    {
-        return $this->hasOne(Spouse::class, 'borrower_id', 'ID');
-    }
-
-    // Additional hasMany relationships if needed
-    public function loans(): HasMany
-    {
-        return $this->hasMany(Loan::class, 'borrower_id', 'ID');
-    }
-
-    public function addresses(): HasMany
-    {
-        return $this->hasMany(BorrowerAddress::class, 'borrower_id', 'ID');
-    }
-
-    public function employments(): HasMany
-    {
-        return $this->hasMany(BorrowerEmployment::class, 'borrower_id', 'ID');
-    }
-
-    public function ids(): HasMany
-    {
-        return $this->hasMany(BorrowerId::class, 'borrower_id', 'ID');
-    }
-
-    public function coBorrowers(): HasMany
-    {
-        return $this->hasMany(CoBorrower::class, 'borrower_id', 'ID');
-    }
-
-    // Accessor for full name
-    public function getNameAttribute(): string
-    {
-        return "{$this->first_name} {$this->last_name}";
-    }
-}
+  }

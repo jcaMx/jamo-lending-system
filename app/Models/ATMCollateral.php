@@ -20,7 +20,7 @@
     ];
 
     public function collateral() {
-      return $this->belongsTo(Collateral::class, 'borrower_id', 'ID');
+      return $this->belongsTo(Collateral::class, 'collateral_id', 'ID');
     }
 
   }
