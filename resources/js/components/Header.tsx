@@ -1,0 +1,110 @@
+import { useState } from "react";
+import { Link, usePage } from "@inertiajs/react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import type { SharedData } from "@/types"; // 👈 your SharedData interface
+
+export default function Header() {
+  const [open, setOpen] = useState(false);
+
+  // Typed props from Inertia
+  const { auth } = usePage<SharedData>().props;
+  const isAuthenticated = !!auth?.user;
+
+  const NavLinks = () => (
+    <>
+      <a
+        href="/#home"
+        className="text-navy font-medium hover:text-navy/80 transition-colors"
+        onClick={() => setOpen(false)}
+      >
+        Home
+      </a>
+      <a
+        href="/#about"
+        className="text-navy font-medium hover:text-navy/80 transition-colors"
+        onClick={() => setOpen(false)}
+      >
+        About
+      </a>
+      <a
+        href="/#services"
+        className="text-navy font-medium hover:text-navy/80 transition-colors"
+        onClick={() => setOpen(false)}
+      >
+        Services
+      </a>
+      <a
+        href="/#contact"
+        className="text-navy font-medium hover:text-navy/80 transition-colors"
+        onClick={() => setOpen(false)}
+      >
+        Contact
+      </a>
+    </>
+  );
+
+  return (
+    <header className="bg-[#FABF24] py-4 px-6 md:px-12">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <img src="/images/jamo-logo-2.png" alt="Jamo Logo" className="h-12 w-auto max-w-[10rem]object-contain" />
+
+        </Link>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-8">
+          <NavLinks />
+        </nav>
+
+        {/* Auth buttons */}
+        <div className="flex items-center gap-4">
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/register">
+              </Link>
+            </>
+          )}
+
+          {/* Mobile menu */}
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon" className="text-navy">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[250px]">
+              <nav className="flex flex-col gap-6 mt-8">
+                <NavLinks />
+                {isAuthenticated ? (
+                  <Link href="/dashboard" onClick={() => setOpen(false)}>
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      Log in
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
