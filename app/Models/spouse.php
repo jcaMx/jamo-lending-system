@@ -15,7 +15,7 @@
       'occupation',
       'position',
       'agency_address',
-      'borrower_id'
+      'borrower_id',
 
     ];
 
