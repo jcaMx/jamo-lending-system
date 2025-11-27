@@ -1,7 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-<<<<<<< HEAD
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,7 +14,7 @@ create.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
 create.url = (options?: RouteQueryOptions) => {
@@ -23,7 +22,7 @@ create.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +30,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +39,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
     const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -49,7 +48,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
         createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -57,7 +56,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:73
+ * @see routes/web.php:74
  * @route '/Loans'
  */
         createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -72,10 +71,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     create.form = createForm
 /**
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
 export const oneMonthLate = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -89,11 +85,7 @@ oneMonthLate.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
 oneMonthLate.url = (options?: RouteQueryOptions) => {
@@ -101,11 +93,7 @@ oneMonthLate.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
 oneMonthLate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,11 +101,7 @@ oneMonthLate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
 oneMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,11 +110,7 @@ oneMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
     const oneMonthLateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -139,11 +119,7 @@ oneMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
         oneMonthLateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -151,11 +127,7 @@ oneMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:74
-=======
- * @see routes/web.php:66
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:75
  * @route '/Loans/1MLL'
  */
         oneMonthLateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -170,11 +142,7 @@ oneMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     oneMonthLate.form = oneMonthLateForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
 export const threeMonthLate = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -188,11 +156,7 @@ threeMonthLate.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
 threeMonthLate.url = (options?: RouteQueryOptions) => {
@@ -200,11 +164,7 @@ threeMonthLate.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
 threeMonthLate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -212,11 +172,7 @@ threeMonthLate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
 threeMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -225,11 +181,7 @@ threeMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
     const threeMonthLateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -238,11 +190,7 @@ threeMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
         threeMonthLateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -250,11 +198,7 @@ threeMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:75
-=======
- * @see routes/web.php:68
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:77
  * @route '/Loans/3MLL'
  */
         threeMonthLateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -269,11 +213,7 @@ threeMonthLate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     
     threeMonthLate.form = threeMonthLateForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
 export const pastMaturityDate = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -287,11 +227,7 @@ pastMaturityDate.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
 pastMaturityDate.url = (options?: RouteQueryOptions) => {
@@ -299,11 +235,7 @@ pastMaturityDate.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
 pastMaturityDate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -311,11 +243,7 @@ pastMaturityDate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => 
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
 pastMaturityDate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -324,11 +252,7 @@ pastMaturityDate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
     const pastMaturityDateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -337,11 +261,7 @@ pastMaturityDate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
         pastMaturityDateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -349,11 +269,7 @@ pastMaturityDate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:76
-=======
- * @see routes/web.php:70
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:79
  * @route '/Loans/PMD'
  */
         pastMaturityDateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -368,11 +284,7 @@ pastMaturityDate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     
     pastMaturityDate.form = pastMaturityDateForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
 export const applications = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -386,11 +298,7 @@ applications.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
 applications.url = (options?: RouteQueryOptions) => {
@@ -398,11 +306,7 @@ applications.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
 applications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -410,11 +314,7 @@ applications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
 applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -423,11 +323,7 @@ applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
     const applicationsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -436,11 +332,7 @@ applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
         applicationsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -448,11 +340,7 @@ applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:77
-=======
- * @see routes/web.php:72
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:81
  * @route '/Loans/VLA'
  */
         applicationsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -467,14 +355,9 @@ applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     applications.form = applicationsForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 export const view = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: view.url(options),
@@ -487,42 +370,27 @@ view.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 view.url = (options?: RouteQueryOptions) => {
     return view.definition.url + queryParams(options)
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 view.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: view.url(options),
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 view.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: view.url(options),
@@ -530,14 +398,9 @@ view.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
     const viewForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: view.url(options),
@@ -545,28 +408,18 @@ view.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
         viewForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: view.url(options),
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:78
- * @route '/Loans/VAL'
-=======
 * @see \App\Http\Controllers\LoanController::view
  * @see app/Http/Controllers/LoanController.php:29
  * @route '/Loans/Loans/VLA'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
         viewForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: view.url({
@@ -581,13 +434,8 @@ view.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     view.form = viewForm
 /**
 * @see \App\Http\Controllers\LoanController::store
-<<<<<<< HEAD
- * @see app/Http/Controllers/LoanController.php:31
- * @route '/Loans/loans'
-=======
  * @see app/Http/Controllers/LoanController.php:44
  * @route '/Loans'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
@@ -596,22 +444,13 @@ export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 store.definition = {
     methods: ["post"],
-<<<<<<< HEAD
-    url: '/Loans/loans',
-=======
     url: '/Loans',
->>>>>>> f527e644e77be1939726e62492d52074749b459a
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\LoanController::store
-<<<<<<< HEAD
- * @see app/Http/Controllers/LoanController.php:31
- * @route '/Loans/loans'
-=======
  * @see app/Http/Controllers/LoanController.php:44
  * @route '/Loans'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 store.url = (options?: RouteQueryOptions) => {
     return store.definition.url + queryParams(options)
@@ -619,13 +458,8 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\LoanController::store
-<<<<<<< HEAD
- * @see app/Http/Controllers/LoanController.php:31
- * @route '/Loans/loans'
-=======
  * @see app/Http/Controllers/LoanController.php:44
  * @route '/Loans'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
@@ -634,13 +468,8 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\LoanController::store
-<<<<<<< HEAD
- * @see app/Http/Controllers/LoanController.php:31
- * @route '/Loans/loans'
-=======
  * @see app/Http/Controllers/LoanController.php:44
  * @route '/Loans'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: store.url(options),
@@ -649,13 +478,8 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\LoanController::store
-<<<<<<< HEAD
- * @see app/Http/Controllers/LoanController.php:31
- * @route '/Loans/loans'
-=======
  * @see app/Http/Controllers/LoanController.php:44
  * @route '/Loans'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: store.url(options),
@@ -664,186 +488,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     
     store.form = storeForm
 /**
-<<<<<<< HEAD
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: show.url(args, options),
-    method: 'get',
-})
-
-show.definition = {
-    methods: ["get","head"],
-    url: '/Loans/loans/{id}',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
-    if (typeof args === 'string' || typeof args === 'number') {
-        args = { id: args }
-    }
-
-    
-    if (Array.isArray(args)) {
-        args = {
-                    id: args[0],
-                }
-    }
-
-    args = applyUrlDefaults(args)
-
-    const parsedArgs = {
-                        id: args.id,
-                }
-
-    return show.definition.url
-            .replace('{id}', parsedArgs.id.toString())
-            .replace(/\/+$/, '') + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: show.url(args, options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: show.url(args, options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-    const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-        showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\LoanController::show
- * @see app/Http/Controllers/LoanController.php:0
- * @route '/Loans/loans/{id}'
- */
-        showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
-/**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-index.definition = {
-    methods: ["get","head"],
-    url: '/Loans/Loans/VLA',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-index.url = (options?: RouteQueryOptions) => {
-    return index.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: index.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\LoanController::index
- * @see app/Http/Controllers/LoanController.php:18
- * @route '/Loans/Loans/VLA'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
-/**
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
 export const add = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -857,11 +502,7 @@ add.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
 add.url = (options?: RouteQueryOptions) => {
@@ -869,11 +510,7 @@ add.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
 add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -881,11 +518,7 @@ add.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
 add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -894,11 +527,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
     const addForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -907,11 +536,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
         addForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -919,11 +544,7 @@ add.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:85
-=======
- * @see routes/web.php:80
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:89
  * @route '/Loans/AddLoan'
  */
         addForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1167,16 +788,10 @@ pastMaturityDate: Object.assign(pastMaturityDate, pastMaturityDate),
 applications: Object.assign(applications, applications),
 view: Object.assign(view, view),
 store: Object.assign(store, store),
-<<<<<<< HEAD
-show: Object.assign(show, show),
-index: Object.assign(index, index),
-addLoan: Object.assign(addLoan, addLoan),
-=======
 add: Object.assign(add, add),
 approve: Object.assign(approve, approve),
 reject: Object.assign(reject, reject),
 close: Object.assign(close, close),
->>>>>>> f527e644e77be1939726e62492d52074749b459a
 }
 
 export default loans

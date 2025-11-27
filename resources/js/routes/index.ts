@@ -1,10 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../wayfinder'
 /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -18,11 +14,7 @@ login.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
 login.url = (options?: RouteQueryOptions) => {
@@ -30,11 +22,7 @@ login.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
 login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -42,11 +30,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
 login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -55,11 +39,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
     const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -68,11 +48,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
         loginForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,11 +56,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:35
-=======
- * @see routes/web.php:31
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:36
  * @route '/login'
  */
         loginForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -154,11 +126,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     
     logout.form = logoutForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
 export const register = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,11 +140,7 @@ register.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
 register.url = (options?: RouteQueryOptions) => {
@@ -184,11 +148,7 @@ register.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
 register.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -196,11 +156,7 @@ register.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
 register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -209,11 +165,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
     const registerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -222,11 +174,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
         registerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -234,11 +182,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:39
-=======
- * @see routes/web.php:35
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:40
  * @route '/register'
  */
         registerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -253,11 +197,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     register.form = registerForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -271,11 +211,7 @@ home.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
 home.url = (options?: RouteQueryOptions) => {
@@ -283,11 +219,7 @@ home.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -295,11 +227,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -308,11 +236,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
     const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -321,11 +245,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
         homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -333,11 +253,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:28
-=======
- * @see routes/web.php:24
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:29
  * @route '/'
  */
         homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -352,13 +268,8 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     home.form = homeForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 export const apply = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: apply.url(options),
@@ -371,39 +282,24 @@ apply.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 apply.url = (options?: RouteQueryOptions) => {
     return apply.definition.url + queryParams(options)
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 apply.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: apply.url(options),
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
 apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: apply.url(options),
@@ -411,13 +307,8 @@ apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
     const applyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: apply.url(options),
@@ -425,26 +316,16 @@ apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
         applyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: apply.url(options),
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:30
+ * @see routes/web.php:31
  * @route '/applynow'
-=======
- * @see routes/web.php:26
- * @route '/apply'
->>>>>>> f527e644e77be1939726e62492d52074749b459a
  */
         applyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: apply.url({
@@ -458,11 +339,7 @@ apply.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     apply.form = applyForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -476,11 +353,7 @@ dashboard.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -488,11 +361,7 @@ dashboard.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -500,11 +369,7 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -513,11 +378,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
     const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -526,11 +387,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
         dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -538,11 +395,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:52
-=======
- * @see routes/web.php:48
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:53
  * @route '/dashboard'
  */
         dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

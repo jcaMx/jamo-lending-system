@@ -4,7 +4,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-export const store = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const store = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(args, options),
     method: 'post',
 })
@@ -19,11 +19,14 @@ store.definition = {
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-store.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+store.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -34,7 +37,9 @@ store.url = (args: { application: string | number } | [application: string | num
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return store.definition.url
@@ -47,7 +52,7 @@ store.url = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-store.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+store.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(args, options),
     method: 'post',
 })
@@ -57,7 +62,7 @@ store.post = (args: { application: string | number } | [application: string | nu
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-    const storeForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const storeForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: store.url(args, options),
         method: 'post',
     })
@@ -67,7 +72,7 @@ store.post = (args: { application: string | number } | [application: string | nu
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-        storeForm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        storeForm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: store.url(args, options),
             method: 'post',
         })

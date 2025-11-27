@@ -62,7 +62,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-export const confirm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const confirm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: confirm.url(args, options),
     method: 'post',
 })
@@ -77,11 +77,14 @@ confirm.definition = {
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-confirm.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+confirm.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -92,7 +95,9 @@ confirm.url = (args: { application: string | number } | [application: string | n
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return confirm.definition.url
@@ -105,7 +110,7 @@ confirm.url = (args: { application: string | number } | [application: string | n
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-confirm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+confirm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: confirm.url(args, options),
     method: 'post',
 })
@@ -115,7 +120,7 @@ confirm.post = (args: { application: string | number } | [application: string | 
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-    const confirmForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const confirmForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: confirm.url(args, options),
         method: 'post',
     })
@@ -125,7 +130,7 @@ confirm.post = (args: { application: string | number } | [application: string | 
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-        confirmForm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        confirmForm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: confirm.url(args, options),
             method: 'post',
         })
@@ -136,7 +141,7 @@ confirm.post = (args: { application: string | number } | [application: string | 
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-export const show = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const show = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -151,11 +156,14 @@ show.definition = {
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-show.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+show.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -166,7 +174,9 @@ show.url = (args: { application: string | number } | [application: string | numb
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return show.definition.url
@@ -179,7 +189,7 @@ show.url = (args: { application: string | number } | [application: string | numb
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-show.get = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+show.get = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -188,7 +198,7 @@ show.get = (args: { application: string | number } | [application: string | numb
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-show.head = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+show.head = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })
@@ -198,7 +208,7 @@ show.head = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-    const showForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    const showForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: show.url(args, options),
         method: 'get',
     })
@@ -208,7 +218,7 @@ show.head = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-        showForm.get = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        showForm.get = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, options),
             method: 'get',
         })
@@ -217,7 +227,7 @@ show.head = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-        showForm.head = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        showForm.head = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',

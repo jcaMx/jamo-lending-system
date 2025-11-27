@@ -2,11 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import dcprE951ef from './dcpr'
 import monthlyC7a835 from './monthly'
 /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
 export const dcpr = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -20,11 +16,7 @@ dcpr.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
 dcpr.url = (options?: RouteQueryOptions) => {
@@ -32,11 +24,7 @@ dcpr.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
 dcpr.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -44,11 +32,7 @@ dcpr.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
 dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -57,11 +41,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
     const dcprForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -70,11 +50,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
         dcprForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,11 +58,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:102
-=======
- * @see routes/web.php:107
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:116
  * @route '/Reports/DCPR'
  */
         dcprForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -101,11 +73,7 @@ dcpr.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dcpr.form = dcprForm
 /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
 export const monthly = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -119,11 +87,7 @@ monthly.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
 monthly.url = (options?: RouteQueryOptions) => {
@@ -131,11 +95,7 @@ monthly.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
 monthly.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -143,11 +103,7 @@ monthly.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
 monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -156,11 +112,7 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
     const monthlyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -169,11 +121,7 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
         monthlyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,11 +129,7 @@ monthly.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-<<<<<<< HEAD
- * @see routes/web.php:106
-=======
- * @see routes/web.php:111
->>>>>>> f527e644e77be1939726e62492d52074749b459a
+ * @see routes/web.php:120
  * @route '/Reports/MonthlyReport'
  */
         monthlyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

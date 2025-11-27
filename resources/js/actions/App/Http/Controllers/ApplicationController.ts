@@ -59,7 +59,7 @@ storeBorrower.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
  * @see app/Http/Controllers/ApplicationController.php:61
  * @route '/applications/{application}/co-borrower'
  */
-export const storeCoBorrower = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const storeCoBorrower = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: storeCoBorrower.url(args, options),
     method: 'post',
 })
@@ -74,11 +74,14 @@ storeCoBorrower.definition = {
  * @see app/Http/Controllers/ApplicationController.php:61
  * @route '/applications/{application}/co-borrower'
  */
-storeCoBorrower.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+storeCoBorrower.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -89,7 +92,9 @@ storeCoBorrower.url = (args: { application: string | number } | [application: st
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return storeCoBorrower.definition.url
@@ -102,7 +107,7 @@ storeCoBorrower.url = (args: { application: string | number } | [application: st
  * @see app/Http/Controllers/ApplicationController.php:61
  * @route '/applications/{application}/co-borrower'
  */
-storeCoBorrower.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+storeCoBorrower.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: storeCoBorrower.url(args, options),
     method: 'post',
 })
@@ -112,7 +117,7 @@ storeCoBorrower.post = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:61
  * @route '/applications/{application}/co-borrower'
  */
-    const storeCoBorrowerForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const storeCoBorrowerForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: storeCoBorrower.url(args, options),
         method: 'post',
     })
@@ -122,7 +127,7 @@ storeCoBorrower.post = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:61
  * @route '/applications/{application}/co-borrower'
  */
-        storeCoBorrowerForm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        storeCoBorrowerForm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: storeCoBorrower.url(args, options),
             method: 'post',
         })
@@ -133,7 +138,7 @@ storeCoBorrower.post = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:90
  * @route '/applications/{application}/collateral'
  */
-export const storeCollateral = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const storeCollateral = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: storeCollateral.url(args, options),
     method: 'post',
 })
@@ -148,11 +153,14 @@ storeCollateral.definition = {
  * @see app/Http/Controllers/ApplicationController.php:90
  * @route '/applications/{application}/collateral'
  */
-storeCollateral.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+storeCollateral.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -163,7 +171,9 @@ storeCollateral.url = (args: { application: string | number } | [application: st
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return storeCollateral.definition.url
@@ -176,7 +186,7 @@ storeCollateral.url = (args: { application: string | number } | [application: st
  * @see app/Http/Controllers/ApplicationController.php:90
  * @route '/applications/{application}/collateral'
  */
-storeCollateral.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+storeCollateral.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: storeCollateral.url(args, options),
     method: 'post',
 })
@@ -186,7 +196,7 @@ storeCollateral.post = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:90
  * @route '/applications/{application}/collateral'
  */
-    const storeCollateralForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const storeCollateralForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: storeCollateral.url(args, options),
         method: 'post',
     })
@@ -196,7 +206,7 @@ storeCollateral.post = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:90
  * @route '/applications/{application}/collateral'
  */
-        storeCollateralForm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        storeCollateralForm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: storeCollateral.url(args, options),
             method: 'post',
         })
@@ -207,7 +217,7 @@ storeCollateral.post = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-export const storeLoanDetails = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const storeLoanDetails = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: storeLoanDetails.url(args, options),
     method: 'post',
 })
@@ -222,11 +232,14 @@ storeLoanDetails.definition = {
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-storeLoanDetails.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+storeLoanDetails.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -237,7 +250,9 @@ storeLoanDetails.url = (args: { application: string | number } | [application: s
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return storeLoanDetails.definition.url
@@ -250,7 +265,7 @@ storeLoanDetails.url = (args: { application: string | number } | [application: s
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-storeLoanDetails.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+storeLoanDetails.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: storeLoanDetails.url(args, options),
     method: 'post',
 })
@@ -260,7 +275,7 @@ storeLoanDetails.post = (args: { application: string | number } | [application: 
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-    const storeLoanDetailsForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const storeLoanDetailsForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: storeLoanDetails.url(args, options),
         method: 'post',
     })
@@ -270,7 +285,7 @@ storeLoanDetails.post = (args: { application: string | number } | [application: 
  * @see app/Http/Controllers/ApplicationController.php:118
  * @route '/applications/{application}/loan-details'
  */
-        storeLoanDetailsForm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        storeLoanDetailsForm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: storeLoanDetails.url(args, options),
             method: 'post',
         })
@@ -281,7 +296,7 @@ storeLoanDetails.post = (args: { application: string | number } | [application: 
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-export const confirm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const confirm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: confirm.url(args, options),
     method: 'post',
 })
@@ -296,11 +311,14 @@ confirm.definition = {
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-confirm.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+confirm.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -311,7 +329,9 @@ confirm.url = (args: { application: string | number } | [application: string | n
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return confirm.definition.url
@@ -324,7 +344,7 @@ confirm.url = (args: { application: string | number } | [application: string | n
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-confirm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+confirm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: confirm.url(args, options),
     method: 'post',
 })
@@ -334,7 +354,7 @@ confirm.post = (args: { application: string | number } | [application: string | 
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-    const confirmForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const confirmForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: confirm.url(args, options),
         method: 'post',
     })
@@ -344,7 +364,7 @@ confirm.post = (args: { application: string | number } | [application: string | 
  * @see app/Http/Controllers/ApplicationController.php:143
  * @route '/applications/{application}/confirm'
  */
-        confirmForm.post = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        confirmForm.post = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: confirm.url(args, options),
             method: 'post',
         })
@@ -355,7 +375,7 @@ confirm.post = (args: { application: string | number } | [application: string | 
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-export const show = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const show = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -370,11 +390,14 @@ show.definition = {
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-show.url = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions) => {
+show.url = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { application: args }
     }
 
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { application: args.id }
+        }
     
     if (Array.isArray(args)) {
         args = {
@@ -385,7 +408,9 @@ show.url = (args: { application: string | number } | [application: string | numb
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        application: args.application,
+                        application: typeof args.application === 'object'
+                ? args.application.id
+                : args.application,
                 }
 
     return show.definition.url
@@ -398,7 +423,7 @@ show.url = (args: { application: string | number } | [application: string | numb
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-show.get = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+show.get = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -407,7 +432,7 @@ show.get = (args: { application: string | number } | [application: string | numb
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-show.head = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+show.head = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })
@@ -417,7 +442,7 @@ show.head = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-    const showForm = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    const showForm = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: show.url(args, options),
         method: 'get',
     })
@@ -427,7 +452,7 @@ show.head = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-        showForm.get = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        showForm.get = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, options),
             method: 'get',
         })
@@ -436,7 +461,7 @@ show.head = (args: { application: string | number } | [application: string | num
  * @see app/Http/Controllers/ApplicationController.php:157
  * @route '/applications/{application}'
  */
-        showForm.head = (args: { application: string | number } | [application: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        showForm.head = (args: { application: string | number | { id: string | number } } | [application: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
