@@ -10,6 +10,8 @@ namespace App\Providers;
     use App\Services\Amortization\DiminishingAmortizationCalculator;
     use App\Repositories\Interfaces\IRepaymentRepository;
     use App\Services\RepaymentService;
+    use Illuminate\Support\Facades\Vite;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,6 +50,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+            Vite::useBuildDirectory('build/vite');
     }
 }
