@@ -61,21 +61,17 @@ class Borrower extends Model
         'membership_date',
         'birth_date',
     ];
-<<<<<<< HEAD
 
     public function loans() {
     return $this->hasMany(Loan::class, 'borrower_id', 'ID')->orderBy('start_date', 'desc');
 }
     
-=======
     
     public function loan()
     {
         return $this->hasOne(Loan::class, 'borrower_id', 'ID');
     }
 
-
->>>>>>> 9e5f51cbfb9db82cb80d584c494119cd4d6c9ba6
     public function borrowerEmployment(): HasOne
     {
         return $this->hasOne(BorrowerEmployment::class, 'borrower_id', 'ID');
