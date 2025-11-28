@@ -5,7 +5,7 @@
   class Collateral extends Model {
 
     protected $table = 'collateral';
-    protected $primayKey = 'ID';
+    protected $primaryKey = 'ID';
     
     protected $fillable = [
 

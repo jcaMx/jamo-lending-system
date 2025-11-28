@@ -1,0 +1,52 @@
+{
+  "resources/css/index.css": {
+    "file": "assets/index-BKACA3XR.css",
+    "src": "resources/css/index.css",
+    "isEntry": true,
+    "names": [
+      "index.css",
+      "app.css"
+    ]
+  },
+  "resources/js/app.tsx": {
+    "file": "assets/app-DHUwDCN9.js",
+    "name": "app",
+    "src": "resources/js/app.tsx",
+    "isEntry": true,
+    "css": [
+      "assets/index-BKACA3XR.css"
+    ],
+    "assets": [
+      "assets/hero-Bxiewug7.png",
+      "assets/about-BhVYX1Os.png",
+      "assets/personal-loan-BVKDqltR.png",
+      "assets/home-loan-Braipakd.png",
+      "assets/business-loan-BUNAx3-W.png",
+      "assets/emergency-loan-C2Imvzpm.png"
+    ]
+  },
+  "resources/js/assets/about/about.png": {
+    "file": "assets/about-BhVYX1Os.png",
+    "src": "resources/js/assets/about/about.png"
+  },
+  "resources/js/assets/hero/hero.png": {
+    "file": "assets/hero-Bxiewug7.png",
+    "src": "resources/js/assets/hero/hero.png"
+  },
+  "resources/js/assets/services/business-loan.png": {
+    "file": "assets/business-loan-BUNAx3-W.png",
+    "src": "resources/js/assets/services/business-loan.png"
+  },
+  "resources/js/assets/services/emergency-loan.png": {
+    "file": "assets/emergency-loan-C2Imvzpm.png",
+    "src": "resources/js/assets/services/emergency-loan.png"
+  },
+  "resources/js/assets/services/home-loan.png": {
+    "file": "assets/home-loan-Braipakd.png",
+    "src": "resources/js/assets/services/home-loan.png"
+  },
+  "resources/js/assets/services/personal-loan.png": {
+    "file": "assets/personal-loan-BVKDqltR.png",
+    "src": "resources/js/assets/services/personal-loan.png"
+  }
+}

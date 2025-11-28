@@ -1,89 +1,30 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// ---------------- BREADCRUMBS ----------------
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Loans', href: '/Loans' },
-  { title: 'Add Loan', href: '/Loans/AddLoan' },
+  { title: 'Loans', href: '/loans' },
+  { title: 'Add Loan', href: '/loans/addloan' },
 ];
 
-type BorrowerForm = {
-  first_name: string;
-  last_name: string;
-  membership_date: string | null;
-  birth_date: string | null;
-  age: string;
-  gender: string;
-  email: string;
-  contact_no: string;
-  city: string;
-  address: string;
-  land_line: string;
-  marital_status: string;
-  numof_dependentchild: string;
-};
-
-type BorrowerEmploymentForm = {
-  employment_status: string;
-  income_source: string;
-  occupation: string;
-  position: string;
-  agency_address: string;
-  monthly_income: string;
-};
-
-type BorrowerIdsForm = {
-  id_type: string;
-  id_number: string;
-};
-
-type SpouseForm = {
-  first_name: string;
-  last_name: string;
-  mobile_number: string;
-  agency_address: string;
-  occupation: string;
-};
-
-type CoBorrowerForm = {
-  first_name: string;
-  last_name: string;
-  address: string;
-  email: string;
-  contact_no: string;
-  birth_date: string;
-  marital_status: string;
-  occupation: string;
-  net_pay: string;
-};
-
-type LoanForm = {
+// ---------------- FORM TYPES ----------------
+interface LoanFormData {
+  borrower_name: string;
+  borrower_id: string;
+  loan_type: string;
   loan_amount: string;
   interest_type: string;
-  loan_type: string;
   interest_rate: string;
   repayment_frequency: string;
   term: string;
   start_date: string;
   end_date: string;
-};
-
-type CollateralBaseForm = {
-  type: 'vehicle' | 'land' | 'atm';
-  estimated_value: string;
-  appraisal_date: string;
-  appraised_by: string;
-  ownership_proof: File | null;
-  status: string;
-  remarks: string;
-  description: string;
-};
-
-type VehicleCollateralForm = {
+  collateral_type: string;
   type: string;
   brand: string;
   model: string;
@@ -92,431 +33,398 @@ type VehicleCollateralForm = {
   engine_no: string;
   transmission_type: string;
   fuel_type: string;
-};
-
-type LandCollateralForm = {
   title_no: string;
-  lot_no: string;
   location: string;
+  description: string;
   area_size: string;
+  ownership_proof: File | null;
+}
+
+interface CoBorrower {
+  first_name: string;
+  last_name: string;
+  address: string;
+  email: string;
+  contact: string;
+  birth_date: string;
+  marital_status: string;
+  occupation: string;
+  net_pay: string;
+}
+
+// ---------------- REUSABLE COMPONENTS ----------------
+const FieldError = ({ field, errors }: { field: string; errors: any }) =>
+  errors[field] ? <p className="text-red-500 text-sm mt-1">{errors[field]}</p> : null;
+
+interface FormFieldProps {
+  label: string;
+  name: string;
+  type?: string;
+  value?: any;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  options?: { value: string; label: string }[];
+  list?: string;
+  children?: React.ReactNode;
+}
+
+const FormField = ({ label, name, type = 'text', value, onChange, options, list, children }: FormFieldProps) => (
+  <div>
+    <label className="block text-sm font-medium mb-1 text-gray-700">{label}</label>
+
+    {children ? (
+      children
+    ) : type === 'select' && options ? (
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+      >
+        <option value="">Select {label}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    ) : (
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        list={list}
+        className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+      />
+    )}
+  </div>
+);
+
+const SectionContainer = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+    <h2 className="text-xl font-semibold text-gray-700 mb-4">{title}</h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
+  </div>
+);
+
+// ---------------- HELPER ----------------
+const debounce = (fn: (...args: any) => void, delay: number) => {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: any) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
 };
 
-type ATMCollateralForm = {
-  bank_name: string;
-  account_no: string;
-  cardno_4digits: string;
-};
-
-
-
+// ---------------- MAIN COMPONENT ----------------
 export default function AddLoan() {
-  /** ---------- STATES ---------- */
-  const [borrower, setBorrower] = useState<BorrowerForm>({
-    first_name: '',
-    last_name: '',
-    membership_date: null,
-    birth_date: null,
-    age: '',
-    gender: '',
-    email: '',
-    contact_no: '',
-    city: '',
-    address: '',
-    land_line: '',
-    marital_status: '',
-    numof_dependentchild: '',
-  });
-
-  const [employment, setEmployment] = useState<BorrowerEmploymentForm>({
-    employment_status: '',
-    income_source: '',
-    occupation: '',
-    position: '',
-    agency_address: '',
-    monthly_income: '',
-  });
-
-  const [borrowerId, setBorrowerId] = useState<BorrowerIdsForm>({
-    id_type: '',
-    id_number: '',
-  });
-
-  const [spouse, setSpouse] = useState<SpouseForm>({
-    first_name: '',
-    last_name: '',
-    mobile_number: '',
-    agency_address: '',
-    occupation: '',
-  });
-
-  const [coBorrowers, setCoBorrowers] = useState<CoBorrowerForm[]>([
-    {
-      first_name: '',
-      last_name: '',
-      address: '',
-      email: '',
-      contact_no: '',
-      birth_date: '',
-      marital_status: '',
-      occupation: '',
-      net_pay: '',
-    },
-  ]);
-
-  const [loan, setLoan] = useState<LoanForm>({
+  const { data, setData, post, processing, errors } = useForm<LoanFormData>({
+    borrower_name: '',
+    borrower_id: '',
+    loan_type: '',
     loan_amount: '',
     interest_type: '',
-    loan_type: '',
-    interest_rate: '',
+    interest_rate: '5',
     repayment_frequency: '',
     term: '',
     start_date: '',
     end_date: '',
+    collateral_type: 'vehicle',
+    type: '',
+    brand: '',
+    model: '',
+    year_model: '',
+    plate_no: '',
+    engine_no: '',
+    transmission_type: '',
+    fuel_type: '',
+    title_no: '',
+    location: '',
+    description: '',
+    area_size: '',
+    ownership_proof: null,
   });
 
-  const [collateral, setCollateral] = useState<{
-    base: CollateralBaseForm;
-    vehicle?: VehicleCollateralForm;
-    land?: LandCollateralForm;
-    atm?: ATMCollateralForm;
-  }>({
-    base: {
-      type: 'vehicle',
-      estimated_value: '',
-      appraisal_date: '',
-      appraised_by: '',
-      ownership_proof: null,
-      status: '',
-      remarks: '',
-      description: '',
-    },
-    vehicle: {
-      type: '',
-      brand: '',
-      model: '',
-      year_model: '',
-      plate_no: '',
-      engine_no: '',
-      transmission_type: '',
-      fuel_type: '',
-    },
-    land: {
-      title_no: '',
-      lot_no: '',
-      location: '',
-      area_size: '',
-    },
-    atm: {
-      bank_name: '',
-      account_no: '',
-      cardno_4digits: '',
-    },
-  });
+  const [coBorrowers, setCoBorrowers] = useState<CoBorrower[]>([
+    { first_name: '', last_name: '', address: '', email: '', contact: '', birth_date: '', marital_status: '', occupation: '', net_pay: '' },
+  ]);
 
-  // Toggle state for forms
-  const [activeForm, setActiveForm] = useState<
-    'borrower' | 'collateral' | 'coborrower' | null
-  >(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [borrowerValid, setBorrowerValid] = useState(false);
+  const [borrowerSuggestions, setBorrowerSuggestions] = useState<{ id: string; name: string }[]>([]);
 
-  /** ---------- HANDLERS ---------- */
-  const handleChange =
-    (setter: Function) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      const { name, value, files } = e.target as any;
-      setter((prev: any) => ({
-        ...prev,
-        [name]: files ? files[0] : value,
-      }));
-    };
-
-  const handleCoBorrowerChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setCoBorrowers((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [name]: value };
-      return updated;
-    });
+  // ---------------- HANDLERS ----------------
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (e.target instanceof HTMLInputElement && e.target.type === 'file') {
+      setData('ownership_proof', e.target.files?.[0] ?? null);
+    } else {
+      setData(e.target.name as keyof LoanFormData, e.target.value);
+    }
   };
 
-  const addCoBorrower = () => {
-    setCoBorrowers((prev) => [
-      ...prev,
-      {
-        first_name: '',
-        last_name: '',
-        address: '',
-        email: '',
-        contact_no: '',
-        birth_date: '',
-        marital_status: '',
-        occupation: '',
-        net_pay: '',
-      },
-    ]);
+  const fetchBorrower = async (value: string) => {
+    if (value.length <= 2) {
+      setBorrowerValid(false);
+      setBorrowerSuggestions([]);
+      setData('borrower_id', '');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/borrowers/search?query=${encodeURIComponent(value)}`);
+      if (!res.ok) throw new Error('Fetch failed');
+
+      const borrower = await res.json();
+      if (borrower.borrower_id) {
+        setData('borrower_name', borrower.borrower_name);
+        setData('borrower_id', borrower.borrower_id.toString());
+        setBorrowerValid(true);
+        setBorrowerSuggestions([{ id: borrower.borrower_id, name: borrower.borrower_name }]);
+      } else {
+        setBorrowerValid(false);
+        setData('borrower_id', '');
+        setBorrowerSuggestions([]);
+      }
+    } catch (err) {
+      setBorrowerValid(false);
+      setData('borrower_id', '');
+      setBorrowerSuggestions([]);
+      console.error(err);
+    }
   };
 
-  const removeCoBorrower = (index: number) => {
+  const debouncedFetchBorrower = useCallback(debounce(fetchBorrower, 300), []);
+
+  const handleBorrowerChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (e.target instanceof HTMLInputElement) {
+      const value = e.target.value;
+      setData('borrower_name', value);
+      setBorrowerValid(false);
+      setData('borrower_id', '');
+      debouncedFetchBorrower(value);
+    }
+  };
+
+  const selectBorrower = (borrower: { id: string; name: string }) => {
+    setData('borrower_name', borrower.name);
+    setData('borrower_id', borrower.id.toString());
+    setBorrowerValid(true);
+    setBorrowerSuggestions([]);
+  };
+
+  const handleCoBorrowerChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const updated = [...coBorrowers];
-    updated.splice(index, 1);
+    updated[index] = { ...updated[index], [e.target.name]: e.target.value };
     setCoBorrowers(updated);
   };
 
-const handleCollateralBaseChange = (e: any) => {
-  const { name, value, files } = e.target;
-  setCollateral(prev => ({
-    ...prev,
-    base: {
-      ...prev.base,
-      [name]: files ? files[0] : value,
-    },
-  }));
-};
+  const addCoBorrower = () =>
+    setCoBorrowers([...coBorrowers, { first_name: '', last_name: '', address: '', email: '', contact: '', birth_date: '', marital_status: '', occupation: '', net_pay: '' }]);
 
+  const removeCoBorrower = (i: number) => setCoBorrowers(coBorrowers.filter((_, idx) => idx !== i));
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const nextStep = () => {
+    if (activeStep === 0 && !borrowerValid) {
+      alert('Please select a valid borrower before proceeding.');
+      return;
+    }
+    setActiveStep((prev) => Math.min(prev + 1, 4));
+  };
+  const prevStep = () => setActiveStep((prev) => Math.max(prev - 1, 0));
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log({
-      borrower,
-      employment,
-      borrowerId,
-      spouse,
-      coBorrowers,
-      loan,
-      collateral,
+    if (!borrowerValid) {
+      alert('Borrower does not exist. Please select an existing borrower.');
+      return;
+    }
+
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== null) formData.append(key, value as any);
+    });
+
+    formData.append('co_borrowers', JSON.stringify(coBorrowers));
+
+    post('/loans', {
+      preserveScroll: true,
+      forceFormData: true,
     });
   };
 
-  /** ---------- INPUT COMPONENT ---------- */
-
-  const Input = ({ label, ...props }: any) => (
-    <div>
-      <label className="block text-sm font-medium mb-1">{label}</label>
-      <input
-        {...props}
-        className="w-full border rounded px-3 py-2"
-      />
-    </div>
-  );
-
-  /** ---------- SECTION HEADER ---------- */
-  const SectionHeader = ({ title, buttonLabel, onClick }: any) => (
-    <div className="flex justify-between items-center bg-yellow-50 border-b-2 border-yellow-400 px-4 py-2 rounded-t">
-      <h2 className="font-semibold text-lg">{title}</h2>
-      {buttonLabel && (
-        <button
-          type="button"
-          onClick={onClick}
-          className="flex items-center gap-1 text-sm bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-        >
-          <Plus size={14} /> {buttonLabel}
-        </button>
-      )}
-    </div>
-  );
+  // ---------------- RENDER STEPS ----------------
+  const renderStep = () => {
+    switch (activeStep) {
+      case 0:
+        return (
+          <SectionContainer title="Borrower Information">
+            <FormField label="Borrower Name" name="borrower_name" value={data.borrower_name} onChange={handleBorrowerChange}>
+              <input
+                type="text"
+                name="borrower_name"
+                value={data.borrower_name}
+                onChange={handleBorrowerChange}
+                list="borrower-suggestions"
+                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+              />
+              {borrowerSuggestions.length > 0 && (
+                <datalist id="borrower-suggestions">
+                  {borrowerSuggestions.map((b) => (
+                    <option key={b.id} value={b.name} />
+                  ))}
+                </datalist>
+              )}
+            </FormField>
+            <FormField label="Borrower ID" name="borrower_id" value={data.borrower_id} onChange={handleChange} />
+            <FieldError field="borrower_name" errors={errors} />
+            <FieldError field="borrower_id" errors={errors} />
+          </SectionContainer>
+        );
+      case 1:
+        return (
+          <SectionContainer title="Loan Details">
+            <FormField label="Loan Type" name="loan_type" value={data.loan_type} onChange={handleChange} />
+            <FormField label="Loan Amount" name="loan_amount" type="number" value={data.loan_amount} onChange={handleChange} />
+            <FormField
+              label="Interest Type"
+              name="interest_type"
+              type="select"
+              value={data.interest_type}
+              onChange={handleChange}
+              options={[
+                { value: 'Compound', label: 'Compound' },
+                { value: 'Diminishing', label: 'Diminishing' },
+              ]}
+            />
+            <FormField label="Interest Rate (%)" name="interest_rate" type="number" value={data.interest_rate} onChange={handleChange} />
+            <FormField
+              label="Repayment Frequency"
+              name="repayment_frequency"
+              type="select"
+              value={data.repayment_frequency}
+              onChange={handleChange}
+              options={[
+                { value: 'Weekly', label: 'Weekly' },
+                { value: 'Monthly', label: 'Monthly' },
+                { value: 'Yearly', label: 'Yearly' },
+              ]}
+            />
+            <FormField label="Term (months)" name="term" type="number" value={data.term} onChange={handleChange} />
+            <FormField label="Start Date" name="start_date" type="date" value={data.start_date} onChange={handleChange} />
+            <FormField label="End Date" name="end_date" type="date" value={data.end_date} onChange={handleChange} />
+            <FormField
+              label="Collateral Type"
+              name="collateral_type"
+              type="select"
+              value={data.collateral_type}
+              onChange={handleChange}
+              options={[
+                { value: 'vehicle', label: 'Vehicle' },
+                { value: 'atm', label: 'ATM' },
+                { value: 'land', label: 'Land' },
+              ]}
+            />
+          </SectionContainer>
+        );
+      case 2:
+        return (
+          <SectionContainer title="Co-Borrowers">
+            {coBorrowers.map((cb, idx) => (
+              <div key={idx} className="border rounded p-4 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold">Co-Borrower {idx + 1}</h3>
+                  {idx > 0 && (
+                    <Button type="button" variant="destructive" onClick={() => removeCoBorrower(idx)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  )}
+                </div>
+                <FormField label="First Name" name="first_name" value={cb.first_name} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Last Name" name="last_name" value={cb.last_name} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Address" name="address" value={cb.address} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Email" name="email" type="email" value={cb.email} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Contact" name="contact" value={cb.contact} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Birth Date" name="birth_date" type="date" value={cb.birth_date} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Marital Status" name="marital_status" value={cb.marital_status} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Occupation" name="occupation" value={cb.occupation} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+                <FormField label="Net Pay" name="net_pay" type="number" value={cb.net_pay} onChange={(e) => handleCoBorrowerChange(idx, e)} />
+              </div>
+            ))}
+            <Button type="button" onClick={addCoBorrower} className="flex items-center gap-2">
+              <Plus size={16} /> Add Co-Borrower
+            </Button>
+          </SectionContainer>
+        );
+      case 3:
+        return (
+          <SectionContainer title="Collateral (Vehicle)">
+            <FormField label="Type" name="type" value={data.type} onChange={handleChange} />
+            <FormField label="Brand" name="brand" value={data.brand} onChange={handleChange} />
+            <FormField label="Model" name="model" value={data.model} onChange={handleChange} />
+            <FormField label="Year Model" name="year_model" value={data.year_model} onChange={handleChange} />
+            <FormField label="Plate No" name="plate_no" value={data.plate_no} onChange={handleChange} />
+            <FormField label="Engine No" name="engine_no" value={data.engine_no} onChange={handleChange} />
+            <FormField label="Transmission Type" name="transmission_type" value={data.transmission_type} onChange={handleChange} />
+            <FormField label="Fuel Type" name="fuel_type" value={data.fuel_type} onChange={handleChange} />
+            <FormField label="Certificate of Title No" name="title_no" value={data.title_no} onChange={handleChange} />
+            <FormField label="Location" name="location" value={data.location} onChange={handleChange} />
+            <FormField label="Description" name="description" value={data.description} onChange={handleChange} />
+            <FormField label="Area" name="area" value={data.area_size} onChange={handleChange} />
+            <FormField label="Ownership Proof" name="ownership_proof" type="file" onChange={handleChange} />
+          </SectionContainer>
+        );
+      case 4:
+        return (
+          <SectionContainer title="Review Summary">
+            <div className="space-y-2">
+              <p><strong>Borrower:</strong> {data.borrower_name}</p>
+              <p><strong>Loan Type:</strong> {data.loan_type}</p>
+              <p><strong>Loan Amount:</strong> {data.loan_amount}</p>
+              <p><strong>Interest Type:</strong> {data.interest_type}</p>
+              <p><strong>Interest Rate:</strong> {data.interest_rate}%</p>
+              <p><strong>Repayment Frequency:</strong> {data.repayment_frequency}</p>
+              <p><strong>Term:</strong> {data.term} months</p>
+              <p><strong>Collateral Type:</strong> {data.collateral_type}</p>
+              {coBorrowers.map((cb, idx) => (
+                <p key={idx}><strong>Co-Borrower {idx + 1}:</strong> {cb.first_name} {cb.last_name}</p>
+              ))}
+            </div>
+          </SectionContainer>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add Loan Application" />
-
-      <form onSubmit={handleSubmit} className="p-6 space-y-8">
-        <h1 className="text-2xl font-bold">Add Loan Application</h1>
-
-        {/** ------------------ TOGGLE: BORROWER ------------------ */}
-  {activeForm === 'borrower' ? (
-          <div className="bg-white rounded-lg shadow border p-4">
-            <SectionHeader
-              title="Add Borrower"
-              buttonLabel="Cancel"
-              onClick={() => setActiveForm(null)}
-            />
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <Input label="First Name" name="first_name" value={borrower.first_name} onChange={handleChange(setBorrower)} />
-              <Input label="Last Name" name="last_name" value={borrower.last_name} onChange={handleChange(setBorrower)} />
-              <Input label="Membership Date" type="date" name="membership_date" value={borrower.membership_date || ''} onChange={handleChange(setBorrower)} />
-              <Input label="Birth Date" type="date" name="birth_date" value={borrower.birth_date || ''} onChange={handleChange(setBorrower)} />
-              <Input label="Age" name="age" value={borrower.age} onChange={handleChange(setBorrower)} />
-              <Input label="Gender" name="gender" value={borrower.gender} onChange={handleChange(setBorrower)} />
-              <Input label="Email" name="email" value={borrower.email} onChange={handleChange(setBorrower)} />
-              <Input label="Contact No" name="contact_no" value={borrower.contact_no} onChange={handleChange(setBorrower)} />
-              <Input label="City" name="city" value={borrower.city} onChange={handleChange(setBorrower)} />
-              <Input label="Address" name="address" value={borrower.address} onChange={handleChange(setBorrower)} />
-              <Input label="Land Line" name="land_line" value={borrower.land_line} onChange={handleChange(setBorrower)} />
-              <Input label="Marital Status" name="marital_status" value={borrower.marital_status} onChange={handleChange(setBorrower)} />
-              <Input label="No. of Dependent Child" name="numof_dependentchild" value={borrower.numof_dependentchild} onChange={handleChange(setBorrower)} />
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow border">
-            <SectionHeader
-              title="Borrower Information (Existing)"
-              buttonLabel="New Borrower"
-              onClick={() => setActiveForm('borrower')}
-            />
-          </div>
-        )}
-
-        {/** ---------- Employment Section ---------- */}
-        <div className="bg-white rounded-lg shadow border p-4">
-          <SectionHeader title="Employment Information" />
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <Input label="Employment Status" name="employment_status" value={employment.employment_status} onChange={handleChange(setEmployment)} />
-            <Input label="Income Source" name="income_source" value={employment.income_source} onChange={handleChange(setEmployment)} />
-            <Input label="Occupation" name="occupation" value={employment.occupation} onChange={handleChange(setEmployment)} />
-            <Input label="Position" name="position" value={employment.position} onChange={handleChange(setEmployment)} />
-            <Input label="Agency Address" name="agency_address" value={employment.agency_address} onChange={handleChange(setEmployment)} />
-            <Input label="Monthly Income" name="monthly_income" value={employment.monthly_income} onChange={handleChange(setEmployment)} />
-          </div>
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="border-b-4 border-[#FABF24] bg-[#FFF8E2] pb-4 mb-8 p-5">
+          <h1 className="text-3xl font-semibold text-gray-800">Add Loan</h1>
+          <p className="text-gray-500 text-sm">Step {activeStep + 1} of 5</p>
         </div>
 
-        {/** ---------- Borrower ID Section ---------- */}
-        <div className="bg-white rounded-lg shadow border p-4">
-          <SectionHeader title="Valid ID" />
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <Input label="ID Type" name="id_type" value={borrowerId.id_type} onChange={handleChange(setBorrowerId)} />
-            <Input label="ID Number" name="id_number" value={borrowerId.id_number} onChange={handleChange(setBorrowerId)} />
-          </div>
-        </div>
+        {renderStep()}
 
-        {/** ---------- Spouse Section ---------- */}
-        <div className="bg-white rounded-lg shadow border p-4">
-          <SectionHeader title="Spouse Information" />
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <Input label="First Name" name="first_name" value={spouse.first_name} onChange={handleChange(setSpouse)} />
-            <Input label="Last Name" name="last_name" value={spouse.last_name} onChange={handleChange(setSpouse)} />
-            <Input label="Mobile Number" name="mobile_number" value={spouse.mobile_number} onChange={handleChange(setSpouse)} />
-            <Input label="Agency Address" name="agency_address" value={spouse.agency_address} onChange={handleChange(setSpouse)} />
-            <Input label="Occupation" name="occupation" value={spouse.occupation} onChange={handleChange(setSpouse)} />
-          </div>
-        </div>
-
-        {/** ---------- Co-Borrowers Section ---------- */}
-        <div className="bg-white rounded-lg shadow border p-4">
-          <SectionHeader
-            title="Co-Borrowers"
-            buttonLabel="Add Co-Borrower"
-            onClick={() => setActiveForm('coborrower')}
-          />
-          {coBorrowers.map((co, i) => (
-            <div key={i} className="border rounded p-4 relative">
-              <p className="font-semibold mb-2">Co-Borrower</p>
-              {coBorrowers.length > 1 && (
-                <button
-                  type="button"
-                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                  onClick={() => removeCoBorrower(i)}
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
-              <div className="grid md:grid-cols-2 gap-4">
-                {Object.keys(co).map((key) => (
-                  <Input
-                    key={key}
-                    label={key.replace('_', ' ').toUpperCase()}
-                    name={key}
-                    value={co[key as keyof CoBorrowerForm]}
-                    onChange={handleCoBorrowerChange(i)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/** ---------- Loan Section ---------- */}
-        <div className="bg-white rounded-lg shadow border p-4">
-          <SectionHeader title="Loan Details" />
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            {Object.keys(loan).map((key) => (
-              <Input
-                key={key}
-                label={key.replace('_', ' ').toUpperCase()}
-                name={key}
-                value={loan[key as keyof LoanForm]}
-                onChange={handleChange(setLoan)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/** ---------- Collateral Section ---------- */}
-        <div className="bg-white rounded-lg shadow border p-4">
-          <SectionHeader title="Collateral" />
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <label>Collateral Type</label>
-            <select
-              className="border rounded px-3 py-2"
-              value={collateral.base.type}
-              onChange={(e) =>
-                setCollateral((prev) => ({
-                  ...prev,
-                  base: { ...prev.base, type: e.target.value as any },
-                }))
-              }
-              >
-              <option value="vehicle">Vehicle</option>
-              <option value="land">Land</option>
-              <option value="atm">ATM</option>
-            </select>
-          
-            <Input label="Estimated Value" name="estimated_value" value={collateral.base.estimated_value} onChange=
-            {handleCollateralBaseChange}/>
-            <Input label="Appraisal Date" type="date" name="appraisal_date" value={collateral.base.appraisal_date} onChange={handleChange((v: any) => setCollateral(prev => ({ ...prev, base: { ...prev.base, ...v } })))} />
-            <Input label="Appraised By" name="appraised_by" value={collateral.base.appraised_by} onChange={handleChange((v: any) => setCollateral(prev => ({ ...prev, base: { ...prev.base, ...v } })))} />
-          </div>
-
-          {collateral.base.type === 'vehicle' && (
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              {Object.keys(collateral.vehicle!).map((key) => (
-                <Input
-                  key={key}
-                  label={key.replace('_', ' ').toUpperCase()}
-                  name={key}
-                  value={collateral.vehicle![key as keyof VehicleCollateralForm]}
-                  onChange={handleChange((v: any) => setCollateral(prev => ({ ...prev, vehicle: { ...prev.vehicle, ...v } })))}
-                />
-              ))}
-            </div>
+        <div className="flex justify-between mt-6">
+          {activeStep > 0 && (
+            <Button type="button" className="bg-yellow-500" onClick={prevStep}>
+              Previous
+            </Button>
           )}
-
-          {collateral.base.type === 'land' && (
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              {Object.keys(collateral.land!).map((key) => (
-                <Input
-                  key={key}
-                  label={key.replace('_', ' ').toUpperCase()}
-                  name={key}
-                  value={collateral.land![key as keyof LandCollateralForm]}
-                  onChange={handleChange((v: any) => setCollateral(prev => ({ ...prev, land: { ...prev.land, ...v } })))}
-                />
-              ))}
-            </div>
+          {activeStep < 4 && (
+            <Button type="button" className="bg-yellow-500" onClick={nextStep} disabled={activeStep === 0 && !borrowerValid}>
+              Next
+            </Button>
           )}
-
-          {collateral.base.type === 'atm' && (
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              {Object.keys(collateral.atm!).map((key) => (
-                <Input
-                  key={key}
-                  label={key.replace('_', ' ').toUpperCase()}
-                  name={key}
-                  value={collateral.atm![key as keyof ATMCollateralForm]}
-                  onChange={handleChange((v: any) => setCollateral(prev => ({ ...prev, atm: { ...prev.atm, ...v } })))}
-                />
-              ))}
-            </div>
+          {activeStep === 4 && (
+            <Button type="submit" disabled={!borrowerValid || processing} className="bg-yellow-500">
+              {processing ? 'Submitting...' : 'Submit Loan'}
+            </Button>
           )}
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 shadow"
-          >
-            Submit
-          </button>
-        </div>
         </div>
       </form>
     </AppLayout>
   );
-}
+}  

@@ -27,7 +27,7 @@
     protected $casts = [
 
       'type' => 'string',
-      'transmissionType' => 'string'
+      'transmission_type' => 'string'
 
     ];
 

@@ -9,7 +9,7 @@ import { route } from 'ziggy-js';
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Loans', href: '/Loans' },
-  { title: 'View Loan Applications', href: '/Loans/VLA' },
+  { title: 'View Loan Applications', href: '/loans/vla' },
 ];
 
 export default function ViewLoanApplications() {

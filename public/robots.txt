@@ -1,2 +1,19 @@
 User-agent: *
 Disallow:
+<<<<<<< HEAD
+=======
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: *
+Allow: /
+>>>>>>> 9ca3e9217c6460a466e0ca5a9bf57b5e04e2c173

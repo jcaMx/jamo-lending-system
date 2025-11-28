@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Loans', href: '/Loans' },
-  { title: '1 Month Late Loans', href: '/Loans/1MLL' },
+  { title: '1 Month Late Loans', href: '/loans/3mll' },
 ];
 
 export default function OneMonthLateLoans() {

@@ -21,6 +21,9 @@ export function NavUser() {
     const { state } = useSidebar();
     const isMobile = useIsMobile();
 
+    // Return nothing if there is no authenticated user
+    if (!auth.user) return null;
+
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -28,7 +31,7 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                            className="group text-white hover:text-[#FABF24] data-[state=open]:bg-[#101828]"
                             data-test="sidebar-menu-button"
                         >
                             <UserInfo user={auth.user} />
