@@ -40,23 +40,23 @@ return new class extends Migration {
             $table->timestamp('failed_at')->useCurrent();
         });
 
-        Schema::create('cache', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->mediumText('value');
-            $table->integer('expiration');
-        });
+        // Schema::create('cache', function (Blueprint $table) {
+        //     $table->string('key')->primary();
+        //     $table->mediumText('value');
+        //     $table->integer('expiration');
+        // });
 
-        Schema::create('cache_locks', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->string('owner');
-            $table->integer('expiration');
-        });
+        // Schema::create('cache_locks', function (Blueprint $table) {
+        //     $table->string('key')->primary();
+        //     $table->string('owner');
+        //     $table->integer('expiration');
+        // });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('cache_locks');
-        Schema::dropIfExists('cache');
+        // Note: cache/cache_locks are created by a separate migration.
+        // Do not drop them here to avoid conflicts during rollback.
         Schema::dropIfExists('failed_jobs');
         Schema::dropIfExists('job_batches');
         Schema::dropIfExists('jobs');

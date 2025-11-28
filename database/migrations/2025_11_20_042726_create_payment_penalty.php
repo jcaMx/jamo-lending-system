@@ -15,9 +15,12 @@ return new class extends Migration {
             $table->enum('payment_method', ['Cheque','Cash','GCash','Cebuana','Metrobank'])->nullable();
             $table->string('reference_no', 50);
             $table->string('remarks', 100)->nullable();
-            $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
+            // Create verified_by column without FK to avoid constraint formation errors.
+            // FK can be added in a separate migration after users table is guaranteed to exist.
+            $table->unsignedBigInteger('verified_by')->nullable();
             $table->dateTime('verified_date')->nullable();
-            $table->foreignId('schedule_id')->constrained('amortizationschedule')->cascadeOnDelete();
+            // Create schedule_id column without FK to avoid constraint formation errors.
+            $table->unsignedBigInteger('schedule_id')->nullable();
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
         });
 

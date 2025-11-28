@@ -30,7 +30,10 @@ return new class extends Migration {
             $table->string('loan_type', 50)->nullable();
             $table->enum('status', ['Active','Fully_Paid','Bad_Debt','Rejected','Pending'])->default('Pending');
             $table->decimal('balance_remaining', 10, 2);
-            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            // `users` table may be created in a different migration file.
+            // Create the column without an immediate foreign key constraint
+            // to avoid ordering issues during `migrate:fresh`.
+            $table->unsignedBigInteger('approved_by')->nullable();
             $table->timestamps();
             $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
             $table->foreignId('formula_id')->constrained('formula');
@@ -44,7 +47,9 @@ return new class extends Migration {
             $table->decimal('penalty_amount', 15, 2)->default(0.00);
             $table->dateTime('due_date');
             $table->enum('status', ['Paid','Unpaid','Overdue'])->default('Unpaid');
-            $table->foreignId('holiday_id')->nullable()->constrained('holidays')->nullOnDelete();
+            // Create holiday_id column without FK to avoid constraint formation errors.
+            // FK can be added in a separate migration if needed.
+            $table->unsignedBigInteger('holiday_id')->nullable();
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
             $table->decimal('installment_amount', 15, 2)->nullable();
             $table->timestamps();
@@ -61,7 +66,8 @@ return new class extends Migration {
             $table->enum('status', ['Pledged','Released','Forfeited','Pending'])->nullable();
             $table->string('remarks', 100)->nullable();
             $table->string('description', 100)->nullable();
-            $table->foreignId('appraised_by')->nullable()->constrained('users')->nullOnDelete();
+            // Create appraised_by column without FK to avoid dependency on users migration order.
+            $table->unsignedBigInteger('appraised_by')->nullable();
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
         });
 

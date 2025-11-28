@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -12,53 +11,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => 'password',
-                'email_verified_at' => now(),
-            ]
-        );
-
         $this->call([
+            // 1. Create roles and permissions first (required for users)
             RolePermissionSeeder::class,
+
+            // 2. Create formulas (required for loans)
+            FormulaSeeder::class,
+
+            // 3. Create holidays (optional, but good to have)
+            HolidaySeeder::class,
+
+            // 4. Create users with roles and profiles (required for loan approvals)
+            UserSeeder::class,
+
+            // 5. Create borrowers with complete data (addresses, employment, IDs, co-borrowers, spouses)
+            BorrowerSeeder::class,
+
+            // 6. Create loans with collateral and amortization schedules (depends on borrowers, formulas, users)
+            LoanSeeder::class,
+
+            // 7. Create payments and penalties (depends on loans and schedules)
+            PaymentSeeder::class,
+
+            // 8. Create files for borrowers and collaterals (depends on borrowers and loans)
+            FileSeeder::class,
         ]);
-
-        \App\Models\User::factory(5)->create()->each(function ($user) {
-            $user->profile()->create(['address' => 'Sample address']);
-        });
-
-        // create an admin user
-        $admin = \App\Models\User::create([
-            'first_name' => 'Admin',
-            'last_name' => 'User',
-            'full_name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-        ]);
-        $adminRole = \App\Models\Role::where('name', 'admin')->first();
-        if ($adminRole) {
-            $admin->assignRole($adminRole);
-        }
-
-        // If you want to add an AuditLog record during seeding, you need to avoid making assumptions about the current authenticated user,
-        // as there is no authenticated user context when running the seeder.
-        // Instead, you can associate the log either with a specific seeded user or leave 'user_id' as null if appropriate.
-        // You will also need to define what $saved refers to–for this, use the relevant user, for example $admin.
-        //
-        // Example:
-        // use App\Models\AuditLog;
-        // \App\Models\AuditLog::create([
-        //     'user_id' => $admin->id, // or set to null if no user context applies
-        //     'action' => 'created',
-        //     'entity_type' => 'User',
-        //     'entity_id' => $admin->id,
-        //     'changes' => json_encode($admin->toArray()),
-        // ]);
-        //
-        // (Make sure AuditLog model and its migration exist and the schema matches.)
     }
 }

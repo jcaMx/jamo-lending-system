@@ -17,7 +17,7 @@ class Holidays extends Model
 
     protected $primaryKey = 'ID';
 
-    public $timestamps = true;
+    public $timestamps = false;
 
     protected $fillable = [
 

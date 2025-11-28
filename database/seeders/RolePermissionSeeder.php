@@ -47,33 +47,50 @@ class RolePermissionSeeder extends Seeder
         ];
 
         // -----------------------------------------
-        // Create permissions if missing
+        // Create permissions if missing (with guard_name)
         // -----------------------------------------
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(
+                [
+                    'name' => $permission,
+                    'guard_name' => 'web',
+                ]
+            );
         }
 
         // -----------------------------------------
-        // Create roles
+        // Create roles (with guard_name)
         // -----------------------------------------
-        $admin = Role::firstOrCreate(['name' => 'admin']);
-        $cashier = Role::firstOrCreate(['name' => 'cashier']);
+        $admin = Role::firstOrCreate(
+            [
+                'name' => 'admin',
+                'guard_name' => 'web',
+            ]
+        );
+        $cashier = Role::firstOrCreate(
+            [
+                'name' => 'cashier',
+                'guard_name' => 'web',
+            ]
+        );
 
         // -----------------------------------------
         // Assign permissions
         // -----------------------------------------
 
-        // Admin gets everything
+        // Admin gets all permissions (permission_id 1-18)
         $admin->syncPermissions(Permission::all());
 
-        // Cashier: view only + can add repayment
+        // Cashier permissions (matching SQL data):
+        // permission_id 2 (loan.view), 6 (borrower.view), 10 (user.view),
+        // 13 (repayment.create), 14 (repayment.view), 18 (collection.daily)
         $cashier->syncPermissions([
             'loan.view',
             'borrower.view',
+            'user.view',
+            'repayment.create',
             'repayment.view',
-            'repayment.create',    // cashier can add repayment
-            'collection.daily',  // can view daily collection sheet
-            'user.view',                       
+            'collection.daily',
         ]);
     }
 }

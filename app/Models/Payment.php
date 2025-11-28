@@ -33,7 +33,7 @@ use Illuminate\Database\Eloquent\Model;
     ];
 
     protected $casts = [
-        'payment_method' => PaymentMethod::class,
+        'payment_method' => PaymentMethod::class . '?',
         'payment_date' => 'datetime',
         'verified_date' => 'datetime',
     ];
