@@ -18,12 +18,13 @@ class BorrowerService
     public function getBorrowersForIndex(): Collection
     {
         return Borrower::query()
-            ->with(['borrowerEmployment', 'borrowerAddresses', 'loan'])
+            ->with(['borrowerEmployment', 'borrowerAddresses', 'loans'])
             ->orderBy('last_name')
             ->get()
             ->map(fn (Borrower $borrower) => [
                 'id' => $borrower->ID,
-                'name' => $borrower->name,
+                'first_name' => $borrower->first_name,
+                'last_name' => $borrower->last_name,
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
                 'age' => $borrower->age,
@@ -34,8 +35,8 @@ class BorrowerService
                 'mobile' => $borrower->contact_no,
                 'landline' => $borrower->land_line,
                 'activeLoan' => $this->formatLoan(
-                    $borrower->loan?->loadMissing('collateral')
-                ),
+    $this->resolveActiveLoan($borrower)?->loadMissing('collateral')
+),
             ]);
     }
 
@@ -56,7 +57,8 @@ class BorrowerService
             ->findOrFail($borrowerId);
 
         // Map all loans with collateral
-        $allLoans = $borrower->loans->map(function (Loan $loan) {
+        $allLoans = $borrower->loans
+        ->map(function (Loan $loan) {
             return [
                 'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
                 'released' => optional($loan->start_date)?->toDateString() ?? '',
@@ -113,7 +115,7 @@ class BorrowerService
                 'coBorrowers' => $borrower->coBorrowers->values()->all(),
                 'comments' => $comments->values()->all(),
                 'amortizationSchedule' => $this->formatAmortizationSchedule($activeLoanModel),
-                'loans' => $allLoans, // include all loans
+                'loan' => $allLoans, // include all loans
             ],
             'activeLoan' => $activeLoan,
             'repayments' => $this->formatRepayments($activeLoanModel),
@@ -279,8 +281,49 @@ class BorrowerService
                 'agency_address' => $data['spouseAgencyAddress'] ?? null,
             ]);
         }
-
+        
         return $borrower;
     }
+
+    public function deleteBorrower(int $borrowerId): bool
+{
+    $borrower = Borrower::findOrFail($borrowerId);
+    
+    // Optionally delete related records
+    $borrower->borrowerAddresses()->delete();
+    $borrower->borrowerEmployment()->delete();
+    $borrower->spouse()->delete();
+    $borrower->coBorrowers()->delete();
+    $borrower->loans()->delete(); // or handle loans carefully if needed
+
+    return $borrower->delete();
+}
+public function updateBorrower(Borrower $borrower, array $data): Borrower
+{
+    // Update borrower basic info
+    $borrower->update([
+        'email'      => $data['email']      ?? $borrower->email,
+        'contact_no' => $data['mobile']     ?? $borrower->contact_no,
+        'landline'   => $data['landline']   ?? $borrower->landline,
+        'occupation' => $data['occupation'] ?? $borrower->occupation,
+        'gender'     => $data['gender']     ?? $borrower->gender,
+        
+    ]);
+
+    // Update or create borrower address if provided
+    if (!empty($data['address']) || !empty($data['city']) || !empty($data['zipcode'])) {
+        $borrower->borrowerAddresses()->updateOrCreate(
+            ['borrower_id' => $borrower->id],
+            [
+                'address'     => $data['address'] ?? $borrower->borrowerAddresses?->address,
+                'city'        => $data['city'] ?? $borrower->borrowerAddresses?->city,
+                'postal_code' => $data['zipcode'] ?? $borrower->borrowerAddresses?->postal_code,
+            ]
+        );
+    }
+
+    return $borrower->fresh(['borrowerAddresses', 'borrowerEmployment', 'spouse', 'coBorrowers', 'loans']);
+}
+
 
 }

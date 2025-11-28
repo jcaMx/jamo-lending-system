@@ -17,7 +17,7 @@ class BorrowerController extends Controller
 
     public function index()
     {
-        $borrowers = Borrower::with('loan')->get()->map(function ($b) {
+        $borrowers = Borrower::with('loans')->get()->map(function ($b) {
             return [
                 'id' => $b->ID,
                 'first_name' => $b->first_name,
@@ -27,14 +27,14 @@ class BorrowerController extends Controller
                 'gender' => $b->gender,
                 'occupation' => $b->occupation,
                 'contact_no' => $b->contact_no,
-                'loan' => $b->loan ? [
+                'loans' => $b->loan ? [
                     'status' => $b->loan->status,
                 ] : null,
             ];
         });
 
-        return Inertia::render('borrowers/index', [
-            'borrowers' => $this->borrowerService->getBorrowersForIndex(),
+         return Inertia::render('borrowers/index', [
+        'borrowers' => $this->borrowerService->getBorrowersForIndex(),
         ]);
     }
 
@@ -98,23 +98,26 @@ class BorrowerController extends Controller
             ->with('success', 'Borrower added successfully!');
     }
     
-    public function update(Request $request, Borrower $borrower)
-    {
-        $validated = $request->validate([
-            'address' => 'nullable|string|max:50',
-            'city' => 'nullable|string|max:50',
-            'zipcode' => 'nullable|string|max:10',
-            'email' => 'nullable|email|max:100',
-            'mobile' => 'nullable|string|max:20',
-            'landline' => 'nullable|string|max:20',
-            'occupation' => 'nullable|string|max:50',
-            'gender' => 'nullable|string|in:Male,Female',
-            'age' => 'nullable|integer|min:0',
-        ]);
+   public function update(Request $request, Borrower $borrower)
+{
+    $validated = $request->validate([
+        'address' => 'nullable|string|max:50',
+        'city' => 'nullable|string|max:50',
+        'zipcode' => 'nullable|string|max:10',
+        'email' => 'nullable|email|max:100',
+        'mobile' => 'nullable|string|max:20',
+        'landline' => 'nullable|string|max:20',
+        'occupation' => 'nullable|string|max:50',
+        'gender' => 'nullable|string|in:Male,Female',
+        'age' => 'nullable|integer|min:0',
+    ]);
 
-        $this->service->update($borrower, $validated);
+    // 👇 use the injected property name
+    $this->borrowerService->updateBorrower($borrower, $validated);
 
-        return redirect()->back()->with('success', 'Borrower updated successfully');
+    return redirect()->back()->with('success', 'Borrower updated successfully');
+
+
         $borrower = Borrower::with('loan')->findOrFail($id);
 
         return Inertia::render('borrowers/show', [
@@ -132,7 +135,19 @@ class BorrowerController extends Controller
                 ] : null,
             ],
         ]);
+
+        
     }
+
+    public function destroy($id)
+{
+    Borrower::findOrFail($id)->delete();
+
+    return redirect()->route('borrowers.index')
+                     ->with('success', 'Borrower deleted successfully.');
+}
+
+
 
 
 }

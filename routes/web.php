@@ -17,6 +17,7 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\ApplicationController;
 
+
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
@@ -58,6 +59,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
+
+Route::prefix('borrowers')->group(function () {
+    Route::delete('{id}', [BorrowerController::class, 'destroy'])
+        ->name('borrowers.destroy');
+});
     });
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
@@ -73,28 +79,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.index');
         Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.create');
         Route::get('/1MLL', fn() => Inertia::render('Loans/1MLL'))->name('loans.one-month-late');
-
         Route::get('/3MLL', fn() => Inertia::render('Loans/3MLL'))->name('loans.three-month-late');
-
         Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
-        
         Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
-
         Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.applications');
-
         Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.view');
-
         Route::post('/', [LoanController::class, 'store'])->name('loans.store');
-
         Route::get('/AddLoan', fn() => Inertia::render('Loans/AddLoan'))->name('loans.add');
-
         Route::middleware(['role:admin'])->group(function () 
         {
 
             Route::post('/approve/{loan}', [LoanController::class, 'approve'])->name('loans.approve');
-
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
-
             Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
         });
     });

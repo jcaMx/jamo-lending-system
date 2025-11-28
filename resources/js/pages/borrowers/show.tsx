@@ -129,11 +129,11 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         label: 'Repayments',
         content: <RepaymentsTab repayments={safeRepayments} />,
       },
-      {
-        key: 'loanTerms' as TabKey,
-        label: 'Loan Terms',
-        content: <LoanTermsTab loan={safeLoan} />,
-      },
+      // {
+      //   key: 'loanTerms' as TabKey,
+      //   label: 'Loan Terms',
+      //   content: <LoanTermsTab loan={safeLoan} />,
+      // },
       {
         key: 'loanSchedule' as TabKey,
         label: 'Loan Schedule',
@@ -144,11 +144,11 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         label: 'Loan Collateral',
         content: <LoanCollateralTab collaterals={safeCollaterals} />,
       },
-      {
-        key: 'loanFiles' as TabKey,
-        label: 'Loan Files',
-        content: <LoanFilesTab borrower={normalizedBorrower} />,
-      },
+      // {
+      //   key: 'loanFiles' as TabKey,
+      //   label: 'Loan Files',
+      //   content: <LoanFilesTab borrower={normalizedBorrower} />,
+      // },
       {
         key: 'coBorrower' as TabKey,
         label: 'Co-Borrower',

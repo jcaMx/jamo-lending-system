@@ -14,7 +14,7 @@ class RepaymentController extends Controller
 {
     public function add()
     {
-        $borrowers = Borrower::with('loan')->get()->map(function ($b) {
+        $borrowers = Borrower::with('loans')->get()->map(function ($b) {
             return [
                 'id' => $b->ID,
                 'name' => $b->first_name . ' ' . $b->last_name,

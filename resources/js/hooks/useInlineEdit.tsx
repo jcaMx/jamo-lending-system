@@ -1,13 +1,13 @@
 import { useState } from "react";
 
-export default function useInlineEdit(
-  initialData: Record<string, any>,
-  onChange: (field: string, value: any) => void
+export default function useInlineEdit<T>(
+  initialData: T,
+  onChange: <K extends keyof T>(field: K, value: T[K]) => void
 ) {
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [editedValue, setEditedValue] = useState<any>("");
+  const [editingField, setEditingField] = useState<keyof T | null>(null);
+  const [editedValue, setEditedValue] = useState<string>("");
 
-  const startEditing = (field: string, value: any) => {
+  const startEditing = (field: keyof T, value: string) => {
     setEditingField(field);
     setEditedValue(value);
   };
@@ -19,10 +19,17 @@ export default function useInlineEdit(
 
   const saveField = () => {
     if (editingField) {
-      onChange(editingField, editedValue);
+      onChange(editingField, editedValue as T[keyof T]);
       cancelEditing();
     }
   };
 
-  return { editingField, editedValue, setEditedValue, startEditing, cancelEditing, saveField };
+  return {
+    editingField,
+    editedValue,
+    setEditedValue,
+    startEditing,
+    cancelEditing,
+    saveField,
+  };
 }

@@ -29,15 +29,15 @@
 
     ];
 
-    public function landcollateral() {
+    public function landDetails() {
       return $this->hasOne(LandCollateral::class, 'collateral_id', 'ID'); 
     }
 
-    public function vehiclecollateral() {
+    public function vehicleDetails() {
       return $this->hasOne(VehicleCollateral::class, 'collateral_id', 'ID');
     }
 
-    public function atmcollateral() {
+    public function atmDetails() {
       return $this->hasOne(ATMCollateral::class, 'collateral_id', 'ID');
     }
 
