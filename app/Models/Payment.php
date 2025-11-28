@@ -1,25 +1,19 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PaymentMethod;
+use App\Models\User;
 
-
-  enum PaymentMethod: string {
-    case BankTransfer = 'BankTransfer';
-    case Cash = 'Cash';
-    case GCash = 'GCash';
-  }
-
-  class Payment extends Model {
-
-
+class Payment extends Model
+{
     public $timestamps = false;
 
     protected $table = 'payment';
-
     protected $primaryKey = 'ID';
 
     protected $fillable = [
-
         'payment_date',
         'amount',
         'payment_method',
@@ -29,13 +23,12 @@ use Illuminate\Database\Eloquent\Model;
         'verified_date',
         'loan_id',
         'schedule_id',
-
     ];
 
     protected $casts = [
-        'payment_method' => PaymentMethod::class . '?',
-        'payment_date' => 'datetime',
-        'verified_date' => 'datetime',
+        'payment_method' => PaymentMethod::class,
+        'payment_date'   => 'datetime',
+        'verified_date'  => 'datetime',
     ];
 
     public function jamoUser()
@@ -52,10 +45,9 @@ use Illuminate\Database\Eloquent\Model;
     {
         return $this->belongsTo(AmortizationSchedule::class, 'schedule_id', 'ID');
     }
+
     public function verifiedBy()
     {
-        return $this->belongsTo(user::class, 'verified_by');
+        return $this->belongsTo(User::class, 'verified_by');
     }
-
-
 }

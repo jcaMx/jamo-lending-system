@@ -204,8 +204,9 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                 >
                   <option value="">Select method</option>
                   <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Gcash">Gcash</option>
+                  <option value="Metrobank">Metro Bank</option>
+                  <option value="Cebuana">Cebuana</option>
+                  <option value="GCash">GCash</option>
                 </select>
               </div>
 
