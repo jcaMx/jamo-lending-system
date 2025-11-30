@@ -57,12 +57,12 @@ const mainNavItems: NavItem[] = [
     icon: LoansIcon,
     roles: ["admin", "cashier"],
     subItems: [
-      { type: "link", title: "View All Loans", href: "/loans/val" },
-      { type: "link", title: "Past Maturity Date", href: "/loans/pmd" },
-      { type: "link", title: "1 Month Late Loans", href: "/loans/1mll" },
-      { type: "link", title: "3 Month Late Loans", href: "/loans/3mll" },
-      { type: "link", title: "Add Loan", href: "/loans/addloan", roles: ["admin"] },
-      { type: "link", title: "View Loan Applications", href: "/loans/vla", roles: ["admin"] },
+      { type: "link", title: "View All Loans", href: "/Loans/VAL" },
+      { type: "link", title: "Past Maturity Date", href: "/Loans/PMD" },
+      { type: "link", title: "1 Month Late Loans", href: "/Loans/1MLL" },
+      { type: "link", title: "3 Month Late Loans", href: "/Loans/3MLL" },
+      { type: "link", title: "Add Loan", href: "/Loans/AddLoan", roles: ["admin"] },
+      { type: "link", title: "View Loan Applications", href: "/Loans/VLA", roles: ["admin"] },
     ],
   },
 

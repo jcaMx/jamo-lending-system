@@ -1,6 +1,5 @@
 User-agent: *
 Disallow:
-<<<<<<< HEAD
 =======
 User-agent: Googlebot
 Allow: /
@@ -16,4 +15,3 @@ Allow: /
 
 User-agent: *
 Allow: /
->>>>>>> 9ca3e9217c6460a466e0ca5a9bf57b5e04e2c173

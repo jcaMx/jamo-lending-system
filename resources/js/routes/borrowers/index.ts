@@ -211,84 +211,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     
     store.form = storeForm
 /**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-export const search = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: search.url(options),
-    method: 'get',
-})
-
-search.definition = {
-    methods: ["get","head"],
-    url: '/borrowers/search',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-search.url = (options?: RouteQueryOptions) => {
-    return search.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-search.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: search.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: search.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-    const searchForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: search.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-        searchForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: search.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\BorrowerController::search
- * @see app/Http/Controllers/BorrowerController.php:135
- * @route '/borrowers/search'
- */
-        searchForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: search.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    search.form = searchForm
-/**
 * @see \App\Http\Controllers\BorrowerController::show
  * @see app/Http/Controllers/BorrowerController.php:46
  * @route '/borrowers/{id}'
@@ -484,7 +406,7 @@ edit.head = (args: { id: string | number } | [id: string | number ] | string | n
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\BorrowerController::update
- * @see app/Http/Controllers/BorrowerController.php:99
+ * @see app/Http/Controllers/BorrowerController.php:101
  * @route '/borrowers/{borrower}'
  */
 export const update = (args: { borrower: number | { ID: number } } | [borrower: number | { ID: number } ] | number | { ID: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -499,7 +421,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\BorrowerController::update
- * @see app/Http/Controllers/BorrowerController.php:99
+ * @see app/Http/Controllers/BorrowerController.php:101
  * @route '/borrowers/{borrower}'
  */
 update.url = (args: { borrower: number | { ID: number } } | [borrower: number | { ID: number } ] | number | { ID: number }, options?: RouteQueryOptions) => {
@@ -532,7 +454,7 @@ update.url = (args: { borrower: number | { ID: number } } | [borrower: number | 
 
 /**
 * @see \App\Http\Controllers\BorrowerController::update
- * @see app/Http/Controllers/BorrowerController.php:99
+ * @see app/Http/Controllers/BorrowerController.php:101
  * @route '/borrowers/{borrower}'
  */
 update.put = (args: { borrower: number | { ID: number } } | [borrower: number | { ID: number } ] | number | { ID: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -542,7 +464,7 @@ update.put = (args: { borrower: number | { ID: number } } | [borrower: number | 
 
     /**
 * @see \App\Http\Controllers\BorrowerController::update
- * @see app/Http/Controllers/BorrowerController.php:99
+ * @see app/Http/Controllers/BorrowerController.php:101
  * @route '/borrowers/{borrower}'
  */
     const updateForm = (args: { borrower: number | { ID: number } } | [borrower: number | { ID: number } ] | number | { ID: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -557,7 +479,7 @@ update.put = (args: { borrower: number | { ID: number } } | [borrower: number | 
 
             /**
 * @see \App\Http\Controllers\BorrowerController::update
- * @see app/Http/Controllers/BorrowerController.php:99
+ * @see app/Http/Controllers/BorrowerController.php:101
  * @route '/borrowers/{borrower}'
  */
         updateForm.put = (args: { borrower: number | { ID: number } } | [borrower: number | { ID: number } ] | number | { ID: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -575,7 +497,6 @@ const borrowers = {
     index: Object.assign(index, index),
 add: Object.assign(add, add),
 store: Object.assign(store, store),
-search: Object.assign(search, search),
 show: Object.assign(show, show),
 edit: Object.assign(edit, edit),
 update: Object.assign(update, update),

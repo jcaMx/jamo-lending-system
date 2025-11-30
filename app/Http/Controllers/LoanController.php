@@ -1,18 +1,16 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\Loan;
-use App\Models\Collateral;
-use App\Models\VehicleCollateral;
-use App\Models\LandCollateral;
-use App\Models\AtmCollateral; // correct class name
-use App\Models\CoBorrower;
-use App\Models\Files;
+use App\Factories\CollateralFactory;
+use App\Http\Requests\StoreLoanRequest;
 use App\Models\Borrower;
+use App\Models\Files;
+use App\Models\Formula;
+use App\Models\Loan;
 use App\Services\LoanService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
+use Inertia\Inertia;
 
 class LoanController extends Controller
 {
@@ -23,150 +21,297 @@ class LoanController extends Controller
         $this->loanService = $loanService;
     }
 
-    public function store(Request $request)
+    public function index()
     {
-        // ---------------- VALIDATION ----------------
-        $request->validate([
-            'borrower_id' => 'required|exists:borrower,ID', // per your confirmation
-            'loan_type' => 'required|string',
-            'loan_amount' => 'required|numeric|min:0',
-            'interest_type' => 'required|string',
-            'interest_rate' => 'required|numeric|min:0',
-            'repayment_frequency' => 'required|string',
-            'term' => 'required|numeric|min:1',
-            'collateral_type' => 'required|string|in:vehicle,land,atm',
-            'ownership_proof' => 'nullable|file|max:10240',
+        $loanApplications = Loan::with(['borrower.coBorrowers', 'borrower.spouse', 'borrower.borrowerAddress', 'collateral'])
+            ->where('status', 'Pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-            // Vehicle fields
-            'type' => 'nullable|string|required_if:collateral_type,vehicle',
-            'brand' => 'nullable|string|required_if:collateral_type,vehicle',
-            'model' => 'nullable|string|required_if:collateral_type,vehicle',
-            'year_model' => 'nullable|string|required_if:collateral_type,vehicle',
-            'plate_no' => 'nullable|string|required_if:collateral_type,vehicle',
-            'engine_no' => 'nullable|string|required_if:collateral_type,vehicle',
-            'transmission_type' => 'nullable|string|required_if:collateral_type,vehicle',
-            'fuel_type' => 'nullable|string|required_if:collateral_type,vehicle',
-
-            // Land fields
-            'title_no' => 'nullable|string|required_if:collateral_type,land',
-            'location' => 'nullable|string|required_if:collateral_type,land',
-            'area_size' => 'nullable|string|required_if:collateral_type,land',
-
-            // ATM fields
-            'bank_name' => 'nullable|string|required_if:collateral_type,atm',
-            'account_no' => 'nullable|string|required_if:collateral_type,atm',
-            'cardno_4digits' => 'nullable|string|required_if:collateral_type,atm',
+        return Inertia::render('Loans/VLA', [
+            'loanApplications' => $loanApplications,
+            'flash' => ['success' => session('success')],
         ]);
+    }
 
+    public function add()
+    {
+        $borrowers = Borrower::orderBy('last_name')->orderBy('first_name')->get()->map(function ($b) {
+            return [
+                'id' => $b->ID,
+                'name' => $b->first_name.' '.$b->last_name,
+            ];
+        });
+
+        return Inertia::render('Loans/AddLoan', [
+            'borrowers' => $borrowers,
+        ]);
+    }
+
+    public function store(StoreLoanRequest $request)
+    {
         DB::beginTransaction();
 
         try {
-            // Use Borrower::findOrFail - assumes your Borrower model has $primaryKey = 'ID'
-            $borrower = Borrower::findOrFail($request->borrower_id);
+            // Get borrower by ID (borrower should already exist)
+            $borrowerId = $request->input('borrower_id');
+            if (! $borrowerId) {
+                throw new \Exception('Borrower ID is required.');
+            }
 
-            // ---------------- CREATE LOAN ----------------
+            $borrower = Borrower::find($borrowerId);
+            if (! $borrower) {
+                throw new \Exception('Borrower not found.');
+            }
+
+            // Reloan Policy: Check if borrower has existing unpaid loan
+            $existingUnpaidLoan = Loan::where('borrower_id', $borrower->ID)
+                ->whereIn('status', ['Pending', 'Active'])
+                ->where('balance_remaining', '>', 0)
+                ->first();
+
+            if ($existingUnpaidLoan) {
+                throw new \Exception('Borrower cannot reloan. An existing unpaid loan (ID: '.$existingUnpaidLoan->ID.') is still active.');
+            }
+
+            // Get default formula (Compound Interest Loan)
+            $formula = Formula::where('name', 'Compound Interest Loan')->first();
+            if (! $formula) {
+                throw new \Exception('Default formula not found. Please run FormulaSeeder.');
+            }
+
+            // Create Loan using LoanService
             $loanData = [
                 'borrower_id' => $borrower->ID,
-                'loan_type' => $request->loan_type,
-                'principal_amount' => $request->loan_amount,
-                'interest_type' => $request->interest_type,
-                'interest_rate' => $request->interest_rate,
-                'repayment_frequency' => $request->repayment_frequency,
-                'term_months' => $request->term,
+                'loan_type' => $request->input('loan_type'),
+                'principal_amount' => $request->input('loan_amount'),
+                'interest_type' => $request->input('interest_type'),
+                'interest_rate' => $request->input('interest_rate'),
+                'repayment_frequency' => $request->input('repayment_frequency'),
+                'term_months' => (int) $request->input('term'),
+                'status' => 'Pending',
+                'formula_id' => $formula->ID,
+            ];
+            $loan = $this->loanService->createLoan($loanData);
+
+            // Create Collateral using CollateralFactory
+            $collateralType = ucfirst($request->input('collateral_type')); // vehicle -> Vehicle, land -> Land, atm -> ATM
+            $collateralData = [
+                'loan_id' => $loan->ID,
                 'status' => 'Pending',
             ];
 
-            $loan = $this->loanService->createLoan($loanData);
-
-            // ---------------- CREATE CO-BORROWERS ----------------
-            $coBorrowers = json_decode($request->input('co_borrowers', '[]'), true);
-            foreach ($coBorrowers as $co) {
-                CoBorrower::create([
-                    'first_name' => $co['first_name'] ?? '',
-                    'last_name' => $co['last_name'] ?? '',
-                    'address' => $co['address'] ?? '',
-                    'email' => $co['email'] ?? '',
-                    'contact_no' => $co['contact'] ?? '',
-                    'birth_date' => $co['birth_date'] ?? null,
-                    'marital_status' => $co['marital_status'] ?? null,
-                    'occupation' => $co['occupation'] ?? null,
-                    'net_pay' => $co['net_pay'] ?? null,
-                    'borrower_id' => $borrower->ID,
-                    'loan_id' => $loan->ID, // helpful relation
-                ]);
+            // Add type-specific collateral data
+            if ($request->input('collateral_type') === 'vehicle') {
+                $collateralData['brand'] = $request->input('make');
+                $collateralData['model'] = $request->input('series') ?? '';
+                $collateralData['year_model'] = $request->input('year_model');
+                $collateralData['plate_no'] = $request->input('plate_no');
+                $collateralData['engine_no'] = $request->input('engine_no');
+                $collateralData['fuel_type'] = $request->input('fuel');
+                $collateralData['vehicle_type'] = $request->input('vehicle_type'); // Vehicle type (Car, Motorcycle, Truck)
+                $collateralData['transmission_type'] = $request->input('transmission_type'); // Transmission type (Manual, Automatic)
+            } elseif ($request->input('collateral_type') === 'land') {
+                $collateralData['titleNo'] = $request->input('certificate_of_title_no');
+                $collateralData['lotNo'] = 0; // Default if not provided
+                $collateralData['location'] = $request->input('location');
+                $collateralData['areaSize'] = $request->input('area') ?? '';
+                $collateralData['description'] = $request->input('description');
+            } elseif ($request->input('collateral_type') === 'atm') {
+                $collateralData['bank_name'] = $request->input('bank_name');
+                $collateralData['account_no'] = $request->input('account_no');
+                $collateralData['cardno_4digits'] = (int) $request->input('cardno_4digits');
             }
 
-            // ---------------- CREATE COLLATERAL ----------------
-            $collateral = Collateral::create([
-                'loan_id' => $loan->ID,
-                'type' => $request->collateral_type,
-                'status' => 'Pending',
-                'description' => $request->description ?? null,
-                'ownership_proof' => null,
-                'remarks' => null,
-            ]);
+            // Create Collateral first (needed for file relationship)
+            $collateral = CollateralFactory::createCollateral($collateralType, $collateralData);
 
-            // ---------------- COLLATERAL DETAILS ----------------
-            switch ($request->collateral_type) {
-                case 'vehicle':
-                    VehicleCollateral::create([
-                        'collateral_id' => $collateral->ID,
-                        'type' => $request->type,
-                        'brand' => $request->brand,
-                        'model' => $request->model,
-                        'year_model' => $request->year_model,
-                        'plate_no' => $request->plate_no,
-                        'engine_no' => $request->engine_no,
-                        'transmission_type' => $request->transmission_type,
-                        'fuel_type' => $request->fuel_type,
-                    ]);
-                    break;
-                case 'land':
-                    LandCollateral::create([
-                        'collateral_id' => $collateral->ID,
-                        'title_no' => $request->title_no,
-                        'location' => $request->location,
-                        'description' => $request->description ?? null,
-                        'area_size' => $request->area_size,
-                    ]);
-                    break;
-                case 'atm':
-                    AtmCollateral::create([
-                        'collateral_id' => $collateral->ID,
-                        'bank_name' => $request->bank_name,
-                        'account_no' => $request->account_no,
-                        'cardno_4digits' => $request->cardno_4digits,
-                    ]);
-                    break;
-            }
-
-            // ---------------- FILE UPLOAD ----------------
-            if ($request->hasFile('ownership_proof') && $request->file('ownership_proof')->isValid()) {
-                $file = $request->file('ownership_proof');
-                $path = $file->store('ownership_proofs', 'public');
-
-                Files::create([
-                    'borrower_id' => $borrower->ID,
-                    'collateral_id' => $collateral->ID,
+            // Handle ownership proof file upload
+            if ($request->hasFile('ownership_proof')) {
+                $path = $request->file('ownership_proof')->store('collateral', 'public');
+                $file = Files::create([
                     'file_type' => 'ownership_proof',
-                    'file_name' => $file->getClientOriginalName(),
+                    'file_name' => basename($path),
                     'file_path' => $path,
-                    'uploaded_at' => Carbon::now(),
-                    'description' => 'Ownership proof for collateral',
+                    'collateral_id' => $collateral->ID,
                 ]);
-
-                $collateral->ownership_proof = $path;
+                $collateral->ownership_proof = $file->ID;
                 $collateral->save();
+            }
+
+            // Create Co-Borrowers
+            if ($request->filled('coBorrowers')) {
+                foreach ($request->input('coBorrowers') as $coBorrowerData) {
+                    $borrower->coBorrowers()->create([
+                        'first_name' => $coBorrowerData['first_name'] ?? '',
+                        'last_name' => $coBorrowerData['last_name'] ?? '',
+                        'address' => $coBorrowerData['address'] ?? '',
+                        'email' => $coBorrowerData['email'] ?? '',
+                        'contact_no' => $coBorrowerData['contact'] ?? '',
+                        'birth_date' => $coBorrowerData['birth_date'] ?? null,
+                        'marital_status' => $coBorrowerData['marital_status'] ?? '',
+                        'occupation' => $coBorrowerData['occupation'] ?? '',
+                    ]);
+                }
             }
 
             DB::commit();
 
-            return redirect()->route('loans.applications')->with('success', 'Loan application created successfully.');
-        } catch (\Exception $e) {
+            return redirect()->route('loans.view')->with('success', 'Loan application created successfully!');
+
+        } catch (\Throwable $e) {
             DB::rollBack();
-            // Return validation-friendly error for Inertia
-            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+
+            return back()->withErrors([
+                'error' => 'Failed to create loan application: '.$e->getMessage(),
+            ])->withInput();
+        }
+    }
+
+    public function show(Loan $loan)
+    {
+        $loan->load([
+            'borrower',
+            'borrower.coBorrowers',
+            'borrower.spouse',
+            'borrower.borrowerEmployment',
+            'borrower.borrowerAddress',
+            'collateral',
+            'collateral.landDetails',
+            'collateral.vehicleDetails',
+            'collateral.atmDetails',
+            'collateral.files',
+            'amortizationSchedules',
+            'formula',
+        ]);
+
+        return Inertia::render('Loans/ShowLoan', [
+            'loan' => $loan,
+        ]);
+    }
+
+    public function approve(Loan $loan)
+    {
+        try {
+            $approvedBy = auth()->id();
+            if (! $approvedBy) {
+                return back()->withErrors(['error' => 'User not authenticated.']);
+            }
+
+            $request = request();
+            $releasedAmount = $request->input('released_amount');
+
+            if (! $releasedAmount || $releasedAmount <= 0) {
+                return back()->withErrors(['error' => 'Released amount is required and must be greater than 0.']);
+            }
+
+            $this->loanService->approveLoan($loan, $approvedBy, (float) $releasedAmount);
+
+            return redirect()->route('loans.view-approved')->with('success', 'Loan approved successfully!');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['error' => 'Failed to approve loan: '.$e->getMessage()]);
+        }
+    }
+
+    public function reject(Loan $loan)
+    {
+        try {
+            $this->loanService->rejectLoan($loan);
+
+            return redirect()->route('loans.view')->with('success', 'Loan rejected successfully!');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['error' => 'Failed to reject loan: '.$e->getMessage()]);
+        }
+    }
+
+    public function threeMonthLate()
+    {
+        $loans = $this->loanService->getThreeMonthLateLoans();
+
+        return Inertia::render('Loans/3MLL', [
+            'loans' => $loans,
+        ]);
+    }
+
+    public function oneMonthLate()
+    {
+        $loans = $this->loanService->getOneMonthLateLoans();
+
+        return Inertia::render('Loans/1MLL', [
+            'loans' => $loans,
+        ]);
+    }
+
+    public function pastMaturityDate()
+    {
+        $loans = $this->loanService->getPastMaturityDateLoans();
+
+        return Inertia::render('Loans/PMD', [
+            'loans' => $loans,
+        ]);
+    }
+
+    public function viewApproved()
+    {
+        $loans = $this->loanService->getApprovedLoans();
+
+        // Load borrower addresses for each loan
+        $loans = $loans->map(function ($loan) {
+            $loan->borrower->load('borrowerAddress');
+            $loan->load('amortizationSchedules');
+
+            return $loan;
+        });
+
+        return Inertia::render('Loans/ViewLoans', [
+            'loans' => $loans,
+        ]);
+    }
+
+    public function showSchedule(Loan $loan)
+    {
+        $loan->load(['amortizationSchedules', 'borrower.borrowerAddress']);
+
+        // Format the loan data to ensure schedules are properly serialized
+        $loanData = [
+            'ID' => $loan->ID,
+            'principal_amount' => (float) $loan->principal_amount,
+            'released_amount' => $loan->released_amount ? (float) $loan->released_amount : null,
+            'interest_rate' => (float) $loan->interest_rate,
+            'term_months' => $loan->term_months,
+            'repayment_frequency' => $loan->repayment_frequency,
+            'borrower' => [
+                'ID' => $loan->borrower->ID,
+                'first_name' => $loan->borrower->first_name,
+                'last_name' => $loan->borrower->last_name,
+            ],
+            'amortizationSchedules' => $loan->amortizationSchedules->map(function ($schedule) {
+                return [
+                    'ID' => $schedule->ID,
+                    'installment_no' => $schedule->installment_no,
+                    'installment_amount' => (float) $schedule->installment_amount,
+                    'interest_amount' => (float) $schedule->interest_amount,
+                    'penalty_amount' => (float) $schedule->penalty_amount,
+                    'amount_paid' => (float) $schedule->amount_paid,
+                    'due_date' => $schedule->due_date?->toDateString(),
+                    'status' => $schedule->status?->value ?? $schedule->status ?? 'Unpaid',
+                ];
+            })->values()->all(),
+        ];
+
+        return Inertia::render('Loans/LoanSchedule', [
+            'loan' => $loanData,
+        ]);
+    }
+
+    public function close(Loan $loan)
+    {
+        try {
+            $this->loanService->closeLoan($loan);
+
+            return redirect()->back()->with('success', 'Loan closed successfully!');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['error' => 'Failed to close loan: '.$e->getMessage()]);
         }
     }
 }
-    

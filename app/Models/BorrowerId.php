@@ -17,6 +17,8 @@ class BorrowerId extends Model
         'id_number',
     ];
 
+    public $timestamps = false;
+
     public function borrower()
     {
         return $this->belongsTo(Borrower::class);

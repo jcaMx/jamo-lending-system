@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "types": ["node"],
     "lib": ["ES2023", "DOM"],
     "module": "ESNext",
     "skipLibCheck": true,
     "composite": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -17,10 +16,13 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": "resources/js",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
 
     "paths": {
-      "@/*": ["resources/js/*", "src/*", "*"]   // ✅ alias covers both app and landing
+      "@/*": ["./resources/js/*", "./src/*"]   // ✅ alias covers both app and landing
     },
 
     "jsx": "react-jsx"
@@ -33,5 +35,9 @@
     "resources/js/**/*.tsx",
     "resources/js/types/**/*.d.ts", // ✅ ensures inertia.d.ts augmentation is loaded
     "src"                         // ✔ optional if you still have src files
+  ],
+  "exclude": [
+    "node_modules",
+    "**/@babel/**"
   ]
 }

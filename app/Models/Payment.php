@@ -1,17 +1,11 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 
-
-  enum PaymentMethod: string {
-    case BankTransfer = 'BankTransfer';
-    case Cash = 'Cash';
-    case GCash = 'GCash';
-  }
-
-  class Payment extends Model {
-
-
+class Payment extends Model
+{
     public $timestamps = false;
 
     protected $table = 'payment';
@@ -19,7 +13,6 @@ use Illuminate\Database\Eloquent\Model;
     protected $primaryKey = 'ID';
 
     protected $fillable = [
-
         'payment_date',
         'amount',
         'payment_method',
@@ -29,7 +22,6 @@ use Illuminate\Database\Eloquent\Model;
         'verified_date',
         'loan_id',
         'schedule_id',
-
     ];
 
     protected $casts = [
@@ -52,10 +44,9 @@ use Illuminate\Database\Eloquent\Model;
     {
         return $this->belongsTo(AmortizationSchedule::class, 'schedule_id', 'ID');
     }
+
     public function verifiedBy()
     {
-        return $this->belongsTo(user::class, 'verified_by');
+        return $this->belongsTo(User::class, 'verified_by');
     }
-
-
 }

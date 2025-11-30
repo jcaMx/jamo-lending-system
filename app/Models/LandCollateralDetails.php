@@ -11,16 +11,18 @@ class LandCollateralDetails extends Model
 
     protected $table = 'landcollateraldetails';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'titleNo',
         'lotNo',
         'location',
         'areaSize',
-        'collateral_id',
+        'collateralID',
     ];
 
     public function collateral()
     {
-        return $this->belongsTo(Collateral::class, 'collateral_id', 'id');
+        return $this->belongsTo(Collateral::class, 'collateralID', 'ID');
     }
 }

@@ -6,7 +6,7 @@ import { type BreadcrumbItem } from '@/types';
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Loans', href: '/Loans' },
-  { title: 'View All Loans', href: '/loans/val' },
+  { title: 'View All Loans', href: '/Loans/VAL' },
 ];
 
 export default function VAL() {

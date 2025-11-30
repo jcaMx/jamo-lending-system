@@ -1,25 +1,35 @@
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
-import tailwindcss from '@tailwindcss/vite';
-import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import laravel from 'laravel-vite-plugin';
+import reactSwc from '@vitejs/plugin-react-swc';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
 
 export default defineConfig({
-    plugins: [
-        laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            ssr: 'resources/js/ssr.tsx',
-            refresh: true,
-        }),
-        react({
-           
-        }),
-        tailwindcss(),
-        wayfinder({
-            formVariants: true,
-        }),
-    ],
-    esbuild: {
-        jsx: 'automatic',
+  plugins: [
+    laravel({
+      input: [
+        'resources/css/index.css',
+        'resources/js/app.tsx',
+      ],
+      refresh: true,
+    }),
+    reactSwc(),
+    tailwindcss(),
+  ],
+
+  resolve: {
+    alias: {
+      '@app': path.resolve(__dirname, 'resources/js'),
     },
+  },
+
+  esbuild: {
+    jsx: 'automatic',
+  },
+
+  build: {
+    outDir: 'public/build/vite',
+    manifest: true,
+    emptyOutDir: true,
+  },
 });

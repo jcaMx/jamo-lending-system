@@ -8,6 +8,8 @@ class VehicleCollateralDetails extends Model
 {
     protected $table = 'vehiclecollateraldetails';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'type',
         'brand',
