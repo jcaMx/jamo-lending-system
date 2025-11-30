@@ -109,7 +109,6 @@ class BorrowerService
                 'name' => $borrower->name,
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
-                'age' => computeAge($borrower->birth_date),
                 'address' => $borrower->borrowerAddress?->address,
                 'city' => $borrower->borrowerAddress?->city,
                 'zipcode' => $borrower->borrowerAddress?->postal_code ?? '',
@@ -244,28 +243,24 @@ class BorrowerService
     }
 
     public function createBorrower(array $data): Borrower
-    {
-        // Helper to trim and convert empty strings to null
-        $clean = fn ($value) => isset($value) && trim($value) !== '' ? trim($value) : null;
-       
-        return DB::transaction(function() use ($data, $clean) {
-            // -------------------------------
-            // Borrower main info
-            // -------------------------------
-            $borrower = Borrower::create([
-                'first_name'             => $clean($data['borrower_first_name'] ?? null),
-                'last_name'              => $clean($data['borrower_last_name'] ?? null),
-                'birth_date'             => $clean($data['date_of_birth'] ?? null),
-                'gender'                 => $clean($data['gender'] ?? null),
-                'age'                    => $this->computeAge($clean($data['date_of_birth'] ?? null)),
-                'marital_status'         => $clean($data['marital_status'] ?? null),
-                'home_ownership'         => $clean($data['home_ownership'] ?? null),
-                'contact_no'             => $clean($data['contact_no'] ?? null),
-                'land_line'              => $clean($data['landline_number'] ?? null),
-                'email'                  => $clean($data['email'] ?? null),
-                'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
-                'membership_date'        => now(),
-            ]);
+{
+    $clean = fn ($value) => isset($value) && trim($value) !== '' ? trim($value) : null;
+
+    return DB::transaction(function() use ($data, $clean) {
+        $borrower = Borrower::create([
+            'first_name'             => $clean($data['borrower_first_name'] ?? null),
+            'last_name'              => $clean($data['borrower_last_name'] ?? null),
+            'birth_date'             => $clean($data['date_of_birth'] ?? null),
+            'gender'                 => $clean($data['gender'] ?? null),
+            // removed 'age'
+            'marital_status'         => $clean($data['marital_status'] ?? null),
+            'home_ownership'         => $clean($data['home_ownership'] ?? null),
+            'contact_no'             => $clean($data['contact_no'] ?? null),
+            'land_line'              => $clean($data['landline_number'] ?? null),
+            'email'                  => $clean($data['email'] ?? null),
+            'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
+            'membership_date'        => now(),
+        ]);
 
             // -------------------------------
             // Borrower Address
@@ -315,7 +310,7 @@ class BorrowerService
             BorrowerId::create([
                 'borrower_id' => $borrower->ID,
                 'id_type'     => $clean($data['valid_id_type'] ?? null),
-                'id_number'   => $clean($data['valid_id_number'] ?? null),
+                'id_no'   => $clean($data['valid_id_number'] ?? null),
             ]);
 
         // Create spouse if spouse data provided

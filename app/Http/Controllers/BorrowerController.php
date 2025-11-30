@@ -50,7 +50,7 @@ class BorrowerController extends Controller
         return Inertia::render('borrowers/show', [
             'borrower' => $payload['borrower'],
             'collaterals' => $payload['collaterals'],
-            'active_loan' => $payload['active_loan'],
+            'activeLoan' => $payload['activeLoan'],
             'repayments' => $payload['repayments'],
         ]);
     }

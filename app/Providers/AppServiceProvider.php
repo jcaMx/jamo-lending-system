@@ -50,6 +50,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-            Vite::useBuildDirectory('build/vite');
+            // Vite::useBuildDirectory('build/vite');
     }
 }
