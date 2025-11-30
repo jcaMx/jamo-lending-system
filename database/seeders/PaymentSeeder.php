@@ -105,7 +105,6 @@ class PaymentSeeder extends Seeder
     private function getRandomPaymentMethod(): string
     {
         $methods = ['Cash', 'Cheque', 'GCash', 'Cebuana', 'Metrobank'];
-
         return $methods[array_rand($methods)];
     }
 }

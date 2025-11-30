@@ -15,7 +15,6 @@ use Inertia\Inertia;
 class LoanController extends Controller
 {
     protected LoanService $loanService;
-
     public function __construct(LoanService $loanService)
     {
         $this->loanService = $loanService;

@@ -230,7 +230,6 @@ class BorrowerService
             ->values()
             ->all();
     }
-
     private function formatFiles($files)
     {
         return $files->map(function ($f) {

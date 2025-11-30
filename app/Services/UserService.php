@@ -167,7 +167,6 @@ class UserService
     public function deleteUser(int $id): bool
     {
         $user = $this->users->findById($id);
-
         return $user ? $this->users->delete($user) : false;
     }
 }

@@ -123,7 +123,10 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
 =======
 >>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
 === tests rules ===
@@ -135,7 +138,10 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 9ca3e9217c6460a466e0ca5a9bf57b5e04e2c173
+=======
+>>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
 =======
 >>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
 === inertia-laravel/core rules ===
