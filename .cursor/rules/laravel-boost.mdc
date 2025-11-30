@@ -121,6 +121,14 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Typically, keys in an Enum should be TitleCase. For example: `FavoritePerson`, `BestLake`, `Monthly`.
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
+=======
+>>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
 === tests rules ===
 
 ## Test Enforcement
@@ -129,6 +137,13 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test` with a specific filename or filter.
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 9ca3e9217c6460a466e0ca5a9bf57b5e04e2c173
+=======
+>>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
+=======
+>>>>>>> 43b976a6a334b9c893809b050dfb28a6af07366a
 === inertia-laravel/core rules ===
 
 ## Inertia Core

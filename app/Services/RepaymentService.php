@@ -2,117 +2,174 @@
 
 namespace App\Services;
 
+use App\Models\AmortizationSchedule;
 use App\Models\Loan;
 use App\Models\Payment;
-use App\Models\AmortizationSchedule;
+use App\Models\ScheduleStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class RepaymentService
 {
     /**
      * Apply a payment to the loan and amortization schedules.
+     * Business Rules:
+     * - Borrower can make partial payment
+     * - Borrower can make equal payment (same as installment amount)
+     * - Borrower can make advanced payment
+     * - If loan fully settled early, remaining interest is waived
      */
     public function processPayment(Payment $payment)
     {
-        $loan = $payment->loan;
+        DB::transaction(function () use ($payment) {
+            $loan = $payment->loan;
 
-        if (!$loan) {
-            return;
-        }
-
-        $amount = $payment->amount;
-        $paymentDate = Carbon::parse($payment->payment_date);
-
-        // ---- 1. Check if advance payment ----
-        if ($this->isAdvancePayment($loan, $paymentDate)) {
-            $this->voidRemainingInterest($loan, $paymentDate);
-        }
-
-        // ---- 2. Apply payment to amortization schedules ----
-        $this->applyPaymentToSchedules($loan, $amount);
-
-        // ---- 3. Update loan balances ----
-        $this->updateLoanTotals($loan);
-    }
-
-    /**
-     * Check if the payment is considered advance.
-     * Advance = payment date is earlier than the next unpaid amortization's due date
-     */
-    private function isAdvancePayment(Loan $loan, Carbon $paymentDate): bool
-    {
-        $nextDue = $loan->amortizationSchedules()
-            ->whereNull('paid_at')
-            ->orderBy('due_date')
-            ->first();
-
-        if (!$nextDue) return false;
-
-        return $paymentDate->lt(Carbon::parse($nextDue->due_date));
-    }
-
-    /**
-     * VOID remaining future interest when borrower pays in advance.
-     */
-    private function voidRemainingInterest(Loan $loan, Carbon $paymentDate)
-    {
-        $loan->amortizationSchedules()
-            ->where('due_date', '>', $paymentDate)
-            ->update([
-                'interest_amount' => 0,
-                'status' => 'interest_void'
-            ]);
-    }
-
-    /**
-     * Apply partial/complete payment to amortization rows.
-     */
-    private function applyPaymentToSchedules(Loan $loan, float $amount)
-    {
-        $schedules = $loan->amortizationSchedules()
-            ->orderBy('due_date')
-            ->get();
-
-        foreach ($schedules as $row) {
-
-            if ($amount <= 0) break;
-
-            $rowBalance = $row->principal_amount + $row->interest_amount - $row->amount_paid;
-
-            if ($rowBalance <= 0) continue;
-
-            // Pay into this row
-            $apply = min($amount, $rowBalance);
-
-            $row->amount_paid += $apply;
-            $row->paid_at = now();
-
-            // --- Mark as overpaid ---
-            if ($row->amount_paid > ($row->principal_amount + $row->interest_amount)) {
-                $this->markAsOverpaid($row);
+            if (! $loan) {
+                return;
             }
 
-            $row->save();
+            $amount = (float) $payment->amount;
+            $paymentDate = Carbon::parse($payment->payment_date);
+            $scheduleId = $payment->schedule_id;
 
-            $amount -= $apply;
+            // Get the schedule if specified, otherwise get first unpaid
+            if ($scheduleId) {
+                $targetSchedule = AmortizationSchedule::find($scheduleId);
+            } else {
+                $targetSchedule = $loan->amortizationSchedules()
+                    ->whereIn('status', [ScheduleStatus::Unpaid, ScheduleStatus::Overdue])
+                    ->orderBy('due_date', 'asc')
+                    ->first();
+            }
+
+            if (! $targetSchedule) {
+                throw new \Exception('No unpaid schedule found for this loan.');
+            }
+
+            // Check if this is an advance payment (payment date before due date)
+            $isAdvancePayment = $paymentDate->lt(Carbon::parse($targetSchedule->due_date));
+
+            // Calculate remaining balance for the target schedule
+            $totalDue = $targetSchedule->installment_amount + $targetSchedule->interest_amount + $targetSchedule->penalty_amount;
+            $remainingBalance = $totalDue - $targetSchedule->amount_paid;
+
+            // Apply payment to target schedule
+            $paymentToApply = min($amount, $remainingBalance);
+            $targetSchedule->amount_paid += $paymentToApply;
+
+            // Update schedule status - if total due is fully paid, mark as Paid
+            if ($targetSchedule->amount_paid >= $totalDue) {
+                $targetSchedule->status = ScheduleStatus::Paid;
+            }
+
+            $targetSchedule->save();
+            $amount -= $paymentToApply;
+
+            // If there's remaining amount, apply to next schedules (advance payment)
+            if ($amount > 0) {
+                $this->applyAdvancePayment($loan, $amount, $paymentDate);
+            }
+
+            // Update loan balance
+            $this->updateLoanBalance($loan);
+
+            // Check if loan is fully paid - if so, void remaining interest and update status
+            if ($this->isLoanFullyPaid($loan)) {
+                $this->voidRemainingInterest($loan);
+                $loan->status = 'Fully_Paid';
+                $loan->save();
+            }
+        });
+    }
+
+    /**
+     * Apply advance payment to future schedules
+     */
+    private function applyAdvancePayment(Loan $loan, float $remainingAmount, Carbon $paymentDate): void
+    {
+        $futureSchedules = $loan->amortizationSchedules()
+            ->whereIn('status', [ScheduleStatus::Unpaid, ScheduleStatus::Overdue])
+            ->where('due_date', '>', $paymentDate)
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        foreach ($futureSchedules as $schedule) {
+            if ($remainingAmount <= 0) {
+                break;
+            }
+
+            $totalDue = $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
+            $remainingBalance = $totalDue - $schedule->amount_paid;
+            $paymentToApply = min($remainingAmount, $remainingBalance);
+
+            $schedule->amount_paid += $paymentToApply;
+
+            // Update schedule status - if total due is fully paid, mark as Paid
+            if ($schedule->amount_paid >= $totalDue) {
+                $schedule->status = ScheduleStatus::Paid;
+            }
+
+            $schedule->save();
+            $remainingAmount -= $paymentToApply;
         }
     }
 
     /**
-     * Recompute totals of loan balance.
+     * Check if loan is fully paid
      */
-    private function updateLoanTotals(Loan $loan)
+    private function isLoanFullyPaid(Loan $loan): bool
     {
-        $loan->total_paid = $loan->amortizationSchedules()->sum('amount_paid');
+        // Check if all schedules have been fully paid
+        $unpaidSchedules = $loan->amortizationSchedules()
+            ->whereIn('status', [ScheduleStatus::Unpaid, ScheduleStatus::Overdue])
+            ->get();
+
+        foreach ($unpaidSchedules as $schedule) {
+            $totalDue = $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
+            if ($schedule->amount_paid < $totalDue) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Void remaining interest when loan is fully settled early
+     * Business Rule: If borrower fully settles the loan early, remaining interest is waived
+     */
+    private function voidRemainingInterest(Loan $loan): void
+    {
+        // Void interest on all unpaid schedules
+        $unpaidSchedules = $loan->amortizationSchedules()
+            ->whereIn('status', [ScheduleStatus::Unpaid, ScheduleStatus::Overdue])
+            ->get();
+
+        foreach ($unpaidSchedules as $schedule) {
+            // Only void interest if schedule hasn't been fully paid yet
+            $totalDue = $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
+            if ($schedule->amount_paid < $totalDue) {
+                // Void the interest - reduce total due by interest amount
+                $schedule->interest_amount = 0;
+                $schedule->save();
+            }
+        }
+
+        $loan->status = 'Fully_Paid';
         $loan->save();
     }
 
     /**
-     * Mark amortization as OVERPAID.
+     * Update loan balance remaining
      */
-    public function markAsOverpaid(AmortizationSchedule $row)
+    private function updateLoanBalance(Loan $loan): void
     {
-        $row->status = 'Overpaid';
-        $row->save();
+        $totalPaid = $loan->amortizationSchedules()->sum('amount_paid');
+        $totalDue = $loan->amortizationSchedules()->sum(function ($schedule) {
+            return $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
+        });
+
+        $loan->balance_remaining = max(0, $totalDue - $totalPaid);
+        $loan->save();
     }
 }

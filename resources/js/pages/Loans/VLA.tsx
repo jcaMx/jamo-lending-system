@@ -25,19 +25,8 @@ export default function ViewLoanApplications() {
       .includes(searchTerm.toLowerCase())
     );
 
-  const handleApprove = (loanId: number) => {
-    router.post(route('loans.approve', loanId), {}, {
-      onSuccess: () => alert(`Loan ${loanId} approved successfully!`),
-      onError: (errors) => console.error(errors),
-    });
-  };
-
-  const handleReject = (loanId: number) => {
-    router.post(route('loans.reject', loanId), {}, {
-      onSuccess: () => alert(`Loan ${loanId} rejected successfully!`),
-      onError: (errors) => console.error(errors),
-    });
-  };
+  // Approve and Reject actions are now handled in ShowLoan page
+  // where released_amount can be entered before approval
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -79,16 +68,19 @@ export default function ViewLoanApplications() {
               <th className="px-4 py-2">Interest Type</th>
               <th className="px-4 py-2">Collateral</th>
               <th className="px-4 py-2">Co-borrower</th>
-              <th className="px-4 py-2">Action</th>
+              <th className="px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody className="text-sm text-gray-800">
-            {filteredApplications.map((loan) => (
-              <tr key={loan.id} className="border-b last:border-none">
+            {filteredApplications.map((loan) => {
+              const loanId = loan.id || loan.ID || 0;
+              const displayId = loan.id || loan.ID || 'N/A';
+              return (
+              <tr key={loanId} className="border-b last:border-none">
                 <td className="px-4 py-2">
                   {loan.borrower.first_name} {loan.borrower.last_name}
                 </td>
-                <td className="px-4 py-2">{loan.id}</td>
+                <td className="px-4 py-2">{displayId}</td>
                 <td className="px-4 py-2">{loan.principal_amount}</td>
                 <td className="px-4 py-2">{loan.interest_rate}%</td>
                 <td className="px-4 py-2">{loan.term_months} months</td>
@@ -98,22 +90,19 @@ export default function ViewLoanApplications() {
                 <td className="px-4 py-2">
                   {loan.borrower.co_borrowers?.length ? 'Yes' : 'No'}
                 </td>
-                <td className="px-4 py-2 flex gap-2">
+                <td className="px-4 py-2">
+                  {loanId > 0 && (
                   <Button
-                    onClick={() => handleApprove(loan.id)}
-                    className="bg-green-600 text-white hover:bg-green-700"
+                      onClick={() => router.visit(route('loans.show', loanId))}
+                      className="bg-blue-600 text-white hover:bg-blue-700"
                   >
-                    Approve
+                      View & Approve
                   </Button>
-                  <Button
-                    onClick={() => handleReject(loan.id)}
-                    className="bg-red-600 text-white hover:bg-red-700"
-                  >
-                    Reject
-                  </Button>
+                  )}
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

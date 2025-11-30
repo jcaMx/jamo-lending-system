@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-enum PaymentMethod: string {
+enum PaymentMethod: string
+{
     case Cash = 'Cash';
     case GCash = 'GCash';
     case Metrobank = 'Metrobank';
@@ -10,12 +11,11 @@ enum PaymentMethod: string {
 
     public function label(): string
     {
-        return match($this) {
-            self::Cash      => 'Cash',
-            self::GCash     => 'GCash',
+        return match ($this) {
+            self::Cash => 'Cash',
+            self::GCash => 'GCash',
             self::Metrobank => 'Metrobank',
-            self::Cebuana   => 'Cebuana',
+            self::Cebuana => 'Cebuana',
         };
     }
 }
-

@@ -21,18 +21,34 @@ interface Loan {
   collection_date: string;
 }
 
-interface Props {
-  due_loans: Loan[];
-  collectors: string[];
+interface Collection {
+  id: number;
+  name: string;
+  loanNo: string;
+  amount: number;
+  method: string;
+  reference_no?: string;
+  collected_by: string;
+  collection_date: string;
+  schedule_no: number | string;
 }
 
-export default function DailyCollectionSheet({ due_loans, collectors }: Props) {
+interface Props {
+  due_loans: Loan[];
+  collections?: Collection[];
+  collectors: string[];
+  date?: string;
+}
+
+export default function DailyCollectionSheet({ due_loans, collections = [], collectors, date }: Props) {
   const [searchCollector, setSearchCollector] = useState('');
-  const [searchDate, setSearchDate] = useState('');
+  const [searchDate, setSearchDate] = useState(date || '');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'due' | 'collections'>('due');
   const printRef = useRef<HTMLDivElement>(null);
 
   const loansToDisplay = due_loans;
+  const totalCollections = collections.reduce((sum, c) => sum + c.amount, 0);
 
   const handleFilterChange = () => {
     router.get('/daily-collections', {
@@ -116,7 +132,7 @@ export default function DailyCollectionSheet({ due_loans, collectors }: Props) {
           <h2 className="text-2xl font-semibold text-gray-800">Daily Collection Sheet</h2>
 
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             {/* Collector Dropdown */}
             <select
               value={searchCollector}
@@ -144,7 +160,34 @@ export default function DailyCollectionSheet({ due_loans, collectors }: Props) {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="border-b mb-4">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('due')}
+              className={`px-4 py-2 font-medium ${
+                activeTab === 'due'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Due Loans ({loansToDisplay.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('collections')}
+              className={`px-4 py-2 font-medium ${
+                activeTab === 'collections'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Collections ({collections.length}) - Total: ₱{totalCollections.toLocaleString()}
+            </button>
+          </div>
+        </div>
+
         <div ref={printRef} className="overflow-x-auto">
+          {activeTab === 'due' ? (
           <table className="min-w-full border rounded-lg overflow-hidden">
             <thead className="bg-gray-100">
               <tr>
@@ -179,6 +222,46 @@ export default function DailyCollectionSheet({ due_loans, collectors }: Props) {
               )}
             </tbody>
           </table>
+          ) : (
+          <table className="min-w-full border rounded-lg overflow-hidden">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">#</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Borrower</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Loan No</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Schedule #</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Amount</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Method</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Reference No</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Collected By</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {collections.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="text-center py-6 text-gray-500">
+                    No collections found for this date.
+                  </td>
+                </tr>
+              ) : (
+                collections.map((collection, index) => (
+                  <tr key={collection.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-2">{index + 1}</td>
+                    <td className="px-4 py-2">{collection.name}</td>
+                    <td className="px-4 py-2">{collection.loanNo}</td>
+                    <td className="px-4 py-2">{collection.schedule_no}</td>
+                    <td className="px-4 py-2">₱{collection.amount.toLocaleString()}</td>
+                    <td className="px-4 py-2">{collection.method}</td>
+                    <td className="px-4 py-2">{collection.reference_no || 'N/A'}</td>
+                    <td className="px-4 py-2">{collection.collected_by}</td>
+                    <td className="px-4 py-2">{collection.collection_date}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          )}
         </div>
 
         {/* Action Buttons */}

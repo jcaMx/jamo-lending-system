@@ -40,37 +40,33 @@ class HandleInertiaRequests extends Middleware
         if ($request->user()) {
             $user = $request->user();
             // Only update if last_login_at is null or more than 5 minutes ago
-            if (!$user->last_login_at || $user->last_login_at->diffInMinutes(now()) >= 5) {
+            if (! $user->last_login_at || $user->last_login_at->diffInMinutes(now()) >= 5) {
                 $user->update(['last_login_at' => now()]);
             }
         }
         // Generate quote
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-    
+
         return array_merge(parent::share($request), [
             'name' => config('app.name'),
-    
+
             'quote' => [
                 'message' => trim($message),
-                'author'  => trim($author),
+                'author' => trim($author),
             ],
-    
+
             'auth' => [
                 'user' => $request->user()
                     ? $request->user()->only(['id', 'name', 'email'])
                     : null,
-    
                 'roles' => $request->user()
                     ? $request->user()->getRoleNames()->toArray()
                     : [],
 
             ],
-    
-            'sidebarOpen' =>
-                ! $request->hasCookie('sidebar_state') ||
+
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') ||
                 $request->cookie('sidebar_state') === 'true',
         ]);
     }
-    
 }
-

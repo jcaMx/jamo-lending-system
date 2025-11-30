@@ -2,16 +2,17 @@
 
 namespace App\Providers;
 
-    use Illuminate\Support\ServiceProvider;
-    use App\Repositories\Interfaces\IHolidayService;
-    use App\Services\FormulaService;
-    use App\Services\CalendarHolidayService;
-    use App\Services\Amortization\CompoundAmortizationCalculator;
-    use App\Services\Amortization\DiminishingAmortizationCalculator;
-    use App\Repositories\Interfaces\IRepaymentRepository;
-    use App\Services\RepaymentService;
-    use Illuminate\Support\Facades\Vite;
-
+use App\Repositories\Interfaces\IHolidayService;
+use App\Repositories\Interfaces\IPenaltyCalculator;
+use App\Repositories\Interfaces\IRepaymentRepository;
+use App\Services\Amortization\CompoundAmortizationCalculator;
+use App\Services\Amortization\DiminishingAmortizationCalculator;
+use App\Services\CalendarHolidayService;
+use App\Services\DefaultPenaltyService;
+use App\Services\FormulaService;
+use App\Services\RepaymentService;
+use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(IRepaymentRepository::class, RepaymentService::class);
+
+        $this->app->bind(IPenaltyCalculator::class, function ($app) {
+            return new DefaultPenaltyService(
+                $app->make(FormulaService::class),
+                $app->make(IHolidayService::class)
+            );
+        });
     }
 
     /**
@@ -50,6 +58,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-            // Vite::useBuildDirectory('build/vite');
+        Vite::useBuildDirectory('build/vite');
     }
 }

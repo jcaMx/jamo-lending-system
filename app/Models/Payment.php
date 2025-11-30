@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\PaymentMethod;
-use App\Models\User;
 
 class Payment extends Model
 {
@@ -27,8 +25,8 @@ class Payment extends Model
 
     protected $casts = [
         'payment_method' => PaymentMethod::class,
-        'payment_date'   => 'datetime',
-        'verified_date'  => 'datetime',
+        'payment_date' => 'datetime',
+        'verified_date' => 'datetime',
     ];
 
     public function jamoUser()
