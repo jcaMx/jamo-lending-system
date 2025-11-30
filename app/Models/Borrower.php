@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Models\Loan;
-use Carbon\Carbon;
 
 // Enums
 enum BorrowerStatus: string
@@ -35,7 +33,7 @@ class Borrower extends Model
     protected $fillable = [
         'first_name',
         'last_name',
-        // 'age', <-- remove this
+        'age',
         'gender',
         'email',
         'contact_no',
@@ -45,7 +43,7 @@ class Borrower extends Model
         'home_ownership',
         'membership_date',
         'status',
-        'birth_date'
+        'birth_date',
     ];
 
     protected $casts = [
@@ -59,13 +57,12 @@ class Borrower extends Model
         'birth_date',
     ];
 
-    // Relationships
-    public function loans(): HasMany
+    public function loans()
     {
         return $this->hasMany(Loan::class, 'borrower_id', 'ID')->orderBy('start_date', 'desc');
     }
 
-    public function loan(): HasOne
+    public function loan()
     {
         return $this->hasOne(Loan::class, 'borrower_id', 'ID');
     }
@@ -85,12 +82,12 @@ class Borrower extends Model
         return $this->hasOne(BorrowerId::class, 'borrower_id', 'ID');
     }
 
-    public function coBorrowers(): HasMany
+    public function coBorrowers()
     {
         return $this->hasMany(CoBorrower::class, 'borrower_id', 'ID');
     }
 
-    public function files(): HasMany
+    public function files()
     {
         return $this->hasMany(Files::class, 'borrower_id', 'ID');
     }
@@ -98,13 +95,5 @@ class Borrower extends Model
     public function spouse(): HasOne
     {
         return $this->hasOne(Spouse::class, 'borrower_id', 'ID');
-    }
-
-    // ✅ Computed accessor for age
-    public function getAgeAttribute(): ?int
-    {
-        return $this->birth_date
-            ? Carbon::parse($this->birth_date)->age
-            : null;
     }
 }

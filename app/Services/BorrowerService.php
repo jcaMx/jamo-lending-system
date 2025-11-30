@@ -310,7 +310,7 @@ class BorrowerService
             BorrowerId::create([
                 'borrower_id' => $borrower->ID,
                 'id_type'     => $clean($data['valid_id_type'] ?? null),
-                'id_no'   => $clean($data['valid_id_number'] ?? null),
+                'id_number'   => $clean($data['valid_id_number'] ?? null),
             ]);
 
             // Create spouse if spouse data provided

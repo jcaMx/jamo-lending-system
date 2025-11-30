@@ -13,9 +13,7 @@ type Repayment = {
   id: number;
   borrowerName: string;
   loanNo: string;
-  scheduleNo: string | number;
   method: string;
-  referenceNo: string;
   collectedBy: string;
   collectionDate: string;
   amount: number;
@@ -62,9 +60,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
                 <th className="px-4 py-2 border">ID</th>
                 <th className="px-4 py-2 border">Name</th>
                 <th className="px-4 py-2 border">Loan No</th>
-                <th className="px-4 py-2 border">Schedule No</th>
                 <th className="px-4 py-2 border">Method</th>
-                <th className="px-4 py-2 border">Reference No</th>
                 <th className="px-4 py-2 border">Collected By</th>
                 <th className="px-4 py-2 border">Collection Date</th>
                 <th className="px-4 py-2 border">Paid Amount</th>
@@ -76,9 +72,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
                   <td className="px-4 py-2 border">{r.id}</td>
                   <td className="px-4 py-2 border">{r.borrowerName}</td>
                   <td className="px-4 py-2 border">{r.loanNo}</td>
-                  <td className="px-4 py-2 border">{r.scheduleNo}</td>
                   <td className="px-4 py-2 border">{r.method}</td>
-                  <td className="px-4 py-2 border">{r.referenceNo}</td>
                   <td className="px-4 py-2 border">{r.collectedBy}</td>
                   <td className="px-4 py-2 border">{new Date (r.collectionDate).toLocaleString('en-PH')}</td>
                   <td className="px-4 py-2 border">{r.amount.toLocaleString('en-PH', {style: 'currency', currency: 'PHP'})}</td>
