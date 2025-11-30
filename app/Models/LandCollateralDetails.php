@@ -20,6 +20,7 @@ class LandCollateralDetails extends Model
         'areaSize',
         'collateralID',
     ];
+    
 
     public function collateral()
     {

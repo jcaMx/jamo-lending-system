@@ -129,11 +129,11 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         label: 'Repayments',
         content: <RepaymentsTab repayments={safeRepayments} />,
       },
-      // {
-      //   key: 'loanTerms' as TabKey,
-      //   label: 'Loan Terms',
-      //   content: <LoanTermsTab loan={safeLoan} />,
-      // },
+      {
+        key: 'loanTerms' as TabKey,
+        label: 'Loan Terms',
+        content: <LoanTermsTab loan={safeLoan} />,
+      },
       {
         key: 'loanSchedule' as TabKey,
         label: 'Loan Schedule',

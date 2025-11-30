@@ -13,6 +13,7 @@ use App\Models\Spouse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BorrowerService
 {
@@ -28,7 +29,7 @@ class BorrowerService
                 'last_name' => $borrower->last_name,
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
-                'age' => $borrower->age,
+                'age' => $this->computeAge($borrower->birth_date),
                 'address' => $borrower->borrowerAddress?->address,
                 'city' => $borrower->borrowerAddress?->city,
                 'zipcode' => $borrower->borrowerAddress?->postal_code ?? '',
@@ -107,7 +108,10 @@ class BorrowerService
         return [
             'borrower' => [
                 'id' => $borrower->ID,
-                'name' => $borrower->name,
+                'name' => trim(($borrower->first_name ?? '') . ' ' . ($borrower->last_name ?? '')),
+                'first_name' => $borrower->first_name,
+                'last_name' => $borrower->last_name,
+                'age' => $this->computeAge($borrower->birth_date),
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
                 'address' => $borrower->borrowerAddress?->address,
@@ -361,9 +365,9 @@ class BorrowerService
         $borrower->update($data);
     }
 
-    public function computeAge($date_of_birth)
+    function computeAge($date_of_birth)
     {
-        return $date_of_birth ? now()->diffInYears($date_of_birth) : null;
+        return $date_of_birth ? Carbon::parse($date_of_birth)->age : null;
     }
 
     public function deleteBorrower(int $borrowerId): bool

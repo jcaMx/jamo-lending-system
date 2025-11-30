@@ -79,48 +79,48 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
       {/* Fields Display */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
         <div className="flex flex-col gap-2">
-          <div className="font-semibold text-lg">{borrower.name}</div>
+          <div className="font-semibold text-lg">{borrower.name || `${borrower.first_name || ''} ${borrower.last_name || ''}`.trim() || 'N/A'}</div>
           <div className="flex items-center gap-2">
             <span className="font-medium">Occupation:</span>
-            <span className="text-gray-800">{data.occupation}</span>
+            <span className="text-gray-800">{borrower.occupation || data.occupation || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">Gender:</span>
-            <span className="text-gray-800">{data.gender}</span>
+            <span className="text-gray-800">{borrower.gender || data.gender || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">Age:</span>
-            <span className="text-gray-800">{data.age}</span>
+            <span className="text-gray-800">{borrower.age || data.age || 'N/A'}</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className="font-medium">Address:</span>
-            <span className="text-gray-800">{data.address}</span>
+            <span className="text-gray-800">{borrower.address || data.address || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">City:</span>
-            <span className="text-gray-800">{data.city}</span>
+            <span className="text-gray-800">{borrower.city || data.city || 'N/A'}</span>
           </div>
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <span className="font-medium">Zipcode:</span>
-            <span className="text-gray-800">{data.zipcode}</span>
-          </div>
+            <span className="text-gray-800">{borrower.zipcode || data.zipcode || 'N/A'}</span>
+          </div> */}
         </div>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className="font-medium">Email:</span>
-            <span className="text-gray-800">{data.email}</span>
+            <span className="text-gray-800">{borrower.email || data.email || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">Mobile:</span>
-            <span className="text-gray-800">{data.mobile}</span>
+            <span className="text-gray-800">{borrower.mobile || borrower.contact_no || data.mobile || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">Landline:</span>
-            <span className="text-gray-800">{data.landline}</span>
+            <span className="text-gray-800">{borrower.landline || borrower.land_line || data.landline || 'N/A'}</span>
           </div>
         </div>
       </div>
