@@ -99,12 +99,10 @@ class RepaymentService
         }
 
         // Safely get payment method as string (handle enum or string)
-        $paymentMethod = $payment->payment_method instanceof \BackedEnum 
-            ? $payment->payment_method->value 
-            : (string) $payment->payment_method;
+        $paymentMethod = (string) $payment->payment_method; // always string now
 
         $isCash = stripos($paymentMethod, 'Cash') !== false;
-        
+
         $amount = (float) $payment->amount;
         $paymentDate = Carbon::parse($payment->payment_date);
         $scheduleId = $payment->schedule_id;

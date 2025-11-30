@@ -22,7 +22,6 @@ class VehicleCollateralDetails extends Model
         'collateral_id',
     ];
 
-    public $timestamps = false;
 
     public function collateral()
     {
