@@ -41,6 +41,24 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   // Set today's date as default
   const today = new Date().toISOString().split('T')[0];
 
+  // Normalize borrowers data - handle paginated objects, direct arrays, or keyed objects
+  const normalizedBorrowers = useMemo(() => {
+    let data = initialBorrowers;
+    
+    // If it's a paginated object, extract the data array
+    if (data && typeof data === 'object' && !Array.isArray(data) && 'data' in data) {
+      data = (data as any).data;
+    }
+    
+    // If it's still not an array but is an object with numeric keys, convert to array
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      data = Object.values(data);
+    }
+    
+    // Guard with Array.isArray
+    return Array.isArray(data) ? data : [];
+  }, [initialBorrowers]);
+
   const [form, setForm] = useState({
     search: "",
     selectedBorrower: null as BorrowerWithSchedules | null,
@@ -57,39 +75,10 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   const [errorMessage, setErrorMessage] = useState("");
 
   const filteredBorrowers = useMemo(() => {
-    if (!Array.isArray(initialBorrowers)) {
-      return [];
-    }
-    return initialBorrowers.filter((b) =>
+    return normalizedBorrowers.filter((b) =>
       b.name.toLowerCase().includes(form.search.toLowerCase())
     );
-  }, [form.search, initialBorrowers]);
-
-  // Add this useEffect to auto-select borrower when search matches exactly
-  React.useEffect(() => {
-    if (form.search.trim() === '') {
-      // Clear selection if search is empty
-      if (form.selectedBorrower) {
-        setForm(prev => ({
-          ...prev,
-          selectedBorrower: null,
-          selectedSchedule: null,
-          amount: "",
-          collectionDate: today
-        }));
-      }
-      return;
-    }
-
-    // Find exact match (case-insensitive)
-    const exactMatch = initialBorrowers.find(b =>
-      b.name.toLowerCase().trim() === form.search.toLowerCase().trim()
-    );
-
-    if (exactMatch && exactMatch.id !== form.selectedBorrower?.id) {
-      handleSelectBorrower(exactMatch);
-    }
-  }, [form.search, initialBorrowers, form.selectedBorrower]);
+  }, [form.search, normalizedBorrowers]);
 
   // Generate reference number when method changes
   const generateReferenceNumber = () => {
@@ -168,49 +157,49 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     setSuccessMessage("");
     setErrorMessage("");
 
-    router.post("/repayments/store", {
-      borrower_id: selectedBorrower.id,
-      loanNo: selectedBorrower.loanNo,
-      schedule_id: form.selectedSchedule?.ID || null,
-      amount,
-      method,
-      collectedBy,
-      collectionDate,
-      referenceNumber: method === "Cash" ? null : referenceNumber || null
-    }, {
-      onSuccess: () => {
-        // Only show success and reset if the request was successful
-        setSuccessMessage("Payment submitted successfully!");
-        
-        if (referenceNumber) {
-          setSubmittedRefs((prev) => [...prev, referenceNumber]);
-        }
+            router.post("/repayments/store", {
+              borrower_id: selectedBorrower.id,
+              loanNo: selectedBorrower.loanNo,
+              schedule_id: form.selectedSchedule?.ID || null,
+              amount,
+              method,
+              collectedBy,
+              collectionDate,
+              referenceNumber: method === "Cash" ? null : referenceNumber || null
+            }, {
+              onSuccess: () => {
+                // Only show success and reset if the request was successful
+                setSuccessMessage("Payment submitted successfully!");
+                
+                if (referenceNumber) {
+                  setSubmittedRefs((prev) => [...prev, referenceNumber]);
+                }
 
-        // Reset form
-        setForm({
-          search: "",
-          selectedBorrower: null,
-          selectedSchedule: null,
-          amount: "",
-          method: "",
-          collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
-          collectionDate: today,
-          referenceNumber: ""
-        });
-      },
-      onError: (errors) => {
-        // Handle errors from the backend
-        const errorMessages = Object.values(errors).flat();
-        if (errorMessages.length > 0) {
-          setErrorMessage(errorMessages.join(", "));
-        } else {
-          setErrorMessage("Failed to process payment. Please try again.");
-        }
-      },
-      onFinish: () => {
-        // This runs after both success and error
-      }
-    });
+                // Reset form
+                setForm({
+                  search: "",
+                  selectedBorrower: null,
+                  selectedSchedule: null,
+                  amount: "",
+                  method: "",
+                  collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
+                  collectionDate: today,
+                  referenceNumber: ""
+                });
+              },
+              onError: (errors) => {
+                // Handle errors from the backend
+                const errorMessages = Object.values(errors).flat();
+                if (errorMessages.length > 0) {
+                  setErrorMessage(errorMessages.join(", "));
+                } else {
+                  setErrorMessage("Failed to process payment. Please try again.");
+                }
+              },
+              onFinish: () => {
+                // This runs after both success and error
+              }
+            });
   };
 
   return (

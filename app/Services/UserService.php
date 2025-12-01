@@ -68,7 +68,7 @@ class UserService
             }
 
             $message = "Welcome {$data['fName']}! Your account has been created.\n\n".
-                   "Email: $email \nPassword: $generatedPassword";
+                   "Email: {$data['email']} \nPassword: $generatedPassword";
 
             $user->notify(new NotifyUser(
                 message: $message,
