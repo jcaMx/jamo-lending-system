@@ -120,9 +120,9 @@ class RepaymentController extends Controller
                 $referenceNo = 'REF-'.strtoupper(substr(uniqid(), -8)).'-'.date('Ymd');
             }
 
-            // For Cash payments, use empty string instead of null (database column is not nullable)
+            // For Cash payments, use NULL instead of empty string (allows multiple cash payments)
             if ($methodValue === PaymentMethod::Cash->value) {
-                $referenceNo = '';
+                $referenceNo = null;
             }
 
             // Check if reference number already exists (for non-cash)
@@ -170,10 +170,10 @@ class RepaymentController extends Controller
                 'receipt_number' => $receiptNumber,
                 'loan_id' => $request->loanNo,
                 'amount' => (float) $request->amount,  
-                'payment_method' => $methodEnum->value, // Cast type is PaymentMethod enum; Eloquent will handle it
+                'payment_method' => $methodEnum,
                 'verified_by' => $request->collectedBy,
                 'payment_date' => $request->collectionDate,
-                'reference_no' => $referenceNo ?? '',
+                'reference_no' => $referenceNo,
                 'schedule_id' => $scheduleId,
             ]);
 

@@ -144,6 +144,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
             >
               <option value="all">All</option>
               <option value="active">Active</option>
+              <option value="completed">Pending</option>
               <option value="completed">Completed</option>
               <option value="delinquent">Delinquent</option>
             </select>

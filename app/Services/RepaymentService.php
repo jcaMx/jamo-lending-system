@@ -239,9 +239,12 @@ class RepaymentService
     private function updateLoanBalance(Loan $loan): void
     {
         $totalPaid = $loan->amortizationSchedules()->sum('amount_paid');
-        $totalDue = $loan->amortizationSchedules()->sum(function ($schedule) {
-            return $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
-        });
+        
+        // Calculate total due across all schedules
+        $totalDue = 0;
+        foreach ($loan->amortizationSchedules()->get() as $schedule) {
+            $totalDue += $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
+        }
 
         $loan->balance_remaining = max(0, $totalDue - $totalPaid);
         $loan->save();

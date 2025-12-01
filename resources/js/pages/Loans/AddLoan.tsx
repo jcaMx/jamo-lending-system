@@ -554,25 +554,6 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
         { value: 'Retired', label: 'Retired' },
       ];
 
-      // Generate year options (e.g., last 100 years)
-      const currentYear = new Date().getFullYear();
-      const birthYearOptions = Array.from({ length: 100 }, (_, i) => {
-        const year = currentYear - i;
-        return { value: String(year), label: String(year) };
-      });
-
-      // Month options
-      const monthOptions = Array.from({ length: 12 }, (_, i) => {
-        const month = i + 1;
-        return { value: String(month), label: String(month) };
-      });
-
-      // Day options
-      const dayOptions = Array.from({ length: 31 }, (_, i) => {
-        const day = i + 1;
-        return { value: String(day), label: String(day) };
-      });
-
       return (
         <SectionContainer title="Co-Borrowers">
           {coBorrowers.map((co, i) => (
@@ -623,50 +604,14 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
 
                 if (keyStr === 'birth_date') {
                   return (
-                    <div key={keyStr} className="grid grid-cols-3 gap-2">
-                      <FormField
-                        label="Day"
-                        name="birth_day"
-                        type="select"
-                        value={co.birth_date ? new Date(co.birth_date).getDate() : ''}
-                        onChange={(e) => {
-                          const dateParts = co.birth_date ? new Date(co.birth_date) : new Date();
-                          dateParts.setDate(parseInt(e.target.value, 10));
-                          handleCoBorrowerChange(i, {
-                            target: { name: 'birth_date', value: dateParts.toISOString().split('T')[0] },
-                          } as any);
-                        }}
-                        options={dayOptions}
-                      />
-                      <FormField
-                        label="Month"
-                        name="birth_month"
-                        type="select"
-                        value={co.birth_date ? new Date(co.birth_date).getMonth() + 1 : ''}
-                        onChange={(e) => {
-                          const dateParts = co.birth_date ? new Date(co.birth_date) : new Date();
-                          dateParts.setMonth(parseInt(e.target.value, 10) - 1);
-                          handleCoBorrowerChange(i, {
-                            target: { name: 'birth_date', value: dateParts.toISOString().split('T')[0] },
-                          } as any);
-                        }}
-                        options={monthOptions}
-                      />
-                      <FormField
-                        label="Year"
-                        name="birth_year"
-                        type="select"
-                        value={co.birth_date ? new Date(co.birth_date).getFullYear() : ''}
-                        onChange={(e) => {
-                          const dateParts = co.birth_date ? new Date(co.birth_date) : new Date();
-                          dateParts.setFullYear(parseInt(e.target.value, 10));
-                          handleCoBorrowerChange(i, {
-                            target: { name: 'birth_date', value: dateParts.toISOString().split('T')[0] },
-                          } as any);
-                        }}
-                        options={birthYearOptions}
-                      />
-                    </div>
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="date"
+                      value={co.birth_date}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                    />
                   );
                 }
 

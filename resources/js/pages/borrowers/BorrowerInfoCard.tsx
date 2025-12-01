@@ -66,7 +66,7 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
     <div className="m-4 bg-white p-6 rounded-lg shadow space-y-4 mb-6 border border-gray-100">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold">Borrower Information</h2>
+        <h2 className="text-3xl font-bold">{borrower.name || `${borrower.first_name || ''} ${borrower.last_name || ''}`.trim() || 'N/A'}</h2>
         <button
           onClick={openEditModal}
           className="p-2 rounded-md hover:bg-gray-100"
@@ -79,7 +79,7 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
       {/* Fields Display */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
         <div className="flex flex-col gap-2">
-          <div className="font-semibold text-lg">{borrower.name || `${borrower.first_name || ''} ${borrower.last_name || ''}`.trim() || 'N/A'}</div>
+          {/* <div className="font-semibold text-lg">{borrower.name || `${borrower.first_name || ''} ${borrower.last_name || ''}`.trim() || 'N/A'}</div> */}
           <div className="flex items-center gap-2">
             <span className="font-medium">Occupation:</span>
             <span className="text-gray-800">{borrower.occupation || data.occupation || 'N/A'}</span>

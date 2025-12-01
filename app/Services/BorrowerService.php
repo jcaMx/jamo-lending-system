@@ -61,6 +61,11 @@ class BorrowerService
         // Map all loans with collateral
         $allLoans = $borrower->loans
             ->map(function (Loan $loan) {
+                // Safely extract status as string (handle enum or string)
+                $status = $loan->status instanceof \BackedEnum 
+                    ? $loan->status->value 
+                    : (string) ($loan->status ?? '');
+                    
                 return [
                     'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
                     'released' => optional($loan->start_date)?->toDateString() ?? '',
@@ -72,7 +77,7 @@ class BorrowerService
                     'penalty' => 0,
                     'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
                     'balance' => (float) $loan->balance_remaining,
-                    'status' => $loan->status?->value ?? '',
+                    'status' => $status,
                     'collateral' => $loan->collateral ? [
                         'id' => $loan->collateral->id,
                         'type' => $loan->collateral->type,
@@ -167,6 +172,11 @@ class BorrowerService
             return null;
         }
 
+        // Safely extract status as string (handle enum or string)
+        $status = $loan->status instanceof \BackedEnum 
+            ? $loan->status->value 
+            : (string) ($loan->status ?? '');
+
         return [
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
@@ -178,7 +188,7 @@ class BorrowerService
             'penalty' => 0,
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,
-            'status' => $loan->status?->value ?? '',
+            'status' => $status,
         ];
     }
 
@@ -190,11 +200,16 @@ class BorrowerService
 
         return Payment::query()
             ->where('loan_id', $loan->ID)
-            ->with('verifiedBy')
+            ->with(['jamoUser', 'loan.borrower'])
             ->latest('payment_date')
             ->get()
             ->map(function (Payment $payment) use ($loan) {
-                $borrowerName = $loan->borrower?->name ?? 'Unknown Borrower';
+                // Get borrower name from payment->loan->borrower relationship
+                $borrowerName = $payment->loan?->borrower 
+                    ? trim(($payment->loan->borrower->first_name ?? '') . ' ' . ($payment->loan->borrower->last_name ?? ''))
+                    : ($loan->borrower?->first_name ?? '') . ' ' . ($loan->borrower?->last_name ?? '');
+                $borrowerName = $borrowerName ?: 'Unknown Borrower';
+                
                 $verifiedByName = $payment->jamoUser
                     ? ($payment->jamoUser->first_name ?? '').' '.($payment->jamoUser->last_name ?? '')
                     : 'Unverified';
@@ -264,6 +279,7 @@ class BorrowerService
             'email'                  => $clean($data['email'] ?? null),
             'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
             'membership_date'        => now(),
+            'status'                 => 'Pending',
         ]);
 
             // -------------------------------
@@ -375,7 +391,7 @@ class BorrowerService
         $borrower = Borrower::findOrFail($borrowerId);
 
         // Optionally delete related records
-        $borrower->borrowerAddresses()->delete();
+        $borrower->borrowerAddress()->delete();
         $borrower->borrowerEmployment()->delete();
         $borrower->spouse()->delete();
         $borrower->coBorrowers()->delete();
@@ -398,16 +414,16 @@ class BorrowerService
 
         // Update or create borrower address if provided
         if (! empty($data['address']) || ! empty($data['city']) || ! empty($data['zipcode'])) {
-            $borrower->borrowerAddresses()->updateOrCreate(
+            $borrower->borrowerAddress()->updateOrCreate(
                 ['borrower_id' => $borrower->id],
                 [
-                    'address' => $data['address'] ?? $borrower->borrowerAddresses?->address,
-                    'city' => $data['city'] ?? $borrower->borrowerAddresses?->city,
-                    'postal_code' => $data['zipcode'] ?? $borrower->borrowerAddresses?->postal_code,
+                    'address' => $data['address'] ?? $borrower->borrowerAddress?->address,
+                    'city' => $data['city'] ?? $borrower->borrowerAddress?->city,
+                    'postal_code' => $data['zipcode'] ?? $borrower->borrowerAddress?->postal_code,
                 ]
             );
         }
 
-        return $borrower->fresh(['borrowerAddresses', 'borrowerEmployment', 'spouse', 'coBorrowers', 'loans']);
+        return $borrower->fresh(['borrowerAddress', 'borrowerEmployment', 'spouse', 'coBorrowers', 'loans']);
     }
 }
