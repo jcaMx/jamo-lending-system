@@ -133,6 +133,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
+    Route::prefix('api')->group(function () {
+    Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
+    Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
+    Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
+    Route::get('/all-loans', [DashboardController::class, 'allLoans']);
+});
+
+
 });
 
 require __DIR__.'/settings.php';
