@@ -110,6 +110,9 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
     coBorrowers: [] as Array<{ first_name: string; last_name: string; address: string; email: string; contact: string; birth_date: string; marital_status: string; occupation: string; net_pay: string }>,
   });
 
+
+  
+
   // State
   const [coBorrowers, setCoBorrowers] = useState([
     { first_name: '', last_name: '', address: '', email: '', contact: '', birth_date: '', marital_status: '', occupation: '', net_pay: '' },
@@ -355,7 +358,15 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
       case 1:
         return (
           <SectionContainer title="Loan Details">
-            <FormField label="Loan Type" name="loan_type" value={data.loan_type} onChange={handleChange} required />
+            
+            <FormField label="Loan Type" name="loan_type" value={data.loan_type} onChange={handleChange} required 
+              type="select"
+              options={[
+                { value: 'Personal Loan', label: 'Personal Loan' },
+                { value: 'Business Loan', label: 'Business Loan' },
+                { value: 'Home Loan', label: 'Home Loan' },
+                { value: 'Education Loan', label: 'Education Loan' },
+              ]}/>
             <FormField label="Loan Amount (₱)" name="loan_amount" value={data.loan_amount} onChange={handleChange} required />
             <FormField
               label="Interest Type"
@@ -528,29 +539,109 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
       }
 
       case 3:
-        return (
-          <SectionContainer title="Co-Borrowers">
-            {coBorrowers.map((co, i) => (
-              <div key={i} className="relative border-white p-4 rounded-lg mb-4">
-                {coBorrowers.length > 1 && (
-                  <button type="button" onClick={() => removeCoBorrower(i)} className="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                    <Trash2 size={16} />
-                  </button>
-                )}
-                {(Object.keys(co) as Array<keyof typeof co>).map((key) => {
-                  const keyStr = String(key);
-                  const isRequired = keyStr === 'first_name' || keyStr === 'last_name';
-                  return <FormField key={keyStr} label={toCapitalCase(keyStr)} name={keyStr} value={co[key]} onChange={(e) => handleCoBorrowerChange(i, e)} required={isRequired} />;
-                })}
-              </div>
-            ))}
-            <div className="flex justify-end">
-              <Button type="button" className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={addCoBorrower}>
-                <Plus size={14} /> Add Co-Borrower
-              </Button>
+      // Options for dropdowns
+      const maritalStatusOptions = [
+        { value: 'Single', label: 'Single' },
+        { value: 'Married', label: 'Married' },
+        { value: 'Widowed', label: 'Widowed' },
+        { value: 'Divorced', label: 'Divorced' },
+      ];
+
+      const occupationOptions = [
+        { value: 'Employee', label: 'Employee' },
+        { value: 'Self-Employed', label: 'Self-Employed' },
+        { value: 'Unemployed', label: 'Unemployed' },
+        { value: 'Retired', label: 'Retired' },
+      ];
+
+      return (
+        <SectionContainer title="Co-Borrowers">
+          {coBorrowers.map((co, i) => (
+            <div key={i} className="relative border-white p-4 rounded-lg mb-4">
+              {coBorrowers.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeCoBorrower(i)}
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+              {(Object.keys(co) as Array<keyof typeof co>).map((key) => {
+                const keyStr = String(key);
+                const isRequired = keyStr === 'first_name' || keyStr === 'last_name';
+
+                // Dropdowns for specific fields
+                if (keyStr === 'marital_status') {
+                  return (
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="select"
+                      value={co[key]}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                      options={maritalStatusOptions}
+                      required={isRequired}
+                    />
+                  );
+                }
+
+                if (keyStr === 'occupation') {
+                  return (
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="select"
+                      value={co[key]}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                      options={occupationOptions}
+                      required={isRequired}
+                    />
+                  );
+                }
+
+                if (keyStr === 'birth_date') {
+                  return (
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="date"
+                      value={co.birth_date}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                    />
+                  );
+                }
+
+                // Default to text input for other fields
+                return (
+                  <FormField
+                    key={keyStr}
+                    label={toCapitalCase(keyStr)}
+                    name={keyStr}
+                    value={co[key]}
+                    onChange={(e) => handleCoBorrowerChange(i, e)}
+                    required={isRequired}
+                  />
+                );
+              })}
             </div>
-          </SectionContainer>
-        );
+          ))}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              className="bg-yellow-500 text-black hover:bg-yellow-600"
+              onClick={addCoBorrower}
+            >
+              <Plus size={14} /> Add Co-Borrower
+            </Button>
+          </div>
+        </SectionContainer>
+      );
+
 
       case 4:
         return (
@@ -695,6 +786,18 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add Loan Application" />
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
+        {/* Global errors from server */}
+        {errors && Object.keys(errors).length > 0 && (
+          <div className="bg-red-100 text-red-800 p-3 rounded mb-4">
+            <ul className="list-disc list-inside">
+              {Object.entries(errors).map(([key, msg]) => (
+                <li key={key}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="border-b-4 border-[#FABF24] bg-[#FFF8E2] pb-4 mb-8 p-5">
           <h1 className="text-3xl font-semibold text-gray-800">Add Loan</h1>
           <p className="text-gray-500 text-sm">

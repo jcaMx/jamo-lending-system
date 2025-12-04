@@ -14,6 +14,8 @@ type Borrower = any;
 export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   const breadcrumbs: BreadcrumbItem[] = [{ title: 'Borrowers', href: '/borrowers' }];
 
+  const user = usePage().props.auth.user as { role?: string } | undefined;
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,19 +36,23 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   };
 
   const getStatusInfo = (b: Borrower) => {
+    // Ensure status is a lowercase string
     const statusRaw = b.activeLoan?.status?.trim() || '';
-    const status = statusRaw ? statusRaw.toLowerCase() : 'n/a';
+    const status = statusRaw.toLowerCase();
+  
     const statusClasses =
       status === 'active'
         ? 'bg-green-100 text-green-800'
-        : status === 'completed'
+        : status === 'closed'
         ? 'bg-gray-100 text-gray-800'
-        : status === 'delinquent'
+        : status === 'blacklisted'
         ? 'bg-red-100 text-red-800'
         : 'bg-yellow-100 text-yellow-800';
+  
     const statusLabel = statusRaw || 'N/A';
     return { statusClasses, statusLabel };
   };
+  
 
   const filteredBorrowers = useMemo(() => {
     return borrowers.filter((b: Borrower) => {
@@ -97,7 +103,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
     });
   };
 
-  const user = usePage().props.auth.user;
+  
 
 
   return (
@@ -138,13 +144,14 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
             >
               <option value="all">All</option>
               <option value="active">Active</option>
+              <option value="completed">Pending</option>
               <option value="completed">Completed</option>
               <option value="delinquent">Delinquent</option>
             </select>
           </div>
 
           {/* Add Borrower Button for admin only */}
-          {user?.role === 'admin' && (
+          {user?.role && String(user.role) === 'admin' && (
             <Button
               asChild
               className="bg-[#FABF24] text-gray-900 font-medium px-4 py-2 rounded-lg shadow-sm hover:bg-[#f8b80f] transition-colors duration-200 inline-flex items-center"
@@ -180,7 +187,11 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                 const { statusClasses, statusLabel } = getStatusInfo(b);
 
                 return (
-                  <tr key={b.id} className="hover:bg-[#FFF8E6] transition-colors duration-150">
+                  <tr 
+                    key={b.id} 
+                    className="hover:bg-[#FFF8E6] transition-colors duration-150 cursor-pointer"
+                    onClick={() => router.visit(`/borrowers/${b.id}`)}
+                  >
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {(currentPage - 1) * borrowersPerPage + index + 1}
                     </td>
@@ -211,8 +222,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                         <Eye className="h-4 w-4" />
                       </Button>
 
-                      {/* EDIT — admin + cashier */}
-                      {user?.role === 'admin'&& (
+                      {/* {user?.role && ['admin', 'cashier'].includes(String(user.role)) ? ( */}
                         <Button
                           variant="default"
                           size="sm"
@@ -222,12 +232,12 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                             router.visit(`/borrowers/${b.id}/edit`);
                           }}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Edit2 className="h-4 w-4" />
                         </Button>
-                      )}
+                      {/* ) : null} */}
 
                       {/* DELETE — admin only */}
-                      {user?.role === 'admin' && (
+                      {/* {user?.role && String(user.role) === 'admin' && ( */}
                         <Button
                           variant="default"
                           size="sm"
@@ -236,7 +246,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
+                      {/* )} */}
                     </td>
 
 

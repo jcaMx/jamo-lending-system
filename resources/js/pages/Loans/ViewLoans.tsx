@@ -128,13 +128,13 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
                     <div className="flex gap-2">
                       <Button
                         onClick={() => router.visit(route('loans.show', loan.ID))}
-                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        className="bg-yellow-400 text-black hover:bg-yellow-700"
                       >
                         View
                       </Button>
                       <Button
                         onClick={() => router.visit(route('loans.schedule', loan.ID))}
-                        className="bg-purple-600 text-white hover:bg-purple-700"
+                        className="bg-yellow-600 text-white hover:bg-yellow-700"
                       >
                         Schedule
                       </Button>

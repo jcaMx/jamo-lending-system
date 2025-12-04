@@ -22,6 +22,7 @@ class VehicleCollateralDetails extends Model
         'collateral_id',
     ];
 
+
     public function collateral()
     {
         return $this->belongsTo(Collateral::class);

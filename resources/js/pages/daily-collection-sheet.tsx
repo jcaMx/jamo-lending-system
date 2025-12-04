@@ -181,8 +181,9 @@ export default function DailyCollectionSheet({ due_loans, collections = [], coll
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Collections ({collections.length}) - Total: ₱{totalCollections.toLocaleString()}
+              Collections ({collections.length}) 
             </button>
+              {/* Collections ({collections.length}) - Total: ₱{totalCollections.toLocaleString()} */}
           </div>
         </div>
 

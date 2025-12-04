@@ -59,6 +59,10 @@ class LoanService
             $loan->status = 'Active';
             $loan->released_amount = $releasedAmount;
 
+            // Set borrower status to Active
+            $loan->borrower->status = 'Active';
+            $loan->borrower->save();
+
             // Set start_date to today (first installment will be due on start_date)
             $loan->start_date = Carbon::now();
 

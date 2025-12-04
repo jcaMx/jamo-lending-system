@@ -31,6 +31,8 @@
 
     ];
 
+    public $timestamps = false;
+
     public function Collateral() {
       return $this->belongsTo(Collateral::class, 'collateral_id', 'ID');
     }

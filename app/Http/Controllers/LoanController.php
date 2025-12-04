@@ -94,7 +94,12 @@ class LoanController extends Controller
             $loan = $this->loanService->createLoan($loanData);
 
             // Create Collateral using CollateralFactory
-            $collateralType = ucfirst($request->input('collateral_type')); // vehicle -> Vehicle, land -> Land, atm -> ATM
+            $collateralType = match($request->input('collateral_type')) {
+                'vehicle' => 'Vehicle',
+                'land' => 'Land',
+                'atm' => 'ATM',
+                default => ucfirst($request->input('collateral_type'))
+            };
             $collateralData = [
                 'loan_id' => $loan->ID,
                 'status' => 'Pending',

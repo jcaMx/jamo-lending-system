@@ -13,6 +13,8 @@ use App\Services\FormulaService;
 use App\Services\RepaymentService;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -59,5 +61,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::useBuildDirectory('build/vite');
+        Inertia::share([
+            'auth' => function () {
+                $user = auth()->user();
+                return [
+                    'user' => $user ? [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'role' => $user->role, // explicitly send role
+                    ] : null,
+                ];
+            },
+        ]);
+        
     }
 }
