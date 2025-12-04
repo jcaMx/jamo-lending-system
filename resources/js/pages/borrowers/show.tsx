@@ -25,6 +25,7 @@ type Loan = {
   principal: number;
   interest: string;
   interestType: string;
+  loan_type: string;
   penalty: number;
   due: number;
   balance: number;
@@ -109,6 +110,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       principal: 0,
       interest: '',
       interestType: '',
+      loan_type: '',
       penalty: 0,
       due: 0,
       balance: 0,
