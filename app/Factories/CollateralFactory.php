@@ -2,17 +2,17 @@
 
 namespace App\Factories;
 
+use App\Models\AtmCollateralDetails;
 use App\Models\Collateral;
 use App\Models\LandCollateralDetails;
 use App\Models\VehicleCollateralDetails;
-use App\Models\AtmCollateralDetails;
 use Illuminate\Support\Facades\DB;
 
 class CollateralFactory
 {
     public static function createCollateral(string $type, array $data): Collateral
     {
-        if (!in_array($type, ['Land', 'Vehicle', 'ATM'])) {
+        if (! in_array($type, ['Land', 'Vehicle', 'ATM'])) {
             throw new \InvalidArgumentException("Invalid collateral type: {$type}");
         }
 
@@ -31,7 +31,7 @@ class CollateralFactory
             ]);
 
             // Create type-specific details
-            match($type) {
+            match ($type) {
                 'Land' => self::createLandDetails($collateral, $data),
                 'Vehicle' => self::createVehicleDetails($collateral, $data),
                 'ATM' => self::createAtmDetails($collateral, $data),
@@ -44,7 +44,7 @@ class CollateralFactory
     private static function createLandDetails(Collateral $collateral, array $data): void
     {
         LandCollateralDetails::create([
-            'collateral_id' => $collateral->id,
+            'collateralID' => $collateral->ID,
             'titleNo' => $data['titleNo'],
             'lotNo' => $data['lotNo'],
             'location' => $data['location'],
@@ -55,7 +55,7 @@ class CollateralFactory
     private static function createVehicleDetails(Collateral $collateral, array $data): void
     {
         VehicleCollateralDetails::create([
-            'collateral_id' => $collateral->id,
+            'collateral_id' => $collateral->ID,
             'type' => $data['vehicle_type'] ?? null,
             'brand' => $data['brand'],
             'model' => $data['model'],
@@ -70,7 +70,7 @@ class CollateralFactory
     private static function createAtmDetails(Collateral $collateral, array $data): void
     {
         AtmCollateralDetails::create([
-            'collateral_id' => $collateral->id,
+            'collateral_id' => $collateral->ID,
             'bank_name' => $data['bank_name'],
             'account_no' => $data['account_no'],
             'cardno_4digits' => $data['cardno_4digits'],

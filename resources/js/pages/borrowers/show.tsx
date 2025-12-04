@@ -25,6 +25,7 @@ type Loan = {
   principal: number;
   interest: string;
   interestType: string;
+  loan_type: string;
   penalty: number;
   due: number;
   balance: number;
@@ -109,6 +110,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       principal: 0,
       interest: '',
       interestType: '',
+      loan_type: '',
       penalty: 0,
       due: 0,
       balance: 0,
@@ -129,11 +131,11 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         label: 'Repayments',
         content: <RepaymentsTab repayments={safeRepayments} />,
       },
-      // {
-      //   key: 'loanTerms' as TabKey,
-      //   label: 'Loan Terms',
-      //   content: <LoanTermsTab loan={safeLoan} />,
-      // },
+      {
+        key: 'loanTerms' as TabKey,
+        label: 'Loan Terms',
+        content: <LoanTermsTab loan={safeLoan} />,
+      },
       {
         key: 'loanSchedule' as TabKey,
         label: 'Loan Schedule',

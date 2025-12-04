@@ -4,17 +4,31 @@ import AppLayout from "@/layouts/app-layout";
 import { Search } from "lucide-react";
 import { type BreadcrumbItem } from "@/types";
 
-type Borrower = {
+type Schedule = {
+  ID: number;
+  installment_no: number;
+  due_date: string;
+  installment_amount: number;
+  interest_amount: number;
+  penalty_amount: number;
+  amount_paid: number;
+  status: string;
+  total_due: number;
+};
+
+type BorrowerWithSchedules = {
   id: number;
   name: string;
   loanNo: string;
-  current_due: number;
-  due_date: string;
+  loan_id: number;
+  schedules: Schedule[];
+  next_due_date?: string;
+  next_due_amount: number;
 };
 
 type Collector = { id: number; name: string };
 
-type Props = { borrowers: Borrower[]; collectors: Collector[] };
+type Props = { borrowers: BorrowerWithSchedules[]; collectors: Collector[] };
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Repayments", href: "/repayments/add" }
@@ -23,34 +37,103 @@ const breadcrumbs: BreadcrumbItem[] = [
 const inputClass =
   "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FABF24] focus:border-transparent";
 
-export default function Add({ borrowers: initialBorrowers, collectors: initialCollectors }: Props) {
+export default function Add({ borrowers: initialBorrowers = [], collectors: initialCollectors = [] }: Props) {
+  // Set today's date as default
+  const today = new Date().toISOString().split('T')[0];
+
+  // Normalize borrowers data - handle paginated objects, direct arrays, or keyed objects
+  const normalizedBorrowers = useMemo(() => {
+    let data = initialBorrowers;
+    
+    // If it's a paginated object, extract the data array
+    if (data && typeof data === 'object' && !Array.isArray(data) && 'data' in data) {
+      data = (data as any).data;
+    }
+    
+    // If it's still not an array but is an object with numeric keys, convert to array
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      data = Object.values(data);
+    }
+    
+    // Guard with Array.isArray
+    return Array.isArray(data) ? data : [];
+  }, [initialBorrowers]);
+
   const [form, setForm] = useState({
     search: "",
-    selectedBorrower: null as Borrower | null,
+    selectedBorrower: null as BorrowerWithSchedules | null,
+    selectedSchedule: null as Schedule | null,
     amount: "",
     method: "",
-    collectedBy: "",
-    collectionDate: "",
+    collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
+    collectionDate: today,
     referenceNumber: ""
   });
 
   const [submittedRefs, setSubmittedRefs] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const filteredBorrowers = useMemo(() => {
-    return initialBorrowers.filter((b) =>
+    return normalizedBorrowers.filter((b) =>
       b.name.toLowerCase().includes(form.search.toLowerCase())
     );
-  }, [form.search, initialBorrowers]);
+  }, [form.search, normalizedBorrowers]);
+
+  // Generate reference number when method changes
+  const generateReferenceNumber = () => {
+    const prefix = form.method === 'Metrobank' ? 'MB' : form.method === 'Cebuana' ? 'CB' : form.method === 'GCash' ? 'GC' : '';
+    if (prefix) {
+      return `${prefix}-${Date.now().toString().slice(-8)}`;
+    }
+    return '';
+  };
 
   // -------------------- HANDLERS --------------------
 
   const update = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSelectBorrower = (b: Borrower) => {
+  const handleSelectBorrower = (b: BorrowerWithSchedules) => {
     update("selectedBorrower", b);
     update("search", b.name);
+  
+    // Find the next due schedule (earliest due_date among unpaid/overdue)
+    const nextDueSchedule = b.schedules
+      .filter(s => s.status !== "Paid") // safety check
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0] || null;
+  
+    if (nextDueSchedule) {
+      update("selectedSchedule", nextDueSchedule);
+      update("amount", nextDueSchedule.total_due.toFixed(2));
+      if (nextDueSchedule.due_date) {
+        update("collectionDate", nextDueSchedule.due_date);
+      }
+    } else {
+      update("selectedSchedule", null);
+      update("amount", "");
+    }
+  };
+  
+
+  const handleSelectSchedule = (schedule: Schedule) => {
+    update("selectedSchedule", schedule);
+    // Auto-set amount to schedule's total due
+    update("amount", schedule.total_due.toFixed(2));
+    // Auto-set due date from schedule
+    if (schedule.due_date) {
+      update("collectionDate", schedule.due_date);
+    }
+  };
+
+  const handleMethodChange = (method: string) => {
+    update("method", method);
+    // Auto-generate reference number for non-cash methods
+    if (method !== "Cash" && method !== "") {
+      update("referenceNumber", generateReferenceNumber());
+    } else {
+      update("referenceNumber", "");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -70,39 +153,60 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
       return alert("This reference number has already been used.");
     }
 
-    router.post("/repayments/store", {
-      borrower_id: selectedBorrower.id,
-      loanNo: selectedBorrower.loanNo,
-      amount,
-      method,
-      collectedBy,
-      collectionDate,
-      referenceNumber: method === "Cash" ? null : referenceNumber || null
-    });
+    // Clear previous messages
+    setSuccessMessage("");
+    setErrorMessage("");
 
-    if (referenceNumber) {
-      setSubmittedRefs((prev) => [...prev, referenceNumber]);
-    }
+            router.post("/repayments/store", {
+              borrower_id: selectedBorrower.id,
+              loanNo: selectedBorrower.loanNo,
+              schedule_id: form.selectedSchedule?.ID || null,
+              amount,
+              method,
+              collectedBy,
+              collectionDate,
+              referenceNumber: method === "Cash" ? null : referenceNumber || null
+            }, {
+              onSuccess: () => {
+                // Only show success and reset if the request was successful
+                setSuccessMessage("Payment submitted successfully!");
+                
+                if (referenceNumber) {
+                  setSubmittedRefs((prev) => [...prev, referenceNumber]);
+                }
 
-    setSuccessMessage("Payment submitted successfully!");
-
-    // Reset
-    setForm({
-      search: "",
-      selectedBorrower: null,
-      amount: "",
-      method: "",
-      collectedBy: "",
-      collectionDate: "",
-      referenceNumber: ""
-    });
+                // Reset form
+                setForm({
+                  search: "",
+                  selectedBorrower: null,
+                  selectedSchedule: null,
+                  amount: "",
+                  method: "",
+                  collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
+                  collectionDate: today,
+                  referenceNumber: ""
+                });
+              },
+              onError: (errors) => {
+                // Handle errors from the backend
+                const errorMessages = Object.values(errors).flat();
+                if (errorMessages.length > 0) {
+                  setErrorMessage(errorMessages.join(", "));
+                } else {
+                  setErrorMessage("Failed to process payment. Please try again.");
+                }
+              },
+              onFinish: () => {
+                // This runs after both success and error
+              }
+            });
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add Repayment" />
 
-      <div className="w-full h-full mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
+      <div className="w-full h-wrap mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
         <form onSubmit={handleSubmit} className="space-y-10">
 
           {/* ------------------ HEADER -------------------- */}
@@ -158,23 +262,85 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Amount Due</label>
-                <input
-                  type="text"
-                  value={form.selectedBorrower?.current_due || ""}
-                  readOnly
-                  className={inputClass + " bg-gray-100"}
-                />
+              {/* ---------------- Full Amortization Schedule Table ---------------- */}
+              {form.selectedBorrower && form.selectedBorrower.schedules && form.selectedBorrower.schedules.length > 0 && (
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium mb-1">Amortization Schedule</label>
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="max-h-96 overflow-y-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold">#</th>
+                            <th className="px-4 py-3 text-left font-semibold">Due Date</th>
+                            <th className="px-4 py-3 text-left font-semibold">Installment</th>
+                            <th className="px-4 py-3 text-left font-semibold">Interest</th>
+                            <th className="px-4 py-3 text-left font-semibold">Penalty</th>
+                            <th className="px-4 py-3 text-left font-semibold">Paid</th>
+                            <th className="px-4 py-3 text-left font-semibold">Total Due</th>
+                            <th className="px-4 py-3 text-left font-semibold">Status</th>
+                            <th className="px-4 py-3 text-center font-semibold">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {form.selectedBorrower.schedules.map((schedule) => (
+                            <tr key={schedule.ID} className={`border-t hover:bg-gray-50 ${
+                              form.selectedSchedule?.ID === schedule.ID ? 'bg-yellow-50' : ''
+                            }`}>
+                              <td className="px-4 py-3">{schedule.installment_no}</td>
+                              <td className="px-4 py-3">
+                                {schedule.due_date ? new Date(schedule.due_date).toLocaleDateString() : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3">₱{schedule.installment_amount.toLocaleString()}</td>
+                              <td className="px-4 py-3">₱{schedule.interest_amount.toLocaleString()}</td>
+                              <td className="px-4 py-3">₱{schedule.penalty_amount.toLocaleString()}</td>
+                              <td className="px-4 py-3">₱{schedule.amount_paid.toLocaleString()}</td>
+                              <td className="px-4 py-3 font-semibold">₱{schedule.total_due.toLocaleString()}</td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-1 rounded text-xs inline-block ${
+                                  schedule.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                                  schedule.status === 'Overdue' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {schedule.status}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectSchedule(schedule)}
+                                  className={`px-3 py-1 rounded text-xs font-medium ${
+                                    form.selectedSchedule?.ID === schedule.ID
+                                      ? 'bg-yellow-500 text-white'
+                                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                                  }`}
+                                  disabled={schedule.status === 'Paid'}
+                                >
+                                  {form.selectedSchedule?.ID === schedule.ID ? 'Selected' : 'Select'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Select a schedule to apply the payment. Only unpaid or overdue schedules can be selected.
+                  </p>
+                </div>
+              )}
 
-                <label className="block text-sm font-medium mt-2">Due Date</label>
-                <input
-                  type="text"
-                  value={form.selectedBorrower?.due_date || ""}
-                  readOnly
-                  className={inputClass + " bg-gray-100"}
-                />
-              </div>
+              {/* Show message if borrower has no schedules */}
+              {form.selectedBorrower && (!form.selectedBorrower.schedules || form.selectedBorrower.schedules.length === 0) && (
+                <div className="col-span-2">
+                  <div className="border rounded-lg p-4 bg-yellow-50">
+                    <p className="text-sm text-yellow-800">
+                      No amortization schedules found for this borrower's active loan.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* ---------------- AMOUNT ---------------- */}
               <div>
@@ -199,27 +365,28 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                 <label className="block text-sm font-medium mb-1">Payment Method</label>
                 <select
                   value={form.method}
-                  onChange={(e) => update("method", e.target.value)}
+                  onChange={(e) => handleMethodChange(e.target.value)}
                   className={inputClass}
                 >
                   <option value="">Select method</option>
                   <option value="Cash">Cash</option>
-                  <option value="Metrobank">Metro Bank</option>
+                  <option value="Bank">Bank</option>
                   <option value="Cebuana">Cebuana</option>
                   <option value="GCash">GCash</option>
                 </select>
               </div>
 
               {/* ---------------- REFERENCE NUMBER (Hide for Cash) ---------------- */}
-              {form.method !== "Cash" && (
+              {["Bank", "GCash", "Cebuana"].includes(form.method) && (
                 <div>
                   <label className="block text-sm font-medium mb-1">Reference Number</label>
                   <input
                     value={form.referenceNumber}
                     onChange={(e) => update("referenceNumber", e.target.value)}
-                    placeholder="Enter reference number"
-                    className={inputClass}
+                    placeholder="Enter reference number from your chosen mode of payment"
+                    className={inputClass + " bg-gray-50"}
                   />
+ 
                 </div>
               )}
 
@@ -231,12 +398,15 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
                   onChange={(e) => update("collectedBy", e.target.value)}
                   className={inputClass}
                 >
-                  <option value="">Select collector</option>
-                  {initialCollectors.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                  {initialCollectors.length > 0 ? (
+                    initialCollectors.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">No collectors available</option>
+                  )}
                 </select>
               </div>
 
@@ -257,10 +427,14 @@ export default function Add({ borrowers: initialBorrowers, collectors: initialCo
             <div className="bg-green-100 text-green-800 p-3 rounded-md">{successMessage}</div>
           )}
 
+          {errorMessage && (
+            <div className="bg-red-100 text-red-800 p-3 rounded-md">{errorMessage}</div>
+          )}
+
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-amber-600"
+              className="px-6 py-2 text-black bg-[#FABF24] rounded-lg hover:bg-[#f8b80f]"
             >
               Submit Repayment
             </button>

@@ -1,23 +1,12 @@
 // resources/js/types/shared.ts
 import type { SVGProps } from "react";
 import { LucideIcon } from "lucide-react";
-// resources/js/types/shared.ts
-import type { PageProps } from "@inertiajs/core";
-
-export interface SharedData extends PageProps {
-  name: string;
-  quote: { message: string; author: string };
-  auth: {
-    user: User | null;
-    roles?: string[];
-  };
-  sidebarOpen: boolean;
-}
+import type { PageProps as InertiaPageProps } from "@inertiajs/core";
 
 // --------------------
 // SharedData (for Inertia)
 // --------------------
-export interface SharedData {
+export interface SharedData extends InertiaPageProps {
   name: string;
   quote: { message: string; author: string };
   auth: {
@@ -39,6 +28,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  role?: string;
   avatar?: string;
   email_verified_at: string | null;
   two_factor_enabled?: boolean;

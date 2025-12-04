@@ -17,13 +17,14 @@ class LoanSeeder extends Seeder
 {
     public function run(): void
     {
-        $formula = Formula::where('name', 'Compound Interest')->first();
+        $formula = Formula::where('name', 'Compound Interest Loan')->first();
         $approver = User::where('email', 'admin@jamo.com')->first();
 
         $borrowers = Borrower::all();
 
-        if ($borrowers->isEmpty() || !$formula || !$approver) {
+        if ($borrowers->isEmpty() || ! $formula || ! $approver) {
             $this->command->warn('Borrowers, Formula, or Approver not found. Please run BorrowerSeeder, FormulaSeeder, and UserSeeder first.');
+
             return;
         }
 
@@ -215,7 +216,7 @@ class LoanSeeder extends Seeder
         foreach ($loans as $loanData) {
             $borrower = Borrower::where('email', $loanData['borrower_email'])->first();
 
-            if (!$borrower) {
+            if (! $borrower) {
                 continue;
             }
 

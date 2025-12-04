@@ -8,14 +8,9 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { Link, usePage } from '@inertiajs/react';
-import { Folder, LayoutGrid, ChevronDown, ChevronRight } from 'lucide-react';
+import { Folder, LayoutGrid, ChevronDown, ChevronRight, Banknote, Coins, FileChartColumnIncreasing, HandCoins, User } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 import { BorrowersIcon } from '@/components/icons/BorrowersIcon';
-import { UserIcon } from '@/components/icons/UserIcon';
-import { LoansIcon } from '@/components/icons/LoansIcon';
-import { RepaymentsIcon } from '@/components/icons/RepaymentsIcon';
-import { DailyCollectionsIcon } from '@/components/icons/DailyCollectionsIcon';
-import { ReportsIcon } from '@/components/icons/ReportsIcon';
 import { useState, useEffect } from 'react';
 
 interface BaseNavItem {
@@ -54,7 +49,7 @@ const mainNavItems: NavItem[] = [
   {
     type: "group",
     title: "Loans",
-    icon: LoansIcon,
+    icon: Banknote,
     roles: ["admin", "cashier"],
     subItems: [
       { type: "link", title: "View All Loans", href: "/Loans/VAL" },
@@ -69,7 +64,7 @@ const mainNavItems: NavItem[] = [
   {
     type: "group",
     title: "Repayments",
-    icon: RepaymentsIcon,
+    icon: Coins,
     roles: ["cashier", "admin"],
     subItems: [
       { type: "link", title: "View Repayments", href: "/repayments" },
@@ -77,12 +72,12 @@ const mainNavItems: NavItem[] = [
     ]
   },
 
-  { type: "link", title: "Daily Collection Sheets", icon: DailyCollectionsIcon, href: "/daily-collections", roles: ["cashier", "admin"] },
+  { type: "link", title: "Daily Collection Sheets", icon: HandCoins, href: "/daily-collections", roles: ["cashier", "admin"] },
 
   {
     type: "group",
     title: "Reports",
-    icon: ReportsIcon,
+    icon: FileChartColumnIncreasing,
     roles: ["admin"],
     subItems: [
       { type: "link", title: "Daily Cash Position Report", href: "/Reports/DCPR" },
@@ -93,7 +88,7 @@ const mainNavItems: NavItem[] = [
   {
     type: "group",
     title: "System Users",
-    icon: UserIcon,
+    icon: User,
     roles: ["admin"],
     subItems: [
       { type: "link", title: "View Users", href: "/users" },

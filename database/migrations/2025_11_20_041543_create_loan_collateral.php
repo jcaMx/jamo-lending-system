@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // Formula Table
@@ -23,12 +24,12 @@ return new class extends Migration {
             $table->dateTime('start_date')->nullable();
             $table->dateTime('end_date')->nullable();
             $table->integer('term_months');
-            $table->enum('repayment_frequency', ['Weekly','Monthly','Yearly'])->nullable();
+            $table->enum('repayment_frequency', ['Weekly', 'Monthly', 'Yearly'])->nullable();
             $table->decimal('principal_amount', 10, 2);
             $table->float('interest_rate');
-            $table->enum('interest_type', ['Simple','Compound','Deminishing'])->nullable();
+            $table->enum('interest_type', ['Simple', 'Compound', 'Deminishing'])->nullable();
             $table->string('loan_type', 50)->nullable();
-            $table->enum('status', ['Active','Fully_Paid','Bad_Debt','Rejected','Pending'])->default('Pending');
+            $table->enum('status', ['Active', 'Fully_Paid', 'Bad_Debt', 'Rejected', 'Pending'])->default('Pending');
             $table->decimal('balance_remaining', 10, 2);
             // `users` table may be created in a different migration file.
             // Create the column without an immediate foreign key constraint
@@ -46,7 +47,7 @@ return new class extends Migration {
             $table->decimal('interest_amount', 15, 2);
             $table->decimal('penalty_amount', 15, 2)->default(0.00);
             $table->dateTime('due_date');
-            $table->enum('status', ['Paid','Unpaid','Overdue'])->default('Unpaid');
+            $table->enum('status', ['Paid', 'Unpaid', 'Overdue'])->default('Unpaid');
             // Create holiday_id column without FK to avoid constraint formation errors.
             // FK can be added in a separate migration if needed.
             $table->unsignedBigInteger('holiday_id')->nullable();
@@ -59,11 +60,11 @@ return new class extends Migration {
         // Collateral
         Schema::create('collateral', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['Land','Vehicle','ATM'])->nullable();
+            $table->enum('type', ['Land', 'Vehicle', 'ATM'])->nullable();
             $table->decimal('estimated_value', 10, 2)->nullable();
             $table->dateTime('appraisal_date')->nullable();
             $table->unsignedBigInteger('ownership_proof')->nullable();
-            $table->enum('status', ['Pledged','Released','Forfeited','Pending'])->nullable();
+            $table->enum('status', ['Pledged', 'Released', 'Forfeited', 'Pending'])->nullable();
             $table->string('remarks', 100)->nullable();
             $table->string('description', 100)->nullable();
             // Create appraised_by column without FK to avoid dependency on users migration order.
@@ -74,7 +75,7 @@ return new class extends Migration {
         // ATM Collateral
         Schema::create('atmcollateraldetails', function (Blueprint $table) {
             $table->id();
-            $table->enum('bank_name', ['BDO','BPI','LandBank','MetroBank']);
+            $table->enum('bank_name', ['BDO', 'BPI', 'LandBank', 'MetroBank']);
             $table->string('account_no', 20);
             $table->integer('cardno_4digits');
             $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
@@ -93,13 +94,13 @@ return new class extends Migration {
         // Vehicle Collateral
         Schema::create('vehiclecollateraldetails', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['Car','Motorcycle','Truck'])->nullable();
+            $table->enum('type', ['Car', 'Motorcycle', 'Truck'])->nullable();
             $table->string('brand', 20);
             $table->string('model', 20);
             $table->year('year_model')->nullable();
             $table->string('plate_no', 20)->nullable();
             $table->string('engine_no', 20)->nullable();
-            $table->enum('transmission_type', ['Manual','Automatic'])->nullable();
+            $table->enum('transmission_type', ['Manual', 'Automatic'])->nullable();
             $table->string('fuel_type', 20)->nullable();
             $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
             $table->timestamps();

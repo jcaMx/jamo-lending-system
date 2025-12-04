@@ -8,6 +8,8 @@ class AtmCollateralDetails extends Model
 {
     protected $table = 'atmcollateraldetails';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'bank_name',
         'account_no',

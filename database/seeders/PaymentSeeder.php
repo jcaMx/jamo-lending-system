@@ -16,8 +16,9 @@ class PaymentSeeder extends Seeder
         $cashier = User::where('email', 'maria.santos@jamo.com')->first();
         $verifier = User::where('email', 'admin@jamo.com')->first();
 
-        if (!$cashier || !$verifier) {
+        if (! $cashier || ! $verifier) {
             $this->command->warn('Cashier or Verifier not found. Please run UserSeeder first.');
+
             return;
         }
 
@@ -41,8 +42,8 @@ class PaymentSeeder extends Seeder
                         'payment_date' => $paymentDate,
                         'amount' => $paymentAmount,
                         'payment_method' => $this->getRandomPaymentMethod(),
-                        'reference_no' => 'PAY-' . strtoupper(uniqid()),
-                        'remarks' => 'Payment for installment #' . $schedule->installment_no,
+                        'reference_no' => 'PAY-'.strtoupper(uniqid()),
+                        'remarks' => 'Payment for installment #'.$schedule->installment_no,
                         'verified_by' => $verifier->id,
                         'verified_date' => $paymentDate->copy()->addHours(2),
                         'schedule_id' => $schedule->ID,
@@ -90,8 +91,8 @@ class PaymentSeeder extends Seeder
                         'payment_date' => $schedule->due_date->copy()->addDays(rand(-3, 3)),
                         'amount' => $schedule->amount_paid,
                         'payment_method' => $this->getRandomPaymentMethod(),
-                        'reference_no' => 'PAY-' . strtoupper(uniqid()),
-                        'remarks' => 'Payment for installment #' . $schedule->installment_no,
+                        'reference_no' => 'PAY-'.strtoupper(uniqid()),
+                        'remarks' => 'Payment for installment #'.$schedule->installment_no,
                         'verified_by' => $verifier->id,
                         'verified_date' => $schedule->due_date->copy()->addDays(rand(0, 2)),
                         'loan_id' => $fullyPaidLoan->ID,

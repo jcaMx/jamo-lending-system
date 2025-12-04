@@ -1,9 +1,10 @@
 <?php
-  namespace App\Repositories\Interfaces;
 
-  use App\Models\Loan;
+namespace App\Repositories\Interfaces;
 
-  interface IPenaltyCalculator
-  {
-    public function calculate(Loan $loan): float;
-  }
+use App\Models\Loan;
+
+interface IPenaltyCalculator
+{
+    public function calculate(Loan $loan): void;
+}

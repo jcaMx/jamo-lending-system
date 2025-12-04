@@ -5,28 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-enum LoanStatus: string
+class Loan extends Model
 {
-    case Active = 'Active';
-    case FullyPaid = 'Fully_Paid';
-    case BadDebt = 'Bad_Debt';
-    case Rejected = 'Rejected';
-    case Pending = 'Pending';
-  }
-
-  enum InterestType: string {
-    case Compound = 'Compound';
-    case Diminishing = 'Diminishing';   
-  }
-
-  enum RepaymentFrequency: string {
-    case Weekly = 'Weekly';
-    case Monthly = 'Monthly';
-    case Yearly = 'Yearly';
-  }
-  
-  class Loan extends Model
-  {
     use HasFactory;
 
     protected $table = 'loan';
@@ -48,6 +28,7 @@ enum LoanStatus: string
             'status',
             'balance_remaining',
             'approved_by',
+            'released_amount',
             'created_at',
             'updated_at',
             'borrower_id',
@@ -57,35 +38,36 @@ enum LoanStatus: string
     protected $casts =
         [
             'balance_remaining' => 'decimal:2',
+            'released_amount' => 'decimal:2',
             'term_months' => 'integer',
-            'interest_type' => InterestType::class,
-            'status' => LoanStatus::class,
+            'interest_type' => 'string',
+            'status' => 'string',
             'interest_rate' => 'float',
             'start_date' => 'datetime',
             'end_date' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
-            'repayment_frequency' => RepaymentFrequency::class,
+            'repayment_frequency' => 'string',
         ];
 
     const CREATED_AT = 'created_at';
 
     const UPDATED_AT = 'updated_at';
 
-    //Add new Loan
+    // Add new Loan
     public static function addLoan(array $data): Loan
     {
-      if (!isset($data['principal_amount'])) {
-        throw new \Exception('principal_amount required');
-      }
+        if (! isset($data['principal_amount'])) {
+            throw new \Exception('principal_amount required');
+        }
 
-      $data['status'] = $data['status'] ?? LoanStatus::Pending->value;
-      $data['interest_rate'] = $data['interest_rate'] ?? 5.0;
-      $data['interest_type'] = $data['interest_type'] ?? InterestType::Compound->value;
+        $data['status'] = $data['status'] ?? 'Pending';
+        $data['interest_rate'] = $data['interest_rate'] ?? 5.0;
+        $data['interest_type'] = $data['interest_type'] ?? 'Compound';
 
-      $data['balance_remaining'] = $data['balance_remaining'] ?? $data['principal_amount'];
+        $data['balance_remaining'] = $data['balance_remaining'] ?? $data['principal_amount'];
 
-      return self::create($data);
+        return self::create($data);
     }
 
     public function editLoan(array $data): void
@@ -98,7 +80,7 @@ enum LoanStatus: string
     public function closeLoan(): void
     {
         if ($this->balance_remaining == 0) {
-            $this->status = LoanStatus::FullyPaid->value;
+            $this->status = 'Fully_Paid';
             $this->save();
         }
     }
@@ -128,6 +110,8 @@ enum LoanStatus: string
         return $this->belongsTo(JamoUser::class, 'approved_by', 'ID');
     }
 
-    public function formula() {return $this->belongsTo(Formula::class, 'formula_id', 'ID');}
-
-  }
+    public function formula()
+    {
+        return $this->belongsTo(Formula::class, 'formula_id', 'ID');
+    }
+}

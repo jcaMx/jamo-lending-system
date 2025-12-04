@@ -1,52 +1,62 @@
 import { useState } from 'react';
-import dayjs from 'dayjs';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
+import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Loans', href: '/Loans' },
-  { title: 'Past Maturity Loans', href: '/Loans/PMD' },
+  { title: 'Past Maturity Date', href: '/Loans/PMD' },
 ];
 
-export default function PastMaturityLoans() {
+interface Loan {
+  ID: number;
+  principal_amount: number;
+  interest_rate: number;
+  term_months: number;
+  repayment_frequency: string;
+  status: string;
+  balance_remaining: number;
+  start_date?: string;
+  end_date?: string;
+  borrower: {
+    ID: number;
+    first_name: string;
+    last_name: string;
+    contact_no?: string;
+  };
+  collateral?: {
+    type: string;
+  };
+}
+
+interface PastMaturityDateProps {
+  loans: Loan[];
+}
+
+export default function PastMaturityDate({ loans }: PastMaturityDateProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [data] = useState([
-    { Name: 'Ash Alainne', LoanNo: 'A100365', Released: '2025-10-05', Maturity: '2025-10-06', Repayment: 'Biweekly', Principal: '1,000', Interest: '9% per month', Due: '8,650', Paid: '8,650', Balance: '8,650', LastRepayment: '8,650', Status: "Open" },
-    { Name: 'John Doe', LoanNo: 'A100366', Released: '2025-10-06', Maturity: '2025-10-07', Repayment: 'Biweekly', Principal: '1,000', Interest: '9% per month', Due: '9,200', Paid: '9,200', Balance: '9,200', LastRepayment: '9,200', Status: "Open" },
-    { Name: 'Jane Smith', LoanNo: 'A100367', Released: '2025-10-07', Maturity: '2025-10-08', Repayment: 'Biweekly', Principal: '1,000', Interest: '9% per month', Due: '7,800', Paid: '7,800', Balance: '7,800', LastRepayment: '7,800', Status: "Open" },
-    { Name: 'Michael Brown', LoanNo: 'A100368', Released: '2025-10-08', Maturity: '2025-10-09', Repayment: 'Biweekly', Principal: '1,000', Interest: '9% per month', Due: '10,500', Paid: '10,500', Balance: '10,500', LastRepayment: '10,500', Status: "Open" },
-    { Name: 'Emily Davis', LoanNo: 'A100369', Released: '2025-10-09', Maturity: '2025-10-10', Repayment: 'Biweekly', Principal: '1,000', Interest: '9% per month', Due: '6,750', Paid: '6,750', Balance: '6,750', LastRepayment: '6,750', Status: "Open" },
-  ]);
-
-  const filteredData = data.filter(
-    (row) =>
-      dayjs(row.Maturity).isBefore(dayjs()) &&
-      row.Name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLoans = loans.filter((loan) =>
+    `${loan.borrower.first_name} ${loan.borrower.last_name}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Past Maturity Loans" />
-
+      <Head title="Past Maturity Date Loans" />
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">View Past Maturity Loans</h1>
-          <Button
-            onClick={() => router.visit('/Loans/AddLoan')}
-            className="bg-yellow-600 text-white hover:bg-yellow-700"
-          >
-            Add Loan
-          </Button>
+          <h1 className="text-2xl font-bold">Past Maturity Date Loans</h1>
         </div>
 
         <div className="flex mb-4 gap-2">
           <input
             type="text"
-            placeholder="Search by Borrower..."
+            placeholder="Search Borrower..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 border rounded shadow-sm w-64"
@@ -58,35 +68,54 @@ export default function PastMaturityLoans() {
             <tr className="bg-gray-100 text-left text-sm font-medium text-gray-700">
               <th className="px-4 py-2">Borrower</th>
               <th className="px-4 py-2">Loan No.</th>
-              <th className="px-4 py-2">Released</th>
-              <th className="px-4 py-2">Maturity</th>
-              <th className="px-4 py-2">Repayment</th>
               <th className="px-4 py-2">Principal</th>
-              <th className="px-4 py-2">Interest</th>
-              <th className="px-4 py-2">Due</th>
-              <th className="px-4 py-2">Paid</th>
+              <th className="px-4 py-2">Interest Rate</th>
+              <th className="px-4 py-2">Term</th>
+              <th className="px-4 py-2">Maturity Date</th>
               <th className="px-4 py-2">Balance</th>
-              <th className="px-4 py-2">Last Repayment</th>
               <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2">Collateral</th>
+              <th className="px-4 py-2">Action</th>
             </tr>
           </thead>
           <tbody className="text-sm text-gray-800">
-            {filteredData.map((row, idx) => (
-              <tr key={idx} className="border-b last:border-none">
-                <td className="px-4 py-2">{row.Name}</td>
-                <td className="px-4 py-2">{row.LoanNo}</td>
-                <td className="px-4 py-2">{row.Released}</td>
-                <td className="px-4 py-2">{row.Maturity}</td>
-                <td className="px-4 py-2">{row.Repayment}</td>
-                <td className="px-4 py-2">{row.Principal}</td>
-                <td className="px-4 py-2">{row.Interest}</td>
-                <td className="px-4 py-2">{row.Due}</td>
-                <td className="px-4 py-2">{row.Paid}</td>
-                <td className="px-4 py-2">{row.Balance}</td>
-                <td className="px-4 py-2">{row.LastRepayment}</td>
-                <td className="px-4 py-2">{row.Status}</td>
+            {filteredLoans.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                  No past maturity date loans found
+                </td>
               </tr>
-            ))}
+            ) : (
+              filteredLoans.map((loan) => (
+                <tr key={loan.ID} className="border-b last:border-none">
+                  <td className="px-4 py-2">
+                    {loan.borrower.first_name} {loan.borrower.last_name}
+                  </td>
+                  <td className="px-4 py-2">{loan.ID}</td>
+                  <td className="px-4 py-2">₱{loan.principal_amount.toLocaleString()}</td>
+                  <td className="px-4 py-2">{loan.interest_rate}%</td>
+                  <td className="px-4 py-2">{loan.term_months} months</td>
+                  <td className="px-4 py-2">
+                    {loan.end_date ? new Date(loan.end_date).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-4 py-2">₱{loan.balance_remaining.toLocaleString()}</td>
+                  <td className="px-4 py-2">
+                    <span className="px-2 py-1 rounded text-xs bg-orange-100 text-orange-800">
+                      {loan.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">{loan.collateral?.type || 'N/A'}</td>
+                  <td className="px-4 py-2">
+                    <Button
+                      onClick={() => router.visit(route('loans.show', loan.ID))}
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      View
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
