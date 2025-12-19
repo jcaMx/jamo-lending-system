@@ -4,14 +4,14 @@ type Loan = {
   loanNo: string;
   released: string;
   maturity: string;
-  repayment: string;
+  repayment_frequency: string;
   principal: number;
   interest: string;
   interestType: string;
+  loan_type: string;
   due: number;
   balance: number;
   status: string;
-  loan_type: string;
 };
 
 interface LoanTermsTabProps {
@@ -61,7 +61,7 @@ export default function LoanTermsTab({ loan }: LoanTermsTabProps) {
           <DetailRow label="Maturity Date" value={loan.maturity || '—'} />
           <DetailRow label="Interest Rate" value={loan.interest || '—'} />
           <DetailRow label="Interest Type" value={loan.interestType || '—'} />
-          <DetailRow label="Repayment Frequency" value={loan.repayment || '—'} />
+          <DetailRow label="Repayment Frequency" value={loan.repayment_frequency || '—'} />
           <DetailRow label="Installment Due" value={`₱${loan.due.toLocaleString()}`} />
           <DetailRow label="Balance Remaining" value={`₱${loan.balance.toLocaleString()}`} />
         </div>

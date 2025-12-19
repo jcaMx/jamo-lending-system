@@ -3,15 +3,19 @@ import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Search, Edit2, Trash2 } from 'lucide-react';
+import { Search, Edit2, Trash2, Eye } from 'lucide-react';
 import { route } from 'ziggy-js';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import { usePage } from '@inertiajs/react';
+
 
 type Borrower = any;
 
 export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   const breadcrumbs: BreadcrumbItem[] = [{ title: 'Borrowers', href: '/borrowers' }];
 
+  const user = usePage().props.auth.user as { role?: string } | undefined;
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,19 +36,23 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   };
 
   const getStatusInfo = (b: Borrower) => {
+    // Ensure status is a lowercase string
     const statusRaw = b.activeLoan?.status?.trim() || '';
-    const status = statusRaw ? statusRaw.toLowerCase() : 'n/a';
+    const status = statusRaw.toLowerCase();
+  
     const statusClasses =
       status === 'active'
         ? 'bg-green-100 text-green-800'
-        : status === 'completed'
+        : status === 'closed'
         ? 'bg-gray-100 text-gray-800'
-        : status === 'delinquent'
+        : status === 'blacklisted'
         ? 'bg-red-100 text-red-800'
         : 'bg-yellow-100 text-yellow-800';
+  
     const statusLabel = statusRaw || 'N/A';
     return { statusClasses, statusLabel };
   };
+  
 
   const filteredBorrowers = useMemo(() => {
     return borrowers.filter((b: Borrower) => {
@@ -95,6 +103,9 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
     });
   };
 
+  
+
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Borrowers List" />
@@ -133,18 +144,21 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
             >
               <option value="all">All</option>
               <option value="active">Active</option>
+              <option value="completed">Pending</option>
               <option value="completed">Completed</option>
               <option value="delinquent">Delinquent</option>
             </select>
           </div>
 
-          {/* Add Borrower Button */}
-          <Button
-            asChild
-            className="bg-[#FABF24] text-gray-900 font-medium px-4 py-2 rounded-lg shadow-sm hover:bg-[#f8b80f] transition-colors duration-200 inline-flex items-center"
-          >
-            <a href="/borrowers/add">+ Add Borrower</a>
-          </Button>
+          {/* Add Borrower Button for admin only */}
+          {user?.role && String(user.role) === 'admin' && (
+            <Button
+              asChild
+              className="bg-[#FABF24] text-gray-900 font-medium px-4 py-2 rounded-lg shadow-sm hover:bg-[#f8b80f] transition-colors duration-200 inline-flex items-center"
+            >
+              <a href="/borrowers/add">+ Add Borrower</a>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -153,7 +167,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['#', 'Name', 'Occupation', 'Gender', 'City', 'Email', 'Mobile', 'Status'].map(
+              {['#', 'Name', 'Occupation', 'Gender', 'City', 'Email', 'Mobile', 'Status', 'Actions'].map(
                 (header) => (
                   <th
                     key={header}
@@ -173,7 +187,11 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                 const { statusClasses, statusLabel } = getStatusInfo(b);
 
                 return (
-                  <tr key={b.id} className="hover:bg-[#FFF8E6] transition-colors duration-150">
+                  <tr 
+                    key={b.id} 
+                    className="hover:bg-[#FFF8E6] transition-colors duration-150 cursor-pointer"
+                    onClick={() => router.visit(`/borrowers/${b.id}`)}
+                  >
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {(currentPage - 1) * borrowersPerPage + index + 1}
                     </td>
@@ -183,32 +201,55 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                     <td className="px-4 py-3 text-sm text-gray-700">{b.city ?? 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{b.email ?? 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{b.mobile ?? 'N/A'}</td>
-                    <td className="px-4 py-3 flex items-center gap-2">
+                    <td className="px-4 py-3">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses}`}
                       >
                         {statusLabel}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 flex items-center gap-2">
+                      {/* VIEW — all roles */}
                       <Button
                         variant="default"
                         size="sm"
                         className="p-1"
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.visit(`/borrowers/${b.id}/edit`);
+                          router.visit(`/borrowers/${b.id}`);
                         }}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="p-1 text-red-600 hover:text-red-800"
-                        onClick={(e) => handleDeleteClick(b.id, fullName, e)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                      {/* {user?.role && ['admin', 'cashier'].includes(String(user.role)) ? ( */}
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="p-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.visit(`/borrowers/${b.id}/edit`);
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      {/* ) : null} */}
+
+                      {/* DELETE — admin only */}
+                      {/* {user?.role && String(user.role) === 'admin' && ( */}
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="p-1 text-red-600 hover:text-red-800"
+                          onClick={(e) => handleDeleteClick(b.id, fullName, e)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      {/* )} */}
                     </td>
+
+
                   </tr>
                 );
               })

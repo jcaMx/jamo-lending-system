@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
-use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
-use Laravel\Fortify\Http\Controllers\RegisteredUserController;
-use App\Http\Controllers\LoanController;
+use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
-
-
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
-use App\Http\Controllers\DailyCollectionController;
-use App\Http\Controllers\ApplicationController;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -27,18 +24,19 @@ use App\Http\Controllers\ApplicationController;
 Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
 Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
 Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
-Route::get('/', fn() => Inertia::render('index'))->name('home');
+Route::get('/dashboard-upcoming-schedules', [DashboardController::class, 'upcomingDueSchedules']);
+Route::get('/', fn () => Inertia::render('index'))->name('home');
 
-Route::get('/applynow', fn() => Inertia::render('BorrowerApplication'))->name('apply');
+Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
 
 // Guest-only routes
 Route::middleware('guest')->group(function () {
     // Login
-    Route::get('/login', fn() => Inertia::render('auth/login'))->name('login');
+    Route::get('/login', fn () => Inertia::render('auth/login'))->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 
     // Register
-    Route::get('/register', fn() => Inertia::render('auth/register'))->name('register');
+    Route::get('/register', fn () => Inertia::render('auth/register'))->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 });
 
@@ -51,7 +49,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard (your Wayfinder dashboard().url likely resolves this name)
-    Route::get('/dashboard', fn() => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -59,11 +57,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
-
-Route::prefix('borrowers')->group(function () {
-    Route::delete('{id}', [BorrowerController::class, 'destroy'])
-        ->name('borrowers.destroy');
-});
+        Route::get('/search', [BorrowerController::class, 'search'])->name('borrowers.search');
+        Route::get('/{id}/loans', [BorrowerController::class, 'checkLoans'])->name('borrowers.check-loans');
+        Route::delete('{id}', [BorrowerController::class, 'destroy'])->name('borrowers.destroy');
     });
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
@@ -76,19 +72,18 @@ Route::prefix('borrowers')->group(function () {
 
     // Loans (match sidebar hrefs: /Loans/VAL, /Loans/PMD, etc.)
     Route::prefix('Loans')->middleware(['role:admin|cashier'])->group(function () {
-        Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.index');
-        Route::get('/', fn() => Inertia::render('Loans/Index'))->name('loans.create');
-        Route::get('/1MLL', fn() => Inertia::render('Loans/1MLL'))->name('loans.one-month-late');
-        Route::get('/3MLL', fn() => Inertia::render('Loans/3MLL'))->name('loans.three-month-late');
-        Route::get('/PMD', fn() => Inertia::render('Loans/PMD'))->name('loans.past-maturity-date');
-        Route::get('/VLA', fn() => Inertia::render('Loans/VLA'))->name('loans.applications');
-        Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.applications');
-        Route::get('/Loans/VLA', [LoanController::class, 'index'])->name('loans.view');
+        Route::get('/', fn () => Inertia::render('Loans/Index'))->name('loans.index');
+        Route::get('/AddLoan', [LoanController::class, 'add'])->name('loans.add');
+        Route::get('/1MLL', [LoanController::class, 'oneMonthLate'])->name('loans.one-month-late');
+        Route::get('/3MLL', [LoanController::class, 'threeMonthLate'])->name('loans.three-month-late');
+        Route::get('/PMD', [LoanController::class, 'pastMaturityDate'])->name('loans.past-maturity-date');
+        Route::get('/VLA', [LoanController::class, 'index'])->name('loans.view');
+        Route::get('/VAL', [LoanController::class, 'viewApproved'])->name('loans.view-all');
+        Route::get('/ViewLoans', [LoanController::class, 'viewApproved'])->name('loans.view-approved');
+        Route::get('/{loan}/schedule', [LoanController::class, 'showSchedule'])->name('loans.schedule');
         Route::post('/', [LoanController::class, 'store'])->name('loans.store');
-        Route::get('/AddLoan', fn() => Inertia::render('Loans/AddLoan'))->name('loans.add');
-        Route::middleware(['role:admin'])->group(function () 
-        {
-
+        Route::get('/{loan}', [LoanController::class, 'show'])->name('loans.show');
+        Route::middleware(['role:admin'])->group(function () {
             Route::post('/approve/{loan}', [LoanController::class, 'approve'])->name('loans.approve');
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
             Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
@@ -108,18 +103,18 @@ Route::prefix('borrowers')->group(function () {
         });
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
-    Route::prefix('Reports')->middleware([RoleMiddleware::class . ':admin'])->group(function () {
-        Route::get('/DCPR', fn() => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
+    Route::prefix('Reports')->middleware([RoleMiddleware::class.':admin'])->group(function () {
+        Route::get('/DCPR', fn () => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
         Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
         Route::post('/dcpr/print', [DCPRController::class, 'printPreview'])->name('reports.dcpr.print');
 
-        Route::get('/MonthlyReport', fn() => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
+        Route::get('/MonthlyReport', fn () => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
         Route::post('/monthly/export-pdf', [MCPRController::class, 'exportPdf'])->name('reports.monthly.export');
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
     });
 
     // Users
-    Route::middleware([RoleMiddleware::class . ':admin'])->group(function () {
+    Route::middleware([RoleMiddleware::class.':admin'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -131,13 +126,12 @@ Route::prefix('borrowers')->group(function () {
     });
 
     // Applications
-        Route::post('/applications', [ApplicationController::class, 'storeBorrower'])->name('applications.store');
-        Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
-        Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
-        Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
-        Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
-        Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
-
+    Route::post('/applications', [ApplicationController::class, 'storeBorrower'])->name('applications.store');
+    Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
+    Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
+    Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
+    Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
+    Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
 });
 

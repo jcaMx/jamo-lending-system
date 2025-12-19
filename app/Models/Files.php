@@ -6,7 +6,7 @@
 
     protected $table = 'files';
     protected $primaryKey = 'ID';
-    public $timestamps = true;
+    public $timestamps = false;
 
     protected $fillable = [
 

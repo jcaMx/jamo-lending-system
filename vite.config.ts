@@ -28,7 +28,7 @@ export default defineConfig({
   },
 
   build: {
-    outDir: 'public/build/vite',
+    outDir: 'public/build',
     manifest: true,
     emptyOutDir: true,
   },

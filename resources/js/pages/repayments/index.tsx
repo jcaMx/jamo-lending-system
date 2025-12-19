@@ -36,51 +36,59 @@ export default function RepaymentsIndex({ repayments }: Props) {
   return (
     <AppLayout>
       <Head title="Repayments" />
-      <div className="m-4 bg-white p-6 rounded-lg space-y-4 ">
-        {/* Breadcrumb */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Repayments</h2>
-          <div className="flex gap-2 items-center m-4">
-            <Search className="w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name or loan number..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="border rounded px-2 py-1"
-            />
-          </div>
-        </div>
+      
+      {/* Header & Search */}
+      <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">Repayments</h1>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 border">ID</th>
-                <th className="px-4 py-2 border">Name</th>
-                <th className="px-4 py-2 border">Loan No</th>
-                <th className="px-4 py-2 border">Method</th>
-                <th className="px-4 py-2 border">Collected By</th>
-                <th className="px-4 py-2 border">Collection Date</th>
-                <th className="px-4 py-2 border">Paid Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRepayments.map(r => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 border">{r.id}</td>
-                  <td className="px-4 py-2 border">{r.borrowerName}</td>
-                  <td className="px-4 py-2 border">{r.loanNo}</td>
-                  <td className="px-4 py-2 border">{r.method}</td>
-                  <td className="px-4 py-2 border">{r.collectedBy}</td>
-                  <td className="px-4 py-2 border">{new Date (r.collectionDate).toLocaleString('en-PH')}</td>
-                  <td className="px-4 py-2 border">{r.amount.toLocaleString('en-PH', {style: 'currency', currency: 'PHP'})}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name or loan number..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] focus:outline-none transition"
+          />
         </div>
+      </div>
+
+      {/* Repayments Table */}
+      <div className="mx-10 overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Borrower Name</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Loan No</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Method</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collected By</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collection Date</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Paid Amount</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 bg-white">
+            {filteredRepayments.length > 0 ? (
+              filteredRepayments.map(r => (
+                <tr key={r.id} className="hover:bg-[#FFF8E6] transition-colors duration-150">
+                  <td className="px-4 py-3 text-sm text-gray-600">{r.id}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.borrowerName}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{r.loanNo}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{r.method}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{r.collectedBy}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{new Date(r.collectionDate).toLocaleString('en-PH')}</td>
+                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">{r.amount.toLocaleString('en-PH', {style: 'currency', currency: 'PHP'})}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="text-center py-6 text-gray-500 text-sm italic">
+                  No repayments found matching your search.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </AppLayout>
   );
