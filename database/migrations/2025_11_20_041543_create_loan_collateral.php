@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('expression', 50);
             $table->string('variables', 20);
             $table->string('description', 100)->nullable();
-            $table->timestamp('createdAt')->useCurrent();
+            // $table->timestamp('created_at')->useCurrent();
         });
 
         // Loan Table

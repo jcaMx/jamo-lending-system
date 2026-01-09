@@ -81,6 +81,7 @@ return new class extends Migration {
             $table->string('position', 20)->nullable();
             $table->string('agency_address', 50)->nullable();
             $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
+            $table->timestamps();
         });
     }
 

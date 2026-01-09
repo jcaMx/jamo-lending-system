@@ -11,9 +11,10 @@ return new class extends Migration
     {
         Schema::create('payment', function (Blueprint $table) {
             $table->id();
+            $table->string('receipt_number', 50)->unique();
             $table->dateTime('payment_date')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->decimal('amount', 10, 2);
-            $table->enum('payment_method', ['Cheque', 'Cash', 'GCash', 'Cebuana', 'Metrobank'])->nullable();
+            $table->enum('payment_method', ['Cheque', 'Cash', 'GCash', 'Cebuana', 'Bank'])->nullable();
             $table->string('reference_no', 50);
             $table->string('remarks', 100)->nullable();
             // Create verified_by column without FK to avoid constraint formation errors.
