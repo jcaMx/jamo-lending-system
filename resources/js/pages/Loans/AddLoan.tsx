@@ -348,8 +348,10 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
                 onChange={handleChange}
                 className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2 bg-gray-100"
                 readOnly
-                disabled
               />
+              <p>DEBUG selectedBorrower.id: {selectedBorrower?.id}</p>
+              <p>DEBUG data.borrower_id: {data.borrower_id}</p>
+
               <FieldError field="borrower_id" errors={errors} />
             </div>
           </SectionContainer>

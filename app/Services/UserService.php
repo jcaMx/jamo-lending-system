@@ -84,6 +84,41 @@ class UserService
         ];
     }
 
+    public function createCustomerUser(array $data): array
+    {
+        // Reuse existing user creation logic
+        $result = $this->createUser([
+            'fName' => $data['fName'],
+            'lName' => $data['lName'],
+            'email' => $data['email'],
+            'role'  => 'customer',
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $result['user'];
+        $generatedPassword = $result['password'];
+
+        // Notify user
+        $message =
+            "Welcome {$data['fName']}!\n\n" .
+            "Your customer account has been created.\n\n" .
+            "Email: {$data['email']}\n" .
+            "Temporary Password: {$generatedPassword}\n\n" .
+            "Please change your password after login.";
+
+        $user->notify(new NotifyUser(
+            message: $message,
+            email: $user->email,
+            sms: optional($user->profile)->phone
+        ));
+
+        return [
+            'user' => $user,
+            'password' => $generatedPassword,
+        ];
+    }
+
+
     /**
      * Generate a unique username.
      */

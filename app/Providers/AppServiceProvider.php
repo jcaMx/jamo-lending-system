@@ -62,16 +62,16 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::useBuildDirectory('build/vite');
         Inertia::share([
-            'auth' => function () {
-                $user = auth()->user();
-                return [
-                    'user' => $user ? [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'role' => $user->role, // explicitly send role
-                    ] : null,
-                ];
-            },
+        'auth' => fn () => auth()->check()
+            ? [
+                'user' => [
+                    'id'    => auth()->user()->id,
+                    'name'  => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                ],
+                'roles' => auth()->user()->getRoleNames()->toArray(), // 👈 Spatie-correct
+            ]
+            : null,
         ]);
         
     }

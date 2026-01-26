@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+
 // Enums
 enum BorrowerStatus: string
 {
@@ -29,6 +30,8 @@ class Borrower extends Model
 
     protected $table = 'borrower';
     protected $primaryKey = 'ID';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'first_name',
@@ -95,5 +98,16 @@ class Borrower extends Model
     public function spouse(): HasOne
     {
         return $this->hasOne(Spouse::class, 'borrower_id', 'ID');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function activeLoan()
+    {
+        return $this->hasOne(Loan::class, 'borrower_id', 'ID')
+            ->where('status', 'Active');
     }
 }

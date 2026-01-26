@@ -31,11 +31,23 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
-    }
 
-    /**
-     * Configure Fortify actions.
-     */
+        Fortify::authenticateUsing(function (LoginRequest $request) {
+            $user = \App\Models\User::where('email', $request->email)->first();
+    
+            if (
+                $user &&
+                \Hash::check($request->password, $user->password)
+            ) {
+                Auth::guard('web')->login($user); // 🔑 THIS LINE FIXES IT
+                return $user;
+            }
+    
+            return null;
+        });
+
+    }
+    
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);

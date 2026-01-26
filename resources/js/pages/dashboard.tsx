@@ -36,6 +36,7 @@ interface UpcomingSchedule {
 }
 
 export default function Dashboard() {
+  console.log('Rendering Staff Dashboard');
 const [stats, setStats] = useState<StatCard[]>([]);
 const [loanData, setLoanData] = useState<ChartData[]>([]);
 const [collectionData, setCollectionData] = useState<ChartData[]>([]);
@@ -81,7 +82,7 @@ axios.get('/dashboard-upcoming-schedules')
       .catch(() => console.log('Failed to fetch upcoming schedules'));
   }, []);
 
-return ( <AppLayout breadcrumbs={breadcrumbs}> <Head title="Dashboard" /> <div className="p-6 space-y-6"> <h1 className="text-3xl font-bold">Dashboard</h1>
+return ( <AppLayout> <Head title="Dashboard" /> <div className="p-6 space-y-6"> <h1 className="text-3xl font-bold">Dashboard</h1>
 
     {/* Stats Cards */}  
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">  

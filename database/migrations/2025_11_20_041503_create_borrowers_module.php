@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->integer('numof_dependentchild')->nullable();
             $table->enum('home_ownership', ['Owned','Rented','Mortgage'])->nullable();
             $table->timestamp('membership_date')->useCurrent();
-            $table->enum('status', ['Active','Closed','Blacklisted'])->nullable();
+            $table->enum('status', ['Active','Closed','Blacklisted','Pending'])->nullable();
             $table->date('birth_date')->nullable();
         });
 

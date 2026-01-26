@@ -17,6 +17,11 @@ use Carbon\Carbon;
 
 class BorrowerService
 {
+
+    public function __construct(
+        protected UserService $userService
+    ) {}
+
     public function getBorrowersForIndex(): Collection
     {
         return Borrower::query()
@@ -265,25 +270,28 @@ class BorrowerService
     }
 
     public function createBorrower(array $data): Borrower
-{
-    $clean = fn ($value) => isset($value) && trim($value) !== '' ? trim($value) : null;
+    {
+        $clean = fn ($value) => isset($value) && trim($value) !== '' ? trim($value) : null;
 
-    return DB::transaction(function() use ($data, $clean) {
-        $borrower = Borrower::create([
-            'first_name'             => $clean($data['borrower_first_name'] ?? null),
-            'last_name'              => $clean($data['borrower_last_name'] ?? null),
-            'birth_date'             => $clean($data['date_of_birth'] ?? null),
-            'gender'                 => $clean($data['gender'] ?? null),
-            // removed 'age'
-            'marital_status'         => $clean($data['marital_status'] ?? null),
-            'home_ownership'         => $clean($data['home_ownership'] ?? null),
-            'contact_no'             => $clean($data['contact_no'] ?? null),
-            'land_line'              => $clean($data['landline_number'] ?? null),
-            'email'                  => $clean($data['email'] ?? null),
-            'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
-            'membership_date'        => now(),
-            'status'                 => 'Pending',
-        ]);
+        return DB::transaction(function() use ($data, $clean) {
+            // -------------------------------
+            // Borrower
+            // -------------------------------
+            $borrower = Borrower::create([
+                'first_name'             => $clean($data['borrower_first_name'] ?? null),
+                'last_name'              => $clean($data['borrower_last_name'] ?? null),
+                'birth_date'             => $clean($data['date_of_birth'] ?? null),
+                'gender'                 => $clean($data['gender'] ?? null),
+                // removed 'age'
+                'marital_status'         => $clean($data['marital_status'] ?? null),
+                'home_ownership'         => $clean($data['home_ownership'] ?? null),
+                'contact_no'             => $clean($data['contact_no'] ?? null),
+                'land_line'              => $clean($data['landline_number'] ?? null),
+                'email'                  => $clean($data['email'] ?? null),
+                'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
+                'membership_date'        => now(),
+                'status'                 => 'Pending',
+            ]);
 
             // -------------------------------
             // Borrower Address
@@ -336,17 +344,6 @@ class BorrowerService
                 'id_number'   => $clean($data['valid_id_number'] ?? null),
             ]);
 
-            // Create spouse if spouse data provided
-            if (! empty($data['spouseFirstName']) && ! empty($data['spouseLastName'])) {
-                $borrower->spouse()->create([
-                    'first_name' => $data['spouseFirstName'],
-                    'last_name' => $data['spouseLastName'],
-                    'contact_no' => $data['spouseMobileNumber'] ?? null,
-                    'occupation' => $data['spouseOccupation'] ?? null,
-                    'position' => $data['spousePosition'] ?? null,
-                    'agency_address' => $data['spouseAgencyAddress'] ?? null,
-                ]);
-            }
 
             return $borrower;
             // -------------------------------
@@ -375,7 +372,23 @@ class BorrowerService
                 }
             }
 
+            // -------------------------------
+            // Create user ONLY if possible
+            // -------------------------------
+            if ($borrower->email && is_null($borrower->user_id)) {
+                $result = $this->userService->createCustomerUser([
+                    'fName' => $borrower->first_name,
+                    'lName' => $borrower->last_name,
+                    'email' => $borrower->email,
+                ]);
+
+                $borrower->update([
+                    'user_id' => $result['user']->id,
+                ]);
+            }
+            
             return $borrower;
+
         });
     }
 

@@ -15,6 +15,8 @@ use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
+use App\Http\Controllers\Customer\CustomerDashboardController;
+
 /*
 |--------------------------------------------------------------------------
 | Public / Guest Routes
@@ -42,14 +44,27 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes
+| Authenticated - Staff Routes
 |--------------------------------------------------------------------------
 */
 
+Route::middleware(['auth', 'verified', 'web'])->get('/dashboard', function () {
+    $user = auth()->user();
+
+    if ($user->hasRole('customer')) {
+        return Inertia::render('customer/dashboard');
+    }
+
+    // staff / admin / others
+    return Inertia::render('dashboard');
+})->name('dashboard');
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    
+
     // Dashboard (your Wayfinder dashboard().url likely resolves this name)
-    Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    // Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -134,5 +149,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
 });
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated- Customer Routes
+|--------------------------------------------------------------------------
+*/
+
+// Route::middleware(['web', 'auth', 'role:customer'])->group(function () {
+//     Route::get('/customer/dashboard', function () {
+//         return Inertia::render('customer/dashboard');
+//     })->name('customer.dashboard');
+// });
+
+Route::middleware(['web', 'auth', 'role:customer'])->group(function () {
+    Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])
+        ->name('customer.dashboard');
+});
+
+
+Route::get('/log-test', function () {
+    \Log::info('LOG TEST WORKS');
+    return 'ok';
+});
+
+Route::get('/auth-debug', function () {
+    return [
+        'check' => auth()->check(),
+        'user' => auth()->user(),
+        'session' => session()->all(),
+    ];
+});
+
 
 require __DIR__.'/settings.php';

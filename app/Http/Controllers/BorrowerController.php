@@ -7,6 +7,7 @@ use App\Models\Borrower;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\BorrowerService; 
+use Illuminate\Support\Facades\Hash;
 
 
 class BorrowerController extends Controller
@@ -118,6 +119,7 @@ class BorrowerController extends Controller
         return redirect()
         ->route('borrowers.show', ['id' => $borrower->ID])
         ->with('success', 'Borrower added successfully!');
+
 
     }
 
