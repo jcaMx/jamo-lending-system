@@ -7,6 +7,7 @@ import Collateral from "@/pages/borrower-application/Collateral";
 import LoanDetails from "@/pages/borrower-application/LoanDetails";
 import Confirmation from "@/pages/borrower-application/Confirmation";
 import applications from "@/routes/applications";
+import AppLayout from '@/layouts/app-layout';
 
 
 interface Application {
@@ -31,8 +32,9 @@ const LoanApplication = () => {
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   return (
-    <div className="min-h-screen">
-      <Header />
+    <AppLayout>
+          <div className="min-h-screen">
+      {/* <Header /> */}
       
       {currentStep === 1 && <BorrowerInfo onNext={nextStep} />}
       {currentStep === 2 && <CoBorrowerInfo onNext={nextStep} onPrev={prevStep} />}
@@ -40,8 +42,11 @@ const LoanApplication = () => {
       {currentStep === 4 && <LoanDetails onNext={nextStep} onPrev={prevStep} />}
       {currentStep === 5 && <Confirmation onPrev={prevStep} application={application}/>}
       
-      <Footer />
+      {/* <Footer /> */}
     </div>
+
+    </AppLayout>
+
   );
 };
 

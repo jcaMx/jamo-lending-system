@@ -13,12 +13,28 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+             
+            // Core identity
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('username')->nullable()->unique();
+
+            // Authentication
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // Two-factor authentication
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
+
+            // Session & login tracking
             $table->rememberToken();
+            $table->timestamp('last_login_at')->nullable();
+
+            // Laravel timestamps & soft delete
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
