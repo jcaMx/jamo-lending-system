@@ -32,22 +32,22 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureViews();
         $this->configureRateLimiting();
 
-        Fortify::authenticateUsing(function (LoginRequest $request) {
+        Fortify::authenticateUsing(function (Request $request) {
             $user = \App\Models\User::where('email', $request->email)->first();
-    
+
             if (
                 $user &&
                 \Hash::check($request->password, $user->password)
             ) {
-                Auth::guard('web')->login($user); // 🔑 THIS LINE FIXES IT
+                // Return user - Fortify will handle the login automatically
                 return $user;
             }
-    
+
             return null;
         });
 
     }
-    
+
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);

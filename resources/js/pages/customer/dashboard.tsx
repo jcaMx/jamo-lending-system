@@ -70,9 +70,12 @@ export default function CustomerDashboard({ borrower, loan }: Props) {
                         <p className="text-gray-500 mb-6">
                         It looks like you haven’t applied for a loan yet. Start your application today!
                         </p>
-                        <button className="px-6 py-2 bg-[#D97706] text-white rounded-md hover:bg-amber-700 transition">
-                        Apply for a Loan
-                        </button>
+                        <a href="/applynow">
+                            <button className="px-6 py-2 bg-[#D97706] text-white rounded-md hover:bg-amber-700 transition">
+                            Apply for a Loan
+                            </button>
+                        </a>
+                        
                     </div>
                 </div>
 

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-
 // Enums
 enum BorrowerStatus: string
 {
@@ -29,11 +28,15 @@ class Borrower extends Model
     public $timestamps = false;
 
     protected $table = 'borrower';
+
     protected $primaryKey = 'ID';
+
     public $incrementing = true;
+
     protected $keyType = 'int';
 
     protected $fillable = [
+        'user_id',
         'first_name',
         'last_name',
         'age',
@@ -62,7 +65,7 @@ class Borrower extends Model
 
     public function loans()
     {
-        return $this->hasMany(Loan::class, 'borrower_id', 'ID')->orderBy('start_date', 'desc');
+        return $this->hasMany(Loan::class, 'borrower_id', 'user_id')->orderBy('start_date', 'desc');
     }
 
     public function loan()

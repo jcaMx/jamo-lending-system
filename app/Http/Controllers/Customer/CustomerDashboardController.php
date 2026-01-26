@@ -9,34 +9,25 @@ use Inertia\Inertia;
 class CustomerDashboardController extends Controller
 {
     public function index()
-
     {
-        dd('CustomerDashboardController HIT');
+
+        
 
         $user = Auth::user();
-        \Log::info('Customer Dashboard - User ID:', ['user_id' => $user->id]);
-    
-        // User → Borrower via user_id
-        $borrower = $user->borrower()
-            ->with('activeLoan')
-            ->first();
 
-        
-        // Debug: Check if borrower exists
-        \Log::info('Customer Dashboard - Borrower:', [
-            'borrower_exists' => $borrower !== null,
-            'borrower_id' => $borrower?->ID,
-            'user_id_in_borrower' => $borrower?->user_id,
-        ]);
-        
-        // If no borrower found, check if any borrowers exist with this user_id
-        if (!$borrower) {
-            $borrowersWithUserId = \App\Models\Borrower::where('user_id', $user->id)->get();
-            \Log::info('Customer Dashboard - Borrowers with user_id:', [
-                'count' => $borrowersWithUserId->count(),
-                'borrowers' => $borrowersWithUserId->map(fn($b) => ['id' => $b->ID, 'user_id' => $b->user_id])
+        if (! $user) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Please log in to access your dashboard.',
             ]);
         }
+
+        // User → Borrower via user_id
+        // $borrower = $user->borrower()
+        //     ->with('activeLoan')
+        //     ->first();
+
+        // Get borrower for this user
+        $borrower = $user->borrower()->first();
 
         // No borrower linked to this user
         if (! $borrower) {
@@ -46,12 +37,26 @@ class CustomerDashboardController extends Controller
             ]);
         }
 
-        $loan = $borrower->activeLoan;
+        // Get active loan - try relationship first, fallback to query if needed
+        $loan = $borrower->activeLoan()->first();
+
+        // Fallback: if activeLoan relationship returns null, try to find active loan manually
+        if (! $loan) {
+            $loan = $borrower->loans()
+                ->where('status', 'Active')
+                ->first();
+        }
+
+        \Log::info('Borrower', ['borrower' => $borrower->toArray()]);
+        \Log::info('Active Loan', ['loan' => optional($loan)->toArray()]);
+
 
         return Inertia::render('customer/dashboard', [
             'borrower' => $this->mapBorrower($borrower),
             'loan' => $loan ? $this->mapLoan($loan) : null,
         ]);
+
+
     }
 
     /**
@@ -71,18 +76,23 @@ class CustomerDashboardController extends Controller
      */
     private function mapLoan($loan): array
     {
+        // Safely extract status (handle enum or string)
+        $status = $loan->status instanceof \BackedEnum
+            ? $loan->status->value
+            : (string) ($loan->status ?? 'Active');
+
         return [
-            'loanNo'       => $loan->loan_id,
-            'released'     => $loan->start_date,
-            'maturity'     => $loan->end_date,
-            'repayment'    => $loan->repayment_frequency,
-            'principal'    => (float) $loan->principal_amount,
-            'interest'     => $loan->interest_rate,
-            'interestType' => $loan->interest_type,
-            'penalty'      => (float) ($loan->penalties_sum ?? 0),
-            'due'          => (float) $loan->outstanding_balance,
-            'balance'      => (float) $loan->outstanding_balance,
-            'status'       => $loan->status,
+            'loanNo' => (string) $loan->ID,
+            'released' => $loan->start_date?->format('Y-m-d') ?? '',
+            'maturity' => $loan->end_date?->format('Y-m-d') ?? '',
+            'repayment' => $loan->repayment_frequency ?? '',
+            'principal' => (float) $loan->principal_amount,
+            'interest' => (string) $loan->interest_rate,
+            'interestType' => $loan->interest_type ?? '',
+            'penalty' => 0.0,
+            'due' => (float) ($loan->balance_remaining ?? 0),
+            'balance' => (float) ($loan->balance_remaining ?? 0),
+            'status' => $status,
         ];
     }
 }

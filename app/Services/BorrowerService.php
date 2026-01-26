@@ -10,14 +10,14 @@ use App\Models\Loan;
 use App\Models\LoanComment;
 use App\Models\Payment;
 use App\Models\Spouse;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class BorrowerService
 {
-
     public function __construct(
         protected UserService $userService
     ) {}
@@ -67,10 +67,10 @@ class BorrowerService
         $allLoans = $borrower->loans
             ->map(function (Loan $loan) {
                 // Safely extract status as string (handle enum or string)
-                $status = $loan->status instanceof \BackedEnum 
-                    ? $loan->status->value 
+                $status = $loan->status instanceof \BackedEnum
+                    ? $loan->status->value
                     : (string) ($loan->status ?? '');
-                    
+
                 return [
                     'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
                     'released' => optional($loan->start_date)?->toDateString() ?? '',
@@ -120,7 +120,7 @@ class BorrowerService
         return [
             'borrower' => [
                 'id' => $borrower->ID,
-                'name' => trim(($borrower->first_name ?? '') . ' ' . ($borrower->last_name ?? '')),
+                'name' => trim(($borrower->first_name ?? '').' '.($borrower->last_name ?? '')),
                 'first_name' => $borrower->first_name,
                 'last_name' => $borrower->last_name,
                 'age' => $this->computeAge($borrower->birth_date),
@@ -180,8 +180,8 @@ class BorrowerService
         }
 
         // Safely extract status as string (handle enum or string)
-        $status = $loan->status instanceof \BackedEnum 
-            ? $loan->status->value 
+        $status = $loan->status instanceof \BackedEnum
+            ? $loan->status->value
             : (string) ($loan->status ?? '');
 
         return [
@@ -213,11 +213,11 @@ class BorrowerService
             ->get()
             ->map(function (Payment $payment) use ($loan) {
                 // Get borrower name from payment->loan->borrower relationship
-                $borrowerName = $payment->loan?->borrower 
-                    ? trim(($payment->loan->borrower->first_name ?? '') . ' ' . ($payment->loan->borrower->last_name ?? ''))
-                    : ($loan->borrower?->first_name ?? '') . ' ' . ($loan->borrower?->last_name ?? '');
+                $borrowerName = $payment->loan?->borrower
+                    ? trim(($payment->loan->borrower->first_name ?? '').' '.($payment->loan->borrower->last_name ?? ''))
+                    : ($loan->borrower?->first_name ?? '').' '.($loan->borrower?->last_name ?? '');
                 $borrowerName = $borrowerName ?: 'Unknown Borrower';
-                
+
                 $verifiedByName = $payment->jamoUser
                     ? ($payment->jamoUser->first_name ?? '').' '.($payment->jamoUser->last_name ?? '')
                     : 'Unverified';
@@ -256,6 +256,7 @@ class BorrowerService
             ->values()
             ->all();
     }
+
     private function formatFiles($files)
     {
         return $files->map(function ($f) {
@@ -273,24 +274,46 @@ class BorrowerService
     {
         $clean = fn ($value) => isset($value) && trim($value) !== '' ? trim($value) : null;
 
-        return DB::transaction(function() use ($data, $clean) {
+        return DB::transaction(function () use ($data, $clean) {
+            $email = $clean($data['email'] ?? null);
+
+            $userId = null;
+            // 1) If admin explicitly provided a user_id, use it
+            if (! empty($data['user_id'])) {
+                $userId = (int) $data['user_id'];
+            } elseif ($email) {
+                // 2) If a user already exists with this email, link it
+                $userId = User::query()->where('email', $email)->value('id');
+                // 3) Otherwise create a new customer user and link it
+                if (! $userId) {
+                    $result = $this->userService->createCustomerUser([
+                        'fName' => $clean($data['borrower_first_name'] ?? null) ?? 'Customer',
+                        'lName' => $clean($data['borrower_last_name'] ?? null) ?? 'User',
+                        'email' => $email,
+                    ]);
+
+                    $userId = $result['user']->id;
+        }
+            }
+
             // -------------------------------
             // Borrower
             // -------------------------------
             $borrower = Borrower::create([
-                'first_name'             => $clean($data['borrower_first_name'] ?? null),
-                'last_name'              => $clean($data['borrower_last_name'] ?? null),
-                'birth_date'             => $clean($data['date_of_birth'] ?? null),
-                'gender'                 => $clean($data['gender'] ?? null),
+                'user_id' => $userId,
+                'first_name' => $clean($data['borrower_first_name'] ?? null),
+                'last_name' => $clean($data['borrower_last_name'] ?? null),
+                'birth_date' => $clean($data['date_of_birth'] ?? null),
+                'gender' => $clean($data['gender'] ?? null),
                 // removed 'age'
-                'marital_status'         => $clean($data['marital_status'] ?? null),
-                'home_ownership'         => $clean($data['home_ownership'] ?? null),
-                'contact_no'             => $clean($data['contact_no'] ?? null),
-                'land_line'              => $clean($data['landline_number'] ?? null),
-                'email'                  => $clean($data['email'] ?? null),
-                'num_of_dependentchild'  => $clean($data['dependent_child'] ?? null),
-                'membership_date'        => now(),
-                'status'                 => 'Pending',
+                'marital_status' => $clean($data['marital_status'] ?? null),
+                'home_ownership' => $clean($data['home_ownership'] ?? null),
+                'contact_no' => $clean($data['contact_no'] ?? null),
+                'land_line' => $clean($data['landline_number'] ?? null),
+                'email' => $email,
+                'num_of_dependentchild' => $clean($data['dependent_child'] ?? null),
+                'membership_date' => now(),
+                'status' => 'Pending',
             ]);
 
             // -------------------------------
@@ -340,12 +363,10 @@ class BorrowerService
             // -------------------------------
             BorrowerId::create([
                 'borrower_id' => $borrower->ID,
-                'id_type'     => $clean($data['valid_id_type'] ?? null),
-                'id_number'   => $clean($data['valid_id_number'] ?? null),
+                'id_type' => $clean($data['valid_id_type'] ?? null),
+                'id_number' => $clean($data['valid_id_number'] ?? null),
             ]);
 
-
-            return $borrower;
             // -------------------------------
             // Files
             // -------------------------------
@@ -372,21 +393,6 @@ class BorrowerService
                 }
             }
 
-            // -------------------------------
-            // Create user ONLY if possible
-            // -------------------------------
-            if ($borrower->email && is_null($borrower->user_id)) {
-                $result = $this->userService->createCustomerUser([
-                    'fName' => $borrower->first_name,
-                    'lName' => $borrower->last_name,
-                    'email' => $borrower->email,
-                ]);
-
-                $borrower->update([
-                    'user_id' => $result['user']->id,
-                ]);
-            }
-            
             return $borrower;
 
         });
@@ -397,7 +403,7 @@ class BorrowerService
         $borrower->update($data);
     }
 
-    function computeAge($date_of_birth)
+    public function computeAge($date_of_birth)
     {
         return $date_of_birth ? Carbon::parse($date_of_birth)->age : null;
     }
