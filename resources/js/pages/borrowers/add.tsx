@@ -100,7 +100,7 @@ const next = () => {
 
       <form
         onSubmit={handleSubmit}
-        className="w-full mx-auto bg-white shadow-xl rounded-2xl p-10 mb-16 border border-gray-200 space-y-10"
+        className="w-full bg-white shadow-xl rounded-2xl p-10 mb-16 border border-gray-200 space-y-10"
       >
         {/* Header */}
         <div className="border-b-4 border-[#FABF24] pb-4 mb-8 bg-[#FFF8E2] p-5">

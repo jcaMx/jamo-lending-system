@@ -44,6 +44,12 @@ class RolePermissionSeeder extends Seeder
 
             // Daily Collection Sheet
             'collection.daily',
+
+            // Customer permissions
+            'loan.view.own',
+            'repayment.view.own',
+            'profile.view',
+            'profile.update',
         ];
 
         // -----------------------------------------
@@ -74,6 +80,13 @@ class RolePermissionSeeder extends Seeder
             ]
         );
 
+        $customer = Role::firstOrCreate([
+            'name' => 'customer',
+            'guard_name' => 'web',
+        ]);
+        
+
+
         // -----------------------------------------
         // Assign permissions
         // -----------------------------------------
@@ -91,6 +104,13 @@ class RolePermissionSeeder extends Seeder
             'repayment.create',
             'repayment.view',
             'collection.daily',
+        ]);
+
+        $customer->syncPermissions([
+            'loan.view.own',
+            'repayment.view.own',
+            'profile.view',
+            'profile.update',
         ]);
     }
 }

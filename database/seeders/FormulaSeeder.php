@@ -24,11 +24,11 @@ class FormulaSeeder extends Seeder
             ],
         ];
 
-        foreach ($formulas as $formulaData) {
-            Formula::firstOrCreate(
-                ['name' => $formulaData['name']],
-                array_merge($formulaData, ['createdAt' => now()])
-            );
-        }
+        // foreach ($formulas as $formulaData) {
+        //     Formula::firstOrCreate(
+        //         ['name' => $formulaData['name']],
+        //         array_merge($formulaData, ['created_at' => now()])
+        //     );
+        // }
     }
 }

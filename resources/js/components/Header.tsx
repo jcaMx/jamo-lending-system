@@ -70,14 +70,20 @@ export default function Header() {
           ) : (
             <>
               <Link href="/login">
-                <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
+                <Button className="bg-[#D97706] hover:bg-amber-500/90 text-white px-6">
                   Log in
                 </Button>
               </Link>
               <Link href="/register">
+                <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
+                  Register
+                </Button>
+
               </Link>
             </>
           )}
+
+
 
           {/* Mobile menu */}
           <Sheet open={open} onOpenChange={setOpen}>

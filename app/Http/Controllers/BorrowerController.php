@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Borrower;
+use App\Services\BorrowerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Services\BorrowerService; 
 
 
 class BorrowerController extends Controller
@@ -33,8 +32,8 @@ class BorrowerController extends Controller
             ];
         });
 
-         return Inertia::render('borrowers/index', [
-        'borrowers' => $this->borrowerService->getBorrowersForIndex(),
+        return Inertia::render('borrowers/index', [
+            'borrowers' => $this->borrowerService->getBorrowersForIndex(),
         ]);
     }
 
@@ -54,41 +53,42 @@ class BorrowerController extends Controller
             'repayments' => $payload['repayments'],
         ]);
     }
-    
+
     public function store(Request $request)
     {
         // Debug: Log incoming request data
         \Log::info('Incoming request data:', $request->all());
-        
+
         $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'borrower_first_name' => 'required|string|max:255',
-            'borrower_last_name'  => 'required|string|max:255',
-            'date_of_birth'       => 'required|date',
-            'gender'              => 'required|string',
-            'marital_status'      => 'required|string',
-            'contact_no'       => 'required|string|max:15',
-            'landline_number'     => 'nullable|string|max:15',
-            'email'               => 'required|email|max:255',
-            'dependent_child'     => 'nullable|integer',
-            'permanent_address'   => 'nullable|string|max:255',
-            'city'                => 'nullable|string|max:255',
-            'home_ownership'      => 'nullable|string|max:50',
-            'employment_status'   => 'nullable|string|max:50',
-            'income_source'       => 'nullable|string|max:50',
-            'occupation'          => 'nullable|string|max:100',
-            'position'            => 'nullable|string|max:100',
-            'monthly_income'      => 'nullable|numeric',
-            'agency_address'      => 'nullable|string|max:255',
-            'valid_id_type'       => 'required|string|max:50',
-            'valid_id_number'     => 'required|string|max:50',
-            'files.*'             => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'borrower_last_name' => 'required|string|max:255',
+            'date_of_birth' => 'required|date',
+            'gender' => 'required|string',
+            'marital_status' => 'required|string',
+            'contact_no' => 'required|string|max:15',
+            'landline_number' => 'nullable|string|max:15',
+            'email' => 'required|email|max:255',
+            'dependent_child' => 'nullable|integer',
+            'permanent_address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'home_ownership' => 'nullable|string|max:50',
+            'employment_status' => 'nullable|string|max:50',
+            'income_source' => 'nullable|string|max:50',
+            'occupation' => 'nullable|string|max:100',
+            'position' => 'nullable|string|max:100',
+            'monthly_income' => 'nullable|numeric',
+            'agency_address' => 'nullable|string|max:255',
+            'valid_id_type' => 'required|string|max:50',
+            'valid_id_number' => 'required|string|max:50',
+            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             // spouse fields if married
-            'spouse_first_name'    => 'nullable|string|max:255',
-            'spouse_last_name'     => 'nullable|string|max:255',
+            'spouse_first_name' => 'nullable|string|max:255',
+            'spouse_last_name' => 'nullable|string|max:255',
             'spouse_mobile_number' => 'nullable|string|max:15',
-            'spouse_occupation'    => 'nullable|string|max:100',
-            'spouse_position'      => 'nullable|string|max:100',
-            'spouse_agency_address'=> 'nullable|string|max:255',
+            'spouse_occupation' => 'nullable|string|max:100',
+            'spouse_position' => 'nullable|string|max:100',
+            'spouse_agency_address' => 'nullable|string|max:255',
         ]);
 
         // -------------------------------
@@ -116,31 +116,29 @@ class BorrowerController extends Controller
         $borrower = $this->borrowerService->createBorrower($validated);
 
         return redirect()
-        ->route('borrowers.show', ['id' => $borrower->ID])
-        ->with('success', 'Borrower added successfully!');
+            ->route('borrowers.show', ['id' => $borrower->ID])
+            ->with('success', 'Borrower added successfully!');
 
     }
 
-    
-   public function update(Request $request, Borrower $borrower)
-{
-    $validated = $request->validate([
-        'address' => 'nullable|string|max:50',
-        'city' => 'nullable|string|max:50',
-        'zipcode' => 'nullable|string|max:10',
-        'email' => 'nullable|email|max:100',
-        'mobile' => 'nullable|string|max:20',
-        'landline' => 'nullable|string|max:20',
-        'occupation' => 'nullable|string|max:50',
-        'gender' => 'nullable|string|in:Male,Female',
-        'age' => 'nullable|integer|min:0',
-    ]);
+    public function update(Request $request, Borrower $borrower)
+    {
+        $validated = $request->validate([
+            'address' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'zipcode' => 'nullable|string|max:10',
+            'email' => 'nullable|email|max:100',
+            'mobile' => 'nullable|string|max:20',
+            'landline' => 'nullable|string|max:20',
+            'occupation' => 'nullable|string|max:50',
+            'gender' => 'nullable|string|in:Male,Female',
+            'age' => 'nullable|integer|min:0',
+        ]);
 
-    // 👇 use the injected property name
-    $this->borrowerService->updateBorrower($borrower, $validated);
+        // 👇 use the injected property name
+        $this->borrowerService->updateBorrower($borrower, $validated);
 
-    return redirect()->back()->with('success', 'Borrower updated successfully');
-
+        return redirect()->back()->with('success', 'Borrower updated successfully');
 
         $borrower = Borrower::with('loan')->findOrFail($id);
 
@@ -160,14 +158,13 @@ class BorrowerController extends Controller
             ],
         ]);
 
-        
     }
 
     public function destroy($id)
-{
-    Borrower::findOrFail($id)->delete();
+    {
+        Borrower::findOrFail($id)->delete();
 
-    return redirect()->route('borrowers.index')
-                     ->with('success', 'Borrower deleted successfully.');
-}
+        return redirect()->route('borrowers.index')
+            ->with('success', 'Borrower deleted successfully.');
+    }
 }

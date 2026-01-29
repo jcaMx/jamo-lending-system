@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('expression', 50);
             $table->string('variables', 20);
             $table->string('description', 100)->nullable();
-            $table->timestamp('createdAt')->useCurrent();
+            // $table->timestamp('created_at')->useCurrent();
         });
 
         // Loan Table
@@ -34,16 +34,25 @@ return new class extends Migration
             // `users` table may be created in a different migration file.
             // Create the column without an immediate foreign key constraint
             // to avoid ordering issues during `migrate:fresh`.
-            $table->unsignedBigInteger('approved_by')->nullable();
             $table->timestamps();
-            $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
-            $table->foreignId('formula_id')->constrained('formula');
+
+            $table->foreign('borrower_id', 'FK_Loan_Borrower')
+            ->references('id')->on('borrower')
+            ->onDelete('cascade');
+  
+            $table->foreign('formula_id', 'FK_Loan_Formula')
+                    ->references('id')->on('formula')
+                    ->onUpdate('cascade');
+        
+            $table->foreign('approved_by', 'FK_Loan_User')
+                    ->references('id')->on('jamouser');
         });
 
         // Amortization table
         Schema::create('amortizationschedule', function (Blueprint $table) {
             $table->id();
             $table->integer('installment_no');
+
             $table->decimal('interest_amount', 15, 2);
             $table->decimal('penalty_amount', 15, 2)->default(0.00);
             $table->dateTime('due_date');
@@ -68,8 +77,12 @@ return new class extends Migration
             $table->string('remarks', 100)->nullable();
             $table->string('description', 100)->nullable();
             // Create appraised_by column without FK to avoid dependency on users migration order.
-            $table->unsignedBigInteger('appraised_by')->nullable();
-            $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
+            $table->foreign('loan_id', 'FK_Collateral_Loan')
+            ->references('id')->on('loan')
+            ->onDelete('cascade');
+
+            $table->foreign('appraised_by', 'FK_Collateral_User')
+                    ->references('id')->on('jamouser');
         });
 
         // ATM Collateral
@@ -78,7 +91,11 @@ return new class extends Migration
             $table->enum('bank_name', ['BDO', 'BPI', 'LandBank', 'MetroBank']);
             $table->string('account_no', 20);
             $table->integer('cardno_4digits');
-            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
+            $table->unsignedBigInteger('collateral_id');
+
+            $table->foreign('collateral_id', 'FK_ATMCollateral_Collateral')
+                  ->references('id')->on('collateral')
+                  ->onDelete('cascade');
         });
 
         // Land Collateral
@@ -88,7 +105,11 @@ return new class extends Migration
             $table->bigInteger('lotNo');
             $table->string('location', 50);
             $table->string('areaSize', 20);
-            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
+            $table->unsignedBigInteger('collateral_id');
+
+            $table->foreign('collateral_id', 'FK_LandCollateral_Collateral')
+                  ->references('ID')->on('collateral')
+                  ->onDelete('cascade');
         });
 
         // Vehicle Collateral
@@ -102,8 +123,13 @@ return new class extends Migration
             $table->string('engine_no', 20)->nullable();
             $table->enum('transmission_type', ['Manual', 'Automatic'])->nullable();
             $table->string('fuel_type', 20)->nullable();
-            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
             $table->timestamps();
+
+            $table->unsignedBigInteger('collateral_id');
+
+            $table->foreign('collateral_id', 'FK_VehicleCollateral_Collateral')
+                  ->references('id')->on('collateral')
+                  ->onDelete('cascade');
         });
     }
 

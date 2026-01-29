@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoanController;
@@ -14,6 +15,8 @@ use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use App\Models\Loan;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,8 +29,6 @@ Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
 Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
 Route::get('/dashboard-upcoming-schedules', [DashboardController::class, 'upcomingDueSchedules']);
 Route::get('/', fn () => Inertia::render('index'))->name('home');
-
-Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
 
 // Guest-only routes
 Route::middleware('guest')->group(function () {
@@ -42,14 +43,25 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes
+| Authenticated - Staff Routes
 |--------------------------------------------------------------------------
 */
+
+Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
+    $user = auth()->user();
+
+    if ($user && $user->hasRole('customer')) {
+        return redirect()->route('customer.dashboard');
+    }
+
+    // staff / admin / others
+    return Inertia::render('dashboard');
+})->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard (your Wayfinder dashboard().url likely resolves this name)
-    Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    // Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -141,6 +153,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated- Customer Routes
+|--------------------------------------------------------------------------
+*/
+
+// Route::middleware(['web', 'auth', 'role:customer'])->group(function () {
+//     Route::get('/customer/dashboard', function () {
+//         return Inertia::render('customer/dashboard');
+//     })->name('customer.dashboard');
+// });
+
+Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
+    Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])
+        ->name('customer.dashboard');
+
+    Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
+});
+
+Route::get('/log-test', function () {
+    \Log::info('LOG TEST WORKS');
+
+    return 'ok';
+});
+
+Route::get('/auth-debug', function () {
+    return [
+        'check' => auth()->check(),
+        'user' => auth()->user(),
+        'session' => session()->all(),
+    ];
+});
+
+Route::get('/debug-loan', function () {
+    dd('ROUTE HIT');
 });
 
 require __DIR__.'/settings.php';

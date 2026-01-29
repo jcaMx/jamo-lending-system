@@ -31,10 +31,29 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $parts = preg_split('/\s+/', trim($input['name']));
+        
+        if (count($parts) > 1) {
+            $firstName = $parts[0];
+            $surname   = end($parts); // last word as surname
+        } else {
+            // fallback if only one name is given
+            $firstName = $parts[0];
+            $surname   = $parts[0];
+            }
+
+        $username = strtolower(substr($firstName, 0, 1) . '.' . $surname);
+
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
+            'username' => $username,
             'password' => Hash::make($input['password']),
         ]);
+    
+        // ✅ Assign CUSTOMER role
+        $user->assignRole('customer');
+    
+        return $user;
     }
 }
