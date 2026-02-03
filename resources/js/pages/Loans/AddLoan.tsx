@@ -346,7 +346,7 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
                 name="borrower_id" 
                 value={data.borrower_id ?? ''} 
                 onChange={handleChange}
-                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2 bg-gray-100"
+                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
                 readOnly
               />
               <p>DEBUG selectedBorrower.id: {selectedBorrower?.id}</p>

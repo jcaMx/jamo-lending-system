@@ -29,6 +29,7 @@ class Loan extends Model
             'balance_remaining',
             'approved_by',
             'released_amount',
+            'released_date',
             'created_at',
             'updated_at',
             'borrower_id',
@@ -39,6 +40,7 @@ class Loan extends Model
         [
             'balance_remaining' => 'decimal:2',
             'released_amount' => 'decimal:2',
+            'released_date' => 'date',
             'term_months' => 'integer',
             'interest_type' => 'string',
             'status' => 'string',

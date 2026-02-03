@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 const Contact = () => {
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     // Handle form submission
   };
@@ -29,7 +29,7 @@ const Contact = () => {
           {/* Left Column - Contact Info & Map */}
           <div className="space-y-4">
             <div className="bg-white p-5 rounded-lg shadow-sm flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center shrink-0">
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -41,7 +41,7 @@ const Contact = () => {
             </div>
 
             <div className="bg-white p-5 rounded-lg shadow-sm flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center shrink-0">
                 <Phone className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -53,7 +53,7 @@ const Contact = () => {
             </div>
 
             <div className="bg-white p-5 rounded-lg shadow-sm flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center shrink-0">
                 <Mail className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -65,7 +65,7 @@ const Contact = () => {
             </div>
 
             <div className="bg-white p-5 rounded-lg shadow-sm flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center shrink-0">
                 <Clock className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -137,7 +137,7 @@ const Contact = () => {
                 onClick={handleSubmit}
                 className="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-2.5"
               >
-                Send Message
+                Send Message  
               </Button>
             </div>
           </div>

@@ -27,7 +27,7 @@ export default function AuthSimpleLayout({
                         
                             <img
                                 src="/images/jamo-logo-2.png"
-                                className="h-12 w-auto max-w-[10rem] object-contain"
+                                className="h-12 w-auto max-w-40 object-contain"
                                 alt="Jamo Lending Corp Logo"
                                 draggable={false}
                             />

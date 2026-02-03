@@ -16,8 +16,8 @@ const SidebarRegistry: Record<string, React.FC> = {
 
 };
 
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+// Add breadcrumbs to the props interface
+export default function AppLayout({ children, breadcrumbs }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
   const { props } = usePage();
 
 
@@ -38,10 +38,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen">
         <SidebarComponent /> {/* dynamically selected sidebar */}
         <main className="flex-1 overflow-y-auto">
+          {/* You can render breadcrumbs here if needed */}
+          {breadcrumbs && (
+            <nav className="p-4">
+              {/* Add your breadcrumb rendering logic here */}
+            </nav>
+          )}
           {children}
         </main>
       </div>
     </SidebarProvider>
   );
 }
-

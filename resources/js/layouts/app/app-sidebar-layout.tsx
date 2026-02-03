@@ -16,7 +16,7 @@ export default function AppSidebarLayout({
 
                 <AppContent
                     variant="sidebar"
-                    className="overflow-y-auto overflow-x-hidden flex-1 md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none"
+                    className="overflow-y-auto overflow-x-hidden flex-1 md:m-0 md:ml-0 md:rounded-none md:shadow-none"
                 >
                     <AppSidebarHeader breadcrumbs={breadcrumbs} />
                     {children}

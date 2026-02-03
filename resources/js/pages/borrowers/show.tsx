@@ -22,6 +22,7 @@ type Loan = {
   released: string;
   maturity: string;
   repayment: string;
+  repayment_frequency: string;
   principal: number;
   interest: string;
   interestType: string;

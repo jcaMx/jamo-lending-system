@@ -1,6 +1,6 @@
 // resources/js/Pages/Borrowers/Tabs/RepaymentsTab.tsx
 import React from 'react';
-import { Card, CardContent, Button } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function RepaymentsTab({ repayments = [] }: any) {
   return (

@@ -26,6 +26,7 @@ interface LoanDetailsProps {
     status: string;
     balance_remaining: number;
     released_amount?: number;
+    released_date?: string;
     borrower: {
       ID: number;
       first_name: string;
@@ -120,6 +121,7 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
   const computedReleasedAmount = principalAmount - totalFees;
 
   const [releasedAmount, setReleasedAmount] = useState<string>(computedReleasedAmount.toFixed(2));
+  const [releasedDate, setReleasedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [showReleaseForm, setShowReleaseForm] = useState(false);
 
   const handleApprove = () => {
@@ -129,9 +131,15 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
       return;
     }
 
-    if (confirm(`Are you sure you want to approve this loan?\n\nPrincipal: ₱${principalAmount.toLocaleString()}\nReleased Amount: ₱${amount.toLocaleString()}\n\nThis will generate amortization schedules.`)) {
+    if (!releasedDate) {
+      alert('Please select a releasing date.');
+      return;
+    }
+
+    if (confirm(`Are you sure you want to approve this loan?\n\nPrincipal: ₱${principalAmount.toLocaleString()}\nReleased Amount: ₱${amount.toLocaleString()}\nReleasing Date: ${new Date(releasedDate).toLocaleDateString()}\n\nThis will generate amortization schedules.`)) {
       router.post(route('loans.approve', loan.ID), {
         released_amount: amount,
+        released_date: releasedDate,
       }, {
         onSuccess: () => {
           router.visit(route('loans.view-approved'));
@@ -200,17 +208,26 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                         </div>
                       </div>
                       <div className="pt-2 border-t">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mb-3">
                           <label className="text-sm font-medium text-gray-700">Released Amount:</label>
                           <input
                             type="number"
                             step="0.01"
                             min="0.01"
                             value={releasedAmount}
-                            onChange={(e) => setReleasedAmount(e.target.value)}
-                            className="px-4 py-2 border rounded shadow-sm w-48"
+                            readOnly
+                            className="px-4 py-2 border rounded shadow-sm w-48 bg-gray-100 cursor-not-allowed"
                           />
                           <span className="text-sm text-gray-500">(Computed: ₱{computedReleasedAmount.toFixed(2)})</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium text-gray-700">Releasing Date:</label>
+                          <input
+                            type="date"
+                            value={releasedDate}
+                            onChange={(e) => setReleasedDate(e.target.value)}
+                            className="px-4 py-2 border rounded shadow-sm w-48"
+                          />
                         </div>
                       </div>
                     </div>
@@ -225,6 +242,7 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                         onClick={() => {
                           setShowReleaseForm(false);
                           setReleasedAmount(computedReleasedAmount.toFixed(2));
+                          setReleasedDate(new Date().toISOString().split('T')[0]);
                         }}
                         className="bg-gray-600 text-white hover:bg-gray-700"
                       >
@@ -344,6 +362,12 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
               <div>
                 <p className="text-sm text-gray-600">Released Amount</p>
                 <p className="font-medium">₱{loan.released_amount.toLocaleString()}</p>
+              </div>
+            )}
+            {loan.released_date && (
+              <div>
+                <p className="text-sm text-gray-600">Released Date</p>
+                <p className="font-medium">{new Date(loan.released_date).toLocaleDateString()}</p>
               </div>
             )}
             {loan.start_date && (
@@ -563,4 +587,3 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
     </AppLayout>
   );
 }
-
