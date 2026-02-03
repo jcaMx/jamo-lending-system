@@ -10,9 +10,9 @@ class LoanComment extends Model
 {
     use HasFactory;
 
-    protected $table = 'loancomments'; // make sure this matches your DB table
-
+    protected $table = 'loancomments';
     protected $primaryKey = 'ID';
+    public $timestamps = false;
 
     protected $fillable = [
         'comment_text',
@@ -25,9 +25,8 @@ class LoanComment extends Model
         'comment_date' => 'datetime',
     ];
 
-    // Relationship: each comment belongs to a loan
     public function loan(): BelongsTo
     {
-        return $this->belongsTo(Loan::class, 'loan_id', 'id');
+        return $this->belongsTo(Loan::class, 'loan_id', 'ID');
     }
 }

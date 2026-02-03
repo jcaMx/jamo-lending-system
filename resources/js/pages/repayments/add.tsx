@@ -38,24 +38,16 @@ const inputClass =
   "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FABF24] focus:border-transparent";
 
 export default function Add({ borrowers: initialBorrowers = [], collectors: initialCollectors = [] }: Props) {
-  // Set today's date as default
   const today = new Date().toISOString().split('T')[0];
 
-  // Normalize borrowers data - handle paginated objects, direct arrays, or keyed objects
   const normalizedBorrowers = useMemo(() => {
     let data = initialBorrowers;
-    
-    // If it's a paginated object, extract the data array
     if (data && typeof data === 'object' && !Array.isArray(data) && 'data' in data) {
       data = (data as any).data;
     }
-    
-    // If it's still not an array but is an object with numeric keys, convert to array
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       data = Object.values(data);
     }
-    
-    // Guard with Array.isArray
     return Array.isArray(data) ? data : [];
   }, [initialBorrowers]);
 
@@ -67,7 +59,13 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     method: "",
     collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
     collectionDate: today,
-    referenceNumber: ""
+    referenceNumber: "",
+    // New fields for vouchers
+    voucherNumber: "",
+    voucherDate: "",
+    chequeNumber: "",
+    bankName: "",
+    chequeDate: "",
   });
 
   const [submittedRefs, setSubmittedRefs] = useState<string[]>([]);
@@ -80,7 +78,6 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     );
   }, [form.search, normalizedBorrowers]);
 
-  // Generate reference number when method changes
   const generateReferenceNumber = () => {
     const prefix = form.method === 'Metrobank' ? 'MB' : form.method === 'Cebuana' ? 'CB' : form.method === 'GCash' ? 'GC' : '';
     if (prefix) {
@@ -89,20 +86,18 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     return '';
   };
 
-  // -------------------- HANDLERS --------------------
-
+  // Handlers
   const update = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSelectBorrower = (b: BorrowerWithSchedules) => {
     update("selectedBorrower", b);
     update("search", b.name);
-  
-    // Find the next due schedule (earliest due_date among unpaid/overdue)
+
     const nextDueSchedule = b.schedules
-      .filter(s => s.status !== "Paid") // safety check
+      .filter(s => s.status !== "Paid")
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0] || null;
-  
+
     if (nextDueSchedule) {
       update("selectedSchedule", nextDueSchedule);
       update("amount", nextDueSchedule.total_due.toFixed(2));
@@ -114,32 +109,35 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
       update("amount", "");
     }
   };
-  
 
   const handleSelectSchedule = (schedule: Schedule) => {
     update("selectedSchedule", schedule);
-    // Auto-set amount to schedule's total due
     update("amount", schedule.total_due.toFixed(2));
-    // Auto-set due date from schedule
     if (schedule.due_date) {
       update("collectionDate", schedule.due_date);
     }
   };
 
   const handleMethodChange = (method: string) => {
-    update("method", method);
-    // Auto-generate reference number for non-cash methods
-    if (method !== "Cash" && method !== "") {
-      update("referenceNumber", generateReferenceNumber());
-    } else {
-      update("referenceNumber", "");
-    }
+    setForm((prev) => ({
+      ...prev,
+      method,
+      referenceNumber: "",
+      voucherNumber: "",
+      voucherDate: "",
+      chequeNumber: "",
+      bankName: "",
+      chequeDate: "",
+      ...(["Bank", "Cebuana", "GCash"].includes(method)
+        ? { referenceNumber: generateReferenceNumber() }
+        : {}),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { selectedBorrower, collectedBy, amount, method, collectionDate, referenceNumber } = form;
+    const { selectedBorrower, collectedBy, amount, method, collectionDate } = form;
 
     if (!selectedBorrower) return alert("Please select a borrower.");
     if (!collectedBy) return alert("Please select a collector.");
@@ -148,68 +146,79 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     if (!method) return alert("Please select a payment method.");
     if (!collectionDate) return alert("Please select a collection date.");
 
-    // Reference number check (only for non-cash)
-    if (method !== "Cash" && referenceNumber && submittedRefs.includes(referenceNumber)) {
-      return alert("This reference number has already been used.");
+    // Basic client-side validation for voucher fields
+    if (method === "Cash Voucher" && !form.voucherNumber.trim()) {
+      return alert("Voucher Number is required for Cash Voucher payments.");
+    }
+    if (method === "Cheque Voucher") {
+      if (!form.chequeNumber.trim()) return alert("Cheque Number is required.");
+      if (!form.bankName.trim()) return alert("Bank Name is required.");
+      if (!form.chequeDate) return alert("Cheque Date is required.");
+    }
+    if (["Bank", "GCash", "Cebuana"].includes(method) && !form.referenceNumber.trim()) {
+      return alert("Reference Number is required for this payment method.");
     }
 
-    // Clear previous messages
-    setSuccessMessage("");
-    setErrorMessage("");
+    const payload: any = {
+      borrower_id: selectedBorrower.id,
+      loanNo: selectedBorrower.loanNo,
+      schedule_id: form.selectedSchedule?.ID || null,
+      amount,
+      method,
+      collectedBy,
+      collectionDate,
+    };
 
-            router.post("/repayments/store", {
-              borrower_id: selectedBorrower.id,
-              loanNo: selectedBorrower.loanNo,
-              schedule_id: form.selectedSchedule?.ID || null,
-              amount,
-              method,
-              collectedBy,
-              collectionDate,
-              referenceNumber: method === "Cash" ? null : referenceNumber || null
-            }, {
-              onSuccess: () => {
-                // Only show success and reset if the request was successful
-                setSuccessMessage("Payment submitted successfully!");
-                
-                if (referenceNumber) {
-                  setSubmittedRefs((prev) => [...prev, referenceNumber]);
-                }
+    // Add method-specific fields
+    if (method === "Cash Voucher") {
+      payload.voucher_number = form.voucherNumber.trim();
+      payload.voucher_date = form.voucherDate || null;
+    } else if (method === "Cheque Voucher") {
+      payload.cheque_number = form.chequeNumber.trim();
+      payload.bank_name = form.bankName.trim();
+      payload.cheque_date = form.chequeDate;
+    } else if (["Bank", "GCash", "Cebuana"].includes(method)) {
+      payload.reference_number = form.referenceNumber.trim() || null;
+    }
 
-                // Reset form
-                setForm({
-                  search: "",
-                  selectedBorrower: null,
-                  selectedSchedule: null,
-                  amount: "",
-                  method: "",
-                  collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
-                  collectionDate: today,
-                  referenceNumber: ""
-                });
-              },
-              onError: (errors) => {
-                // Handle errors from the backend
-                const errorMessages = Object.values(errors).flat();
-                if (errorMessages.length > 0) {
-                  setErrorMessage(errorMessages.join(", "));
-                } else {
-                  setErrorMessage("Failed to process payment. Please try again.");
-                }
-              },
-              onFinish: () => {
-                // This runs after both success and error
-              }
-            });
+    router.post("/repayments/store", payload, {
+      onSuccess: () => {
+        setSuccessMessage("Payment submitted successfully!");
+
+        if (form.referenceNumber && ["Bank", "GCash", "Cebuana"].includes(method)) {
+          setSubmittedRefs((prev) => [...prev, form.referenceNumber]);
+        }
+
+        setForm({
+          search: "",
+          selectedBorrower: null,
+          selectedSchedule: null,
+          amount: "",
+          method: "",
+          collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
+          collectionDate: today,
+          referenceNumber: "",
+          voucherNumber: "",
+          voucherDate: "",
+          chequeNumber: "",
+          bankName: "",
+          chequeDate: "",
+        });
+      },
+      onError: (errors) => {
+        const errorMessages = Object.values(errors).flat();
+        setErrorMessage(errorMessages.join(", ") || "Failed to process payment.");
+      },
+    });
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add Repayment" />
 
-      <div className="w-full h-wrap mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
+      <div className="w-full mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
         <form onSubmit={handleSubmit} className="space-y-10">
 
-          {/* ------------------ HEADER -------------------- */}
           <section>
             <div className="border-b-4 border-[#FABF24] rounded-t-lg pb-3 mb-6 bg-[#FFF8E2] p-5">
               <h2 className="text-2xl font-semibold text-gray-800">Repayment</h2>
@@ -217,10 +226,9 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
 
-              {/* ------------------ BORROWER SEARCH ------------------ */}
+              {/* Borrower Search */}
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Borrower</label>
-
                 <div className="relative">
                   <input
                     type="text"
@@ -251,7 +259,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 )}
               </div>
 
-              {/* ---------------- Loan Info ---------------- */}
+              {/* Loan Number */}
               <div>
                 <label className="block text-sm font-medium mb-1">Loan Number</label>
                 <input
@@ -262,8 +270,8 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 />
               </div>
 
-              {/* ---------------- Full Amortization Schedule Table ---------------- */}
-              {form.selectedBorrower && form.selectedBorrower.schedules && form.selectedBorrower.schedules.length > 0 && (
+              {/* Amortization Schedule Table */}
+              {form.selectedBorrower && form.selectedBorrower.schedules?.length > 0 && (
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1">Amortization Schedule</label>
                   <div className="border rounded-lg overflow-hidden">
@@ -284,9 +292,12 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                         </thead>
                         <tbody>
                           {form.selectedBorrower.schedules.map((schedule) => (
-                            <tr key={schedule.ID} className={`border-t hover:bg-gray-50 ${
-                              form.selectedSchedule?.ID === schedule.ID ? 'bg-yellow-50' : ''
-                            }`}>
+                            <tr
+                              key={schedule.ID}
+                              className={`border-t hover:bg-gray-50 ${
+                                form.selectedSchedule?.ID === schedule.ID ? 'bg-yellow-50' : ''
+                              }`}
+                            >
                               <td className="px-4 py-3">{schedule.installment_no}</td>
                               <td className="px-4 py-3">
                                 {schedule.due_date ? new Date(schedule.due_date).toLocaleDateString() : 'N/A'}
@@ -297,11 +308,13 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                               <td className="px-4 py-3">₱{schedule.amount_paid.toLocaleString()}</td>
                               <td className="px-4 py-3 font-semibold">₱{schedule.total_due.toLocaleString()}</td>
                               <td className="px-4 py-3">
-                                <span className={`px-2 py-1 rounded text-xs inline-block ${
-                                  schedule.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                                  schedule.status === 'Overdue' ? 'bg-red-100 text-red-800' :
-                                  'bg-yellow-100 text-yellow-800'
-                                }`}>
+                                <span
+                                  className={`px-2 py-1 rounded text-xs inline-block ${
+                                    schedule.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                                    schedule.status === 'Overdue' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}
+                                >
                                   {schedule.status}
                                 </span>
                               </td>
@@ -331,7 +344,6 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 </div>
               )}
 
-              {/* Show message if borrower has no schedules */}
               {form.selectedBorrower && (!form.selectedBorrower.schedules || form.selectedBorrower.schedules.length === 0) && (
                 <div className="col-span-2">
                   <div className="border rounded-lg p-4 bg-yellow-50">
@@ -342,7 +354,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 </div>
               )}
 
-              {/* ---------------- AMOUNT ---------------- */}
+              {/* Amount */}
               <div>
                 <label className="block text-sm font-medium mb-1">Amount</label>
                 <input
@@ -360,7 +372,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 />
               </div>
 
-              {/* ---------------- PAYMENT METHOD ---------------- */}
+              {/* Payment Method */}
               <div>
                 <label className="block text-sm font-medium mb-1">Payment Method</label>
                 <select
@@ -370,27 +382,102 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 >
                   <option value="">Select method</option>
                   <option value="Cash">Cash</option>
+                  <option value="Cash Voucher">Cash Voucher</option>
+                  <option value="Cheque Voucher">Cheque Voucher</option>
                   <option value="Bank">Bank</option>
                   <option value="Cebuana">Cebuana</option>
                   <option value="GCash">GCash</option>
                 </select>
               </div>
 
-              {/* ---------------- REFERENCE NUMBER (Hide for Cash) ---------------- */}
+              {/* ─── Conditional Fields ──────────────────────────────────────── */}
+
+             {form.method === "Cash Voucher" && (
+  <>
+    <div>
+      <label className="block text-sm font-medium mb-1">
+        Voucher Number <span className="text-red-600">*</span>
+      </label>
+      <input
+        type="text"
+        value={form.voucherNumber}
+        onChange={(e) => update("voucherNumber", e.target.value)}
+        placeholder="e.g. CV-2025-00421"
+        className={inputClass}
+        required
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium mb-1">Issued / Valid Until</label>
+      <input
+        type="date"
+        value={form.voucherDate}
+        onChange={(e) => update("voucherDate", e.target.value)}
+        className={inputClass}
+      />
+    </div>
+  </>
+)}
+              {form.method === "Cheque Voucher" && (
+  <>
+    <div>
+      <label className="block text-sm font-medium mb-1">
+        Cheque Number <span className="text-red-600">*</span>
+      </label>
+      <input
+        type="text"
+        value={form.chequeNumber}
+        onChange={(e) => update("chequeNumber", e.target.value)}
+        placeholder="e.g. 012345"
+        className={inputClass}
+        required
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium mb-1">
+        Bank Name <span className="text-red-600">*</span>
+      </label>
+      <input
+        type="text"
+        value={form.bankName}
+        onChange={(e) => update("bankName", e.target.value)}
+        placeholder="e.g. BDO, Metrobank, BPI"
+        className={inputClass}
+        required
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium mb-1">
+        Cheque Date <span className="text-red-600">*</span>
+      </label>
+      <input
+        type="date"
+        value={form.chequeDate}
+        onChange={(e) => update("chequeDate", e.target.value)}
+        className={inputClass}
+        required
+      />
+    </div>
+  </>
+)}
+
+              {/* Reference Number – for electronic/third-party methods */}
               {["Bank", "GCash", "Cebuana"].includes(form.method) && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Reference Number</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Reference Number <span className="text-red-600">*</span>
+                  </label>
                   <input
                     value={form.referenceNumber}
                     onChange={(e) => update("referenceNumber", e.target.value)}
-                    placeholder="Enter reference number from your chosen mode of payment"
-                    className={inputClass + " bg-gray-50"}
+                    placeholder="Transaction ref / OR number / Confirmation code"
+                    className={inputClass}
+                    required
                   />
- 
                 </div>
               )}
 
-              {/* ---------------- COLLECTOR ---------------- */}
+              {/* Collector */}
               <div>
                 <label className="block text-sm font-medium mb-1">Collected By</label>
                 <select
@@ -410,7 +497,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 </select>
               </div>
 
-              {/* ---------------- COLLECTION DATE ---------------- */}
+              {/* Collection Date */}
               <div>
                 <label className="block text-sm font-medium mb-1">Collection Date</label>
                 <input

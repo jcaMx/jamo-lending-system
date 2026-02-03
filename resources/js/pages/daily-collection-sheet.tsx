@@ -153,7 +153,7 @@ export default function DailyCollectionSheet({ due_loans, collections = [], coll
             />
             <Button
               onClick={handleFilterChange}
-              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+              className="px-4 py-2 bg-yellow-600 text-white rounded shadow hover:bg-yellow-700"
             >
               Filter
             </Button>

@@ -16,6 +16,8 @@ use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Models\Loan;
+use App\Http\Controllers\LoanCommentController;
+
 
 
 /*
@@ -152,6 +154,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/all-loans', [DashboardController::class, 'allLoans']);
 });
 
+   Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])
+    ->name('loans.comments.store');
 
 });
 

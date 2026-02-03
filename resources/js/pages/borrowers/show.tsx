@@ -12,6 +12,7 @@ import LoanCollateralTab from './components/Tabs/LoanCollateralTab';
 import LoanFilesTab from './components/Tabs/LoanFilesTab';
 import CoBorrowerTab from './components/Tabs/CoBorrowerTab';
 import LoanCommentsTab from './components/Tabs/LoanCommentsTab';
+import loan from '@/routes/applications/loan';
 
 
 
@@ -30,6 +31,8 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  repayment_frequency: string;
+  
 };
 // Add after line 8 in show.tsx
 type Collateral = {
@@ -157,9 +160,10 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         content: <CoBorrowerTab borrower={normalizedBorrower} />,
       },
       {
-        key: 'loanComments' as TabKey,
+        key: 'loanComments' as TabKey,  
         label: 'Loan Comments',
-        content: <LoanCommentsTab comments={borrower.comments ?? []} />,
+        content: <LoanCommentsTab comments={borrower.comments ?? []}
+        loanId={safeLoan.ID} />,
       },
     ],
     [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower],
