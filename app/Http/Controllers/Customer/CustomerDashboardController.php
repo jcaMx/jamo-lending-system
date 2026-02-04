@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -10,9 +11,10 @@ class CustomerDashboardController extends Controller
 {
     public function index()
     {
-
+        // dd('CUSTOMER DASHBOARD HIT');
         
 
+        /** @var User|null $user */
         $user = Auth::user();
 
         if (! $user) {
@@ -20,11 +22,6 @@ class CustomerDashboardController extends Controller
                 'email' => 'Please log in to access your dashboard.',
             ]);
         }
-
-        // User → Borrower via user_id
-        // $borrower = $user->borrower()
-        //     ->with('activeLoan')
-        //     ->first();
 
         // Get borrower for this user
         $borrower = $user->borrower()->first();
@@ -42,7 +39,7 @@ class CustomerDashboardController extends Controller
 
         // Fallback: if activeLoan relationship returns null, try to find active loan manually
         if (! $loan) {
-            $loan = $borrower->loans()
+            $loan = \App\Models\Loan::where('borrower_id', $borrower->ID)
                 ->where('status', 'Active')
                 ->first();
         }

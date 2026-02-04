@@ -3,67 +3,58 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Application;
-use App\Models\Borrower;
-use App\Models\CoBorrower;
-use App\Models\Collateral;
-use App\Models\Loan;
-use App\Models\Confirmation;
-
+use App\Services\ApplicationService;
 
 class ApplicationController extends Controller
 {
-    public function storeBorrowerInfo(Request $request)
+    protected $service;
+
+    public function __construct(ApplicationService $service)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'dob' => 'required|date',
-            'age' => 'required|integer|min:18',
-            'marital_status' => 'required|string',
-            'address' => 'required|string|max:500',
-            'mobile' => 'required|string|max:20',
-            'dependents' => 'nullable|integer|min:0',
-            'home_ownership' => 'nullable|string|max:255',
-            'occupation' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'employer_address' => 'nullable|string|max:500',
-            'photo' => 'nullable|image|max:2048', // 2MB limit
-            'spouse_first_name' => 'nullable|string|max:255',
-            'spouse_middle_name' => 'nullable|string|max:255',
-            'spouse_last_name' => 'nullable|string|max:255',
-            'spouse_occupation' => 'nullable|string|max:255',
-            'spouse_position' => 'nullable|string|max:255',
-            'spouse_employer_address' => 'nullable|string|max:500',
-            'spouse_mobile' => 'nullable|string|max:20',
-        ]);
-
-        // Handle photo upload if present
-        if ($request->hasFile('photo')) {
-            $validated['photo'] = $request->file('photo')->store('borrowers', 'public');
-        }
-
-        // Create borrower record
-        $borrower = Borrower::create($validated);
-
-        // Create application record tied to borrower
-        $application = Application::create([
-            'borrower_id' => $borrower->id,
-            'status' => 'draft', // or 'submitted' later
-        ]);
-
-        // Return back to Inertia with success
-        return redirect()->route('applications.show', $application->id)
-                         ->with('success', 'Application created successfully.');
+        $this->service = $service;
     }
-     public function storeCoBorrower(Request $request, Application $application)
+
+    public function storeBorrower(Request $request)
     {
-        // Validate incoming data
+        $validated = $request->validate([
+            'borrower_first_name' => 'required|string|max:255',
+            'borrower_last_name' => 'required|string|max:255',
+            'date_of_birth' => 'required|date',
+            'gender' => 'required|string',
+            'marital_status' => 'required|string',
+            'contact_no' => 'required|string|max:15',
+            'landline_number' => 'nullable|string|max:15',
+            'email' => 'required|email|max:255',
+            'dependent_child' => 'nullable|integer',
+            'permanent_address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'home_ownership' => 'nullable|string|max:50',
+            'employment_status' => 'nullable|string|max:50',
+            'income_source' => 'nullable|string|max:50',
+            'occupation' => 'nullable|string|max:100',
+            'position' => 'nullable|string|max:100',
+            'monthly_income' => 'nullable|numeric',
+            'agency_address' => 'nullable|string|max:255',
+            'valid_id_type' => 'required|string|max:50',
+            'valid_id_number' => 'required|string|max:50',
+            'photo' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $application = $request->application ?? null;
+
+        $borrower = $this->service->storeBorrower($validated, $application);
+
+        return redirect()->route('applications.show', $application?->ID ?? $borrower->ID)
+                         ->with('success', 'Borrower information saved.');
+    }
+
+    public function storeCoBorrower(Request $request, Application $application)
+    {
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
-            'dob' => 'required|date',
+            'date_of_birth' => 'required|date',
             'age' => 'required|integer|min:18',
             'marital_status' => 'required|string|max:50',
             'address' => 'required|string|max:500',
@@ -75,21 +66,14 @@ class ApplicationController extends Controller
             'employer_address' => 'nullable|string|max:500',
         ]);
 
-        // Create co-borrower record
-        $coBorrower = CoBorrower::create($validated);
+        $this->service->storeCoBorrowers($application, [$validated]);
 
-        // Link co-borrower to application
-        $application->co_borrower_id = $coBorrower->id;
-        $application->save();
-
-        // Redirect back to Inertia with success
-        return redirect()->route('applications.show', $application->id)
-                         ->with('success', 'Co-Borrower information saved successfully.');
+        return redirect()->route('applications.show', $application->ID)
+                         ->with('success', 'Co-borrower information saved.');
     }
 
     public function storeCollateral(Request $request, Application $application)
     {
-        // Validate incoming data
         $validated = $request->validate([
             'collateral_type' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
@@ -99,25 +83,18 @@ class ApplicationController extends Controller
             'ownership_proof' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:4096',
         ]);
 
-        // Handle file upload if present
         if ($request->hasFile('ownership_proof')) {
             $validated['ownership_proof'] = $request->file('ownership_proof')->store('collaterals', 'public');
         }
 
-        // Create collateral record
-        $collateral = Collateral::create($validated);
+        $this->service->storeCollateral($application, $validated);
 
-        // Link collateral to application
-        $application->collateral_id = $collateral->id;
-        $application->save();
-
-        // Redirect back to Inertia with success
-        return redirect()->route('applications.show', $application->id)
-                         ->with('success', 'Collateral information saved successfully.');
+        return redirect()->route('applications.show', $application->ID)
+                         ->with('success', 'Collateral information saved.');
     }
-     public function storeLoanDetails(Request $request, Application $application)
+
+    public function storeLoanDetails(Request $request, Application $application)
     {
-        // Validate incoming data
         $validated = $request->validate([
             'loan_amount' => 'required|numeric|min:1000',
             'loan_type' => 'required|string|max:255',
@@ -129,39 +106,107 @@ class ApplicationController extends Controller
             'end_date' => 'required|date|after:start_date',
         ]);
 
-        // Create loan record
-        $loan = Loan::create($validated);
+        $this->service->storeLoan($application, $validated);
 
-        // Link loan to application
-        $application->loan_id = $loan->id;
-        $application->save();
-
-        // Redirect back to Inertia with success
-        return redirect()->route('applications.show', $application->id)
-                         ->with('success', 'Loan details saved successfully.');
+        return redirect()->route('applications.show', $application->ID)
+                         ->with('success', 'Loan details saved.');
     }
-    public function confirm(Request $request, Application $application)
-{
-    $validated = $request->validate([
-        'payment_method' => 'required|string|in:bank,cash,check',
-    ]);
 
-    $application->payment_method = $validated['payment_method'];
-    $application->status = 'submitted';
-    $application->submitted_at = now();
-    $application->save();
+    public function confirm(Request $request)
+    {
+        $validated = $request->validate([
+            'borrower_first_name' => 'required|string|max:255',
+            'borrower_last_name' => 'required|string|max:255',
+            'date_of_birth' => 'required|date',
+            'gender' => 'required|string|max:20',
+            'marital_status' => 'required|string|max:20',
+            'contact_no' => 'required|string|max:15',
+            'landline_number' => 'nullable|string|max:20',
+            'dependent_child' => 'nullable|integer',
+            'permanent_address' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'home_ownership' => 'nullable|string|max:50',
 
-    return redirect()->route('applications.show', $application->id)
-                     ->with('success', 'Application submitted successfully.');
-}
-public function show(Application $application)
-{
-    // Eager-load all related models
-    $application->load(['borrower', 'coBorrower', 'collateral', 'loan']);
+            'spouse_first_name' => 'nullable|string|max:255',
+            'spouse_last_name' => 'nullable|string|max:255',
+            'spouse_mobile_number' => 'nullable|string|max:20',
+            'spouse_occupation' => 'nullable|string|max:100',
+            'spouse_position' => 'nullable|string|max:100',
+            'spouse_agency_address' => 'nullable|string|max:255',
 
-    // Pass to Inertia view
-    return inertia('BorrowerApplication', [
-        'application' => $application,
-    ]);
-}
+            'employment_status' => 'nullable|string|max:50',
+            'income_source' => 'nullable|string|max:50',
+            'occupation' => 'nullable|string|max:100',
+            'position' => 'nullable|string|max:100',
+            'monthly_income' => 'nullable|numeric',
+            'agency_address' => 'nullable|string|max:255',
+
+            'valid_id_type' => 'required|string|max:50',
+            'valid_id_number' => 'required|string|max:50',
+            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+
+            'coBorrowers' => 'nullable|array',
+            'coBorrowers.*.first_name' => 'required_with:coBorrowers|string|max:255',
+            'coBorrowers.*.last_name' => 'required_with:coBorrowers|string|max:255',
+            'coBorrowers.*.birth_date' => 'required_with:coBorrowers|date',
+            'coBorrowers.*.marital_status' => 'nullable|string|max:50',
+            'coBorrowers.*.mobile' => 'nullable|string|max:20',
+            'coBorrowers.*.dependents' => 'nullable|integer|min:0',
+            'coBorrowers.*.address' => 'required_with:coBorrowers|string|max:500',
+            'coBorrowers.*.occupation' => 'nullable|string|max:255',
+            'coBorrowers.*.position' => 'nullable|string|max:255',
+            'coBorrowers.*.employer_address' => 'nullable|string|max:500',
+
+            'collateral_type' => 'required|string|max:50',
+            'description' => 'nullable|string|max:1000',
+            'estimated_value' => 'nullable|numeric|min:0',
+            'appraisal_date' => 'nullable|date',
+            'appraised_by' => 'nullable|string|max:255',
+            'ownership_proof' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:4096',
+            'make' => 'nullable|string|max:50',
+            'vehicle_type' => 'nullable|string|max:20',
+            'transmission_type' => 'nullable|string|max:20',
+            'plate_no' => 'nullable|string|max:20',
+            'engine_no' => 'nullable|string|max:20',
+            'year_model' => 'nullable|string|max:4',
+            'series' => 'nullable|string|max:50',
+            'fuel' => 'nullable|string|max:20',
+            'certificate_of_title_no' => 'nullable|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'area' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|max:50',
+            'account_no' => 'nullable|string|max:50',
+            'cardno_4digits' => 'nullable|string|max:4',
+
+            'loan_amount' => 'required|numeric|min:1000',
+            'loan_type' => 'required|string|max:255',
+            'interest_rate' => 'required|numeric|min:0',
+            'term' => 'required|integer|min:1',
+            'interest_type' => 'required|string|max:20',
+            'repayment_frequency' => 'required|string|max:20',
+
+            'payment_method' => 'required|string|in:bank,cash,check',
+        ]);
+
+        $application = $this->service->createFullApplication(
+            $validated,
+            [
+                'files' => $request->file('files', []),
+                'ownership_proof' => $request->file('ownership_proof'),
+            ],
+            Auth::user()
+        );
+
+        return redirect()->route('applications.show', $application->ID)
+                         ->with('success', 'Application submitted successfully.');
+    }
+
+    public function show(Application $application)
+    {
+        $application->load(['borrower', 'coBorrower', 'collateral', 'loan']);
+
+        return inertia('BorrowerApplication', [
+            'application' => $application,
+        ]);
+    }
 }

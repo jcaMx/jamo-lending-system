@@ -9,14 +9,14 @@ return new class extends Migration {
     {
         Schema::create('files', function (Blueprint $table) {
             $table->id();
-            $table->enum('file_type', ['id_document','photo','contract','collateral_document'])->nullable();
+            $table->enum('file_type', ['id_document','photo','contract','collateral_documennt'])->nullable();
             $table->string('file_name', 20);
             $table->string('file_path', 100);
             $table->timestamp('uploaded_at')->useCurrent();
             $table->string('description', 100)->nullable();
 
             $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
-            $table->foreignId('collateral_id')->nullable()->constrained('collateral')->nullOnDelete();
+            $table->foreignId('collateral_id')->constrained('collateral')->cascadeOnDelete();
         });
     }
 

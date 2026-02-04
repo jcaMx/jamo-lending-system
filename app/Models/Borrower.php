@@ -65,7 +65,7 @@ class Borrower extends Model
 
     public function loans()
     {
-        return $this->hasMany(Loan::class, 'borrower_id', 'user_id')->orderBy('start_date', 'desc');
+        return $this->hasMany(Loan::class, 'borrower_id', 'ID')->orderBy('start_date', 'desc');
     }
 
     public function loan()
@@ -111,6 +111,7 @@ class Borrower extends Model
     public function activeLoan()
     {
         return $this->hasOne(Loan::class, 'borrower_id', 'ID')
-            ->where('status', 'Active');
+            ->whereIn('status', ['Active', 'Pending', 'Fully_Paid', 'Bad_Debt', 'Rejected'])
+            ->latest('start_date');
     }
 }

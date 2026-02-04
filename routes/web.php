@@ -142,7 +142,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
     Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
     Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
-    Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
+    Route::post('/applications/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
 });
@@ -164,24 +164,10 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
         ->name('customer.dashboard');
 
     Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
+
+    // Route::get('/my-loan-details', fn () => Inertia::render('MyLoan'))->name('customer.loan');
+
 });
 
-Route::get('/log-test', function () {
-    \Log::info('LOG TEST WORKS');
-
-    return 'ok';
-});
-
-Route::get('/auth-debug', function () {
-    return [
-        'check' => auth()->check(),
-        'user' => auth()->user(),
-        'session' => session()->all(),
-    ];
-});
-
-Route::get('/debug-loan', function () {
-    dd('ROUTE HIT');
-});
 
 require __DIR__.'/settings.php';

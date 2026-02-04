@@ -329,53 +329,53 @@ const next = () => {
 
         {/* STEP 2 — ADDRESS */}
         {step === 2 && (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Borrower Address</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-1">Permanent Address</label>
-              <input
-                type="text"
-                value={data.permanent_address}
-                onChange={(e) => setData('permanent_address', e.target.value)}
-                placeholder="Enter permanent address"
-                className={inputClass}
-                required
-              />
-              {errors.permanent_address && <p className="text-red-500 text-xs mt-1">{errors.permanent_address}</p>}
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Borrower Address</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium mb-1">Permanent Address</label>
+                <input
+                  type="text"
+                  value={data.permanent_address}
+                  onChange={(e) => setData('permanent_address', e.target.value)}
+                  placeholder="Enter permanent address"
+                  className={inputClass}
+                  required
+                />
+                {errors.permanent_address && <p className="text-red-500 text-xs mt-1">{errors.permanent_address}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">City</label>
+                <input
+                  type="text"
+                  value={data.city}
+                  onChange={(e) => setData('city', e.target.value)}
+                  placeholder="Enter city"
+                  className={inputClass}
+                  required
+                />
+                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Home Ownership</label>
+                <select
+                  value={data.home_ownership}
+                  onChange={(e) => setData('home_ownership', e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select Home Ownership</option>
+                  <option value="Owned">Owned</option>
+                  <option value="Rented">Rented</option>
+                  <option value="Mortgage">Mortgage</option>
+                </select>
+                {errors.home_ownership && <p className="text-red-500 text-xs mt-1">{errors.home_ownership}</p>}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">City</label>
-              <input
-                type="text"
-                value={data.city}
-                onChange={(e) => setData('city', e.target.value)}
-                placeholder="Enter city"
-                className={inputClass}
-                required
-              />
-              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Home Ownership</label>
-              <select
-                value={data.home_ownership}
-                onChange={(e) => setData('home_ownership', e.target.value)}
-                className={inputClass}
-                required
-              >
-                <option value="">Select Home Ownership</option>
-                <option value="Owned">Owned</option>
-                <option value="Rented">Rented</option>
-                <option value="Mortgage">Mortgage</option>
-              </select>
-              {errors.home_ownership && <p className="text-red-500 text-xs mt-1">{errors.home_ownership}</p>}
-            </div>
-          </div>
-
-          </div>
           
         )}
 

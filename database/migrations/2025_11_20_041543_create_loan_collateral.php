@@ -11,11 +11,11 @@ return new class extends Migration
         // Formula Table
         Schema::create('formula', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 20);
-            $table->string('expression', 50);
-            $table->string('variables', 20);
+            $table->string('name', 50);
+            $table->string('expression', 500)->nullable();
+            $table->string('variables', 500)->nullable();
             $table->string('description', 100)->nullable();
-            // $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('created_at')->useCurrent();
         });
 
         // Loan Table
@@ -27,25 +27,18 @@ return new class extends Migration
             $table->enum('repayment_frequency', ['Weekly', 'Monthly', 'Yearly'])->nullable();
             $table->decimal('principal_amount', 10, 2);
             $table->float('interest_rate');
-            $table->enum('interest_type', ['Simple', 'Compound', 'Deminishing'])->nullable();
+            $table->enum('interest_type', ['Compound', 'Diminishing'])->nullable();
             $table->string('loan_type', 50)->nullable();
             $table->enum('status', ['Active', 'Fully_Paid', 'Bad_Debt', 'Rejected', 'Pending'])->default('Pending');
             $table->decimal('balance_remaining', 10, 2);
-            // `users` table may be created in a different migration file.
-            // Create the column without an immediate foreign key constraint
-            // to avoid ordering issues during `migrate:fresh`.
+            $table->decimal('released_amount', 10, 2)->default(0.00);
+            $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
+            $table->foreignId('formula_id')->nullable()->constrained('formula')->onUpdate('cascade');
+            $table->unsignedBigInteger('approved_by')->nullable();
             $table->timestamps();
 
-            $table->foreign('borrower_id', 'FK_Loan_Borrower')
-            ->references('id')->on('borrower')
-            ->onDelete('cascade');
-  
-            $table->foreign('formula_id', 'FK_Loan_Formula')
-                    ->references('id')->on('formula')
-                    ->onUpdate('cascade');
-        
             $table->foreign('approved_by', 'FK_Loan_User')
-                    ->references('id')->on('jamouser');
+                ->references('ID')->on('jamouser');
         });
 
         // Amortization table
@@ -76,13 +69,11 @@ return new class extends Migration
             $table->enum('status', ['Pledged', 'Released', 'Forfeited', 'Pending'])->nullable();
             $table->string('remarks', 100)->nullable();
             $table->string('description', 100)->nullable();
-            // Create appraised_by column without FK to avoid dependency on users migration order.
-            $table->foreign('loan_id', 'FK_Collateral_Loan')
-            ->references('id')->on('loan')
-            ->onDelete('cascade');
+            $table->unsignedBigInteger('appraised_by')->nullable();
+            $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
 
             $table->foreign('appraised_by', 'FK_Collateral_User')
-                    ->references('id')->on('jamouser');
+                ->references('ID')->on('jamouser');
         });
 
         // ATM Collateral
@@ -108,7 +99,7 @@ return new class extends Migration
             $table->unsignedBigInteger('collateral_id');
 
             $table->foreign('collateral_id', 'FK_LandCollateral_Collateral')
-                  ->references('ID')->on('collateral')
+                  ->references('id')->on('collateral')
                   ->onDelete('cascade');
         });
 

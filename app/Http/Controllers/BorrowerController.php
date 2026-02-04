@@ -57,7 +57,7 @@ class BorrowerController extends Controller
     public function store(Request $request)
     {
         // Debug: Log incoming request data
-        \Log::info('Incoming request data:', $request->all());
+        // \Log::info('Incoming request data:', $request->all());
 
         $validated = $request->validate([
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
