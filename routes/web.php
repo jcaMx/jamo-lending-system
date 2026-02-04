@@ -163,6 +163,15 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])
         ->name('customer.dashboard');
 
+    Route::get('/customer/loan', fn () => Inertia::render('customer/loan'))
+        ->name('customer.loan');
+
+    Route::get('/customer/repayments', fn () => Inertia::render('customer/repayments'))
+        ->name('customer.repayments');
+
+    Route::get('/customer/profile', fn () => Inertia::render('customer/profile'))
+        ->name('customer.profile');
+
     Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
 });
 
