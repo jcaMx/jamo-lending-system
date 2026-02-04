@@ -34,6 +34,8 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     payment_method: initialPayment,
   });
 
+  const errorEntries = Object.entries(errors);
+
   const appendIfPresent = (payload: FormData, key: string, value: any) => {
     if (value === undefined || value === null || value === "") return;
     payload.append(key, String(value));
@@ -187,7 +189,18 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
           }}
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
-        
+          {errorEntries.length > 0 && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <p className="font-semibold">Please fix the following errors:</p>
+              <ul className="mt-2 list-disc pl-5">
+                {errorEntries.map(([field, message]) => (
+                  <li key={field}>
+                    <span className="font-medium">{field}:</span> {String(message)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Application Summary */}
           <div className="border-2 border-golden rounded-lg p-6 space-y-6 bg-golden/5">
@@ -267,12 +280,14 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
             <Button type="button" onClick={onPrev} variant="outline" className="px-8">
               Previous
             </Button>
+
             <Button
               type="submit"
               className="bg-golden hover:bg-golden-dark text-black px-8"
             >
-              Submit
+              Submit Application
             </Button>
+
           </div>
         </form>
       </div>

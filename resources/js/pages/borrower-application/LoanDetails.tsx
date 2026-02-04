@@ -118,12 +118,10 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
         label="Interest Rate (%)"
         name="interest_rate"
         value={String(data.interest_rate)}
-        onChange={(v) =>
-          setData("interest_rate", parseFloat(sanitize.decimal(v)) || 0)
-        }
+        onChange={(v) => setData("interest_rate", parseFloat(sanitize.decimal(v)) || 0) }
         required
         error={errors.interest_rate}
-        disabled = {true}
+        disabled={true}
       />
 
       <FormField

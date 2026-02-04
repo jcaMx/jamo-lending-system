@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
-use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoanController;
@@ -10,6 +9,7 @@ use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use App\Http\Controllers\UserController;
+
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -17,6 +17,11 @@ use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Models\Loan;
 
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\MyLoanController;
+use App\Http\Controllers\Customer\MyRepaymentsController;
+
+use App\Http\Controllers\Customer\MyProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -163,9 +168,29 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])
         ->name('customer.dashboard');
 
+    // Route::get('/customer/loan', fn () => Inertia::render('customer/loan'))
+    //     ->name('customer.loan');
+
+    Route::get('/my-loan', [MyLoanController::class, 'index'])
+        ->name('customer.MyLoan');
+
+
+    // Route::get('/my-repayments', fn () => Inertia::render('customer/repayments'))
+    //     ->name('customer.repayments'); 
+    
+    Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
+
+
+    // Route::get('/my-profile', fn () => Inertia::render('customer/profile'))
+    //     ->name('customer.profile');
+
+    Route::get('/my-profile', [MyProfileController::class, 'index'])
+    ->name('customer.profile');
+
+
     Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
 
-    // Route::get('/my-loan-details', fn () => Inertia::render('MyLoan'))->name('customer.loan');
+    Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
 
 });
 

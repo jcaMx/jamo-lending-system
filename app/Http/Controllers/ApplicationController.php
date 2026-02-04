@@ -100,8 +100,8 @@ class ApplicationController extends Controller
             'loan_type' => 'required|string|max:255',
             'interest_rate' => 'required|numeric|min:0',
             'term' => 'required|integer|min:1',
-            'interest_type' => 'required|string|in:fixed,variable',
-            'repayment_frequency' => 'required|string|in:monthly,quarterly,annually',
+            'interest_type' => 'required|string|in:compound,diminishing',
+            'repayment_frequency' => 'required|string|in:weekly,monthly,yearly',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ]);
@@ -185,7 +185,7 @@ class ApplicationController extends Controller
             'interest_type' => 'required|string|max:20',
             'repayment_frequency' => 'required|string|max:20',
 
-            'payment_method' => 'required|string|in:bank,cash,check',
+            // 'payment_method' => 'required|string|in:bank,cash,check',
         ]);
 
         $application = $this->service->createFullApplication(

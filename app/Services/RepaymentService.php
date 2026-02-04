@@ -249,4 +249,28 @@ class RepaymentService
         $loan->balance_remaining = max(0, $totalDue - $totalPaid);
         $loan->save();
     }
+
+    public function getNextDueAmount(Loan $loan): float
+    {
+        return $loan->amortizationSchedules
+            ->whereIn('status', ['Unpaid', 'Overdue'])
+            ->sum(function ($s) {
+                return ($s->installment_amount ?? 0)
+                    + ($s->interest_amount ?? 0)
+                    + ($s->penalty_amount ?? 0)
+                    - ($s->amount_paid ?? 0);
+            });
+    }
+
+    public function getTotalPaid(Loan $loan): float
+    {
+        return (float) Payment::query()
+            ->where('loan_id', $loan->ID)
+            ->sum('amount');
+    }
+
+    
+
+
+
 }

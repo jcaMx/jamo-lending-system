@@ -6,6 +6,7 @@ import LoanDetails from "./borrower-application/LoanDetails";
 import Confirmation from "./borrower-application/Confirmation";
 import AppLayout from "@/layouts/app-layout";
 import type { SharedFormData } from "./borrower-application/sharedFormData";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 
 
 
@@ -87,7 +88,7 @@ const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
   });
 
   return (
-    <AppLayout>
+    <DashboardLayout>
     <div className="min-h-screen">
       {/* <Header /> */}
       
@@ -135,7 +136,7 @@ const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
       
       {/* <Footer /> */}
     </div>
-    </AppLayout>
+    </DashboardLayout>
   );
 };
 

@@ -1,151 +1,153 @@
 import React, { useMemo, useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import AppLayout from '@/layouts/app-layout'; // Assuming your layout handles customer auth
+import { type BreadcrumbItem } from '@/types';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import NoLoansPlaceholder from '@/components/dashboard/NoLoansPlaceholder';
 
-import BorrowerHeader from './components/BorrowerHeader';
-import ActiveLoanTable from './components/ActiveLoanTable';
-import RepaymentsTab from '@/pages/borrowers/components/Tabs/RepaymentsTab';
-import LoanTermsTab from '@/pages/borrowers/components/Tabs/LoanTermsTab';
+import BorrowerInfoCard from '@/pages/borrowers/BorrowerInfoCard'; // Consider renaming to ProfileSummaryCard 
+// import RepaymentsTab from '@/pages/borrowers/components/Tabs/RepaymentsTab';
 import LoanScheduleTab from '@/pages/borrowers/components/Tabs/LoanScheduleTab';
 import LoanCollateralTab from '@/pages/borrowers/components/Tabs/LoanCollateralTab';
-import LoanFilesTab from '@/pages/borrowers/components/Tabs/LoanFilesTab';
-import CoBorrowerTab from '@/pages/borrowers/components/Tabs/CoBorrowerTab';
-import LoanCommentsTab from '@/pages/borrowers/components/Tabs/LoanCommentsTab';
+import LoanTermsTab from '@/pages/borrowers/components/Tabs/LoanTermsTab';
 
+// Customer side usually doesn't see internal admin comments, 
+// so we've removed LoanCommentsTab for privacy.
 
-import type { Borrower, Loan, Collateral } from '@/types/loan';
-import { toArray, DEFAULT_LOAN } from '@/utils/loanHelpers';
+// type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
+type Loan = {
+  loanNo: string; released: string; maturity: string; repayment: string;
+  principal: number; interest: string; interestType: string; loan_type: string;
+  penalty: number; due: number; balance: number; status: string;
+};
+type Collateral = { id: number; type: string; estimated_value: number; status: string; /* ... rest of your types */ };
 
-type TabKey = 'repayments' | 'loanTerms' | 'loanSchedule' | 'loanCollateral' | 'loanFiles' | 'coBorrower' | 'loanComments';
+const toArray = <T,>(value: T[] | Record<string, T> | null | undefined): T[] => {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') return Object.values(value as Record<string, T>);
+  return [];
+};
 
-interface CustomerLoanProps {
-  borrower: Borrower | null;
-  collaterals?: Collateral[];
-  activeLoan?: Loan | null;
-  repayments?: any[];
-}
+export default function MyLoan({ authUser, collaterals = [], activeLoan = null }: { authUser: any; collaterals: Collateral[]; activeLoan: Loan | null }) {
+  type TabKey = 'loanTerms' | 'loanSchedule' | 'loanCollateral';
+  const [activeTab, setActiveTab] = useState<TabKey>('loanSchedule');
 
-/**
- * Customer Loan Dashboard
- * Displays borrower information and active loan details with tabbed interface
- */
-export default function CustomerLoan({
-  borrower,
-  collaterals = [],
-  activeLoan = null,
-  repayments = [],
-}: CustomerLoanProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>('repayments');
+  if (!authUser) {
+    return (
+      <DashboardLayout>
+        <Head title="My Loan Details" />
+        <div className="m-4">
+          <NoLoansPlaceholder message="You don't have a borrower profile yet. Please apply for a loan to create one." />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-  // Normalize borrower data
-  const normalizedBorrower = useMemo(
-    () => ({
-      ...borrower,
-      loans: toArray((borrower as any)?.loans),
-      files: toArray((borrower as any)?.files),
-      coBorrowers: toArray(borrower?.coBorrowers || []),
-      comments: toArray((borrower as any)?.comments),
-      amortizationSchedule: toArray((borrower as any)?.amortizationSchedule),
-    }),
-    [borrower],
-  );
+  // Logic to handle user data
+  const normalizedData = useMemo(() => ({
+    ...authUser,
+    loans: toArray<Loan>(authUser.loans),
+    amortizationSchedule: toArray(authUser.amortizationSchedule),
+  }), [authUser]);
 
-  // Normalize data arrays
-  const safeCollaterals = useMemo(() => toArray<Collateral>(collaterals), [collaterals]);
-  const safeRepayments = useMemo(() => toArray(repayments), [repayments]);
+  const safeLoan: Loan = activeLoan ?? normalizedData.loans[0] ?? {
+    loanNo: '-', released: '-', maturity: '-', repayment: '-', principal: 0,
+    interest: '-', interestType: '-', loan_type: '-', penalty: 0, due: 0, balance: 0, status: 'N/A',
+  };
 
-  // Determine active loan with fallback
-  const safeLoan: Loan = useMemo(
-    () => activeLoan ?? normalizedBorrower.loans[0] ?? (DEFAULT_LOAN as Loan),
-    [activeLoan, normalizedBorrower.loans],
-  );
+  const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'My Loan Details', href: '/my-loan' },
+  ];
 
-  // Prepare breadcrumbs
-  const breadcrumbs: BreadcrumbItem[] = borrower
-    ? [
-        { title: 'Borrowers', href: '/borrowers' },
-        { title: `${borrower.first_name} ${borrower.last_name}`, href: `/borrowers/${borrower.id || borrower.ID}` },
-      ]
-    : [];
-
-  const amortizationSchedule = normalizedBorrower.amortizationSchedule;
-
-  // Tab configuration
-  const tabItems = useMemo(
-    () => [
-      {
-        key: 'repayments' as TabKey,
-        label: 'Repayments',
-        content: <RepaymentsTab repayments={safeRepayments} />,
-      },
-      {
-        key: 'loanTerms' as TabKey,
-        label: 'Loan Terms',
-        content: <LoanTermsTab loan={safeLoan} />,
-      },
-      {
-        key: 'loanSchedule' as TabKey,
-        label: 'Loan Schedule',
-        content: <LoanScheduleTab amortizationSchedule={amortizationSchedule} />,
-      },
-      {
-        key: 'loanCollateral' as TabKey,
-        label: 'Loan Collateral',
-        content: <LoanCollateralTab collaterals={safeCollaterals} />,
-      },
-      {
-        key: 'coBorrower' as TabKey,
-        label: 'Co-Borrower',
-        content: <CoBorrowerTab borrower={normalizedBorrower} />,
-      },
-      {
-        key: 'loanComments' as TabKey,
-        label: 'Loan Comments',
-        content: <LoanCommentsTab comments={toArray((borrower as any)?.comments ?? [])} />,
-      },
-    ],
-    [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower],
-  );
+  const tabItems = useMemo(() => [
+    // {
+    //   key: 'repayments' as TabKey,
+    //   label: 'My Payments',
+    //   content: <RepaymentsTab repayments={toArray(authUser.repayments)} />,
+    // },
+    {
+      key: 'loanSchedule' as TabKey,
+      label: 'Payment Schedule',
+      content: <LoanScheduleTab amortizationSchedule={normalizedData.amortizationSchedule} />,
+    },
+    {
+      key: 'loanTerms' as TabKey,
+      label: 'Loan Terms',
+      content: <LoanTermsTab loan={safeLoan} />,
+    },
+    {
+      key: 'loanCollateral' as TabKey,
+      label: 'Collateral',
+      content: <LoanCollateralTab collaterals={toArray(collaterals)} />,
+    },
+  ], [authUser, safeLoan, normalizedData, collaterals]);
 
   const currentTab = tabItems.find((tab) => tab.key === activeTab);
 
   return (
-    <AppLayout>
-      <Head title={`Loan - ${borrower ? `${borrower.first_name} ${borrower.last_name}` : 'Customer'}`} />
+    <DashboardLayout>
+      <Head title="My Loan Details" />
 
-      {/* Borrower Header */}
-      <BorrowerHeader borrower={borrower} />
+      {/* User profile summary */}
+      {/* <BorrowerInfoCard borrower={authUser} /> */}
+      <div className="space-y-1.5 m-3">
+        <p className="text-xl md:text-2xl font-semibold text-gray-900">My Loan</p>
+        <p className="text-sm text-gray-600 max-w-xl">
+           Get detailed information about your loan terms, payment schedule, and collateral.
+        </p>
+      </div>
+      {/* Main Loan Overview */}
+      <div className="m-4 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <h2 className='text-xl font-bold text-gray-800 mb-4'>Current Loan Overview</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b text-gray-500 text-sm">
+                <th className="px-3 py-3 text-left">Loan No.</th>
+                <th className="px-3 py-3 text-left">Principal</th>
+                <th className="px-3 py-3 text-left">Interest</th>
+                <th className="px-3 py-3 text-left">Balance</th>
+                <th className="px-3 py-3 text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              <tr>
+                <td className="px-3 py-4 font-medium">{safeLoan.loanNo}</td>
+                <td className="px-3 py-4 text-gray-600">₱{safeLoan.principal.toLocaleString()}</td>
+                <td className="px-3 py-4 text-gray-600">{safeLoan.interest}%</td>
+                <td className="px-3 py-4 font-bold text-[#D97706]">₱{safeLoan.balance.toLocaleString()}</td>
+                <td className="px-3 py-4">
+                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 uppercase">
+                    {safeLoan.status}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {borrower && (
-        <>
-          {/* Active Loan Table */}
-          <ActiveLoanTable loan={safeLoan} />
+      {/* Detailed Tabs */}
+      <div className="m-4 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex bg-gray-50 border-b">
+          {tabItems.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-6 py-3 text-sm font-semibold transition-all ${
+                activeTab === tab.key
+                  ? 'bg-white text-[#D97706] border-t-2 border-[#D97706]'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          {/* Tabs Section */}
-          <div className="bg-white rounded-lg shadow border border-gray-200">
-            {/* Tab Navigation */}
-            <div className="flex gap-0 overflow-x-auto border-b border-gray-200">
-              {tabItems.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-3 font-medium whitespace-nowrap transition-colors duration-150 border-b-2 ${
-                    activeTab === tab.key
-                      ? 'bg-white text-amber-600 border-amber-600'
-                      : 'bg-white text-gray-600 border-transparent hover:text-gray-800'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Tab Content */}
-            <div className="p-6">{currentTab?.content}</div>
-          </div>
-        </>
-      )}
-    </AppLayout>
+        <div className="p-4">{currentTab?.content}</div>
+      </div>
+    </DashboardLayout>
   );
 }

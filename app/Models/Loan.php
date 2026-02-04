@@ -114,4 +114,5 @@ class Loan extends Model
     {
         return $this->belongsTo(Formula::class, 'formula_id', 'ID');
     }
+    
 }
