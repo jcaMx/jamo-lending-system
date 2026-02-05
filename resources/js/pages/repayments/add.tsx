@@ -60,7 +60,6 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
     collectionDate: today,
     referenceNumber: "",
-    // New fields for vouchers
     voucherNumber: "",
     voucherDate: "",
     chequeNumber: "",

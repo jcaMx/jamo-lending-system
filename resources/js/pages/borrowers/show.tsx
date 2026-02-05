@@ -32,6 +32,7 @@ type Loan = {
   balance: number;
   status: string;
   repayment_frequency: string;
+  ID: number;
   
 };
 // Add after line 8 in show.tsx
