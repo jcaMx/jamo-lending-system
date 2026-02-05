@@ -9,8 +9,10 @@ use App\Models\Files;
 use App\Models\Formula;
 use App\Models\Loan;
 use App\Services\LoanService;
+use App\Models\LoanComment;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
@@ -187,7 +189,24 @@ class LoanController extends Controller
             'collateral.files',
             'amortizationSchedules',
             'formula',
+            'loanComments' => function ($query) {
+                    $query->orderBy('comment_date', 'desc');
+            }
         ]);
+
+        if ($loan->relationLoaded('loanComments')) {
+            $loan->setRelation(
+                'loanComments',
+                $loan->loanComments
+                    ->load('user')
+                    ->map(fn (LoanComment $comment) => [
+                        'ID' => $comment->ID,
+                        'comment_text' => $comment->comment_text,
+                        'commented_by' => $comment->user?->name ?? 'Unknown',
+                        'comment_date' => optional($comment->comment_date)?->toISOString(),
+                    ])
+            );
+        }
 
         return Inertia::render('Loans/ShowLoan', [
             'loan' => $loan,
@@ -318,4 +337,34 @@ class LoanController extends Controller
             return back()->withErrors(['error' => 'Failed to close loan: '.$e->getMessage()]);
         }
     }
+
+    public function addComment(Loan $loan, Request $request)
+    {
+        // Validation
+        $request->validate([
+            'comment_text' => 'required|string|max:1000',
+        ]);
+
+        // Use the relationship to create comment
+        $comment = $loan->loanComments()->create([
+            'comment_text' => $request->input('comment_text'),
+            'commented_by' => auth()->id(),
+            'comment_date' => now(),
+        ]);
+
+        return back()->with('success', 'Comment added successfully.');
+    }
+
+
+    public function deleteComment(LoanComment $comment)
+    {
+        try {
+            $comment->delete();
+
+            return back()->with('success', 'Comment deleted successfully!');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['error' => 'Failed to delete comment: '.$e->getMessage()]);
+        }
+    }
+
 }

@@ -147,6 +147,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
+Route::middleware(['auth', 'role:admin|cashier'])->group(function () {
+    Route::post('/loans/{loan}/comments', [LoanController::class, 'addComment'])->name('loans.comments.add');
+    Route::delete('/loans/comments/{comment}', [LoanController::class, 'deleteComment'])->name('loans.comments.delete');
+});
+
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated- Customer Routes

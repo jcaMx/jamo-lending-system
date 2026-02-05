@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
 class LoanComment extends Model
 {
     use HasFactory;
 
-    protected $table = 'loancomments'; // make sure this matches your DB table
+    protected $table = 'loancomments';
 
     protected $primaryKey = 'ID';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'comment_text',
@@ -28,6 +31,11 @@ class LoanComment extends Model
     // Relationship: each comment belongs to a loan
     public function loan(): BelongsTo
     {
-        return $this->belongsTo(Loan::class, 'loan_id', 'id');
+        return $this->belongsTo(Loan::class, 'loan_id', 'ID');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'commented_by', 'id');
     }
 }

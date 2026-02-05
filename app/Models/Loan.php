@@ -99,7 +99,7 @@ class Loan extends Model
 
     public function loanComments()
     {
-        return $this->hasMany(LoanComments::class, 'loan_id', 'ID');
+        return $this->hasMany(LoanComment::class, 'loan_id', 'ID');
     }
 
     public function borrower()

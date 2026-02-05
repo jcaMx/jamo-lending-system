@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { route } from 'ziggy-js';
+import LoanCommentsTab from '@/pages/borrowers/components/Tabs/LoanCommentsTab';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -99,6 +100,12 @@ interface LoanDetailsProps {
       amount_paid: number;
       penalty_amount: number;
       status: string;
+    }>;
+    loanComments?: Array<{
+      ID: number;
+      comment_text: string;
+      commented_by: string;
+      comment_date: string;
     }>;
   };
 }
@@ -583,6 +590,16 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
             </div>
           </div>
         )}
+
+        {/* Loan Comments Section */}
+        <div className="bg-white shadow-md rounded-lg">
+          <h2 className="text-xl font-semibold text-gray-700 p-6 pb-4">Loan Comments</h2>
+          <LoanCommentsTab
+            comments={loan.loanComments || []}
+            loanId={loan.ID}
+            canDelete={true}
+          />
+        </div>
       </div>
     </AppLayout>
   );

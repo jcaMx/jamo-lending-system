@@ -112,9 +112,16 @@ class BorrowerService
         $activeLoan = $this->formatLoan($activeLoanModel);      // formatted array for frontend
 
         $comments = $activeLoanModel
-            ? LoanComment::where('loan_id', $activeLoanModel->id)
+            ? LoanComment::with('user')
+                ->where('loan_id', $activeLoanModel->ID)
                 ->orderByDesc('comment_date')
                 ->get()
+                ->map(fn (LoanComment $comment) => [
+                    'ID' => $comment->ID,
+                    'comment_text' => $comment->comment_text,
+                    'commented_by' => $comment->user?->name ?? 'Unknown',
+                    'comment_date' => optional($comment->comment_date)?->toISOString(),
+                ])
             : collect();
 
         return [
@@ -185,6 +192,7 @@ class BorrowerService
             : (string) ($loan->status ?? '');
 
         return [
+            'ID' => $loan->ID,
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
