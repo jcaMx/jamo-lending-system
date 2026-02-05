@@ -1,6 +1,7 @@
 import React from "react";
 import { Head } from "@inertiajs/react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import show from "../users/show";
 
 type Loan = {
   loanNo: string;
@@ -157,13 +158,62 @@ export default function MyLoanApplicationSummary({
                 </div>
                 <div className="mt-2 grid md:grid-cols-2 gap-3">
                   <div>
-                    {/* <p className="text-gray-500">Estimated Value</p>
+                    {/* ATM */}
+                    {collateral.type === "ATM" && (
+                      <>
+                        <p className="text-gray-500">Bank</p>
+                        <p className="font-medium text-gray-900">
+                          {collateral.atm_details?.bank_name ?? "-"}
+                        </p>
+
+                        <p className="text-gray-500">Account No.</p>
+                        <p className="font-medium text-gray-900">
+                          {collateral.atm_details?.account_no ?? "-"}
+                        </p>
+
+                        <p className="text-gray-500">Card No. (Last 4 digits)</p>
+                        <p className="font-medium text-gray-900">
+                          {collateral.atm_details?.cardno_4digits ?? "-"}
+                        </p>
+                      </>
+                    )}
+
+                    {/* Vehicle */}
+                    {collateral.type === "Vehicle" && (
+                      <>
+                        <p className="text-gray-500">Brand & Model</p>
+                        <p className="font-medium text-gray-900">
+                          {`${collateral.vehicle_details?.brand ?? "-"} ${
+                            collateral.vehicle_details?.model ?? ""
+                          }`}
+                        </p>
+                      </>
+                    )}
+
+                    {/* Land */}
+                    {collateral.type === "Land" && (
+                      <>
+                        <p className="text-gray-500">Location</p>
+                        <p className="font-medium text-gray-900">
+                          {collateral.land_details?.location ?? "-"}
+                        </p>
+                      </>
+                    )}
+
+                    {/* Fallback */}
+                    {!["ATM", "Vehicle", "Land"].includes(collateral.type) && (
+                      <>
+                        <p className="text-gray-500">Description</p>
+                        <p className="font-medium text-gray-900">
+                          {collateral.description ?? "-"}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  <div>
                     <p className="font-medium text-gray-900">
-                      PHP {Number(collateral.estimated_value ?? 0).toLocaleString()}
-                    </p> */}
-                    <p className="text-gray-500">Bank</p>
-                    <p className="font-medium text-gray-900">
-                      PHP {Number(collateral.estimated_value ?? 0).toLocaleString()}
+                      
                     </p>
                   </div>
                   <div>

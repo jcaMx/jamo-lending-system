@@ -1,4 +1,5 @@
 <?php
+use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
@@ -16,6 +17,7 @@ use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Models\Loan;
+
 
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\MyLoanController;
@@ -53,7 +55,7 @@ Route::middleware('guest')->group(function () {
 */
 
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
-    $user = auth()->user();
+    $user = Auth::user();
 
     if ($user && $user->hasRole('customer')) {
         return redirect()->route('customer.dashboard');
@@ -168,25 +170,16 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])
         ->name('customer.dashboard');
 
-    // Route::get('/customer/loan', fn () => Inertia::render('customer/loan'))
-    //     ->name('customer.loan');
-
     Route::get('/my-loan', [MyLoanController::class, 'index'])
         ->name('customer.MyLoan');
-
-
-    // Route::get('/my-repayments', fn () => Inertia::render('customer/repayments'))
-    //     ->name('customer.repayments'); 
     
     Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
-
-
-    // Route::get('/my-profile', fn () => Inertia::render('customer/profile'))
-    //     ->name('customer.profile');
 
     Route::get('/my-profile', [MyProfileController::class, 'index'])
     ->name('customer.profile');
 
+    Route::put('/my-profile', [MyProfileController::class, 'update'])
+    ->name('customer.profile.update');
 
     Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
 

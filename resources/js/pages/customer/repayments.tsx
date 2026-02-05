@@ -34,6 +34,7 @@ type PageProps = {
   totalPending?: number;
   hasBorrower?: boolean;
   hasPendingLoan?: boolean;
+  nextDueDate?: string | null;
 };
 
 const formatCurrency = (amount: number) => {
@@ -69,6 +70,7 @@ export default function CustomerRepayments() {
     totalPending: totalPendingFromBackend,
     hasBorrower = true,
     hasPendingLoan = false,
+    nextDueDate = null,
   } = usePage<InertiaPageProps & PageProps>().props;
 
 
@@ -132,14 +134,10 @@ export default function CustomerRepayments() {
     return count;
   }, 0);
 
-  const nextDuePayment = normalizedPayments
-    .filter((payment) => payment.status === "Unpaid")
-    .sort((a, b) => {
-      if (!a.date || !b.date) return 0; 
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    })[0];
+  // const nextDuePayment = normalizedPayments
+  // .filter((payment) => payment.status === "Pending")
 
-  const nextDueDate = nextDuePayment?.date;
+
   const nextDueDisplay =
   nextDueDate && !Number.isNaN(new Date(nextDueDate).getTime())
     ? formatDate(nextDueDate)

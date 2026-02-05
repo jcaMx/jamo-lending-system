@@ -4,6 +4,9 @@ import { ProfileCard } from "@/components/dashboard/ProfileCard";
 import NoLoansPlaceholder from "@/components/dashboard/NoLoansPlaceholder";
 import { useEffect, useMemo, useState } from 'react';
 import { Mail, Phone, MapPin, Calendar, User, Edit2, Save, X } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import { route } from 'ziggy-js';
+
 
 
 type BorrowerProfile = {
@@ -74,7 +77,10 @@ export default function CustomerProfile() {
     email: displayProfile.email === "-" ? "" : displayProfile.email,
     contact: displayProfile.contact === "-" ? "" : displayProfile.contact,
     address: displayProfile.address === "-" ? "" : displayProfile.address,
+    city: displayProfile.city === "-" ? "" : displayProfile.city,
+    zipcode: displayProfile.zipcode === "-" ? "" : displayProfile.zipcode,
   });
+
 
   useEffect(() => {
     setEditedProfile({
@@ -82,14 +88,23 @@ export default function CustomerProfile() {
       email: displayProfile.email === "-" ? "" : displayProfile.email,
       contact: displayProfile.contact === "-" ? "" : displayProfile.contact,
       address: displayProfile.address === "-" ? "" : displayProfile.address,
+      city: displayProfile.city === "-" ? "" : displayProfile.city,
+      zipcode: displayProfile.zipcode === "-" ? "" : displayProfile.zipcode,
     });
   }, [displayProfile]);
 
   const handleSave = () => {
-    // TODO: wire this to a backend update route
-    console.log('Saving profile:', editedProfile);
-    setIsEditing(false);
+    router.put(route('customer.profile.update'), {
+      first_name: editedProfile.name.split(' ')[0],
+      last_name: editedProfile.name.split(' ').slice(1).join(' '),
+      email: editedProfile.email,
+      mobile: editedProfile.contact,
+      address: editedProfile.address,
+      city: editedProfile.city,
+      zipcode: editedProfile.zipcode,
+    });
   };
+
 
   const handleCancel = () => {
     setEditedProfile({
@@ -97,6 +112,8 @@ export default function CustomerProfile() {
       email: displayProfile.email === "-" ? "" : displayProfile.email,
       contact: displayProfile.contact === "-" ? "" : displayProfile.contact,
       address: displayProfile.address === "-" ? "" : displayProfile.address,
+            city: displayProfile.city === "-" ? "" : displayProfile.city,
+      zipcode: displayProfile.zipcode === "-" ? "" : displayProfile.zipcode,
     });
     setIsEditing(false);
   };
@@ -192,6 +209,35 @@ export default function CustomerProfile() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
                     />
                   </div>
+                  <div>
+
+                  </div>
+                  
+                  <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input
+                    type="text"
+                    value={editedProfile.city}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, city: e.target.value })
+                    }
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D97706]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
+                  <input
+                    type="text"
+                    value={editedProfile.zipcode}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, zipcode: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D97706]"
+                  />
+                </div>
+
                 </div>
               </div>
             )}
@@ -225,24 +271,6 @@ export default function CustomerProfile() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Mail className="h-5 w-5" style={{ color: "#D97706" }} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Email</p>
-                  <p className="text-sm font-medium text-foreground">{displayProfile.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Phone className="h-5 w-5" style={{ color: "#D97706" }} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Contact</p>
-                  <p className="text-sm font-medium text-foreground">{displayProfile.contact}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
                   <MapPin className="h-5 w-5" style={{ color: "#D97706" }} />
                 </div>
                 <div>
@@ -250,6 +278,25 @@ export default function CustomerProfile() {
                   <p className="text-sm font-medium text-foreground">{displayProfile.address}</p>
                 </div>
               </div>
+              {/* <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                  <MapPin className="h-5 w-5" style={{ color: "#D97706" }} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">City</p>
+                  <p className="text-sm font-medium text-foreground">{displayProfile.city}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                  <MapPin className="h-5 w-5" style={{ color: "#D97706" }} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Zip Code</p>
+                  <p className="text-sm font-medium text-foreground">{displayProfile.zipcode}</p>
+                </div>
+              </div> */}
+
             </div>
           </div>
         </div>

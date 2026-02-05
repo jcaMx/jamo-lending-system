@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Models\Borrower;
 
 class MyProfileController extends Controller
 {
@@ -20,9 +21,11 @@ class MyProfileController extends Controller
             ]);
         }
 
-        $borrower = $user->borrower()
-            ->with(['borrowerEmployment', 'borrowerAddress'])
+        $borrower = Borrower::query()
+            ->with(['borrowerAddress', 'borrowerEmployment'])
+            ->where('user_id', $user->id)
             ->first();
+
 
         if (! $borrower) {
             return Inertia::render('customer/profile', [
@@ -63,7 +66,16 @@ class MyProfileController extends Controller
             return redirect()->route('login');
         }
 
-        $borrower = $user->borrower()->with(['borrowerAddress', 'borrowerEmployment'])->first();
+        // $borrower = $user->borrower()->with(['borrowerAddress', 'borrowerEmployment'])->first();
+        $borrower = Borrower::query()
+            ->with(['borrowerAddress', 'borrowerEmployment'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        
+        $borrower = Borrower::query()
+            ->where('user_id', $user->id)
+            ->first();
 
         if (! $borrower) {
             return redirect()->back()->withErrors([

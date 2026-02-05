@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Borrower;
 use App\Models\Payment;
 use App\Services\RepaymentService;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,11 @@ class MyRepaymentsController extends Controller
             ]);
         }
 
-        $borrower = $user->borrower()->with('loans')->first();
+        $borrower = Borrower::query()
+            ->where('user_id', $user->id)
+            ->with('loans.amortizationSchedules')
+            ->first();
+        
 
         if (! $borrower || $borrower->loans->isEmpty()) {
             return Inertia::render('customer/repayments', [
@@ -33,11 +38,21 @@ class MyRepaymentsController extends Controller
                 'totalPending' => 0,
                 'hasBorrower' => (bool) $borrower,
                 'hasPendingLoan' => false,
+                'nextDueDate' => null,
             ]);
         }
 
         $loanIds = $borrower->loans->pluck('ID');
         $hasPendingLoan = $borrower->loans->contains(fn ($loan) => $loan->status === 'Pending');
+        $activeLoan = $borrower->loans
+            ->first(fn ($loan) => in_array($loan->status, ['Active', 'Overdue'], true));
+        $nextDueDate = $activeLoan
+            ? optional($activeLoan->amortizationSchedules()
+                ->whereIn('status', ['Unpaid', 'Overdue'])
+                ->orderBy('due_date', 'asc')
+                ->first()
+            )?->due_date?->toDateString()
+            : null;
 
         $payments = Payment::query()
             ->whereIn('loan_id', $loanIds)
@@ -72,6 +87,7 @@ class MyRepaymentsController extends Controller
             'totalPending' => $totalPending,
             'hasBorrower' => true,
             'hasPendingLoan' => $hasPendingLoan,
+            'nextDueDate' => $nextDueDate,
         ]);
     }
 }

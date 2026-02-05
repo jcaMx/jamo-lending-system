@@ -24,7 +24,9 @@ class MyLoanController extends Controller
             ]);
         }
 
-        $borrower = $user->borrower()->first();
+        $borrower = Borrower::query()
+            ->where('user_id', $user->id)
+            ->first();
 
         if (! $borrower) {
             return Inertia::render('customer/MyLoan', [
