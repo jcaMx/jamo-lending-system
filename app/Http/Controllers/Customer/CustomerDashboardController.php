@@ -64,7 +64,7 @@ class CustomerDashboardController extends Controller
 
         $stats = [
             'totalBalance' => $activeLoans->sum('balance_remaining'),
-            'due' => $firstActiveLoan ? $this->repaymentService->getNextDueAmount($firstActiveLoan) : 0,
+            'totalDue' => $firstActiveLoan ? $this->repaymentService->getNextDueAmount($firstActiveLoan) : 0,
             'totalPaid' => $firstActiveLoan ? $this->repaymentService->getTotalPaid($firstActiveLoan) : 0,
             'totalPenalty' => $activeLoans->sum(function ($loan) {
                 return $loan->amortizationSchedules->sum('penalty_amount')

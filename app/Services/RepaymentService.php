@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\ScheduleStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RepaymentService
 {
@@ -94,7 +95,7 @@ class RepaymentService
         $loan = $payment->loan;
 
         if (! $loan) {
-            \Log::error('Payment has no loan', ['payment_id' => $payment->ID, 'loan_id' => $payment->loan_id]);
+            // \Log::error('Payment has no loan', ['payment_id' => $payment->ID, 'loan_id' => $payment->loan_id]);
             throw new \Exception('Payment does not have an associated loan. Payment ID: '.$payment->ID.', Loan ID: '.$payment->loan_id);
         }
 

@@ -3,7 +3,8 @@ import { Head, usePage } from "@inertiajs/react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { RecentPaymentsCard } from "@/components/dashboard/RecentPaymentsCard";
 import NoLoansPlaceholder from "@/components/dashboard/NoLoansPlaceholder";
-import { PageProps } from "@inertiajs/inertia";
+import PendingLoanPlaceholder from "@/components/dashboard/PendingLoanPlaceholder";
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 type DashboardBorrower = {
   name?: string;
@@ -76,7 +77,7 @@ type DashboardStats = {
   overdueCount: number;
 };
 
-type PageProps = {
+type DashboardPageProps = {
   borrower?: DashboardBorrower | null;
   loans?: RawLoan[];
   recentPayments?: RawPayment[];
@@ -102,7 +103,14 @@ const formatDate = (dateString: string) => {
 };
 
 const CustomerDashboard = () => {
-  const { borrower, loans = [], recentPayments = [], stats, hasBorrower = true } = usePage<PageProps>().props;
+  // const { borrower, loans = [], recentPayments = [], stats, hasBorrower = true } = usePage.props() as PageProps;
+  const {
+    borrower,
+    loans = [],
+    recentPayments = [],
+    stats,
+    hasBorrower = true,
+  } = usePage<InertiaPageProps & DashboardPageProps>().props;
 
   if (!hasBorrower) {
     return (
@@ -120,13 +128,13 @@ const CustomerDashboard = () => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   };
-
+ 
   const normalizedLoans: Loan[] = loans.map((loan) => ({
     id: String(loan.id ?? loan.ID ?? loan.loanNo ?? loan.loan_no ?? ""),
     loanNo: String(loan.loanNo ?? loan.loan_no ?? loan.ID ?? loan.id ?? ""),
     principal: normalizeNumber(loan.principal ?? loan.principal_amount),
     balance: normalizeNumber(loan.balance ?? loan.balance_remaining),
-    due: normalizeNumber(loan.due ?? 0),
+    due: normalizeNumber(loan.due ?? loan.amount_due ?? loan.total_due ?? 0),
     penalty: normalizeNumber(loan.penalty ?? loan.penalty_amount),
     status: loan.status ?? "Active",
     nextPaymentDate: loan.nextPaymentDate ?? loan.next_payment_date ?? "-",
@@ -149,11 +157,28 @@ const CustomerDashboard = () => {
   const activeLoans = normalizedLoans.filter(
     (l) => l.status === "Active" || l.status === "Overdue"
   );
+  const pendingLoans = normalizedLoans.filter((l) => l.status === "Pending");
+
+  if (pendingLoans.length > 0) {
+    return (
+      <DashboardLayout>
+        <Head title="Repayments" />
+
+        <div className="m-4">
+          <PendingLoanPlaceholder
+            message="Your loan application is pending review. You can view the summary on the My Loan page."
+          />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+
 
   // Use stats from backend, or compute from loans if stats not provided
   const displayStats: DashboardStats = stats ?? {
     totalBalance: activeLoans.reduce((s, l) => s + l.balance, 0),
-    totalDue: activeLoans.reduce((s, l) => s + l.due, 0),
+    totalDue: activeLoans.reduce((s, l) => s + (l.due || 0), 0), // Add fallback to 0
     totalPenalty: activeLoans.reduce((s, l) => s + l.penalty, 0),
     activeLoans: activeLoans.length,
     overdueCount: activeLoans.filter((l) => l.status === "Overdue").length,
@@ -315,7 +340,14 @@ const CustomerDashboard = () => {
         );
       })
     ) : (
-      <NoLoansPlaceholder message="You don’t have a borrower profile yet. Please apply for a loan to create one." />
+      <div className="space-y-2 text-sm text-gray-600">
+        
+        {pendingLoans.length > 0 && (
+          <p className="text-amber-700">
+            Your loan application is pending review. You can view the summary on the My Loan page.
+          </p>
+        )}
+      </div>
     )}
   </div>
 

@@ -1,11 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout'; // Assuming your layout handles customer auth
 import { type BreadcrumbItem } from '@/types';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import NoLoansPlaceholder from '@/components/dashboard/NoLoansPlaceholder';
-
-import BorrowerInfoCard from '@/pages/borrowers/BorrowerInfoCard'; // Consider renaming to ProfileSummaryCard 
+import BorrowerInfoCard from '@/pages/borrowers/BorrowerInfoCard'; 
 // import RepaymentsTab from '@/pages/borrowers/components/Tabs/RepaymentsTab';
 import LoanScheduleTab from '@/pages/borrowers/components/Tabs/LoanScheduleTab';
 import LoanCollateralTab from '@/pages/borrowers/components/Tabs/LoanCollateralTab';
@@ -16,11 +14,49 @@ import LoanTermsTab from '@/pages/borrowers/components/Tabs/LoanTermsTab';
 
 // type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
 type Loan = {
-  loanNo: string; released: string; maturity: string; repayment: string;
-  principal: number; interest: string; interestType: string; loan_type: string;
-  penalty: number; due: number; balance: number; status: string;
+  loanNo: string;
+  released: string;
+  maturity: string;
+  repayment_frequency: string;
+  principal: number;
+  interest: string;
+  interestType: string;
+  loan_type: string;
+  due: number;
+  balance: number;
+  status: string;
 };
-type Collateral = { id: number; type: string; estimated_value: number; status: string; /* ... rest of your types */ };
+
+type Collateral = {
+  id: number;
+  type: 'Land' | 'Vehicle' | 'ATM';
+  estimated_value: number;
+  appraisal_date?: string;
+  status: 'Pledged' | 'Released' | 'Forfeited' | 'Pending';
+  description?: string;
+  remarks?: string;
+  land_details?: {
+    titleNo: number;
+    lotNo: number;
+    location: string;
+    areaSize: string;
+  };
+  vehicle_details?: {
+    type: 'Car' | 'Motorcycle' | 'Truck';
+    brand: string;
+    model: string;
+    year_model?: number;
+    plate_no?: string;
+    engine_no?: string;
+    transmission_type?: 'Manual' | 'Automatic';
+    fuel_type?: string;
+  };
+  atm_details?: {
+    bank_name: 'BDO' | 'BPI' | 'LandBank' | 'MetroBank';
+    account_no: string;
+    cardno_4digits: number;
+  };
+};
 
 const toArray = <T,>(value: T[] | Record<string, T> | null | undefined): T[] => {
   if (Array.isArray(value)) return value;

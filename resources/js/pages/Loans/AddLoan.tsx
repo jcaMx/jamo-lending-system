@@ -423,7 +423,7 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
         );
 
       case 2: {
-        const vehicleOptions: Record<string, string[]> = { make: ['Toyota', 'Honda', 'Nissan'], fuel: ['Gasoline', 'Diesel', 'Electric'] };
+        const vehicleOptions: Record<string, string[]> = { make: ['Toyota','Honda','Nissan','Ford','Chevrolet','BMW','Mercedes-Benz','Audi','Volkswagen','Hyundai','Kia','Mazda','Subaru','Jeep','Dodge','Tesla','Volvo','Jaguar','Land Rover','Mitsubishi'], fuel: ['Gasoline', 'Diesel', 'Electric'] };
         const landOptions: Record<string, string[]> = { location: ['Manila', 'Cebu', 'Davao'] };
         const atmOptions: Record<string, string[]> = { bank_name: ['BDO', 'BPI', 'Metrobank'] };
         type DataKey = keyof typeof data;

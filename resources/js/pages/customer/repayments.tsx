@@ -2,6 +2,8 @@ import { Head, usePage } from '@inertiajs/react';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { RecentPaymentsCard } from "@/components/dashboard/RecentPaymentsCard";
 import NoLoansPlaceholder from "@/components/dashboard/NoLoansPlaceholder";
+import PendingLoanPlaceholder from "@/components/dashboard/PendingLoanPlaceholder";
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 type RawPayment = {
   id?: string | number;
@@ -31,6 +33,7 @@ type PageProps = {
   totalPaid?: number;
   totalPending?: number;
   hasBorrower?: boolean;
+  hasPendingLoan?: boolean;
 };
 
 const formatCurrency = (amount: number) => {
@@ -50,6 +53,14 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const normalizeNumber = (value: number | string | undefined) => {
+  if (value === null || value === undefined || value === "") return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+
+
 export default function CustomerRepayments() {
   const {
     payments = [],
@@ -57,7 +68,11 @@ export default function CustomerRepayments() {
     totalPaid: totalPaidFromBackend,
     totalPending: totalPendingFromBackend,
     hasBorrower = true,
-  } = usePage<PageProps>().props;
+    hasPendingLoan = false,
+  } = usePage<InertiaPageProps & PageProps>().props;
+
+
+
   if (!hasBorrower) {
     return (
       <DashboardLayout>
@@ -70,12 +85,6 @@ export default function CustomerRepayments() {
   }
   const sourcePayments = payments.length ? payments : recentPayments;
 
-  const normalizeNumber = (value: number | string | undefined) => {
-    if (value === null || value === undefined || value === "") return 0;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
   const normalizedPayments: Payment[] = sourcePayments.map((payment) => ({
     id: String(payment.id ?? payment.ID ?? ""),
     loanNo: payment.loanNo ?? payment.loan_no ?? "",
@@ -84,6 +93,20 @@ export default function CustomerRepayments() {
     status: payment.status ?? "Completed",
     method: payment.method ?? payment.payment_method,
   }));
+
+  if (hasPendingLoan) {
+    return (
+      <DashboardLayout>
+        <Head title="Repayments" />
+        <div className="m-4">
+          <PendingLoanPlaceholder
+            message="Your loan application is pending review. You can view the summary on the My Loan page."
+          />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
 
   const computedTotalPaid = normalizedPayments
     .filter((payment) => payment.status === "Completed")
@@ -110,11 +133,18 @@ export default function CustomerRepayments() {
   }, 0);
 
   const nextDuePayment = normalizedPayments
-    .filter((payment) => payment.status === "Pending")
+    .filter((payment) => payment.status === "Unpaid")
     .sort((a, b) => {
-      if (!a.date || !b.date) return 0;
+      if (!a.date || !b.date) return 0; 
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     })[0];
+
+  const nextDueDate = nextDuePayment?.date;
+  const nextDueDisplay =
+  nextDueDate && !Number.isNaN(new Date(nextDueDate).getTime())
+    ? formatDate(nextDueDate)
+    : "-";
+
 
   const preferredMethod = (() => {
     const counts = new Map<string, number>();
@@ -181,9 +211,13 @@ export default function CustomerRepayments() {
               </div>
               <div className="rounded-xl bg-amber-50 p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-amber-700">Next due</p>
-                <p className="mt-2 text-xl font-semibold text-amber-900">
+                {/* <p className="mt-2 text-xl font-semibold text-amber-900">
                   {nextDuePayment?.date ? formatDate(nextDuePayment.date) : "-"}
+                </p> */}
+                <p className="mt-2 text-xl font-semibold text-amber-900">
+                  {nextDueDisplay}
                 </p>
+
               </div>
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-slate-600">Preferred method</p>

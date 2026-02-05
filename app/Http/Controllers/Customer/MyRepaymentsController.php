@@ -32,10 +32,12 @@ class MyRepaymentsController extends Controller
                 'totalPaid' => 0,
                 'totalPending' => 0,
                 'hasBorrower' => (bool) $borrower,
+                'hasPendingLoan' => false,
             ]);
         }
 
         $loanIds = $borrower->loans->pluck('ID');
+        $hasPendingLoan = $borrower->loans->contains(fn ($loan) => $loan->status === 'Pending');
 
         $payments = Payment::query()
             ->whereIn('loan_id', $loanIds)
@@ -69,6 +71,7 @@ class MyRepaymentsController extends Controller
             'totalPaid' => $totalPaid,
             'totalPending' => $totalPending,
             'hasBorrower' => true,
+            'hasPendingLoan' => $hasPendingLoan,
         ]);
     }
 }

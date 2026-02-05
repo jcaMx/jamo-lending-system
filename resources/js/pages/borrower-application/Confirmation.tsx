@@ -13,6 +13,7 @@ import { router, useForm } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import type { SharedFormData } from "./sharedFormData";
 
+
 interface ConfirmationProps {
   onPrev: () => void;
   application?: {
@@ -137,8 +138,16 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
   const appendPayment = (payload: FormData) => {
     appendIfPresent(payload, "payment_method", data.payment_method);
   };
+  const logFormData = (fd: FormData) => {
+    for (const [key, value] of fd as any) {
+      console.log(key, value);
+    }
+  };
 
   const handleSubmit = () => {
+    console.log('Submit button clicked');
+    console.log('Form data:', formData);
+
     const payload = new FormData();
 
     appendBorrower(payload);
@@ -150,10 +159,26 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     appendLoan(payload);
     appendPayment(payload);
 
+    // Log payload contents (FormData compatible way)
+    logFormData(payload);
+  
+
+    console.log('Sending POST request to:', route("applications.confirm"));
+
+
     router.post(route("applications.confirm"), payload, {
       forceFormData: true,
-      onSuccess: () => {
-        // success handled by backend redirect
+      onStart: () => {
+        console.log('Request started');
+      },
+      onSuccess: (response) => {
+        console.log('Success:', response);
+      },
+      onError: (errors) => {
+        console.error('Validation errors:', errors);
+      },
+      onFinish: () => {
+        console.log('Request finished');
       },
     });
   };

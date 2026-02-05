@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Application;
 use App\Services\ApplicationService;
 
 class ApplicationController extends Controller
@@ -14,102 +13,6 @@ class ApplicationController extends Controller
     public function __construct(ApplicationService $service)
     {
         $this->service = $service;
-    }
-
-    public function storeBorrower(Request $request)
-    {
-        $validated = $request->validate([
-            'borrower_first_name' => 'required|string|max:255',
-            'borrower_last_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date',
-            'gender' => 'required|string',
-            'marital_status' => 'required|string',
-            'contact_no' => 'required|string|max:15',
-            'landline_number' => 'nullable|string|max:15',
-            'email' => 'required|email|max:255',
-            'dependent_child' => 'nullable|integer',
-            'permanent_address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'home_ownership' => 'nullable|string|max:50',
-            'employment_status' => 'nullable|string|max:50',
-            'income_source' => 'nullable|string|max:50',
-            'occupation' => 'nullable|string|max:100',
-            'position' => 'nullable|string|max:100',
-            'monthly_income' => 'nullable|numeric',
-            'agency_address' => 'nullable|string|max:255',
-            'valid_id_type' => 'required|string|max:50',
-            'valid_id_number' => 'required|string|max:50',
-            'photo' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
-
-        $application = $request->application ?? null;
-
-        $borrower = $this->service->storeBorrower($validated, $application);
-
-        return redirect()->route('applications.show', $application?->ID ?? $borrower->ID)
-                         ->with('success', 'Borrower information saved.');
-    }
-
-    public function storeCoBorrower(Request $request, Application $application)
-    {
-        $validated = $request->validate([
-            'full_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date',
-            'age' => 'required|integer|min:18',
-            'marital_status' => 'required|string|max:50',
-            'address' => 'required|string|max:500',
-            'mobile' => 'required|string|max:20',
-            'dependents' => 'nullable|integer|min:0',
-            'home_ownership' => 'nullable|string|max:255',
-            'occupation' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'employer_address' => 'nullable|string|max:500',
-        ]);
-
-        $this->service->storeCoBorrowers($application, [$validated]);
-
-        return redirect()->route('applications.show', $application->ID)
-                         ->with('success', 'Co-borrower information saved.');
-    }
-
-    public function storeCollateral(Request $request, Application $application)
-    {
-        $validated = $request->validate([
-            'collateral_type' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'estimated_value' => 'required|numeric|min:0',
-            'appraisal_date' => 'nullable|date',
-            'appraised_by' => 'nullable|string|max:255',
-            'ownership_proof' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:4096',
-        ]);
-
-        if ($request->hasFile('ownership_proof')) {
-            $validated['ownership_proof'] = $request->file('ownership_proof')->store('collaterals', 'public');
-        }
-
-        $this->service->storeCollateral($application, $validated);
-
-        return redirect()->route('applications.show', $application->ID)
-                         ->with('success', 'Collateral information saved.');
-    }
-
-    public function storeLoanDetails(Request $request, Application $application)
-    {
-        $validated = $request->validate([
-            'loan_amount' => 'required|numeric|min:1000',
-            'loan_type' => 'required|string|max:255',
-            'interest_rate' => 'required|numeric|min:0',
-            'term' => 'required|integer|min:1',
-            'interest_type' => 'required|string|in:compound,diminishing',
-            'repayment_frequency' => 'required|string|in:weekly,monthly,yearly',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-        ]);
-
-        $this->service->storeLoan($application, $validated);
-
-        return redirect()->route('applications.show', $application->ID)
-                         ->with('success', 'Loan details saved.');
     }
 
     public function confirm(Request $request)
@@ -174,7 +77,7 @@ class ApplicationController extends Controller
             'certificate_of_title_no' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
             'area' => 'nullable|string|max:50',
-            'bank_name' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|in:BDO,BPI,LandBank,MetroBank',
             'account_no' => 'nullable|string|max:50',
             'cardno_4digits' => 'nullable|string|max:4',
 
@@ -188,7 +91,7 @@ class ApplicationController extends Controller
             // 'payment_method' => 'required|string|in:bank,cash,check',
         ]);
 
-        $application = $this->service->createFullApplication(
+        $loan = $this->service->createFullApplication(
             $validated,
             [
                 'files' => $request->file('files', []),
@@ -197,16 +100,7 @@ class ApplicationController extends Controller
             Auth::user()
         );
 
-        return redirect()->route('applications.show', $application->ID)
+        return redirect()->route('customer.MyLoan')
                          ->with('success', 'Application submitted successfully.');
-    }
-
-    public function show(Application $application)
-    {
-        $application->load(['borrower', 'coBorrower', 'collateral', 'loan']);
-
-        return inertia('BorrowerApplication', [
-            'application' => $application,
-        ]);
     }
 }

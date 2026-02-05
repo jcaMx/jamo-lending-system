@@ -29,6 +29,29 @@ const vehicleTypeOptions = [
   { value: "Motorcycle", label: "Motorcycle" },
   { value: "Truck", label: "Truck" },
 ];
+const makeTypeOptions = [ 
+  { value: "Toyota", label: "Toyota" },
+  { value: "Nissan", label: "Nissan" },
+  { value: "Honda", label: "Honda" },
+  { value: "Ford", label: "Ford" },
+  { value: "Chevrolet", label: "Chevrolet" },
+  { value: "BMW", label: "BMW" },
+  { value: "Mercedes-Benz", label: "Mercedes-Benz" },
+  { value: "Audi", label: "Audi" },
+  { value: "Volkswagen", label: "Volkswagen" },
+  { value: "Hyundai", label: "Hyundai" },
+  { value: "Kia", label: "Kia" },
+  { value: "Mazda", label: "Mazda" },
+  { value: "Subaru", label: "Subaru" },
+  { value: "Jeep", label: "Jeep" },
+  { value: "Dodge", label: "Dodge" },
+  { value: "Tesla", label: "Tesla" },
+  { value: "Volvo", label: "Volvo" },
+  { value: "Jaguar", label: "Jaguar" },
+  { value: "Land Rover", label: "Land Rover" },
+  { value: "Mitsubishi", label: "Mitsubishi" }
+];
+
 
 const transmissionOptions = [
   { value: "Manual", label: "Manual" },
@@ -40,6 +63,26 @@ const fuelOptions = [
   { value: "Diesel", label: "Diesel" },
   { value: "Electric", label: "Electric" },
 ];
+
+const bankOptions = [
+  { value: "BDO", label: "BDO" },
+  { value: "BPI", label: "BPI" },
+  { value: "Security Bank", label: "Security Bank" },
+  { value: "Metrobank", label: "Metrobank" },
+  { value: "Land Bank", label: "Land Bank" },
+  { value: "PNB", label: "PNB" },
+  { value: "UnionBank", label: "UnionBank" },
+  { value: "EastWest Bank", label: "EastWest Bank" },
+  { value: "China Bank", label: "China Bank" },
+  { value: "RCBC", label: "RCBC" },
+  { value: "UCPB", label: "UCPB" },
+  { value: "DBP", label: "DBP" },
+  { value: "Maybank", label: "Maybank" },
+  { value: "HSBC", label: "HSBC" },
+  { value: "Standard Chartered", label: "Standard Chartered" }
+];
+
+
 
 const sanitize = {
   alphaNum: (v: string) => v.replace(/[^a-zA-Z0-9]/g, ""),
@@ -117,8 +160,26 @@ const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) 
         {/* VEHICLE */}
         {data.collateral_type === "vehicle" && (
           <>
-            <FormField label="Model / Make" name="make" value={data.make}
-              onChange={(v) => setData("make", sanitize.trim(v))} />
+            <FormField
+              label="Make"
+              name="make"
+              value={data.make}
+              onChange={(v) => setData("make", sanitize.trim(v))}
+              type="text"
+              list="vehicle-makes"
+              placeholder="Select or type vehicle make"
+            />
+
+            <datalist id="vehicle-makes">
+              {makeTypeOptions.map((opt) => (
+                <option key={opt.value} value={opt.label} />
+              ))}
+            </datalist>
+
+            <FormField label="Fuel Type" name="fuel" type="select"
+              value={data.fuel}
+              onChange={(v) => setData("fuel", v)}
+              options={fuelOptions} />
 
             <FormField label="Vehicle Type" name="vehicle_type" type="select"
               value={data.vehicle_type} onChange={(v) => setData("vehicle_type", v)}
@@ -146,10 +207,7 @@ const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) 
               value={data.series}
               onChange={(v) => setData("series", sanitize.trim(v))} />
 
-            <FormField label="Fuel Type" name="fuel" type="select"
-              value={data.fuel}
-              onChange={(v) => setData("fuel", v)}
-              options={fuelOptions} />
+            
           </>
         )}
 
@@ -196,7 +254,15 @@ const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) 
               name="bank_name"
               value={data.bank_name}
               onChange={(v) => setData("bank_name", sanitize.trim(v))}
+              list="bank-names"
+              placeholder="Select or type bank name"
             />
+
+            <datalist id="bank-names">
+              {bankOptions.map((opt) => (
+                <option key={opt.value} value={opt.label} />
+              ))}
+            </datalist>
 
             <FormField
               label="Account Number"

@@ -37,6 +37,14 @@ class MyLoanController extends Controller
 
         $payload = $this->getBorrowerLoanData($borrower->ID);
 
+        if ($payload['pendingLoan']) {
+            return Inertia::render('customer/MyLoanApplicationSummary', [
+                'authUser' => $payload['borrower'],
+                'pendingLoan' => $payload['pendingLoan'],
+                'collaterals' => $payload['pendingCollaterals'],
+            ]);
+        }
+
         return Inertia::render('customer/MyLoan', [
             'authUser' => $payload['borrower'],
             'collaterals' => $payload['collaterals'],
@@ -70,6 +78,15 @@ class MyLoanController extends Controller
             $activeLoanModel->load(['amortizationSchedules','collateral']);
         }
 
+        $pendingLoanModel = $borrower->loans()
+            ->where('status', 'Pending')
+            ->latest()
+            ->first();
+
+        if ($pendingLoanModel) {
+            $pendingLoanModel->load(['collateral']);
+        }
+
         return [
             'borrower' => [
                 'id' => $borrower->ID,
@@ -80,9 +97,13 @@ class MyLoanController extends Controller
                 'amortizationSchedule' => $this->formatAmortizationSchedule($activeLoanModel),
             ],
             'activeLoan' => $activeLoanModel ? $this->formatLoan($activeLoanModel) : null,
+            'pendingLoan' => $pendingLoanModel ? $this->formatLoan($pendingLoanModel) : null,
             // 'repayments' => $activeLoanModel ? $this->formatRepayments($activeLoanModel) : [],
             'collaterals' => ($activeLoanModel && $activeLoanModel->collateral)
                 ? $this->formatCollaterals(collect([$activeLoanModel->collateral]))
+                : [],
+            'pendingCollaterals' => ($pendingLoanModel && $pendingLoanModel->collateral)
+                ? $this->formatCollaterals(collect([$pendingLoanModel->collateral]))
                 : [],
         ];
     }

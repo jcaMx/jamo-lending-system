@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Application;
 use App\Models\Borrower;
 use App\Models\BorrowerAddress;
 use App\Models\BorrowerEmployment;
@@ -21,105 +20,9 @@ use Illuminate\Support\Facades\Auth;
 class ApplicationService
 {
     /**
-     * Create or update borrower for an application
-     */
-    public function storeBorrower(array $borrowerData, Application $application = null): Borrower
-    {
-        return DB::transaction(function () use ($borrowerData, $application) {
-
-            // $borrowerData['user_id'] = Auth::id();
-
-            $user = Auth::user(); // get the logged-in user
-            $borrowerData['user_id'] = $user->id;
-
-            // Always set borrower's email to the authenticated user's email
-            $borrowerData['email'] = $user->email;
-
-
-            if ($application && $application->borrower_id) {
-                // Update existing borrower
-                $borrower = Borrower::findOrFail($application->borrower_id);
-                $borrower->update($borrowerData);
-            } else {
-                $borrower = Borrower::create($borrowerData);
-            }
-
-            if ($application && ! $application->borrower_id) {
-                $application->borrower_id = $borrower->ID;
-                $application->save();
-            }
-
-            return $borrower;
-        });
-    }
-
-    /**
-     * Store co-borrower(s)
-     */
-    public function storeCoBorrowers(Application $application, array $coBorrowers): void
-    {
-        DB::transaction(function () use ($application, $coBorrowers) {
-            foreach ($coBorrowers as $co) {
-                CoBorrower::create(array_merge($co, [
-                    'borrower_id' => $application->borrower_id
-                ]));
-            }
-        });
-    }
-
-    /**
-     * Store collateral
-     */
-    public function storeCollateral(Application $application, array $collateralData): Collateral
-    {
-        return DB::transaction(function () use ($application, $collateralData) {
-
-            $collateral = Collateral::create(array_merge($collateralData, [
-                'borrower_id' => $application->borrower_id
-            ]));
-
-            $application->collateral_id = $collateral->ID;
-            $application->save();
-
-            return $collateral;
-        });
-    }
-
-    /**
-     * Store loan details
-     */
-    public function storeLoan(Application $application, array $loanData): Loan
-    {
-        return DB::transaction(function () use ($application, $loanData) {
-
-            $loanData['borrower_id'] = $application->borrower_id;
-
-            $loan = Loan::create($loanData);
-
-            $application->loan_id = $loan->ID;
-            $application->save();
-
-            return $loan;
-        });
-    }
-
-    /**
-     * Confirm application (submit)
-     */
-    public function confirmApplication(Application $application, string $paymentMethod)
-    {
-        $application->payment_method = $paymentMethod;
-        $application->status = 'submitted';
-        $application->submitted_at = now();
-        $application->save();
-
-        return $application;
-    }
-
-    /**
      * Create full application in a single transaction.
      */
-    public function createFullApplication(array $data, array $files = [], ?User $user = null): Application
+    public function createFullApplication(array $data, array $files = [], ?User $user = null): Loan
     {
         return DB::transaction(function () use ($data, $files, $user) {
             $user = $user ?? Auth::user();
@@ -213,12 +116,18 @@ class ApplicationService
             }
 
             if (strtolower($data['collateral_type']) === 'atm') {
-                AtmCollateralDetails::create([
-                    'collateral_id' => $collateral->ID,
-                    'bank_name' => $data['bank_name'] ?? 'BDO',
-                    'account_no' => $data['account_no'] ?? '',
-                    'cardno_4digits' => $data['cardno_4digits'] ?? 0,
-                ]);
+                $allowedBanks = ['BDO', 'BPI', 'LandBank', 'MetroBank'];
+                $bankName = $data['bank_name'] ?? null;
+                $bankName = in_array($bankName, $allowedBanks, true) ? $bankName : null;
+
+                if ($bankName) {
+                    AtmCollateralDetails::create([
+                        'collateral_id' => $collateral->ID,
+                        'bank_name' => $bankName,
+                        'account_no' => $data['account_no'] ?? '',
+                        'cardno_4digits' => $data['cardno_4digits'] ?? 0,
+                    ]);
+                }
             }
 
             $coBorrowerIds = [];
@@ -276,17 +185,7 @@ class ApplicationService
                 $collateral->save();
             }
 
-            $application = Application::create([
-                'borrower_id' => $borrower->ID,
-                'co_borrower_id' => $coBorrowerIds[0] ?? null,
-                'collateral_id' => $collateral->ID,
-                'loan_id' => $loan->ID,
-                'payment_method' => $data['payment_method'],
-                'status' => 'submitted',
-                'submitted_at' => now(),
-            ]);
-
-            return $application;
+            return $loan;
         });
     }
 

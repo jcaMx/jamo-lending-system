@@ -15,6 +15,8 @@ export const FormField = ({
   pattern,
   maxLength,
   options,
+  list,
+  disabled
 }: {
   label: string;
   name: string;
@@ -27,6 +29,7 @@ export const FormField = ({
   pattern?: string;
   maxLength?: number;
   options?: { value: string; label: string }[];
+  list?: string;
   disabled?: boolean;  // <-- Add this property
 }) => (
   <div>
@@ -55,6 +58,8 @@ export const FormField = ({
         required={required}
         pattern={pattern}
         maxLength={maxLength}
+        list={list}      
+        disabled={disabled}
       />
     )}
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
