@@ -6,29 +6,38 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
-import { type NavItem } from '@/types';
+import { type LinkNavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
-const sidebarNavItems: NavItem[] = [
+const editRoute = edit();
+const editPasswordRoute = editPassword();
+const showRoute = show();
+const editAppearanceRoute = editAppearance();
+
+const sidebarNavItems: LinkNavItem[] = [
     {
+        type: 'link',
         title: 'Profile',
-        href: edit(),
+        href: typeof editRoute === 'string' ? editRoute : editRoute.url,
         icon: null,
     },
     {
+        type: 'link',
         title: 'Password',
-        href: editPassword(),
+        href: typeof editPasswordRoute === 'string' ? editPasswordRoute : editPasswordRoute.url,
         icon: null,
     },
     {
+        type: 'link',
         title: 'Two-Factor Auth',
-        href: show(),
+        href: typeof showRoute === 'string' ? showRoute : showRoute.url,
         icon: null,
     },
     {
+        type: 'link',
         title: 'Appearance',
-        href: editAppearance(),
+        href: typeof editAppearanceRoute === 'string' ? editAppearanceRoute : editAppearanceRoute.url,
         icon: null,
     },
 ];

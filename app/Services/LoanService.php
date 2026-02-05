@@ -52,12 +52,13 @@ class LoanService
         return Loan::addLoan($data);
     }
 
-    public function approveLoan(Loan $loan, int $approvedByUser, float $releasedAmount): Loan
+    public function approveLoan(Loan $loan, int $approvedByUser, float $releasedAmount, ?string $releasedDate = null): Loan
     {
-        DB::transaction(function () use ($loan, $approvedByUser, $releasedAmount) {
+        DB::transaction(function () use ($loan, $approvedByUser, $releasedAmount, $releasedDate) {
             $loan->approved_by = $approvedByUser;
             $loan->status = 'Active';
             $loan->released_amount = $releasedAmount;
+            $loan->released_date = $releasedDate ? Carbon::parse($releasedDate) : Carbon::now();
 
             // Set borrower status to Active
             $loan->borrower->status = 'Active';

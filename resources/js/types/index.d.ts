@@ -43,7 +43,7 @@ export interface User {
 // --------------------
 interface BaseNavItem {
   title: string;
-  icon?: React.ElementType;
+  icon?: React.ElementType | null;
   roles?: string[];
 }
 
@@ -90,3 +90,6 @@ export interface IconProps extends SVGProps<SVGSVGElement> {
 export type LucideIconType = LucideIcon & {
   (props: IconProps): JSX.Element;
 };
+
+// --------------------
+// Route Def
