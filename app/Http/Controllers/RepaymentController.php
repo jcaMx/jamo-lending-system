@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+
 
 class RepaymentController extends Controller
 {

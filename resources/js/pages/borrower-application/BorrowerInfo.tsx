@@ -1,53 +1,97 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import StepIndicator from "./StepIndicator";
 import { User } from "lucide-react";
-import { Link, useForm } from "@inertiajs/react";
-import {route} from "ziggy-js";
-
+import { Link, useForm} from "@inertiajs/react";
+import { FormField, SectionHeader, inputClass } from "@/components/FormField";
+import { useEffect } from "react";
+import type { SharedFormData } from "./sharedFormData";
+import { on } from "events";
 
 interface BorrowerInfoProps {
   onNext: () => void;
+  formData: SharedFormData;
+  setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
 }
 
-const BorrowerInfo = ({ onNext }: BorrowerInfoProps) => {
-  const { data, setData, post, errors } = useForm({
-    first_name: "",
-    middle_name: "",
-    last_name: "",
-    dob: "",
-    age: "",
-    marital_status: "",
-    address: "",
-    mobile: "",
-    dependents: 0,
-    home_ownership: "",
-    occupation: "",
-    position: "",
-    employer_address: "",
-    photo: null as File | null,
-    spouse_first_name: "",
-    spouse_middle_name: "",
-    spouse_last_name: "",
-    spouse_occupation: "",
-    spouse_position: "",
-    spouse_employer_address: "",
-    spouse_mobile: "",
+const BorrowerInfo = ({ onNext, formData: parentData, setFormData }: BorrowerInfoProps) => {
+ const { data, setData, errors } = useForm({
+    borrower_first_name: '',
+    borrower_last_name: '',
+    gender: '',
+    date_of_birth: '',
+    marital_status: '',
+    contact_no: '',
+    landline_number: '',
+    // email: '', we can remove email, as we can reference user -> email
+    dependent_child: '',  
+
+    spouse_first_name: '',
+    spouse_last_name: '',
+    spouse_agency_address: '',
+    spouse_occupation: '',
+    spouse_position: '',
+    spouse_mobile_number: '',
+
+    permanent_address: '',
+    city: '',
+    home_ownership: '',
+
+    employment_status: '',
+    occupation: '',
+    position: '',
+    monthly_income: '',
+    income_source: '',
+    agency_address: '',
+
+    valid_id_type: '',
+    valid_id_number: '',
+    files: null as FileList | null,
   });
 
+  // Initialize form from parent if available
+  useEffect(() => {
+    if (parentData) {
+      // seed only keys that exist in the form definition
+      const keys = Object.keys(data);
+      const initial: Record<string, any> = {};
+      keys.forEach((k) => {
+        if (parentData[k] !== undefined && parentData[k] !== null) {
+          initial[k] = parentData[k];
+        }
+      });
+      if (Object.keys(initial).length) setData((d: any) => ({ ...d, ...initial }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // keep parent in sync whenever local form `data` changes
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, ...data }));
+  }, [data, setFormData]);
+
   const handleSubmit = () => {
-    post(route("applications.store"), {
-      onSuccess: () => onNext(),
-    });
+    onNext();
   };
+
+  // Options for select fields
+  const genderOptions = [
+    { value: "Male", label: "Male" },
+    { value: "Female", label: "Female" },
+    { value: "Other", label: "Other" },
+  ];
+
+  const maritalStatusOptions = [
+    { value: "Single", label: "Single" },
+    { value: "Married", label: "Married" },
+    { value: "Separated", label: "Separated" },
+    { value: "Widowed", label: "Widowed" },
+  ];
+
+  const homeOwnershipOptions = [
+    { value: "Owned", label: "Owned" },
+    { value: "Rented", label: "Rented" },
+    { value: "Mortgage", label: "Mortgage" },
+  ];
 
   return (
     <section
@@ -55,15 +99,15 @@ const BorrowerInfo = ({ onNext }: BorrowerInfoProps) => {
       style={{ backgroundColor: "#F7F5F3" }}
     >
       <div className="max-w-4xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <User className="w-6 h-6 text-golden" />
-            <h1 className="text-2xl md:text-3xl font-bold">
-              Borrower Information
-            </h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Borrower Application</h1>
           </div>
         </div>
 
+        {/* Step Indicator */}
         <StepIndicator
           currentStep={1}
           steps={[
@@ -75,253 +119,378 @@ const BorrowerInfo = ({ onNext }: BorrowerInfoProps) => {
           ]}
         />
 
+        {/* Form */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSubmit();
           }}
-          className="bg-white rounded-lg p-6 md:p-8 space-y-6"
+          className="bg-white rounded-lg p-6 md:p-8 space-y-8"
         >
-          {/* Borrower fields */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                value={data.first_name}
-                onChange={(e) => setData("first_name", e.target.value)}
+          {/* Section 1: Borrower Profile */}
+          <fieldset>
+            <SectionHeader title="Borrower Profile" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                label="First Name"
+                name="borrower_first_name"
+                value={data.borrower_first_name}
+                onChange={(val) => setData("borrower_first_name", val)}
                 placeholder="Enter first name"
-                className="bg-gray-50"
+                error={errors.borrower_first_name}
+                required
               />
-              {errors.first_name && (
-                <div className="text-red-500 text-sm">{errors.first_name}</div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="middleName">Middle Name</Label>
-              <Input
-                id="middleName"
-                value={data.middle_name}
-                onChange={(e) => setData("middle_name", e.target.value)}
-                placeholder="Enter middle name"
-                className="bg-gray-50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                value={data.last_name}
-                onChange={(e) => setData("last_name", e.target.value)}
+
+              <FormField
+                label="Last Name"
+                name="borrower_last_name"
+                value={data.borrower_last_name}
+                onChange={(val) => setData("borrower_last_name", val)}
                 placeholder="Enter last name"
-                className="bg-gray-50"
+                error={errors.borrower_last_name}
+                required
               />
-              {errors.last_name && (
-                <div className="text-red-500 text-sm">{errors.last_name}</div>
-              )}
-            </div>
-          </div>
 
-          {/* Example: DOB and Age */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="dob">Date of Birth</Label>
-              <Input
-                id="dob"
+              <FormField
+                label="Gender"
+                name="gender"
+                type="select"
+                value={data.gender}
+                onChange={(val) => setData("gender", val)}
+                error={errors.gender}
+                options={genderOptions}
+                required
+              />
+
+              <FormField
+                label="Date of Birth"
+                name="date_of_birth"
                 type="date"
-                value={data.dob}
-                onChange={(e) => setData("dob", e.target.value)}
-                className="bg-gray-50"
+                value={data.date_of_birth}
+                onChange={(val) => setData("date_of_birth", val)}
+                error={errors.date_of_birth}
+                required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
+
+              <FormField
+                label="Mobile Number"
+                name="contact_no"
+                value={data.contact_no}
+                onChange={(val) => setData("contact_no", val)}
+                placeholder="09XXXXXXXXX"
+                pattern="09\d{9}"
+                maxLength={11}
+                error={errors.contact_no}
+                required
+              />
+
+              <FormField
+                label="Landline Number"
+                name="landline_number"
+                value={data.landline_number}
+                onChange={(val) => setData("landline_number", val)}
+                placeholder="02-XXXXXXX (optional)"
+                pattern="0\d{1,2}-\d{7,8}"
+                error={errors.landline_number}
+              />
+
+              {/* <FormField
+                label="Email"
+                name="email"
+                type="email"
+                value={data.email}
+                onChange={(val) => setData("email", val)}
+                placeholder="Enter email"
+                error={errors.email}
+                required
+              /> */}
+
+              <FormField
+                label="Marital Status"
+                name="marital_status"
+                type="select"
+                value={data.marital_status}
+                onChange={(val) => setData("marital_status", val)}
+                error={errors.marital_status}
+                options={maritalStatusOptions}
+                required
+              />
+
+              <FormField
+                label="Number of Dependents"
+                name="dependent_child"
                 type="number"
-                value={data.age}
-                onChange={(e) => setData("age", e.target.value)}
-                placeholder="Age"
-                className="bg-gray-50"
+                value={data.dependent_child}
+                onChange={(val) => setData("dependent_child", val)}
+                placeholder="0"
+                error={errors.dependent_child}
               />
             </div>
-          </div>
+          </fieldset>
 
-          {/* Marital Status */}
-          <div className="space-y-2">
-            <Label htmlFor="maritalStatus">Marital Status</Label>
-            <Select
-              onValueChange={(val) => setData("marital_status", val)}
-              value={data.marital_status}
-            >
-              <SelectTrigger className="bg-gray-50">
-                <SelectValue placeholder="Select marital status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="single">Single</SelectItem>
-                <SelectItem value="married">Married</SelectItem>
-                <SelectItem value="divorced">Divorced</SelectItem>
-                <SelectItem value="widowed">Widowed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Address */}
-          <div className="space-y-2">
-            <Label htmlFor="address">Permanent Home Address</Label>
-            <Input
-              id="address"
-              value={data.address}
-              onChange={(e) => setData("address", e.target.value)}
-              placeholder="Enter address"
-              className="bg-gray-50"
-            />
-          </div>
-
-          {/* Mobile */}
-          <div className="space-y-2">
-            <Label htmlFor="mobile">Mobile Number</Label>
-            <Input
-              id="mobile"
-              value={data.mobile}
-              onChange={(e) => setData("mobile", e.target.value)}
-              placeholder="Enter mobile number"
-              className="bg-gray-50"
-            />
-          </div>
-          {/* Dependents */}
-<div className="space-y-2">
-  <Label htmlFor="dependents">Number of Dependents</Label>
-  <Input
-    id="dependents"
-    type="number"
-    value={data.dependents}
-    onChange={(e) => setData("dependents", Number(e.target.value))}
-    placeholder="0"
-    className="bg-gray-50"
-  />
-  {errors.dependents && (
-    <div className="text-red-500 text-sm">{errors.dependents}</div>
-  )}
-</div>
-
-
-          {/* Photo */}
-          <div className="space-y-2">
-            <Label htmlFor="photo">Borrower Photo</Label>
-            <Input
-              id="photo"
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setData("photo", e.target.files ? e.target.files[0] : null)
-              }
-              className="bg-gray-50"
-            />
-          </div>
-
-          {/* Spouse data */}
-          <div className="border-t pt-6 mt-8">
-            <h3 className="text-lg font-semibold mb-4 text-muted-foreground">
-              Spouse's personal data{" "}
-              <span className="text-sm font-normal">(If applicable)</span>
-            </h3>
-
-            <div className="space-y-6 ">
-              <div className="space-y-2">
-                <Label htmlFor="spouseFirstName">First Name</Label>
-                <Input
-                  id="spouseFirstName"
+          {/* Section 2: Spouse Information (Conditional) */}
+          {data.marital_status === "Married" && (
+            <fieldset>
+              <SectionHeader title="Spouse Information" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  label="Spouse First Name"
+                  name="spouse_first_name"
                   value={data.spouse_first_name}
-                  onChange={(e) =>
-                    setData("spouse_first_name", e.target.value)
-                  }
-                  placeholder="Enter first name"
-                  className="bg-gray-50"
+                  onChange={(val) => setData("spouse_first_name", val)}
+                  placeholder="Enter spouse first name"
+                  error={errors.spouse_first_name}
+                  required
+                />
+
+                <FormField
+                  label="Spouse Last Name"
+                  name="spouse_last_name"
+                  value={data.spouse_last_name}
+                  onChange={(val) => setData("spouse_last_name", val)}
+                  placeholder="Enter spouse last name"
+                  error={errors.spouse_last_name}
+                  required
+                />
+
+                <FormField
+                  label="Spouse Mobile Number"
+                  name="spouse_mobile_number"
+                  value={data.spouse_mobile_number}
+                  onChange={(val) => setData("spouse_mobile_number", val)}
+                  placeholder="09XXXXXXXXX"
+                  error={errors.spouse_mobile_number}
+                />
+
+                <FormField
+                  label="Spouse Occupation"
+                  name="spouse_occupation"
+                  value={data.spouse_occupation}
+                  onChange={(val) => setData("spouse_occupation", val)}
+                  placeholder="Enter spouse occupation"
+                  error={errors.spouse_occupation}
+                />
+
+                <FormField
+                  label="Spouse Position"
+                  name="spouse_position"
+                  value={data.spouse_position}
+                  onChange={(val) => setData("spouse_position", val)}
+                  placeholder="Enter spouse position"
+                  error={errors.spouse_position}
+                />
+
+                <FormField
+                  label="Spouse Agency Address"
+                  name="spouse_agency_address"
+                  value={data.spouse_agency_address}
+                  onChange={(val) => setData("spouse_agency_address", val)}
+                  placeholder="Enter spouse agency address"
+                  error={errors.spouse_agency_address}
                 />
               </div>
-             <div className="space-y-2">
-  <Label htmlFor="spouseMiddleName">Middle Name</Label>
-  <Input
-    id="spouseMiddleName"
-    value={data.spouse_middle_name}
-    onChange={(e) => setData("spouse_middle_name", e.target.value)}
-    placeholder="Enter middle name"
-    className="bg-gray-50"
-  />
-</div>
+            </fieldset>
+          )}
 
-<div className="space-y-2">
-  <Label htmlFor="spouseLastName">Last Name</Label>
-  <Input
-    id="spouseLastName"
-    value={data.spouse_last_name}
-    onChange={(e) => setData("spouse_last_name", e.target.value)}
-    placeholder="Enter last name"
-    className="bg-gray-50"
-  />
-</div>
+          {/* Section 3: Address Information */}
+          <fieldset>
+            <SectionHeader title="Borrower Address" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                label="Permanent Address"
+                name="permanent_address"
+                value={data.permanent_address}
+                onChange={(val) => setData("permanent_address", val)}
+                placeholder="Enter permanent address"
+                error={errors.permanent_address}
+                required
+              />
 
-<div className="space-y-2">
-  <Label htmlFor="spouseOccupation">Occupation</Label>
-  <Input
-    id="spouseOccupation"
-    value={data.spouse_occupation}
-    onChange={(e) => setData("spouse_occupation", e.target.value)}
-    placeholder="Enter occupation"
-    className="bg-gray-50"
-  />
-</div>
+              <FormField
+                label="City"
+                name="city"
+                value={data.city}
+                onChange={(val) => setData("city", val)}
+                placeholder="Enter city"
+                error={errors.city}
+                required
+              />
 
-<div className="space-y-2">
-  <Label htmlFor="spousePosition">Position</Label>
-  <Input
-    id="spousePosition"
-    value={data.spouse_position}
-    onChange={(e) => setData("spouse_position", e.target.value)}
-    placeholder="Enter position"
-    className="bg-gray-50"
-  />
-</div>
-
-<div className="space-y-2">
-  <Label htmlFor="spouseEmployerAddress">Employer Address</Label>
-  <Input
-    id="spouseEmployerAddress"
-    value={data.spouse_employer_address}
-    onChange={(e) => setData("spouse_employer_address", e.target.value)}
-    placeholder="Enter employer address"
-    className="bg-gray-50"
-  />
-</div>
-
-<div className="space-y-2">
-  <Label htmlFor="spouseMobile">Mobile Number</Label>
-  <Input
-    id="spouseMobile"
-    value={data.spouse_mobile}
-    onChange={(e) => setData("spouse_mobile", e.target.value)}
-    placeholder="Enter mobile number"
-    className="bg-gray-50"
-  />
-</div>
+              <FormField
+                label="Home Ownership"
+                name="home_ownership"
+                type="select"
+                value={data.home_ownership}
+                onChange={(val) => setData("home_ownership", val)}
+                error={errors.home_ownership}
+                options={homeOwnershipOptions}
+                required
+              />
             </div>
-          </div>
+          </fieldset>
 
-          {/* Navigation buttons */}
-          <div className="flex justify-between gap-4">
+          <fieldset>
+            <SectionHeader title="Employment Information" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium mb-1">Employment Status</label>
+                <select
+                  value={data.employment_status}
+                  onChange={(e) => setData('employment_status', e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select Employment Status</option>
+                  <option value="Employed">Employed</option>
+                  <option value="Unemployed">Unemployed</option>
+                </select>
+                {errors.employment_status && <p className="text-red-500 text-xs mt-1">{errors.employment_status}</p>}
+              </div>
+        
+              <div>
+                <label className="block text-sm font-medium mb-1">Income Source</label>
+                <select
+                  value={data.income_source}
+                  onChange={(e) => setData('income_source', e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select Income Source</option>
+                  <option value="Salary">Salary</option>
+                  <option value="Business">Business</option>
+                  <option value="Investments">Investments</option>
+                  <option value="Property">Property</option>
+                  <option value="Freelance">Freelance</option>
+                  <option value="Pension">Pension</option>
+                  <option value="Remittance">Remittance</option>
+                  <option value="Allowance">Allowance</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.income_source && (
+                  <p className="text-red-500 text-xs mt-1">{errors.income_source}</p>
+                )}
+              </div>
+        
+              <div>
+                <label className="block text-sm font-medium mb-1">Occupation</label>
+                <input
+                  type="text"
+                  value={data.occupation}
+                  onChange={(e) => setData('occupation', e.target.value)}
+                  placeholder="Enter occupation"
+                  className={inputClass}
+                />
+                {errors.occupation && <p className="text-red-500 text-xs mt-1">{errors.occupation}</p>}
+              </div>
+        
+              <div>
+                <label className="block text-sm font-medium mb-1">Position</label>
+                <input
+                  type="text"
+                  value={data.position}
+                  onChange={(e) => setData('position', e.target.value)}
+                  placeholder="Enter position"
+                  className={inputClass}
+                />
+                {errors.position && <p className="text-red-500 text-xs mt-1">{errors.position}</p>}
+              </div>
+        
+              <div>
+                <label className="block text-sm font-medium mb-1">Monthly Income</label>
+                <input
+                  type="number"
+                  value={data.monthly_income}
+                  onChange={(e) => setData('monthly_income', e.target.value)}
+                  placeholder="Enter monthly income"
+                  className={inputClass}
+                />
+                {errors.monthly_income && <p className="text-red-500 text-xs mt-1">{errors.monthly_income}</p>}
+              </div>
+        
+              <div>
+                <label className="block text-sm font-medium mb-1">Agency Address</label>
+                <input
+                  type="text"
+                  value={data.agency_address}
+                  onChange={(e) => setData('agency_address', e.target.value)}
+                  placeholder="Enter agency address"
+                  className={inputClass}
+                />
+                {errors.agency_address && <p className="text-red-500 text-xs mt-1">{errors.agency_address}</p>}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <SectionHeader title="Valid ID" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                <label className="block text-sm font-medium mb-1">Valid ID Type</label>
+                <select
+                  value={data.valid_id_type}
+                  onChange={(e) => setData('valid_id_type', e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select ID Type</option>
+                  <option value="Philippine Passport">Philippine Passport</option>
+                  <option value="Driver's License">Driver's License</option>
+                  <option value="SSS ID">SSS ID</option>
+                  <option value="GSIS ID">GSIS ID</option>
+                  <option value="PhilHealth ID">PhilHealth ID</option>
+                  <option value="PRC License">PRC License</option>
+                  <option value="Voter's ID">Voter's ID</option>
+                  <option value="Barangay ID">Barangay ID</option>
+                  <option value="Unified Multi-Purpose ID (UMID)">Unified Multi-Purpose ID (UMID)</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.valid_id_type && (
+                  <p className="text-red-500 text-xs mt-1">{errors.valid_id_type}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Valid ID Number</label>
+                <input
+                  type="text"
+                  value={data.valid_id_number}
+                  onChange={(e) => setData('valid_id_number', e.target.value)}
+                  placeholder="Enter ID number"
+                  className={inputClass}
+                />
+                {errors.valid_id_number && <p className="text-red-500 text-xs mt-1">{errors.valid_id_number}</p>}
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium mb-1">Upload Valid ID File(s)</label>
+                <input
+                  type="file"
+                  multiple
+                  className={inputClass}
+                  onChange={(e) => setData('files', e.target.files)}
+                />
+                {errors.files && <p className="text-red-500 text-xs mt-1">{errors.files}</p>}
+              </div>
+            </div>
+
+          </fieldset>
+
+
+          {/* Form Actions */}
+          <div className="flex justify-between gap-4 pt-6 border-t">
             <Link href="/">
               <Button variant="outline" className="px-8">
                 Back to Home
               </Button>
             </Link>
-            <Button onClick={onNext}
+            <Button
               type="submit"
               className="bg-golden hover:bg-golden-dark text-black px-8"
             >
               Next
             </Button>
           </div>
+          
         </form>
       </div>
     </section>

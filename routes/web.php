@@ -1,8 +1,8 @@
 <?php
+use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
-use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoanController;
@@ -10,6 +10,7 @@ use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use App\Http\Controllers\UserController;
+
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -19,6 +20,12 @@ use App\Models\Loan;
 use App\Http\Controllers\LoanCommentController;
 
 
+
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\MyLoanController;
+use App\Http\Controllers\Customer\MyRepaymentsController;
+
+use App\Http\Controllers\Customer\MyProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,7 +57,7 @@ Route::middleware('guest')->group(function () {
 */
 
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
-    $user = auth()->user();
+    $user = Auth::user();
 
     if ($user && $user->hasRole('customer')) {
         return redirect()->route('customer.dashboard');
@@ -144,7 +151,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/applications/{application}/co-borrower', [ApplicationController::class, 'storeCoBorrower'])->name('applications.coBorrower.store');
     Route::post('/applications/{application}/collateral', [ApplicationController::class, 'storeCollateral'])->name('applications.collateral.store');
     Route::post('/applications/{application}/loan-details', [ApplicationController::class, 'storeLoanDetails'])->name('applications.loan.store');
-    Route::post('/applications/{application}/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
+    Route::post('/applications/confirm', [ApplicationController::class, 'confirm'])->name('applications.confirm');
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
     Route::prefix('api')->group(function () {
@@ -175,25 +182,22 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])
         ->name('customer.dashboard');
 
+    Route::get('/my-loan', [MyLoanController::class, 'index'])
+        ->name('customer.MyLoan');
+    
+    Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
+
+    Route::get('/my-profile', [MyProfileController::class, 'index'])
+    ->name('customer.profile');
+
+    Route::put('/my-profile', [MyProfileController::class, 'update'])
+    ->name('customer.profile.update');
+
     Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
+
+    Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
+
 });
 
-Route::get('/log-test', function () {
-    \Log::info('LOG TEST WORKS');
-
-    return 'ok';
-});
-
-Route::get('/auth-debug', function () {
-    return [
-        'check' => auth()->check(),
-        'user' => auth()->user(),
-        'session' => session()->all(),
-    ];
-});
-
-Route::get('/debug-loan', function () {
-    dd('ROUTE HIT');
-});
 
 require __DIR__.'/settings.php';

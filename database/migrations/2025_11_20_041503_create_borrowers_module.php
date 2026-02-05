@@ -58,7 +58,7 @@ return new class extends Migration {
             $table->id();
             $table->string('first_name', 20);
             $table->string('last_name', 20);
-            $table->integer('age');
+            $table->integer('age')->nullable();
             $table->date('birth_date');
             $table->string('address', 50);
             $table->string('email', 50);
@@ -68,6 +68,7 @@ return new class extends Migration {
             $table->string('agency_address', 50)->nullable();
             $table->char('marital_status', 10)->nullable();
             $table->enum('home_ownership', ['Owned','Rented','Mortgage'])->nullable();
+            $table->decimal('net_pay', 10, 2)->nullable();
             $table->foreignId('borrower_id')->constrained('borrower')->cascadeOnDelete();
         });
 

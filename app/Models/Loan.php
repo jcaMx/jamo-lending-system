@@ -37,8 +37,8 @@ class Loan extends Model
 
     protected $casts =
         [
-            'balance_remaining' => 'decimal:2',
-            'released_amount' => 'decimal:2',
+            'balance_remaining' => 'float',
+            'released_amount' => 'float',
             'term_months' => 'integer',
             'interest_type' => 'string',
             'status' => 'string',
@@ -114,4 +114,5 @@ class Loan extends Model
     {
         return $this->belongsTo(Formula::class, 'formula_id', 'ID');
     }
+    
 }

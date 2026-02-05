@@ -27,17 +27,17 @@ const customerNavItems: NavItem[] = [
   {
     title: "Loan",
     icon: Banknote,
-    href: "/customer/loan",
+    href: "/my-loan",
   },
   {
     title: "Repayments",
     icon: Coins,
-    href: "/customer/repayments",
+    href: "/my-repayments",
   },
   {
     title: "Profile",
     icon: User,
-    href: "/customer/profile",
+    href: "/my-profile",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function CustomerSidebar() {
     <Sidebar
       collapsible="none"
       variant="floating"
-      className="bg-[#192132] text-white w-64 h-screen flex flex-col"
+      className="bg-[#192132] text-white w-64 h-screen flex flex-col fixed left-0 top-0 z-40"
     >
       {/* HEADER */}
       <SidebarHeader className="bg-[#192132]">

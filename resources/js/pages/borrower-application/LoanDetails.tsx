@@ -1,49 +1,72 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import StepIndicator from "./StepIndicator";
-import { DollarSign } from "lucide-react";
+
+import { useEffect } from "react";
 import { useForm } from "@inertiajs/react";
+import { FormField, SectionHeader } from "@/components/FormField";
+import type { SharedFormData } from "./sharedFormData";
+import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
+import StepIndicator from "./StepIndicator";
+
+const icons = [User, Users, Home, DollarSign, CreditCard];
+
 
 interface LoanDetailsProps {
   onNext: () => void;
   onPrev: () => void;
+  formData: SharedFormData;
+  setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
 }
 
-const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
-  const { data, setData, post, errors } = useForm({
-    loan_amount: 0,
-    loan_type: "",
-    interest_rate: 0,
-    term: 0,
-    interest_type: "",
-    repayment_frequency: "",
-    start_date: "",
-    end_date: "",
+const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps) => {
+  const initial = formData ?? {};
+  const { data, setData, errors } = useForm({
+    loan_type: initial.loan_type ?? "",
+    loan_amount: String(initial.loan_amount ?? ""),
+    interest_type: initial.interest_type ?? "",
+    interest_rate: 5, // default interest rate
+    repayment_frequency: initial.repayment_frequency ?? "",
+    term: String(initial.term ?? ""),
   });
 
+  // keep parent in sync
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, ...data }));
+  }, [data, setFormData]);
+
+  const sanitize = {
+    number: (v: string) => v.replace(/\D/g, ""),
+    decimal: (v: string) => v.replace(/[^0-9.]/g, ""),
+  };
+
+  const loanTypeOptions = [
+    { value: "personal", label: "Personal Loan" },
+    { value: "business", label: "Business Loan" },
+    { value: "home", label: "Home Loan" },
+    { value: "education", label: "Education Loan" },
+  ];
+
+  const interestTypeOptions = [
+    { value: "compound", label: "Compound" },
+    { value: "diminishing", label: "Diminishing" },
+  ];
+
+  const repaymentFrequencyOptions = [
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+  ];
+
   const handleSubmit = () => {
-    post("/applications/loan-details", {
-      onSuccess: () => onNext(),
-    });
+    onNext();
   };
 
   return (
-    <section
-      className="py-8 md:py-16 px-6 md:px-12"
-      style={{ backgroundColor: "#F7F5F3" }}
-    >
-      <div className="max-w-4xl mx-auto">
+    
+    <section title="Loan Details" className="w-full h-full flex flex-col m-3">
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg space-y-6">
+
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <DollarSign className="w-6 h-6 text-golden" />
+            <CreditCard className="w-6 h-6 text-golden" />
             <h1 className="text-2xl md:text-3xl font-bold">Loan Details</h1>
           </div>
         </div>
@@ -58,144 +81,84 @@ const LoanDetails = ({ onNext, onPrev }: LoanDetailsProps) => {
             "Payment",
           ]}
         />
+      <FormField
+        label="Loan Type"
+        name="loan_type"
+        type="select"
+        value={data.loan_type}
+        onChange={(v) => setData("loan_type", v)}
+        required
+        options={loanTypeOptions}
+        error={errors.loan_type}
+      />
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-          className="bg-white rounded-lg p-6 md:p-8 space-y-6"
-        >
-          {/* Loan Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="loanAmount">Loan Amount</Label>
-            <Input
-              id="loanAmount"
-              type="number"
-              value={data.loan_amount}
-              onChange={(e) => setData("loan_amount", Number(e.target.value))}
-              placeholder="Enter loan amount"
-              className="bg-gray-50"
-            />
-            {errors.loan_amount && (
-              <div className="text-red-500 text-sm">{errors.loan_amount}</div>
-            )}
-          </div>
+      <FormField
+        label="Loan Amount (₱)"
+        name="loan_amount"
+        value={data.loan_amount}
+        onChange={(v) =>
+          setData("loan_amount", sanitize.number(v))
+        }
+        required
+        error={errors.loan_amount}
+      />
 
-          {/* Loan Type */}
-          <div className="space-y-2">
-            <Label htmlFor="loanType">Loan Type</Label>
-            <Input
-              id="loanType"
-              value={data.loan_type}
-              onChange={(e) => setData("loan_type", e.target.value)}
-              placeholder="Enter loan type"
-              className="bg-gray-50"
-            />
-          </div>
+      <FormField
+        label="Interest Type"
+        name="interest_type"
+        type="select"
+        value={data.interest_type}
+        onChange={(v) => setData("interest_type", v)}
+        required
+        options={interestTypeOptions}
+        error={errors.interest_type}
+      />
 
-          {/* Interest Rate and Term */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="interestRate">Interest Rate %</Label>
-              <Input
-                id="interestRate"
-                type="number"
-                step="0.01"
-                value={data.interest_rate}
-                onChange={(e) =>
-                  setData("interest_rate", Number(e.target.value))
-                }
-                placeholder="Enter interest rate"
-                className="bg-gray-50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="term">Term</Label>
-              <Input
-                id="term"
-                type="number"
-                value={data.term}
-                onChange={(e) => setData("term", Number(e.target.value))}
-                placeholder="Enter term (months)"
-                className="bg-gray-50"
-              />
-            </div>
-          </div>
+      <FormField
+        label="Interest Rate (%)"
+        name="interest_rate"
+        value={String(data.interest_rate)}
+        onChange={(v) => setData("interest_rate", parseFloat(sanitize.decimal(v)) || 0) }
+        required
+        error={errors.interest_rate}
+        disabled={true}
+      />
 
-          {/* Interest Type */}
-          <div className="space-y-2">
-            <Label htmlFor="interestType">Interest Type</Label>
-            <Select
-              onValueChange={(val) => setData("interest_type", val)}
-              value={data.interest_type}
-            >
-              <SelectTrigger className="bg-gray-50">
-                <SelectValue placeholder="Select interest type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fixed">Fixed</SelectItem>
-                <SelectItem value="variable">Variable</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <FormField
+        label="Repayment Frequency"
+        name="repayment_frequency"
+        type="select"
+        value={data.repayment_frequency}
+        onChange={(v) => setData("repayment_frequency", v)}
+        required
+        options={repaymentFrequencyOptions}
+        error={errors.repayment_frequency}
+      />
 
-          {/* Repayment Frequency */}
-          <div className="space-y-2">
-            <Label htmlFor="repaymentFrequency">Repayment Frequency</Label>
-            <Select
-              onValueChange={(val) => setData("repayment_frequency", val)}
-              value={data.repayment_frequency}
-            >
-              <SelectTrigger className="bg-gray-50">
-                <SelectValue placeholder="Select repayment frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="annually">Annually</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <FormField
+        label="Term (months)"
+        name="term"
+        value={data.term}
+        onChange={(v) =>
+          setData("term", sanitize.number(v))
+        }
+        required
+        error={errors.term}
+      />
 
-          {/* Start and End Dates */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={data.start_date}
-                onChange={(e) => setData("start_date", e.target.value)}
-                className="bg-gray-50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={data.end_date}
-                onChange={(e) => setData("end_date", e.target.value)}
-                className="bg-gray-50"
-              />
-            </div>
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex justify-between gap-4">
-            <Button onClick={onPrev} variant="outline" className="px-8">
-              Previous
-            </Button>
-            <Button onClick={onNext}
-              type="submit"
-              className="bg-golden hover:bg-golden-dark text-black px-8"
-            >
-              Next
-            </Button>
-          </div>
-        </form>
+      <div className="flex justify-between mt-6">
+        <button type="button" className="px-4 py-1 border border-gray-300 rounded-md hover:bg-gray-400" onClick={onPrev}>
+          Back
+        </button>
+        <button type="button" className="px-4 py-1 bg-golden text-black rounded-md hover:bg-golden-dark" onClick={handleSubmit}>
+          Next
+        </button>
       </div>
+
+
+      </div>
+
+        
     </section>
   );
 };

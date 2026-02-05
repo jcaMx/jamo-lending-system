@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\ScheduleStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RepaymentService
 {
@@ -94,7 +95,7 @@ class RepaymentService
         $loan = $payment->loan;
 
         if (! $loan) {
-            \Log::error('Payment has no loan', ['payment_id' => $payment->ID, 'loan_id' => $payment->loan_id]);
+            // \Log::error('Payment has no loan', ['payment_id' => $payment->ID, 'loan_id' => $payment->loan_id]);
             throw new \Exception('Payment does not have an associated loan. Payment ID: '.$payment->ID.', Loan ID: '.$payment->loan_id);
         }
 
@@ -249,4 +250,28 @@ class RepaymentService
         $loan->balance_remaining = max(0, $totalDue - $totalPaid);
         $loan->save();
     }
+
+    public function getNextDueAmount(Loan $loan): float
+    {
+        return $loan->amortizationSchedules
+            ->whereIn('status', ['Unpaid', 'Overdue'])
+            ->sum(function ($s) {
+                return ($s->installment_amount ?? 0)
+                    + ($s->interest_amount ?? 0)
+                    + ($s->penalty_amount ?? 0)
+                    - ($s->amount_paid ?? 0);
+            });
+    }
+
+    public function getTotalPaid(Loan $loan): float
+    {
+        return (float) Payment::query()
+            ->where('loan_id', $loan->ID)
+            ->sum('amount');
+    }
+
+    
+
+
+
 }

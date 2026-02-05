@@ -14,23 +14,17 @@ return new class extends Migration
             $table->string('receipt_number', 50)->unique();
             $table->dateTime('payment_date')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->decimal('amount', 10, 2);
-            $table->enum('payment_method', ['Cheque', 'Cash', 'GCash', 'Cebuana', 'Bank'])->nullable();
-            $table->string('reference_no', 50);
+            $table->enum('payment_method', ['Bank', 'Cash', 'GCash', 'Cebuana'])->nullable();
+            $table->string('reference_no', 50)->nullable();
             $table->string('remarks', 100)->nullable();
-            // Create verified_by column without FK to avoid constraint formation errors.
-            // FK can be added in a separate migration after users table is guaranteed to exist.
-            
-            $table->foreign('loan_id', 'FK_Payment_Loan')
-            ->references('ID')->on('loan');
+            $table->unsignedBigInteger('verified_by')->nullable();
+            $table->dateTime('verified_date')->nullable();
+            $table->foreignId('schedule_id')->constrained('amortizationschedule');
+            $table->foreignId('loan_id')->constrained('loan');
             
             $table->foreign('verified_by', 'FK_Payment_Users')
-            ->references('ID')->on('jamouser')
-            ->onUpdate('cascade');
-
-            $table->dateTime('verified_date')->nullable();
-            // Create schedule_id column without FK to avoid constraint formation errors.
-            $table->foreign('schedule_id', 'FK_Payment_AmortizationSchedule')
-          ->references('ID')->on('amortizationschedule');
+                ->references('ID')->on('jamouser')
+                ->onUpdate('cascade');
         });
             
 

@@ -68,4 +68,15 @@ class AmortizationSchedule extends Model
     {
         return $this->belongsTo(Loan::class, 'loan_id', 'ID');
     }
+    
+    public function getTotalDueAttribute(): float
+    {
+        return max(0, (
+            $this->installment_amount +
+            $this->interest_amount +
+            $this->penalty_amount -
+            $this->amount_paid
+        ));
+    }
+
 }
