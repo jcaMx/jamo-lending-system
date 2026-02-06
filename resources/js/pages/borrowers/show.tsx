@@ -14,11 +14,10 @@ import CoBorrowerTab from './components/Tabs/CoBorrowerTab';
 import LoanCommentsTab from './components/Tabs/LoanCommentsTab';
 import loan from '@/routes/applications/loan';
 
-
-
 type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
 
 type Loan = {
+  ID: number;
   loanNo: string;
   released: string;
   maturity: string;
@@ -32,10 +31,8 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
-  repayment_frequency: string;
-  ID: number;
-  
 };
+
 // Add after line 8 in show.tsx
 type Collateral = {
   id: number;
@@ -68,16 +65,9 @@ type Collateral = {
   };
 };
 
-
 const toArray = <T,>(value: T[] | Record<string, T> | null | undefined): T[] => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.values(value as Record<string, T>);
-  }
-
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') return Object.values(value as Record<string, T>);
   return [];
 };
 
@@ -85,29 +75,26 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
   type TabKey = 'repayments' | 'loanTerms' | 'loanSchedule' | 'loanCollateral' | 'loanFiles' | 'coBorrower' | 'loanComments';
   const [activeTab, setActiveTab] = useState<TabKey>('repayments');
 
-  // fallback safety if borrower is undefined
   if (!borrower) {
     return <div className="p-6">No borrower data provided.</div>;
   }
 
-  const normalizedBorrower = useMemo(
-    () => ({
-      ...borrower,
-      loans: toArray<Loan>(borrower.loans),
-      files: toArray(borrower.files),
-      coBorrowers: toArray(borrower.coBorrowers),
-      comments: toArray(borrower.comments),
-      amortizationSchedule: toArray(borrower.amortizationSchedule),
-    }),
-    [borrower],
-  );
+  const normalizedBorrower = useMemo(() => ({
+    ...borrower,
+    loans: toArray<Loan>(borrower.loans),
+    files: toArray(borrower.files),
+    coBorrowers: toArray(borrower.coBorrowers),
+    comments: toArray(borrower.comments),
+    amortizationSchedule: toArray(borrower.amortizationSchedule),
+  }), [borrower]);
 
   const safeCollaterals = toArray<Collateral>(collaterals);
   const safeRepayments: Repayment[] = toArray(repayments ?? borrower.repayments);
 
   const safeLoan: Loan =
-    activeLoan ??
+    activeLoan ?? 
     normalizedBorrower.loans[0] ?? {
+      ID: 0,
       loanNo: '-',
       released: '',
       maturity: '',
@@ -129,8 +116,8 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
 
   const amortizationSchedule = normalizedBorrower.amortizationSchedule;
 
-  const tabItems = useMemo(
-    () => [
+  const tabItems = useMemo(() => {
+    const tabs = [
       {
         key: 'repayments' as TabKey,
         label: 'Repayments',
@@ -151,25 +138,34 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         label: 'Loan Collateral',
         content: <LoanCollateralTab collaterals={safeCollaterals} />,
       },
-      // {
-      //   key: 'loanFiles' as TabKey,
-      //   label: 'Loan Files',
-      //   content: <LoanFilesTab borrower={normalizedBorrower} />,
-      // },
       {
         key: 'coBorrower' as TabKey,
         label: 'Co-Borrower',
         content: <CoBorrowerTab borrower={normalizedBorrower} />,
       },
-      {
-        key: 'loanComments' as TabKey,  
+    ];
+
+    // Only add Loan Comments tab if there is a real active loan
+    if (safeLoan.ID > 0) {
+      tabs.push({
+        key: 'loanComments' as TabKey,
         label: 'Loan Comments',
-        content: <LoanCommentsTab comments={borrower.comments ?? []}
-        loanId={safeLoan.ID} />,
-      },
-    ],
-    [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower],
-  );
+        content: <LoanCommentsTab 
+          comments={borrower.comments ?? []}
+          loanId={safeLoan.ID}
+          canDelete={true} 
+        />,
+      });
+    } else {
+      tabs.push({
+        key: 'loanComments' as TabKey,
+        label: 'Loan Comments',
+        content: <p className="p-2 text-gray-500">No active loan to show comments.</p>,
+      });
+    }
+
+    return tabs;
+  }, [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower, borrower.comments]);
 
   const currentTab = tabItems.find((tab) => tab.key === activeTab);
 
@@ -177,7 +173,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={`Borrower: ${borrower.name}`} />
 
-      {/* Just render the card with the borrower prop */}
+      {/* Borrower Card */}
       <BorrowerInfoCard borrower={borrower} />
 
       {/* Active Loan Table */}
@@ -200,7 +196,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
             </tr>
           </thead>
           <tbody>
-          <tr>
+            <tr>
               <td className="px-3 py-2">{safeLoan.loanNo}</td>
               <td className="px-3 py-2">{safeLoan.released}</td>
               <td className="px-3 py-2">{safeLoan.maturity}</td>
@@ -217,8 +213,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         </table>
       </div>
 
-
-      {/* TABS  */}
+      {/* TABS */}
       <div className="m-4 bg-white rounded-lg shadow space-y-2 mb-6 border border-gray-100">
         <div className="flex gap-2 overflow-hidden">
           {tabItems.map((tab) => (

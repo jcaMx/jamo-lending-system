@@ -6,21 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-// Enums
-enum BorrowerStatus: string
-{
-    case Active = 'Active';
-    case Closed = 'Closed';
-    case Blacklisted = 'Blacklisted';
-}
-
-enum HomeOwnership: string
-{
-    case Owned = 'Owned';
-    case Rented = 'Rented';
-    case Mortgage = 'Mortgage';
-}
-
 class Borrower extends Model
 {
     use HasFactory;
@@ -28,11 +13,8 @@ class Borrower extends Model
     public $timestamps = false;
 
     protected $table = 'borrower';
-
     protected $primaryKey = 'ID';
-
     public $incrementing = true;
-
     protected $keyType = 'int';
 
     protected $fillable = [
