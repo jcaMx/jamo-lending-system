@@ -535,78 +535,74 @@ const next = () => {
           
         )}
 
-        {/* STEP 5 — REVIEW + SUBMIT */}
-        {step === 5 && (
-          <div className="space-y-6">
-            {/* Borrower Profile */}
-            <div className="p-4 rounded-lg border shadow-sm bg-[#F7F5F3]">
-              <h3 className="text-lg font-semibold mb-2 text-gray-700">Borrower Profile</h3>
-              <ul className="text-gray-600 space-y-1">
-                <li><strong>First Name:</strong> {data.borrower_first_name}</li>
-                <li><strong>Last Name:</strong> {data.borrower_last_name}</li>
-                <li><strong>Gender:</strong> {data.gender}</li>
-                <li><strong>Date of Birth:</strong> {data.date_of_birth}</li>
-                <li><strong>Marital Status:</strong> {data.marital_status}</li>
-                <li><strong>Mobile Number:</strong> {data.contact_no}</li>
-                <li><strong>Landline Number:</strong> {data.landline_number || '—'}</li>
-                <li><strong>Email:</strong> {data.email}</li>
-                <li><strong>Dependents:</strong> {data.dependent_child || 0}</li>
-              </ul>
-            </div>
+       {/* STEP 5 — Review */}
+{step === 5 && (
+  <div className="space-y-6">
+    <h2 className="text-2xl font-semibold text-gray-700 mb-4">Review Borrower Details</h2>
 
-            {/* Spouse Info — Only if Married */}
-            {data.marital_status === 'Married' && (
-              <div className="p-4 rounded-lg border shadow-sm bg-[#F7F5F3]">
-                <h3 className="text-lg font-semibold mb-2 text-gray-700">Spouse Information</h3>
-                <ul className="text-gray-600 space-y-1">
-                  <li><strong>First Name:</strong> {data.spouse_first_name}</li>
-                  <li><strong>Last Name:</strong> {data.spouse_last_name}</li>
-                  <li><strong>Mobile Number:</strong> {data.spouse_mobile_number || '—'}</li>
-                  <li><strong>Occupation:</strong> {data.spouse_occupation || '—'}</li>
-                  <li><strong>Position:</strong> {data.spouse_position || '—'}</li>
-                  <li><strong>Agency Address:</strong> {data.spouse_agency_address || '—'}</li>
-                </ul>
-              </div>
-            )}
+    {/* Borrower Info */}
+    <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+      <h3 className="text-lg font-medium text-gray-600 mb-3">Profile</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><span className="font-semibold">Name:</span> {data.borrower_first_name} {data.borrower_last_name}</div>
+        <div><span className="font-semibold">Gender:</span> {data.gender}</div>
+        <div><span className="font-semibold">DOB:</span> {data.date_of_birth}</div>
+        <div><span className="font-semibold">Marital Status:</span> {data.marital_status}</div>
+        <div><span className="font-semibold">Mobile:</span> {data.contact_no}</div>
+        {data.landline_number && <div><span className="font-semibold">Landline:</span> {data.landline_number}</div>}
+        <div><span className="font-semibold">Email:</span> {data.email}</div>
+        {data.dependent_child && <div><span className="font-semibold">Dependents:</span> {data.dependent_child}</div>}
+      </div>
+    </div>
 
-            {/* Address */}
-            <div className="p-4 rounded-lg border shadow-sm bg-[#F7F5F3]">
-              <h3 className="text-lg font-semibold mb-2 text-gray-700">Address Information</h3>
-              <ul className="text-gray-600 space-y-1">
-                <li><strong>Permanent Address:</strong> {data.permanent_address}</li>
-                <li><strong>City:</strong> {data.city}</li>
-                <li><strong>Home Ownership:</strong> {data.home_ownership}</li>
-              </ul>
-            </div>
+    {/* Spouse Info */}
+    {data.marital_status === 'Married' && (
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">Spouse Info</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div><span className="font-semibold">Name:</span> {data.spouse_first_name} {data.spouse_last_name}</div>
+          <div><span className="font-semibold">Mobile:</span> {data.spouse_mobile_number}</div>
+          <div><span className="font-semibold">Occupation:</span> {data.spouse_occupation}</div>
+          <div><span className="font-semibold">Position:</span> {data.spouse_position}</div>
+          <div className="col-span-2"><span className="font-semibold">Agency Address:</span> {data.spouse_agency_address}</div>
+        </div>
+      </div>
+    )}
 
-            {/* Employment */}
-            <div className="p-4 rounded-lg border shadow-sm bg-[#F7F5F3]">
-              <h3 className="text-lg font-semibold mb-2 text-gray-700">Employment Information</h3>
-              <ul className="text-gray-600 space-y-1">
-                <li><strong>Status:</strong> {data.employment_status}</li>
-                <li><strong>Occupation:</strong> {data.occupation}</li>
-                <li><strong>Position:</strong> {data.position}</li>
-                <li><strong>Monthly Income:</strong> {data.monthly_income}</li>
-                <li><strong>Income Source:</strong> {data.income_source}</li>
-                <li><strong>Agency Address:</strong> {data.agency_address}</li>
-              </ul>
-            </div>
+    {/* Address */}
+    <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+      <h3 className="text-lg font-medium text-gray-600 mb-3">Address</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="col-span-2"><span className="font-semibold">Permanent Address:</span> {data.permanent_address}</div>
+        <div><span className="font-semibold">City:</span> {data.city}</div>
+        <div><span className="font-semibold">Home Ownership:</span> {data.home_ownership}</div>
+      </div>
+    </div>
 
-            {/* Valid ID + Files */}
-            <div className="p-4 rounded-lg border shadow-sm bg-[#F7F5F3]">
-              <h3 className="text-lg font-semibold mb-2 text-gray-700">Valid Identification</h3>
-              <ul className="text-gray-600 space-y-1">
-                <li><strong>ID Type:</strong> {data.valid_id_type}</li>
-                <li><strong>ID Number:</strong> {data.valid_id_number}</li>
-                <li>
-                  <strong>Files:</strong>{' '}
-                  {data.files ? Array.from(data.files).map(f => f.name).join(', ') : '—'}
-                </li>
-              </ul>
-            </div>
+    {/* Employment */}
+    <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+      <h3 className="text-lg font-medium text-gray-600 mb-3">Employment</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><span className="font-semibold">Status:</span> {data.employment_status}</div>
+        {data.occupation && <div><span className="font-semibold">Occupation:</span> {data.occupation}</div>}
+        {data.position && <div><span className="font-semibold">Position:</span> {data.position}</div>}
+        {data.monthly_income && <div><span className="font-semibold">Monthly Income:</span> {data.monthly_income}</div>}
+        {data.income_source && <div><span className="font-semibold">Income Source:</span> {data.income_source}</div>}
+        {data.agency_address && <div className="col-span-2"><span className="font-semibold">Agency Address:</span> {data.agency_address}</div>}
+      </div>
+    </div>
 
-          </div>
-        )}
+    {/* Valid ID */}
+    <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+      <h3 className="text-lg font-medium text-gray-600 mb-3">Valid ID</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><span className="font-semibold">ID Type:</span> {data.valid_id_type}</div>
+        {data.valid_id_number && <div><span className="font-semibold">ID Number:</span> {data.valid_id_number}</div>}
+        {data.files && <div className="col-span-2"><span className="font-semibold">Uploaded Files:</span> {data.files.length} file(s)</div>}
+      </div>
+    </div>
+  </div>
+)}
 
 
         {/* Navigation Buttons */}

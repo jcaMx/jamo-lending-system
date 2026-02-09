@@ -643,141 +643,116 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
 
 
       case 4:
-        return (
-          <SectionContainer title="Review & Submit">
-            <div className="mb-6">
-              <h3 className="font-semibold text-gray-700 mb-2">Borrower Information</h3>
-              <p>
-                <strong>Name:</strong> {data.borrower_name}
-              </p>
-              <p>
-                <strong>Borrower ID:</strong> {data.borrower_id}
-              </p>
-              <p>
-                <strong>Loan Type:</strong> {data.loan_type}
-              </p>
-              <p>
-                <strong>Interest Type:</strong> {data.interest_type}
-              </p>
-              <p>
-                <strong>Interest Rate:</strong> {data.interest_rate}%
-              </p>
-              <p>
-                <strong>Loan Amount:</strong> ₱{data.loan_amount}
-              </p>
-              <p>
-                <strong>Repayment Frequency:</strong> {data.repayment_frequency}
-              </p>
-              <p>
-                <strong>Term:</strong> {data.term} months
-              </p>
-            </div>
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+        Review Loan Application
+      </h2>
 
-            <div className="mb-6">
-              <h3 className="font-semibold text-gray-700 mb-2">Collateral</h3>
-              <p>
-                <strong>Type:</strong> {toCapitalCase(data.collateral_type)}
-              </p>
-              {data.collateral_type === 'vehicle' && (
-                <>
-                  <p>
-                    <strong>Model:</strong> {data.make}
-                  </p>
-                  <p>
-                    <strong>Vehicle Type:</strong> {data.vehicle_type}
-                  </p>
-                  <p>
-                    <strong>Transmission Type:</strong> {data.transmission_type}
-                  </p>
-                  <p>
-                    <strong>Plate No.:</strong> {data.plate_no}
-                  </p>
-                  <p>
-                    <strong>Engine No.:</strong> {data.engine_no}
-                  </p>
-                  <p>
-                    <strong>Year Model:</strong> {data.year_model}
-                  </p>
-                  <p>
-                    <strong>Series:</strong> {data.series}
-                  </p>
-                  <p>
-                    <strong>Fuel:</strong> {data.fuel}
-                  </p>
-                </>
-              )}
-              {data.collateral_type === 'land' && (
-                <>
-                  <p>
-                    <strong>Certificate of Title No.:</strong> {data.certificate_of_title_no}
-                  </p>
-                  <p>
-                    <strong>Location:</strong> {data.location}
-                  </p>
-                  <p>
-                    <strong>Description:</strong> {data.description}
-                  </p>
-                  <p>
-                    <strong>Area:</strong> {data.area}
-                  </p>
-                </>
-              )}
-              {data.collateral_type === 'atm' && (
-                <>
-                  <p>
-                    <strong>Bank Name:</strong> {data.bank_name}
-                  </p>
-                  <p>
-                    <strong>Account Number:</strong> {data.account_no}
-                  </p>
-                  <p>
-                    <strong>Card Last 4 Digits:</strong> {data.cardno_4digits}
-                  </p>
-                </>
-              )}
-            </div>
+      {/* Borrower Info */}
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">
+          Borrower Information
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <span className="font-semibold">Name:</span> {data.borrower_name}
+          </div>
+          <div>
+            <span className="font-semibold">Borrower ID:</span> {data.borrower_id}
+          </div>
+        </div>
+      </div>
 
-            {coBorrowers.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Co-Borrowers</h3>
-                {coBorrowers.map((co, index) => (
-                  <div key={index} className="mb-3">
-                    <p>
-                      <strong>Co-Borrower {index + 1}:</strong>
-                    </p>
-                    <p>
-                      <strong>First Name:</strong> {co.first_name}
-                    </p>
-                    <p>
-                      <strong>Last Name:</strong> {co.last_name}
-                    </p>
-                    <p>
-                      <strong>Address:</strong> {co.address}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {co.email}
-                    </p>
-                    <p>
-                      <strong>Contact:</strong> {co.contact}
-                    </p>
-                    <p>
-                      <strong>Birth Date:</strong> {co.birth_date}
-                    </p>
-                    <p>
-                      <strong>Marital Status:</strong> {co.marital_status}
-                    </p>
-                    <p>
-                      <strong>Occupation:</strong> {co.occupation}
-                    </p>
-                    <p>
-                      <strong>Net Pay:</strong> {co.net_pay}
-                    </p>
-                  </div>
-                ))}
+      {/* Loan Details */}
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">
+          Loan Details
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div><span className="font-semibold">Loan Type:</span> {data.loan_type}</div>
+          <div><span className="font-semibold">Loan Amount:</span> ₱{data.loan_amount}</div>
+          <div><span className="font-semibold">Interest Type:</span> {data.interest_type}</div>
+          <div><span className="font-semibold">Interest Rate:</span> {data.interest_rate}%</div>
+          <div><span className="font-semibold">Repayment:</span> {data.repayment_frequency}</div>
+          <div><span className="font-semibold">Term:</span> {data.term} months</div>
+        </div>
+      </div>
+
+      {/* Collateral */}
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">
+          Collateral
+        </h3>
+
+        <p className="mb-2">
+          <span className="font-semibold">Type:</span>{' '}
+          {toCapitalCase(data.collateral_type)}
+        </p>
+
+        {data.collateral_type === 'vehicle' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><span className="font-semibold">Make:</span> {data.make}</div>
+            <div><span className="font-semibold">Vehicle Type:</span> {data.vehicle_type}</div>
+            <div><span className="font-semibold">Transmission:</span> {data.transmission_type}</div>
+            <div><span className="font-semibold">Plate No:</span> {data.plate_no}</div>
+            <div><span className="font-semibold">Engine No:</span> {data.engine_no}</div>
+            <div><span className="font-semibold">Year Model:</span> {data.year_model}</div>
+            <div><span className="font-semibold">Series:</span> {data.series}</div>
+            <div><span className="font-semibold">Fuel:</span> {data.fuel}</div>
+          </div>
+        )}
+
+        {data.collateral_type === 'land' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><span className="font-semibold">Title No:</span> {data.certificate_of_title_no}</div>
+            <div><span className="font-semibold">Location:</span> {data.location}</div>
+            <div className="col-span-2">
+              <span className="font-semibold">Description:</span> {data.description}
+            </div>
+            <div><span className="font-semibold">Area:</span> {data.area}</div>
+          </div>
+        )}
+
+        {data.collateral_type === 'atm' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><span className="font-semibold">Bank:</span> {data.bank_name}</div>
+            <div><span className="font-semibold">Account No:</span> {data.account_no}</div>
+            <div><span className="font-semibold">Card Last 4:</span> {data.cardno_4digits}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Co-Borrowers */}
+      {coBorrowers.length > 0 && (
+        <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-600 mb-3">
+            Co-Borrowers
+          </h3>
+
+          {coBorrowers.map((co, i) => (
+            <div key={i} className="mb-4 border-b pb-3 last:border-b-0">
+              <p className="font-semibold mb-1">
+                Co-Borrower {i + 1}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><span className="font-semibold">Name:</span> {co.first_name} {co.last_name}</div>
+                <div><span className="font-semibold">Contact:</span> {co.contact}</div>
+                <div><span className="font-semibold">Email:</span> {co.email}</div>
+                <div><span className="font-semibold">Marital Status:</span> {co.marital_status}</div>
+                <div><span className="font-semibold">Occupation:</span> {co.occupation}</div>
+                <div><span className="font-semibold">Net Pay:</span> {co.net_pay}</div>
+                <div className="col-span-2">
+                  <span className="font-semibold">Address:</span> {co.address}
+                </div>
               </div>
-            )}
-          </SectionContainer>
-        );
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
     }
   };
 
