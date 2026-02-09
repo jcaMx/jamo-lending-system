@@ -206,4 +206,7 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
 });
 
 
+
+
+
 require __DIR__.'/settings.php';
