@@ -32,7 +32,7 @@ type PageProps = {
   recentPayments?: RawPayment[];
   totalPaid?: number;
   totalPending?: number;
-  hasBorrower?: boolean;
+  hasLoan?: boolean;
   hasPendingLoan?: boolean;
   nextDueDate?: string | null;
 };
@@ -68,19 +68,18 @@ export default function CustomerRepayments() {
     recentPayments = [],
     totalPaid: totalPaidFromBackend,
     totalPending: totalPendingFromBackend,
-    hasBorrower = true,
+    hasLoan = true,
     hasPendingLoan = false,
     nextDueDate = null,
   } = usePage<InertiaPageProps & PageProps>().props;
 
 
-
-  if (!hasBorrower) {
+  if (!hasLoan) {
     return (
       <DashboardLayout>
         <Head title="Repayments" />
         <div className="m-4">
-          <NoLoansPlaceholder message="You don't have a borrower profile yet. Please apply for a loan to create one." />
+          <NoLoansPlaceholder message="You don't have a loans yet. Please apply for a loan to create one." />
         </div>
       </DashboardLayout>
     );

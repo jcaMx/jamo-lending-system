@@ -18,6 +18,7 @@ interface LoanTermsTabProps {
   loan: Loan;
 }
 
+
 export default function LoanTermsTab({ loan }: LoanTermsTabProps) {
   if (!loan) {
     return (
@@ -74,7 +75,7 @@ export default function LoanTermsTab({ loan }: LoanTermsTabProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
           <DetailRow label="Processing Fee (3%)" value={`₱${loan.principal.toLocaleString()}`} /> 
           <DetailRow label="Insurance Fee (2%)" value={loan.released || '—'} />
-          <DetailRow label="Notary Fee (1%)" value={loan.maturity || '—'} />
+          <DetailRow label="Notary Fee (1%)" value={loan.maturity || '—'} /> 
           <DetailRow label="Savings Contribution (2%)" value={loan.interest || '—'} />
           <DetailRow label="Total Releasing Fees" value={`₱${loan.balance.toLocaleString()}`} />
 

@@ -6,7 +6,6 @@ import type { SharedFormData } from "./sharedFormData";
 import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 
-const icons = [User, Users, Home, DollarSign, CreditCard];
 
 
 interface LoanDetailsProps {
@@ -72,12 +71,11 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
         </div>
 
         <StepIndicator
-          currentStep={4}
+          currentStep={1}
           steps={[
-            "Borrower",
+            "Loan Details",
             "Co-Borrower",
             "Collateral",
-            "Loan Details",
             "Payment",
           ]}
         />

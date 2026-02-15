@@ -6,7 +6,7 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
-  const icons = [User, Users, Home, DollarSign, CreditCard];
+  const icons = [ DollarSign, Users, Home, CreditCard];
 
   return (
     <div className="flex items-center justify-center gap-2 md:gap-4 mb-12">

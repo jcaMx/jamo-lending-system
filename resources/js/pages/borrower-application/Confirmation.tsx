@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import StepIndicator from "./StepIndicator";
-import { CreditCard } from "lucide-react";
+import { CreditCard,DollarSign, Users, Home } from "lucide-react";
 import { router, useForm } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import type { SharedFormData } from "./sharedFormData";
@@ -197,12 +197,11 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
         </div>
 
         <StepIndicator
-          currentStep={5}
+          currentStep={4}
           steps={[
-            "Borrower",
+            "Loan Details",
             "Co-Borrower",
             "Collateral",
-            "Loan Details",
             "Payment",
           ]}
         />

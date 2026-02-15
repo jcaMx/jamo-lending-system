@@ -33,7 +33,22 @@ class MyLoanController extends Controller
                 'authUser' => null,
                 'collaterals' => [],
                 'activeLoan' => null,
+                'hasLoan' => false,
                 'repayments' => [],
+            ]);
+        }
+
+        if (! $borrower->loans()->exists()) {
+            return Inertia::render('customer/MyLoan', [
+                'authUser' => [
+                    'id' => $borrower->ID,
+                    'name' => trim(($borrower->first_name ?? '').' '.($borrower->last_name ?? '')),
+                    'email' => $borrower->email,
+                    'mobile' => $borrower->contact_no,
+                ],
+                'collaterals' => [],
+                'activeLoan' => null,
+                'hasLoan' => false,
             ]);
         }
 
@@ -51,6 +66,7 @@ class MyLoanController extends Controller
             'authUser' => $payload['borrower'],
             'collaterals' => $payload['collaterals'],
             'activeLoan' => $payload['activeLoan'],
+            'hasLoan' => true,
             // 'repayments' => $payload['repayments'],
         ]);
     }

@@ -94,7 +94,7 @@ export default function ViewLoanApplications() {
                   {loanId > 0 && (
                   <Button
                       onClick={() => router.visit(route('loans.show', loanId))}
-                      className="bg-yellow-400 text-black hover:bg-blue-700"
+                      className="bg-yellow-400 text-black hover:bg-yellow-500"
                   >
                       View & Approve
                   </Button>

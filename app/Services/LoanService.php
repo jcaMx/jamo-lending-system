@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Loan;
 use App\Models\ScheduleStatus;
+use App\Models\AmortizationSchedule;
+use App\Models\Holiday;
 use App\Repositories\Interfaces\IAmortizationCalculator;
 use App\Repositories\Interfaces\IHolidayService;
 use App\Repositories\Interfaces\IPenaltyCalculator;
@@ -11,6 +13,8 @@ use App\Services\Amortization\CompoundAmortizationCalculator;
 use App\Services\Amortization\DiminishingAmortizationCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\NotifyUser;
+
 
 class LoanService
 {
@@ -96,6 +100,24 @@ class LoanService
             $loan->save();
         });
 
+        $loan->refresh();
+        $loan->load('borrower');
+        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
+                    Your loan application has been approved.\n\n
+                    Loan Details:\n
+                    - Loan Number: {$loan->ID}\n
+                    - Borrower: {$loan->borrower->first_name} {$loan->borrower->last_name}\n
+                    -Loan Amount: PHP {$loan->principal_amount}\n
+                    
+                    For more information, please log in your account in JAMO Lending System";
+
+        $borrower = $loan->borrower;
+        $borrower->notify(new NotifyUser(
+            message: $message,
+            email: $borrower->email,
+            // sms: $borrower->$user->profile->phone ?? null
+        ));
+
         return $loan->fresh();
     }
 
@@ -103,6 +125,21 @@ class LoanService
     {
         $loan->status = 'Rejected';
         $loan->save();
+
+        $loan->load('borrower');
+
+        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
+                    We regrettably inform you that your loan application has been rejected.\n\n
+                    
+                    Please log in your account in JAMO Lending System and try again. Or contact us for further assistance.
+                    \n Thank you!";
+
+        $borrower = $loan->borrower;
+        $borrower->notify(new NotifyUser(
+            message: $message,
+            email: $borrower->email,
+            // sms: $borrower->$user->profile->phone ?? null
+        ));
 
         return $loan->fresh();
     }
@@ -229,4 +266,21 @@ class LoanService
             ->orderBy('created_at', 'desc')
             ->get();
     }
+    public function notifyUpcomingDue(): void
+    {
+        $threeDaysFromNow = Carbon::now()->addDays(3)->startOfDay();
+        
+        AmortizationSchedule::with('loan.borrower')
+            ->where('status', ScheduleStatus::Unpaid->value)
+            ->whereDate('due_date', $threeDaysFromNow)
+            ->get()
+            ->each(function ($schedule) {
+                $borrower = $schedule->loan->borrower;
+                $borrower->notify(new NotifyUser(
+                    message: "Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
+                    email: $borrower->email
+                ));
+            });
+    }
+
 }

@@ -8,9 +8,6 @@ import type { SharedFormData } from "./sharedFormData";
 import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 
-const icons = [User, Users, Home, DollarSign, CreditCard];
-
-
 interface CollateralProps {
   onNext: () => void;
   onPrev: () => void;
@@ -139,10 +136,9 @@ const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) 
         <StepIndicator
           currentStep={3}
           steps={[
-            "Borrower",
+            "Loan Details",
             "Co-Borrower",
             "Collateral",
-            "Loan Details",
             "Payment",
           ]}
         />

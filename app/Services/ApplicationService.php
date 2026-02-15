@@ -26,59 +26,59 @@ class ApplicationService
     {
         return DB::transaction(function () use ($data, $files, $user) {
             $user = $user ?? Auth::user();
+            $borrower = $user->borrower;
 
-            $borrower = Borrower::create([
-                'user_id' => $user?->id,
-                'first_name' => $data['borrower_first_name'],
-                'last_name' => $data['borrower_last_name'],
-                'birth_date' => $data['date_of_birth'],
-                'gender' => $data['gender'],
-                'marital_status' => $data['marital_status'],
-                'contact_no' => $data['contact_no'],
-                'land_line' => $data['landline_number'] ?? null,
-                'numof_dependentchild' => $data['dependent_child'] ?? null,
-                'home_ownership' => $data['home_ownership'] ?? null,
-                'email' => $user?->email ?? '',
-                'status' => 'Pending',
-            ]);
+            // $borrower = Borrower::create([
+            //     'user_id' => $user?->id,
+            //     'first_name' => $data['borrower_first_name'],
+            //     'last_name' => $data['borrower_last_name'],
+            //     'birth_date' => $data['date_of_birth'],
+            //     'gender' => $data['gender'],
+            //     'marital_status' => $data['marital_status'],
+            //     'contact_no' => $data['contact_no'],
+            //     'land_line' => $data['landline_number'] ?? null,
+            //     'numof_dependentchild' => $data['dependent_child'] ?? null,
+            //     'home_ownership' => $data['home_ownership'] ?? null,
+            //     'email' => $user?->email ?? '',
+            //     'status' => 'Pending',
+            // ]);
+            // BorrowerAddress::create([
+            //     'borrower_id' => $borrower->ID,
+            //     'address' => $data['permanent_address'],
+            //     'city' => $data['city'],
+            // ]);
 
-            BorrowerAddress::create([
-                'borrower_id' => $borrower->ID,
-                'address' => $data['permanent_address'],
-                'city' => $data['city'],
-            ]);
+            // BorrowerEmployment::create([
+            //     'borrower_id' => $borrower->ID,
+            //     'employment_status' => $data['employment_status'] ?? null,
+            //     'income_source' => $data['income_source'] ?? null,
+            //     'occupation' => $data['occupation'] ?? null,
+            //     'position' => $data['position'] ?? null,
+            //     'agency_address' => $data['agency_address'] ?? null,
+            //     'monthly_income' => $data['monthly_income'] ?? 0,
+            // ]);
 
-            BorrowerEmployment::create([
-                'borrower_id' => $borrower->ID,
-                'employment_status' => $data['employment_status'] ?? null,
-                'income_source' => $data['income_source'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'position' => $data['position'] ?? null,
-                'agency_address' => $data['agency_address'] ?? null,
-                'monthly_income' => $data['monthly_income'] ?? 0,
-            ]);
+            // BorrowerId::create([
+            //     'borrower_id' => $borrower->ID,
+            //     'id_type' => $data['valid_id_type'],
+            //     'id_number' => $data['valid_id_number'],
+            // ]);
 
-            BorrowerId::create([
-                'borrower_id' => $borrower->ID,
-                'id_type' => $data['valid_id_type'],
-                'id_number' => $data['valid_id_number'],
-            ]);
-
-            if (
-                ($data['marital_status'] ?? null) === 'Married'
-                && ! empty($data['spouse_first_name'])
-                && ! empty($data['spouse_last_name'])
-            ) {
-                Spouse::create([
-                    'borrower_id' => $borrower->ID,
-                    'first_name' => $data['spouse_first_name'],
-                    'last_name' => $data['spouse_last_name'],
-                    'contact_no' => $data['spouse_mobile_number'] ?? '',
-                    'occupation' => $data['spouse_occupation'] ?? null,
-                    'position' => $data['spouse_position'] ?? null,
-                    'agency_address' => $data['spouse_agency_address'] ?? null,
-                ]);
-            }
+            // if (
+            //     ($data['marital_status'] ?? null) === 'Married'
+            //     && ! empty($data['spouse_first_name'])
+            //     && ! empty($data['spouse_last_name'])
+            // ) {
+            //     Spouse::create([
+            //         'borrower_id' => $borrower->ID,
+            //         'first_name' => $data['spouse_first_name'],
+            //         'last_name' => $data['spouse_last_name'],
+            //         'contact_no' => $data['spouse_mobile_number'] ?? '',
+            //         'occupation' => $data['spouse_occupation'] ?? null,
+            //         'position' => $data['spouse_position'] ?? null,
+            //         'agency_address' => $data['spouse_agency_address'] ?? null,
+            //     ]);
+            // }
 
             $loan = Loan::create([
                 'borrower_id' => $borrower->ID,

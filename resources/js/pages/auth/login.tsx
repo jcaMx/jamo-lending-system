@@ -48,6 +48,8 @@ export default function Login({
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="email@example.com"
+                                    className="placeholder:text-gray-400"
+
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -73,6 +75,7 @@ export default function Login({
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
+                                    className="placeholder:text-gray-400"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -85,6 +88,7 @@ export default function Login({
                                 />
                                 <Label htmlFor="remember">Remember me</Label>
                             </div>
+
 
                             <Button
                                 type="submit"
@@ -106,6 +110,13 @@ export default function Login({
                                 </TextLink>
                             </div>
                         )}
+
+                        <div className="text-center text-sm text-muted-foreground">
+                            Don't have an account yet?{' '}
+                            <TextLink href={register()} tabIndex={6}>
+                                Sign up
+                            </TextLink>
+                        </div>
                     </>
                 )}
             </Form>

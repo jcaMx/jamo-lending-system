@@ -26,38 +26,38 @@ interface BorrowerApplicationProps {
 const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
   const [currentStep, setCurrentStep] = useState(0);
 
-  const totalSteps = 5;
+  const totalSteps = 4;
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
   const [formData, setFormData] = useState<SharedFormData>({
-    borrower_first_name: "",
-    borrower_last_name: "",
-    gender: "",
-    date_of_birth: "",
-    marital_status: "",
-    contact_no: "",
-    landline_number: "",
-    dependent_child: "",
-    spouse_first_name: "",
-    spouse_last_name: "",
-    spouse_agency_address: "",
-    spouse_occupation: "",
-    spouse_position: "",
-    spouse_mobile_number: "",
-    permanent_address: "",
-    city: "",
-    home_ownership: "",
-    employment_status: "",
-    occupation: "",
-    position: "",
-    monthly_income: "",
-    income_source: "",
-    agency_address: "",
-    valid_id_type: "",
-    valid_id_number: "",
-    files: null,
-        coBorrowers: [],
+    // borrower_first_name: "",
+    // borrower_last_name: "",
+    // gender: "",
+    // date_of_birth: "",
+    // marital_status: "",
+    // contact_no: "",
+    // landline_number: "",
+    // dependent_child: "",
+    // spouse_first_name: "",
+    // spouse_last_name: "",
+    // spouse_agency_address: "",
+    // spouse_occupation: "",
+    // spouse_position: "",
+    // spouse_mobile_number: "",
+    // permanent_address: "",
+    // city: "",
+    // home_ownership: "",
+    // employment_status: "",
+    // occupation: "",
+    // position: "",
+    // monthly_income: "",
+    // income_source: "",
+    // agency_address: "",
+    // valid_id_type: "",
+    // valid_id_number: "",
+    // files: null,
+    coBorrowers: [],
     collateral_type: "",
     make: "",
     vehicle_type: "",
@@ -92,12 +92,21 @@ const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
     <div className="min-h-screen">
       {/* <Header /> */}
       
-      {currentStep === 0 && (
+      {/* {currentStep === 0 && (
         <BorrowerInfo
           onNext={nextStep}
           formData={formData}
           setFormData={setFormData}
         />
+      )} */}
+      {currentStep === 0 && (
+        <LoanDetails
+          onNext={nextStep}
+          onPrev={prevStep}
+          formData={formData}
+          setFormData={setFormData}
+        />
+
       )}
       {currentStep === 1 && (
         <CoBorrowerInfo
@@ -106,24 +115,19 @@ const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
           formData={formData}
           setFormData={setFormData}
         />
+
       )}
       {currentStep === 2 && (
+
         <Collateral
           onNext={nextStep}
           onPrev={prevStep}
           formData={formData}
           setFormData={setFormData}
         />
+
       )}
       {currentStep === 3 && (
-        <LoanDetails
-          onNext={nextStep}
-          onPrev={prevStep}
-          formData={formData}
-          setFormData={setFormData}
-        />
-      )}
-      {currentStep === 4 && (
         <Confirmation
           onPrev={prevStep}
           application={application}
