@@ -95,45 +95,49 @@ class LoanController extends Controller
             ];
             $loan = $this->loanService->createLoan($loanData);
 
-            // Create Collateral using CollateralFactory
-            $collateralType = match($request->input('collateral_type')) {
-                'vehicle' => 'Vehicle',
-                'land' => 'Land',
-                'atm' => 'ATM',
-                default => ucfirst($request->input('collateral_type'))
-            };
-            $collateralData = [
-                'loan_id' => $loan->ID,
-                'status' => 'Pending',
-            ];
+            $collateral = null;
+            $collateralTypeInput = $request->input('collateral_type');
+            if ($collateralTypeInput) {
+                // Create Collateral using CollateralFactory
+                $collateralType = match($collateralTypeInput) {
+                    'vehicle' => 'Vehicle',
+                    'land' => 'Land',
+                    'atm' => 'ATM',
+                    default => ucfirst((string) $collateralTypeInput)
+                };
+                $collateralData = [
+                    'loan_id' => $loan->ID,
+                    'status' => 'Pending',
+                ];
 
-            // Add type-specific collateral data
-            if ($request->input('collateral_type') === 'vehicle') {
-                $collateralData['brand'] = $request->input('make');
-                $collateralData['model'] = $request->input('series') ?? '';
-                $collateralData['year_model'] = $request->input('year_model');
-                $collateralData['plate_no'] = $request->input('plate_no');
-                $collateralData['engine_no'] = $request->input('engine_no');
-                $collateralData['fuel_type'] = $request->input('fuel');
-                $collateralData['vehicle_type'] = $request->input('vehicle_type'); // Vehicle type (Car, Motorcycle, Truck)
-                $collateralData['transmission_type'] = $request->input('transmission_type'); // Transmission type (Manual, Automatic)
-            } elseif ($request->input('collateral_type') === 'land') {
-                $collateralData['titleNo'] = $request->input('certificate_of_title_no');
-                $collateralData['lotNo'] = 0; // Default if not provided
-                $collateralData['location'] = $request->input('location');
-                $collateralData['areaSize'] = $request->input('area') ?? '';
-                $collateralData['description'] = $request->input('description');
-            } elseif ($request->input('collateral_type') === 'atm') {
-                $collateralData['bank_name'] = $request->input('bank_name');
-                $collateralData['account_no'] = $request->input('account_no');
-                $collateralData['cardno_4digits'] = (int) $request->input('cardno_4digits');
+                // Add type-specific collateral data
+                if ($collateralTypeInput === 'vehicle') {
+                    $collateralData['brand'] = $request->input('make');
+                    $collateralData['model'] = $request->input('series') ?? '';
+                    $collateralData['year_model'] = $request->input('year_model');
+                    $collateralData['plate_no'] = $request->input('plate_no');
+                    $collateralData['engine_no'] = $request->input('engine_no');
+                    $collateralData['fuel_type'] = $request->input('fuel');
+                    $collateralData['vehicle_type'] = $request->input('vehicle_type'); // Vehicle type (Car, Motorcycle, Truck)
+                    $collateralData['transmission_type'] = $request->input('transmission_type'); // Transmission type (Manual, Automatic)
+                } elseif ($collateralTypeInput === 'land') {
+                    $collateralData['titleNo'] = $request->input('certificate_of_title_no');
+                    $collateralData['lotNo'] = 0; // Default if not provided
+                    $collateralData['location'] = $request->input('location');
+                    $collateralData['areaSize'] = $request->input('area') ?? '';
+                    $collateralData['description'] = $request->input('description');
+                } elseif ($collateralTypeInput === 'atm') {
+                    $collateralData['bank_name'] = $request->input('bank_name');
+                    $collateralData['account_no'] = $request->input('account_no');
+                    $collateralData['cardno_4digits'] = (int) $request->input('cardno_4digits');
+                }
+
+                // Create Collateral first (needed for file relationship)
+                $collateral = CollateralFactory::createCollateral($collateralType, $collateralData);
             }
 
-            // Create Collateral first (needed for file relationship)
-            $collateral = CollateralFactory::createCollateral($collateralType, $collateralData);
-
             // Handle ownership proof file upload
-            if ($request->hasFile('ownership_proof')) {
+            if ($collateral && $request->hasFile('ownership_proof')) {
                 $path = $request->file('ownership_proof')->store('collateral', 'public');
                 $file = Files::create([
                     'file_type' => 'ownership_proof',

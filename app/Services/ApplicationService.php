@@ -28,58 +28,6 @@ class ApplicationService
             $user = $user ?? Auth::user();
             $borrower = $user->borrower;
 
-            // $borrower = Borrower::create([
-            //     'user_id' => $user?->id,
-            //     'first_name' => $data['borrower_first_name'],
-            //     'last_name' => $data['borrower_last_name'],
-            //     'birth_date' => $data['date_of_birth'],
-            //     'gender' => $data['gender'],
-            //     'marital_status' => $data['marital_status'],
-            //     'contact_no' => $data['contact_no'],
-            //     'land_line' => $data['landline_number'] ?? null,
-            //     'numof_dependentchild' => $data['dependent_child'] ?? null,
-            //     'home_ownership' => $data['home_ownership'] ?? null,
-            //     'email' => $user?->email ?? '',
-            //     'status' => 'Pending',
-            // ]);
-            // BorrowerAddress::create([
-            //     'borrower_id' => $borrower->ID,
-            //     'address' => $data['permanent_address'],
-            //     'city' => $data['city'],
-            // ]);
-
-            // BorrowerEmployment::create([
-            //     'borrower_id' => $borrower->ID,
-            //     'employment_status' => $data['employment_status'] ?? null,
-            //     'income_source' => $data['income_source'] ?? null,
-            //     'occupation' => $data['occupation'] ?? null,
-            //     'position' => $data['position'] ?? null,
-            //     'agency_address' => $data['agency_address'] ?? null,
-            //     'monthly_income' => $data['monthly_income'] ?? 0,
-            // ]);
-
-            // BorrowerId::create([
-            //     'borrower_id' => $borrower->ID,
-            //     'id_type' => $data['valid_id_type'],
-            //     'id_number' => $data['valid_id_number'],
-            // ]);
-
-            // if (
-            //     ($data['marital_status'] ?? null) === 'Married'
-            //     && ! empty($data['spouse_first_name'])
-            //     && ! empty($data['spouse_last_name'])
-            // ) {
-            //     Spouse::create([
-            //         'borrower_id' => $borrower->ID,
-            //         'first_name' => $data['spouse_first_name'],
-            //         'last_name' => $data['spouse_last_name'],
-            //         'contact_no' => $data['spouse_mobile_number'] ?? '',
-            //         'occupation' => $data['spouse_occupation'] ?? null,
-            //         'position' => $data['spouse_position'] ?? null,
-            //         'agency_address' => $data['spouse_agency_address'] ?? null,
-            //     ]);
-            // }
-
             $loan = Loan::create([
                 'borrower_id' => $borrower->ID,
                 'loan_type' => $data['loan_type'],
@@ -91,17 +39,21 @@ class ApplicationService
                 'balance_remaining' => $data['loan_amount'],
             ]);
 
-            $collateral = Collateral::create([
-                'loan_id' => $loan->ID,
-                'type' => $this->normalizeCollateralType($data['collateral_type']),
-                'estimated_value' => $data['estimated_value'] ?? null,
-                'appraisal_date' => $data['appraisal_date'] ?? null,
-                'appraised_by' => $data['appraised_by'] ?? null,
-                'description' => $data['description'] ?? null,
-                'status' => 'Pending',
-            ]);
+            $collateral = null;
+            $collateralType = strtolower((string) ($data['collateral_type'] ?? ''));
+            if ($collateralType !== '') {
+                $collateral = Collateral::create([
+                    'loan_id' => $loan->ID,
+                    'type' => $this->normalizeCollateralType($collateralType),
+                    'estimated_value' => $data['estimated_value'] ?? null,
+                    'appraisal_date' => $data['appraisal_date'] ?? null,
+                    'appraised_by' => $data['appraised_by'] ?? null,
+                    'description' => $data['description'] ?? null,
+                    'status' => 'Pending',
+                ]);
+            }
 
-            if (strtolower($data['collateral_type']) === 'vehicle') {
+            if ($collateral && $collateralType === 'vehicle') {
                 VehicleCollateralDetails::create([
                     'collateral_id' => $collateral->ID,
                     'type' => $data['vehicle_type'] ?? null,
@@ -115,19 +67,13 @@ class ApplicationService
                 ]);
             }
 
-            if (strtolower($data['collateral_type']) === 'atm') {
-                $allowedBanks = ['BDO', 'BPI', 'LandBank', 'MetroBank'];
-                $bankName = $data['bank_name'] ?? null;
-                $bankName = in_array($bankName, $allowedBanks, true) ? $bankName : null;
-
-                if ($bankName) {
-                    AtmCollateralDetails::create([
-                        'collateral_id' => $collateral->ID,
-                        'bank_name' => $bankName,
-                        'account_no' => $data['account_no'] ?? '',
-                        'cardno_4digits' => $data['cardno_4digits'] ?? 0,
-                    ]);
-                }
+            if ($collateral && $collateralType === 'atm') {
+                AtmCollateralDetails::create([
+                    'collateral_id' => $collateral->ID,
+                    'bank_name' => $data['bank_name'] ?? '',
+                    'account_no' => $data['account_no'] ?? '',
+                    'cardno_4digits' => $data['cardno_4digits'] ?? 0,
+                ]);
             }
 
             $coBorrowerIds = [];
@@ -152,7 +98,7 @@ class ApplicationService
             }
 
             $ownershipProofFileId = null;
-            if (! empty($files['ownership_proof'])) {
+            if ($collateral && ! empty($files['ownership_proof'])) {
                 $file = $files['ownership_proof'];
                 $path = $file->store('collaterals', 'public');
                 $fileRecord = Files::create([
@@ -175,12 +121,12 @@ class ApplicationService
                         'file_path' => $path,
                         'description' => 'Borrower valid ID',
                         'borrower_id' => $borrower->ID,
-                        'collateral_id' => $collateral->ID,
+                        'collateral_id' => $collateral?->ID,
                     ]);
                 }
             }
 
-            if ($ownershipProofFileId) {
+            if ($collateral && $ownershipProofFileId) {
                 $collateral->ownership_proof = $ownershipProofFileId;
                 $collateral->save();
             }

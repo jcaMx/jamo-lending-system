@@ -4,20 +4,33 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use App\Services\ApplicationService;
+use App\Services\LoanProductRuleResolver;
 
 class ApplicationController extends Controller
 {
     protected $service;
+    protected LoanProductRuleResolver $ruleResolver;
 
-    public function __construct(ApplicationService $service)
+    public function __construct(ApplicationService $service, LoanProductRuleResolver $ruleResolver)
     {
         $this->service = $service;
+        $this->ruleResolver = $ruleResolver;
     }
 
     public function confirm(Request $request)
     {
-        $validated = $request->validate([
+        $loanProductId = $request->integer('loan_product_id') ?: null;
+        $loanType = $request->input('loan_type');
+        $loanAmount = (float) $request->input('loan_amount', 0);
+
+        $loanRule = $this->ruleResolver->resolve($loanProductId, $loanType);
+        $requiresCollateral = $this->ruleResolver->requiresCollateral($loanRule, $loanAmount);
+        $requiresCoBorrower = $this->ruleResolver->requiresCoBorrower($loanRule);
+        $hasCollateralPayload = $request->filled('collateral_type') || $request->hasFile('ownership_proof');
+
+        $rules = [
             // 'borrower_first_name' => 'required|string|max:255',
             // 'borrower_last_name' => 'required|string|max:255',
             // 'date_of_birth' => 'required|date',
@@ -48,7 +61,7 @@ class ApplicationController extends Controller
             // 'valid_id_number' => 'required|string|max:50',
             // 'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
 
-            'coBorrowers' => 'nullable|array',
+            'loan_product_id' => 'nullable|integer|exists:loan_products,id',
             'coBorrowers.*.first_name' => 'required_with:coBorrowers|string|max:255',
             'coBorrowers.*.last_name' => 'required_with:coBorrowers|string|max:255',
             'coBorrowers.*.birth_date' => 'required_with:coBorrowers|date',
@@ -60,7 +73,7 @@ class ApplicationController extends Controller
             'coBorrowers.*.position' => 'nullable|string|max:255',
             'coBorrowers.*.employer_address' => 'nullable|string|max:500',
 
-            'collateral_type' => 'required|string|max:50',
+            'collateral_type' => 'nullable|string|in:vehicle,land,atm',
             'description' => 'nullable|string|max:1000',
             'estimated_value' => 'nullable|numeric|min:0',
             'appraisal_date' => 'nullable|date',
@@ -77,7 +90,7 @@ class ApplicationController extends Controller
             'certificate_of_title_no' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
             'area' => 'nullable|string|max:50',
-            'bank_name' => 'nullable|string|in:BDO,BPI,LandBank,MetroBank',
+            'bank_name' => 'nullable|string|max:100',
             'account_no' => 'nullable|string|max:50',
             'cardno_4digits' => 'nullable|string|max:4',
 
@@ -89,7 +102,33 @@ class ApplicationController extends Controller
             'repayment_frequency' => 'required|string|max:20',
 
             // 'payment_method' => 'required|string|in:bank,cash,check',
-        ]);
+        ];
+
+        $rules['coBorrowers'] = $requiresCoBorrower
+            ? 'required|array|min:1'
+            : 'nullable|array';
+
+        if ($requiresCollateral) {
+            $rules['collateral_type'] = 'required|string|in:vehicle,land,atm';
+        }
+
+        if ($requiresCollateral || $hasCollateralPayload) {
+            $collateralType = strtolower((string) $request->input('collateral_type'));
+            if ($collateralType === 'vehicle') {
+                $rules['make'] = 'required|string|max:50';
+                $rules['vehicle_type'] = 'required|string|max:20';
+                $rules['transmission_type'] = 'required|string|max:20';
+            } elseif ($collateralType === 'land') {
+                $rules['certificate_of_title_no'] = 'required|string|max:50';
+                $rules['location'] = 'required|string|max:255';
+            } elseif ($collateralType === 'atm') {
+                $rules['bank_name'] = 'required|string|max:100';
+                $rules['account_no'] = 'required|string|max:50';
+                $rules['cardno_4digits'] = 'required|string|size:4';
+            }
+        }
+
+        $validated = Validator::make($request->all(), $rules)->validate();
 
         $loan = $this->service->createFullApplication(
             $validated,

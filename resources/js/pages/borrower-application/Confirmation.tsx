@@ -127,6 +127,7 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
   };
 
   const appendLoan = (payload: FormData) => {
+    appendIfPresent(payload, "loan_product_id", formData.loan_product_id);
     appendIfPresent(payload, "loan_type", formData.loan_type);
     appendIfPresent(payload, "loan_amount", formData.loan_amount);
     appendIfPresent(payload, "interest_type", formData.interest_type);

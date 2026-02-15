@@ -11,6 +11,12 @@ export interface CoBorrower {
   employer_address: string;
 }
 
+export interface LoanProductRule {
+  requires_collateral: boolean;
+  requires_coborrower: boolean;
+  collateral_required_above: number | null;
+}
+
 export interface SharedFormData {
   // borrower_first_name?: string;
   // borrower_last_name?: string;
@@ -69,6 +75,8 @@ export interface SharedFormData {
   appraised_by?: string;
   ownership_proof?: File | null;
 
+  loan_product_id?: number | null;
+  loan_product_rule?: LoanProductRule | null;
   loan_type?: string;
   loan_amount?: number | string;
   interest_type?: string;
