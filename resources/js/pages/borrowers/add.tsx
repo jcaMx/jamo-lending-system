@@ -3,7 +3,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import React, { useMemo, useState } from 'react';
-import {route }from 'ziggy-js';
 import AddBorrowerStepIndicator from './components/AddBorrowerStepIndicator';
 import RenderDocumentUploader, {
   type BorrowerDocumentCategory,
@@ -75,6 +74,7 @@ const MIN_DOCUMENTS_PER_CATEGORY: Record<'borrower_identity' | 'borrower_address
 
 export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProps) {
   const [step, setStep] = useState(1);
+  const [submitError, setSubmitError] = useState<string>('');
 
   const { data, setData, post, processing, errors } = useForm<FormData>({
     borrower_first_name: '',
@@ -174,6 +174,7 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
   const prev = () => setStep((s) => s - 1);
 
   const next = () => {
+    setSubmitError('');
     const currentRequired = STEP_REQUIRED_FIELDS[step] || [];
     const hasEmptyFields = currentRequired.some((field) => !String(data[field] ?? '').trim());
 
@@ -182,33 +183,38 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
       if (spouseRequired) return;
     }
 
-    if (step === 4 && !hasMinDocuments('borrower_identity')) {
-      return;
-    }
-
-    if (!hasEmptyFields && step < 5) {
+    if (!hasEmptyFields && step < addBorrowerSteps.length) {
       setStep((s) => s + 1);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError('');
 
     if (!hasMinDocuments('borrower_identity') || !hasMinDocuments('borrower_address') || !hasMinDocuments('borrower_employment')) {
       setStep(4);
+      setSubmitError('Please complete the required documents: Identity (2), Address (1), Employment (2).');
       return;
     }
 
-    post(route('borrowers.store'), {
+    post('/borrowers', {
       forceFormData: true,
       preserveScroll: true,
-      onError: () => {
-        const fieldErrors = Object.keys(errors);
-        if (fieldErrors.some((k) => k.startsWith('borrower_') || ['gender', 'date_of_birth', 'marital_status', 'contact_no', 'email'].includes(k))) {
+      onError: (fieldErrors) => {
+        const keys = Object.keys(fieldErrors);
+        const firstMessage = Object.values(fieldErrors)[0];
+        setSubmitError(typeof firstMessage === 'string' ? firstMessage : 'Submission failed. Please check the highlighted fields.');
+
+        if (keys.some((k) => k.startsWith('documents.'))) {
+          setStep(4);
+          return;
+        }
+        if (keys.some((k) => k.startsWith('borrower_') || ['gender', 'date_of_birth', 'marital_status', 'contact_no', 'email'].includes(k))) {
           setStep(1);
-        } else if (fieldErrors.some((k) => k.startsWith('permanent_address') || k.startsWith('city') || k.startsWith('home_ownership') || k.includes('borrower_address'))) {
+        } else if (keys.some((k) => k.startsWith('permanent_address') || k.startsWith('city') || k.startsWith('home_ownership') || k.includes('borrower_address'))) {
           setStep(2);
-        } else if (fieldErrors.some((k) => k.startsWith('employment_') || k.startsWith('income_source') || k.includes('borrower_employment'))) {
+        } else if (keys.some((k) => k.startsWith('employment_') || k.startsWith('income_source') || k.includes('borrower_employment'))) {
           setStep(3);
         } else {
           setStep(4);
@@ -229,6 +235,12 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
         </h1>
 
         <AddBorrowerStepIndicator currentStep={step} steps={addBorrowerSteps} />
+
+        {submitError && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {submitError}
+          </div>
+        )}
 
         {step === 1 && (
           <div>
@@ -435,14 +447,14 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
         <div className="flex justify-between mt-6">
           <div>{step > 1 && <Button type="button" onClick={prev} className="bg-[#FABF24] text-black hover:bg-yellow-600">Back</Button>}</div>
           <div>
-            {step < 5 && (
+            {step < addBorrowerSteps.length && (
               <Button type="button" onClick={next} className="bg-[#FABF24] text-black hover:bg-yellow-600">
                 Next
               </Button>
             )}
-            {step === 5 && (
+            {step === addBorrowerSteps.length && (
               <Button type="submit" className="bg-[#FABF24] text-black hover:bg-yellow-600" disabled={processing}>
-                {processing ? 'Submitting...' : 'Submit Borrower'}
+                {processing ? 'Submitting...' : 'Submit'}
               </Button>
             )}
           </div>

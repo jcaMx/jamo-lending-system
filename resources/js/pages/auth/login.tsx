@@ -111,12 +111,12 @@ export default function Login({
                             </div>
                         )}
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        {/* <div className="text-center text-sm text-muted-foreground">
                             Don't have an account yet?{' '}
                             <TextLink href={register()} tabIndex={6}>
                                 Sign up
                             </TextLink>
-                        </div>
+                        </div> */}
                     </>
                 )}
             </Form>

@@ -88,8 +88,8 @@ class BorrowerController extends Controller
             'position' => 'nullable|string|max:100',
             'monthly_income' => 'nullable|numeric',
             'agency_address' => 'nullable|string|max:255',
-            'valid_id_type' => 'required|string|max:50',
-            'valid_id_number' => 'required|string|max:50',
+            'valid_id_type' => 'nullable|string|max:50',
+            'valid_id_number' => 'nullable|string|max:50',
 
             // spouse fields if married
             'spouse_first_name' => 'nullable|string|max:255',
@@ -132,9 +132,7 @@ class BorrowerController extends Controller
 
         $borrower = $this->borrowerService->createBorrower($validated);
 
-        return redirect()
-            ->route('borrowers.show', ['id' => $borrower->ID])
-            ->with('success', 'Borrower added successfully!');
+        return Inertia::location(route('borrowers.show', ['id' => $borrower->ID]));
     }
 
     public function update(Request $request, Borrower $borrower)

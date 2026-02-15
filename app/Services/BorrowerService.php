@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Borrower;
 use App\Models\BorrowerId;
 use App\Models\Collateral;
-use App\Models\File;
+use App\Models\Files;
 use App\Models\Loan;
 use App\Models\LoanComment;
 use App\Models\Payment;
@@ -359,18 +359,28 @@ class BorrowerService
             }
 
             // -------------------------------
-            // Borrower ID
+            // Borrower ID (optional when documents are used as source of truth)
             // -------------------------------
-            BorrowerId::create([
-                'borrower_id' => $borrower->ID,
-                'id_type' => $clean($data['valid_id_type'] ?? null),
-                'id_number' => $clean($data['valid_id_number'] ?? null),
-            ]);
+            $validIdType = $clean($data['valid_id_type'] ?? null);
+            $validIdNumber = $clean($data['valid_id_number'] ?? null);
+
+            if ($validIdType && $validIdNumber) {
+                BorrowerId::create([
+                    'borrower_id' => $borrower->ID,
+                    'id_type' => $validIdType,
+                    'id_number' => $validIdNumber,
+                ]);
+            }
 
             // -------------------------------
             // Documents (polymorphic files)
             // -------------------------------
             $documentCategories = ['borrower_identity', 'borrower_address', 'borrower_employment'];
+            $fileTypeByCategory = [
+                'borrower_identity' => 'id_document',
+                'borrower_address' => 'contract',
+                'borrower_employment' => 'contract',
+            ];
 
             foreach ($documentCategories as $category) {
                 $documents = $data['documents'][$category] ?? [];
@@ -389,17 +399,15 @@ class BorrowerService
 
                     $storedPath = $file->store("borrowers/{$borrower->ID}/{$category}", 'public');
 
-                    File::create([
-                        'documentable_id' => $borrower->ID,
-                        'documentable_type' => Borrower::class,
-                        'document_type_id' => $documentTypeId,
-                        'status' => 'Pending',
-                        'verified_by' => null,
-                        'verified_at' => null,
+                    Files::create([
+                        'file_type' => $fileTypeByCategory[$category] ?? 'contract',
                         'file_name' => $file->getClientOriginalName(),
                         'file_path' => $storedPath,
                         'uploaded_at' => now(),
-                        'description' => $category,
+                        // Keep selected document type traceable even without document_type_id column.
+                        'description' => $category . ' (type_id:' . $documentTypeId . ')',
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => null,
                     ]);
                 }
             }
@@ -460,4 +468,3 @@ class BorrowerService
         return $borrower->fresh(['borrowerAddress', 'borrowerEmployment', 'spouse', 'coBorrowers', 'loans']);
     }
 }
-
