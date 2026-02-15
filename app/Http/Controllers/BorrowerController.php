@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Borrower;
+use App\Models\DocumentType;
 use App\Services\BorrowerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-
 
 class BorrowerController extends Controller
 {
@@ -39,7 +39,19 @@ class BorrowerController extends Controller
 
     public function add()
     {
-        return Inertia::render('borrowers/add');
+        $categories = ['borrower_identity', 'borrower_address', 'borrower_employment'];
+
+        $documentTypesByCategory = DocumentType::query()
+            ->whereIn('category', $categories)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'category'])
+            ->groupBy('category')
+            ->map(fn ($items) => $items->values())
+            ->toArray();
+
+        return Inertia::render('borrowers/add', [
+            'documentTypesByCategory' => $documentTypesByCategory,
+        ]);
     }
 
     public function show(int $id)
@@ -56,9 +68,6 @@ class BorrowerController extends Controller
 
     public function store(Request $request)
     {
-        // Debug: Log incoming request data
-        // \Log::info('Incoming request data:', $request->all());
-
         $validated = $request->validate([
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'borrower_first_name' => 'required|string|max:255',
@@ -81,7 +90,7 @@ class BorrowerController extends Controller
             'agency_address' => 'nullable|string|max:255',
             'valid_id_type' => 'required|string|max:50',
             'valid_id_number' => 'required|string|max:50',
-            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+
             // spouse fields if married
             'spouse_first_name' => 'nullable|string|max:255',
             'spouse_last_name' => 'nullable|string|max:255',
@@ -89,11 +98,23 @@ class BorrowerController extends Controller
             'spouse_occupation' => 'nullable|string|max:100',
             'spouse_position' => 'nullable|string|max:100',
             'spouse_agency_address' => 'nullable|string|max:255',
+
+            // dynamic documents
+            'documents' => 'required|array',
+
+            'documents.borrower_identity' => 'required|array|min:2',
+            'documents.borrower_identity.*.document_type_id' => 'required|integer|exists:document_types,id',
+            'documents.borrower_identity.*.file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+
+            'documents.borrower_address' => 'required|array|min:1',
+            'documents.borrower_address.*.document_type_id' => 'required|integer|exists:document_types,id',
+            'documents.borrower_address.*.file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+
+            'documents.borrower_employment' => 'required|array|min:2',
+            'documents.borrower_employment.*.document_type_id' => 'required|integer|exists:document_types,id',
+            'documents.borrower_employment.*.file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        // -------------------------------
-        // Check if borrower already exists
-        // -------------------------------
         $exists = Borrower::where('first_name', $validated['borrower_first_name'])
             ->where('last_name', $validated['borrower_last_name'])
             ->where('birth_date', $validated['date_of_birth'])
@@ -107,18 +128,13 @@ class BorrowerController extends Controller
                     'email' => 'Borrower already exists.',
                 ])
                 ->withInput();
-
         }
 
-        // -------------------------------
-        // Create borrower using service
-        // -------------------------------
         $borrower = $this->borrowerService->createBorrower($validated);
 
         return redirect()
             ->route('borrowers.show', ['id' => $borrower->ID])
             ->with('success', 'Borrower added successfully!');
-
     }
 
     public function update(Request $request, Borrower $borrower)
@@ -135,29 +151,9 @@ class BorrowerController extends Controller
             'age' => 'nullable|integer|min:0',
         ]);
 
-        // 👇 use the injected property name
         $this->borrowerService->updateBorrower($borrower, $validated);
 
         return redirect()->back()->with('success', 'Borrower updated successfully');
-
-        $borrower = Borrower::with('loan')->findOrFail($id);
-
-        return Inertia::render('borrowers/show', [
-            'borrower' => [
-                'id' => $borrower->ID,
-                'first_name' => $borrower->first_name,
-                'last_name' => $borrower->last_name,
-                'email' => $borrower->email,
-                'city' => $borrower->city,
-                'gender' => $borrower->gender,
-                'occupation' => $borrower->occupation,
-                'contact_no' => $borrower->contact_no,
-                'loan' => $borrower->loan ? [
-                    'status' => $borrower->loan->status,
-                ] : null,
-            ],
-        ]);
-
     }
 
     public function destroy($id)

@@ -112,16 +112,9 @@ class BorrowerService
         $activeLoan = $this->formatLoan($activeLoanModel);      // formatted array for frontend
 
         $comments = $activeLoanModel
-            ? LoanComment::with('user')
-                ->where('loan_id', $activeLoanModel->ID)
+            ? LoanComment::where('loan_id', $activeLoanModel->id)
                 ->orderByDesc('comment_date')
                 ->get()
-                ->map(fn (LoanComment $comment) => [
-                    'ID' => $comment->ID,
-                    'comment_text' => $comment->comment_text,
-                    'commented_by' => $comment->user?->name ?? 'Unknown',
-                    'comment_date' => optional($comment->comment_date)?->toISOString(),
-                ])
             : collect();
 
         return [
@@ -192,7 +185,6 @@ class BorrowerService
             : (string) ($loan->status ?? '');
 
         return [
-            'ID' => $loan->ID,
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
@@ -376,28 +368,39 @@ class BorrowerService
             ]);
 
             // -------------------------------
-            // Files
+            // Documents (polymorphic files)
             // -------------------------------
-            if (! empty($data['files']) && is_array($data['files'])) {
-                $allowedTypes = ['jpg', 'jpeg', 'png', 'pdf'];
-                $maxSize = 5 * 1024 * 1024; // 5MB
+            $documentCategories = ['borrower_identity', 'borrower_address', 'borrower_employment'];
 
-                foreach ($data['files'] as $file) {
-                    if ($file instanceof UploadedFile &&
-                        $file->getSize() <= $maxSize &&
-                        in_array(strtolower($file->getClientOriginalExtension()), $allowedTypes)) {
+            foreach ($documentCategories as $category) {
+                $documents = $data['documents'][$category] ?? [];
 
-                        $path = $file->store('borrowers', 'public');
+                if (! is_array($documents)) {
+                    continue;
+                }
 
-                        File::create([
-                            'borrower_id' => $borrower->ID,
-                            'file_type' => 'ID',
-                            'file_name' => $file->getClientOriginalName(),
-                            'file_path' => $path,
-                            'uploaded_at' => now(),
-                            'description' => 'Borrower ID Upload',
-                        ]);
+                foreach ($documents as $document) {
+                    $file = $document['file'] ?? null;
+                    $documentTypeId = isset($document['document_type_id']) ? (int) $document['document_type_id'] : null;
+
+                    if (! $file instanceof UploadedFile || ! $documentTypeId) {
+                        continue;
                     }
+
+                    $storedPath = $file->store("borrowers/{$borrower->ID}/{$category}", 'public');
+
+                    File::create([
+                        'documentable_id' => $borrower->ID,
+                        'documentable_type' => Borrower::class,
+                        'document_type_id' => $documentTypeId,
+                        'status' => 'Pending',
+                        'verified_by' => null,
+                        'verified_at' => null,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $storedPath,
+                        'uploaded_at' => now(),
+                        'description' => $category,
+                    ]);
                 }
             }
 
@@ -457,3 +460,4 @@ class BorrowerService
         return $borrower->fresh(['borrowerAddress', 'borrowerEmployment', 'spouse', 'coBorrowers', 'loans']);
     }
 }
+
