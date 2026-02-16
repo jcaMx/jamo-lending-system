@@ -45,6 +45,11 @@ class Payment extends Model
         return $this->belongsTo(AmortizationSchedule::class, 'schedule_id', 'ID');
     }
 
+    public function scheduleAllocations()
+    {
+        return $this->hasMany(PaymentScheduleAllocation::class, 'payment_id', 'ID');
+    }
+
     public function verifiedBy()
     {
         return $this->belongsTo(User::class, 'verified_by');

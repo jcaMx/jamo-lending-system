@@ -57,7 +57,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   const [form, setForm] = useState({
     search: "",
     selectedBorrower: null as BorrowerWithSchedules | null,
-    selectedSchedule: null as Schedule | null,
+    selectedSchedules: [] as Schedule[],
     amount: "",
     method: "",
     collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
@@ -101,21 +101,31 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0] || null;
 
     if (nextDueSchedule) {
-      update("selectedSchedule", nextDueSchedule);
+      update("selectedSchedules", [nextDueSchedule]);
       update("amount", nextDueSchedule.total_due.toFixed(2));
       if (nextDueSchedule.due_date) {
         update("collectionDate", nextDueSchedule.due_date);
       }
     } else {
-      update("selectedSchedule", null);
+      update("selectedSchedules", []);
       update("amount", "");
     }
   };
 
-  const handleSelectSchedule = (schedule: Schedule) => {
-    update("selectedSchedule", schedule);
-    update("amount", schedule.total_due.toFixed(2));
-    if (schedule.due_date) {
+  const handleToggleSchedule = (schedule: Schedule) => {
+    const exists = form.selectedSchedules.some((s) => s.ID === schedule.ID);
+    const nextSelected = exists
+      ? form.selectedSchedules.filter((s) => s.ID !== schedule.ID)
+      : [...form.selectedSchedules, schedule].sort(
+          (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+        );
+
+    update("selectedSchedules", nextSelected);
+
+    const total = nextSelected.reduce((sum, s) => sum + (Number(s.total_due) || 0), 0);
+    update("amount", total > 0 ? total.toFixed(2) : "");
+
+    if (!exists && schedule.due_date) {
       update("collectionDate", schedule.due_date);
     }
   };
@@ -139,9 +149,10 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { selectedBorrower, collectedBy, amount, method, collectionDate } = form;
+    const { selectedBorrower, selectedSchedules, collectedBy, amount, method, collectionDate } = form;
 
     if (!selectedBorrower) return alert("Please select a borrower.");
+    if (!selectedSchedules.length) return alert("Please select at least one schedule.");
     if (!collectedBy) return alert("Please select a collector.");
     if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
     if (Number(amount) > 10_000_000) return alert("Amount cannot exceed 10,000,000.");
@@ -164,7 +175,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     const payload: any = {
       borrower_id: selectedBorrower.id,
       loanNo: selectedBorrower.loanNo,
-      schedule_id: form.selectedSchedule?.ID || null,
+      schedule_ids: selectedSchedules.map((s) => s.ID),
       amount,
       method,
       collectedBy,
@@ -194,7 +205,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
         setForm({
           search: "",
           selectedBorrower: null,
-          selectedSchedule: null,
+          selectedSchedules: [],
           amount: "",
           method: "",
           collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
@@ -297,7 +308,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                             <tr
                               key={schedule.ID}
                               className={`border-t hover:bg-gray-50 ${
-                                form.selectedSchedule?.ID === schedule.ID ? 'bg-yellow-50' : ''
+                                form.selectedSchedules.some((s) => s.ID === schedule.ID) ? 'bg-yellow-50' : ''
                               }`}
                             >
                               <td className="px-4 py-3">{schedule.installment_no}</td>
@@ -323,15 +334,15 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                               <td className="px-4 py-3 text-center">
                                 <button
                                   type="button"
-                                  onClick={() => handleSelectSchedule(schedule)}
+                                  onClick={() => handleToggleSchedule(schedule)}
                                   className={`px-3 py-1 rounded text-xs font-medium ${
-                                    form.selectedSchedule?.ID === schedule.ID
+                                    form.selectedSchedules.some((s) => s.ID === schedule.ID)
                                       ? 'bg-yellow-500 text-white'
                                       : 'bg-blue-500 text-white hover:bg-blue-600'
                                   }`}
                                   disabled={schedule.status === 'Paid'}
                                 >
-                                  {form.selectedSchedule?.ID === schedule.ID ? 'Selected' : 'Select'}
+                                  {form.selectedSchedules.some((s) => s.ID === schedule.ID) ? 'Selected' : 'Select'}
                                 </button>
                               </td>
                             </tr>
@@ -341,7 +352,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Select a schedule to apply the payment. Only unpaid or overdue schedules can be selected.
+                    You can select multiple schedules. Payment is allocated by due date order.
                   </p>
                 </div>
               )}

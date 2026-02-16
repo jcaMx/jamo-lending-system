@@ -114,6 +114,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Daily Collection Sheets
     Route::get('/daily-collections', [DailyCollectionController::class, 'index'])->name('index');
+    Route::post('/daily-collections/export-pdf', [DailyCollectionController::class, 'exportPdf'])
+        ->name('daily-collections.export');
 
     // Repayments (match sidebar hrefs: /repayments, /repayments/add)
     Route::prefix('repayments')
@@ -126,11 +128,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
     Route::prefix('Reports')->middleware([RoleMiddleware::class.':admin'])->group(function () {
-        Route::get('/DCPR', fn () => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
+        Route::get('/DCPR', [DCPRController::class, 'index'])->name('reports.dcpr');
         Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
         Route::post('/dcpr/print', [DCPRController::class, 'printPreview'])->name('reports.dcpr.print');
 
-        Route::get('/MonthlyReport', fn () => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
+        Route::get('/MonthlyReport', [MCPRController::class, 'index'])->name('reports.monthly');
         Route::post('/monthly/export-pdf', [MCPRController::class, 'exportPdf'])->name('reports.monthly.export');
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
     });

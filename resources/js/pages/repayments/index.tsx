@@ -13,6 +13,7 @@ type Repayment = {
   id: number;
   borrowerName: string;
   loanNo: string;
+  scheduleNos?: (number | string)[];
   method: string;
   collectedBy: string;
   collectionDate: string;
@@ -61,6 +62,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">ID</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Borrower Name</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Loan No</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Schedules</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Method</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collected By</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collection Date</th>
@@ -74,6 +76,9 @@ export default function RepaymentsIndex({ repayments }: Props) {
                   <td className="px-4 py-3 text-sm text-gray-600">{r.id}</td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.borrowerName}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{r.loanNo}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {r.scheduleNos && r.scheduleNos.length ? r.scheduleNos.join(', ') : 'N/A'}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{r.method}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{r.collectedBy}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{new Date(r.collectionDate).toLocaleString('en-PH')}</td>
@@ -82,7 +87,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="text-center py-6 text-gray-500 text-sm italic">
+                <td colSpan={8} className="text-center py-6 text-gray-500 text-sm italic">
                   No repayments found matching your search.
                 </td>
               </tr>
