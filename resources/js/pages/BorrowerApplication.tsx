@@ -6,6 +6,7 @@ import LoanDetails from "./borrower-application/LoanDetails";
 import Confirmation from "./borrower-application/Confirmation";
 import type { LoanProductRule, SharedFormData } from "./borrower-application/sharedFormData";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import type { BorrowerDocumentTypeOption } from "./borrowers/components/RenderDocumentUploader";
 
 interface BorrowerApplicationProps {
   application?: {
@@ -17,6 +18,7 @@ interface BorrowerApplicationProps {
     collateral?: { collateral_type: string };
     payment_method?: string;
   };
+  documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
 }
 
 type StepKey = "borrower" | "loan" | "coborrower" | "collateral" | "confirmation";
@@ -74,7 +76,7 @@ const normalizeRule = (value: unknown): LoanProductRule | null => {
   };
 };
 
-const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
+const BorrowerApplication = ({ application, documentTypesByCategory = {} }: BorrowerApplicationProps) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const [formData, setFormData] = useState<SharedFormData>({
@@ -99,6 +101,9 @@ const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
     appraisal_date: "",
     appraised_by: "",
     ownership_proof: null,
+    documents: {
+      collateral: [{ document_type_id: "", file: null }],
+    },
     loan_product_id: null,
     loan_product_rule: null,
     loan_type: "",
@@ -186,6 +191,7 @@ const BorrowerApplication = ({ application }: BorrowerApplicationProps) => {
             onPrev={prevStep}
             formData={formData}
             setFormData={setFormData}
+            documentTypesByCategory={documentTypesByCategory}
           />
         ),
       },

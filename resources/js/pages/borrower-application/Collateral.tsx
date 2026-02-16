@@ -1,18 +1,23 @@
 
 
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "@inertiajs/react";
 import { FormField, SectionHeader } from "@/components/FormField";
 import type { SharedFormData } from "./sharedFormData";
-import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import StepIndicator from "./StepIndicator";
+import RenderDocumentUploader, {
+  type BorrowerDocumentTypeOption,
+  type BorrowerDocumentUploadItem,
+} from "@/pages/borrowers/components/RenderDocumentUploader";
 
 interface CollateralProps {
   onNext: () => void;
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
 }
 
 const collateralTypeOptions = [
@@ -87,7 +92,20 @@ const sanitize = {
   trim: (v: string) => v.trim(),
 };
 
-const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) => {
+const inputClass =
+  "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FABF24] focus:border-transparent";
+
+const MIN_DOCUMENTS_PER_CATEGORY: Record<"collateral", number> = {
+  collateral: 1,
+};
+
+const ALLOWED_DOCUMENT_CODES_BY_COLLATERAL_TYPE: Record<string, string[]> = {
+  vehicle: ["OR_CR", "APPRAISAL_REPORT", "COLLATERAL_PHOTO"],
+  land: ["LAND_TITLE", "APPRAISAL_REPORT", "COLLATERAL_PHOTO"],
+  atm: ["APPRAISAL_REPORT", "COLLATERAL_PHOTO"],
+};
+
+const Collateral = ({ onNext, onPrev, formData, setFormData, documentTypesByCategory = {} }: CollateralProps) => {
   const initial = formData ?? {};
   const { data, setData } = useForm({
     collateral_type: initial.collateral_type ?? "",
@@ -113,11 +131,79 @@ const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) 
     appraisal_date: initial.appraisal_date ?? "",
     appraised_by: initial.appraised_by ?? "",
     ownership_proof: initial.ownership_proof ?? null,
+    documents: {
+      collateral: initial.documents?.collateral?.length
+        ? initial.documents.collateral
+        : [{ document_type_id: "", file: null }],
+    },
   });
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, ...data }));
   }, [data, setFormData]);
+
+  const filteredCollateralDocumentTypes = useMemo(() => {
+    const all = documentTypesByCategory?.collateral ?? [];
+    const collateralType = String(data.collateral_type || "").toLowerCase();
+    const allowedCodes = ALLOWED_DOCUMENT_CODES_BY_COLLATERAL_TYPE[collateralType];
+
+    if (!allowedCodes?.length) return all;
+
+    const allowedSet = new Set(allowedCodes.map((code) => code.toUpperCase()));
+    return all.filter((item) => allowedSet.has(String(item.code || "").toUpperCase()));
+  }, [documentTypesByCategory, data.collateral_type]);
+
+  const documentTypeOptions = {
+    collateral: filteredCollateralDocumentTypes,
+  };
+
+  useEffect(() => {
+    const allowedIds = new Set(filteredCollateralDocumentTypes.map((item) => String(item.id)));
+    const hasInvalidSelection = data.documents.collateral.some(
+      (row) => row.document_type_id && !allowedIds.has(String(row.document_type_id)),
+    );
+
+    if (!hasInvalidSelection) return;
+
+    setData("documents", {
+      ...data.documents,
+      collateral: data.documents.collateral.map((row) =>
+        row.document_type_id && !allowedIds.has(String(row.document_type_id))
+          ? { ...row, document_type_id: "" }
+          : row,
+      ),
+    });
+  }, [filteredCollateralDocumentTypes, data.documents, setData]);
+
+  const updateDocRow = (
+    category: "collateral",
+    index: number,
+    patch: Partial<BorrowerDocumentUploadItem>,
+  ) => {
+    if (category !== "collateral") return;
+    setData("documents", {
+      ...data.documents,
+      collateral: data.documents.collateral.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+    });
+  };
+
+  const addDocRow = (category: "collateral") => {
+    if (category !== "collateral") return;
+    setData("documents", {
+      ...data.documents,
+      collateral: [...data.documents.collateral, { document_type_id: "", file: null }],
+    });
+  };
+
+  const removeDocRow = (category: "collateral", index: number) => {
+    if (category !== "collateral") return;
+    const current = data.documents.collateral;
+    if (current.length <= 1) return;
+    setData("documents", {
+      ...data.documents,
+      collateral: current.filter((_, i) => i !== index),
+    });
+  };
 
   const submit = () => {
     onNext();
@@ -280,24 +366,19 @@ const Collateral = ({ onNext, onPrev, formData, setFormData }: CollateralProps) 
             />
           </>
         )}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Ownership Proof
-          </label>
-          <input
-            type="file"
-            accept=".pdf,.doc,.docx,.jpg,.png"
-            onChange={(e) => {
-              const file = e.target.files ? e.target.files[0] : null;
-              setData('ownership_proof', file);
-              setFormData((prev) => ({ ...prev, ownership_proof: file }));
-            }}
-            className="mt-1 block w-full text-sm text-gray-700 bg-gray-50 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
-          <p className="text-xs text-gray-400 mt-1">
-            Accepted formats: PDF, DOC, DOCX, JPG, PNG
-          </p>
-        </div>
+        {/* <SectionHeader title="Documents" /> */}
+        <RenderDocumentUploader
+          title="Collateral Documents"
+          category="collateral"
+          rows={data.documents.collateral}
+          optionsByCategory={documentTypeOptions}
+          minRequired={MIN_DOCUMENTS_PER_CATEGORY.collateral}
+          inputClass={inputClass}
+          onAdd={addDocRow}
+          onRemove={removeDocRow}
+          onUpdate={updateDocRow}
+          getFieldError={() => undefined}
+        />
 
 
         

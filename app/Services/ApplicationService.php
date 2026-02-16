@@ -8,12 +8,13 @@ use App\Models\BorrowerEmployment;
 use App\Models\BorrowerId;
 use App\Models\CoBorrower;
 use App\Models\Collateral;
-use App\Models\Files;
+use App\Models\File;
 use App\Models\Loan;
 use App\Models\Spouse;
 use App\Models\VehicleCollateralDetails;
 use App\Models\AtmCollateralDetails;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -101,27 +102,63 @@ class ApplicationService
             if ($collateral && ! empty($files['ownership_proof'])) {
                 $file = $files['ownership_proof'];
                 $path = $file->store('collaterals', 'public');
-                $fileRecord = Files::create([
-                    'file_type' => 'collateral_documennt',
-                    'file_name' => substr($file->getClientOriginalName(), 0, 20),
+                $fileRecord = File::create([
+                    'documentable_id' => $collateral->ID,
+                    'documentable_type' => Collateral::class,
+                    'document_type_id' => null,
+                    'status' => 'pending',
+                    'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
                     'description' => 'Collateral ownership proof',
                     'borrower_id' => $borrower->ID,
                     'collateral_id' => $collateral->ID,
+                    'uploaded_at' => now(),
                 ]);
-                $ownershipProofFileId = $fileRecord->ID;
+                $ownershipProofFileId = $fileRecord->id;
+            }
+
+            if ($collateral && ! empty($data['documents']['collateral']) && ! empty($files['collateral_documents'])) {
+                foreach ($data['documents']['collateral'] as $index => $docMeta) {
+                    $uploaded = $files['collateral_documents'][$index]['file'] ?? null;
+                    if (! $uploaded instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $documentTypeId = isset($docMeta['document_type_id']) ? (int) $docMeta['document_type_id'] : null;
+                    if (! $documentTypeId) {
+                        continue;
+                    }
+
+                    $path = $uploaded->store("collaterals/{$collateral->ID}", 'public');
+                    File::create([
+                        'documentable_id' => $collateral->ID,
+                        'documentable_type' => Collateral::class,
+                        'document_type_id' => $documentTypeId,
+                        'status' => 'pending',
+                        'file_name' => $uploaded->getClientOriginalName(),
+                        'file_path' => $path,
+                        'description' => 'collateral',
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => $collateral->ID,
+                        'uploaded_at' => now(),
+                    ]);
+                }
             }
 
             if (! empty($files['files'])) {
                 foreach ($files['files'] as $file) {
                     $path = $file->store('borrowers', 'public');
-                    Files::create([
-                        'file_type' => 'id_document',
-                        'file_name' => substr($file->getClientOriginalName(), 0, 20),
+                    File::create([
+                        'documentable_id' => $borrower->ID,
+                        'documentable_type' => Borrower::class,
+                        'document_type_id' => null,
+                        'status' => 'pending',
+                        'file_name' => $file->getClientOriginalName(),
                         'file_path' => $path,
                         'description' => 'Borrower valid ID',
                         'borrower_id' => $borrower->ID,
                         'collateral_id' => $collateral?->ID,
+                        'uploaded_at' => now(),
                     ]);
                 }
             }

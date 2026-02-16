@@ -24,7 +24,9 @@ class LoanController extends Controller
 
     public function index()
     {
-        $loanApplications = Loan::with(['borrower.coBorrowers', 'borrower.spouse', 'borrower.borrowerAddress', 'collateral'])
+        $loanApplications = Loan::with([
+            'borrower',
+        ])
             ->where('status', 'Pending')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -182,6 +184,7 @@ class LoanController extends Controller
     {
         $loan->load([
             'borrower',
+            'borrower.files',
             'borrower.coBorrowers',
             'borrower.spouse',
             'borrower.borrowerEmployment',

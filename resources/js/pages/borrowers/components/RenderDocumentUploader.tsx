@@ -14,24 +14,24 @@ export type BorrowerDocumentUploadItem = {
   file: File | null;
 };
 
-type RenderDocumentUploaderProps = {
+type RenderDocumentUploaderProps<C extends string> = {
   title: string;
-  category: BorrowerDocumentCategory;
+  category: C;
   rows: BorrowerDocumentUploadItem[];
-  optionsByCategory: Record<BorrowerDocumentCategory, BorrowerDocumentTypeOption[]>;
+  optionsByCategory: Record<string, BorrowerDocumentTypeOption[]>;
   minRequired: number;
   inputClass: string;
-  onAdd: (category: BorrowerDocumentCategory) => void;
-  onRemove: (category: BorrowerDocumentCategory, index: number) => void;
+  onAdd: (category: C) => void;
+  onRemove: (category: C, index: number) => void;
   onUpdate: (
-    category: BorrowerDocumentCategory,
+    category: C,
     index: number,
     patch: Partial<BorrowerDocumentUploadItem>,
   ) => void;
   getFieldError: (field: string) => string | undefined;
 };
 
-export default function RenderDocumentUploader({
+export default function RenderDocumentUploader<C extends string>({
   title,
   category,
   rows,
@@ -42,7 +42,7 @@ export default function RenderDocumentUploader({
   onRemove,
   onUpdate,
   getFieldError,
-}: RenderDocumentUploaderProps) {
+}: RenderDocumentUploaderProps<C>) {
   const options = optionsByCategory[category] ?? [];
 
   return (

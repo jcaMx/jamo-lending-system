@@ -17,6 +17,7 @@ use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Models\Loan;
+use App\Models\DocumentType;
 use App\Http\Controllers\LoanCommentController;
 
 
@@ -199,7 +200,20 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::put('/my-profile', [MyProfileController::class, 'update'])
     ->name('customer.profile.update');
 
-    Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
+    Route::get('/applynow', function () {
+        $documentTypesByCategory = DocumentType::query()
+            ->where('category', 'collateral')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'category'])
+            ->groupBy('category')
+            ->map(fn ($items) => $items->values())
+            ->toArray();
+
+        return Inertia::render('BorrowerApplication', [
+            'documentTypesByCategory' => $documentTypesByCategory,
+        ]);
+    })->name('apply');
 
     Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
 

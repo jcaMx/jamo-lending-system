@@ -121,6 +121,17 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     appendIfPresent(payload, "appraisal_date", formData.appraisal_date);
     appendIfPresent(payload, "appraised_by", formData.appraised_by);
 
+    if (formData.documents?.collateral?.length) {
+      formData.documents.collateral.forEach((row, index) => {
+        if (row.document_type_id) {
+          payload.append(`documents[collateral][${index}][document_type_id]`, String(row.document_type_id));
+        }
+        if (row.file) {
+          payload.append(`documents[collateral][${index}][file]`, row.file);
+        }
+      });
+    }
+
     if (formData.ownership_proof) {
       payload.append("ownership_proof", formData.ownership_proof);
     }

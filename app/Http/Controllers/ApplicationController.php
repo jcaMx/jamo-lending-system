@@ -28,7 +28,9 @@ class ApplicationController extends Controller
         $loanRule = $this->ruleResolver->resolve($loanProductId, $loanType);
         $requiresCollateral = $this->ruleResolver->requiresCollateral($loanRule, $loanAmount);
         $requiresCoBorrower = $this->ruleResolver->requiresCoBorrower($loanRule);
-        $hasCollateralPayload = $request->filled('collateral_type') || $request->hasFile('ownership_proof');
+        $hasCollateralPayload = $request->filled('collateral_type')
+            || $request->hasFile('ownership_proof')
+            || $request->hasFile('documents.collateral.0.file');
 
         $rules = [
             // 'borrower_first_name' => 'required|string|max:255',
@@ -79,6 +81,9 @@ class ApplicationController extends Controller
             'appraisal_date' => 'nullable|date',
             'appraised_by' => 'nullable|string|max:255',
             'ownership_proof' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:4096',
+            'documents.collateral' => 'nullable|array',
+            'documents.collateral.*.document_type_id' => 'required_with:documents.collateral.*.file|integer|exists:document_types,id',
+            'documents.collateral.*.file' => 'required_with:documents.collateral.*.document_type_id|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
             'make' => 'nullable|string|max:50',
             'vehicle_type' => 'nullable|string|max:20',
             'transmission_type' => 'nullable|string|max:20',
@@ -113,6 +118,7 @@ class ApplicationController extends Controller
         }
 
         if ($requiresCollateral || $hasCollateralPayload) {
+            $rules['documents.collateral'] = 'required|array|min:1';
             $collateralType = strtolower((string) $request->input('collateral_type'));
             if ($collateralType === 'vehicle') {
                 $rules['make'] = 'required|string|max:50';
@@ -135,6 +141,7 @@ class ApplicationController extends Controller
             [
                 'files' => $request->file('files', []),
                 'ownership_proof' => $request->file('ownership_proof'),
+                'collateral_documents' => $request->file('documents.collateral', []),
             ],
             Auth::user()
         );

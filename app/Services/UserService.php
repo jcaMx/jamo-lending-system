@@ -44,7 +44,7 @@ class UserService
 
         $user = null;
 
-        DB::transaction(function () use ($data, $username, $generatedPassword, &$user) {
+        DB::transaction(function () use ($data, $username, $generatedPassword, $sendNotification,&$user) {
             $user = User::create([
                 'name' => "{$data['fName']} {$data['lName']}",
                 'fName' => $data['fName'],
@@ -68,7 +68,7 @@ class UserService
             }
 
             if ($sendNotification) {
-                $message = "Welcome {$data['fName']}! Your account has been created.\n\n".
+                $message = "Welcome {$data['fName']}! Your account has been created.\n\n". 
                     "Email: {$data['email']} \nPassword: $generatedPassword";
 
                 $user->notify(new NotifyUser(

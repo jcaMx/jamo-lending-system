@@ -17,6 +17,11 @@ export interface LoanProductRule {
   collateral_required_above: number | null;
 }
 
+export interface DocumentUploadItem {
+  document_type_id: string;
+  file: File | null;
+}
+
 export interface SharedFormData {
   // borrower_first_name?: string;
   // borrower_last_name?: string;
@@ -74,6 +79,9 @@ export interface SharedFormData {
   appraisal_date?: string;
   appraised_by?: string;
   ownership_proof?: File | null;
+  documents?: {
+    collateral: DocumentUploadItem[];
+  };
 
   loan_product_id?: number | null;
   loan_product_rule?: LoanProductRule | null;
