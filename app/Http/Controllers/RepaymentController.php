@@ -9,9 +9,8 @@ use App\Models\PaymentMethod;
 use App\Services\RepaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Log;
 
 
 class RepaymentController extends Controller
@@ -82,19 +81,24 @@ class RepaymentController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'referenceNumber' => $request->input('referenceNumber', $request->input('reference_number')),
+        ]);
+
         $rules = [
             'borrower_id' => 'required|exists:borrower,ID',
             'loanNo' => 'required|exists:loan,ID',
-            'schedule_id' => 'nullable|exists:amortizationschedule,ID',
+            'schedule_ids' => 'required|array|min:1',
+            'schedule_ids.*' => 'integer|exists:amortizationschedule,ID',
             'amount' => 'required|numeric|min:0.01',
-            'method' => ['required', Rule::enum(PaymentMethod::class)],
+            'method' => 'required|string|max:50',
             'collectedBy' => 'required|exists:jamouser,ID',
             'collectionDate' => 'required|date',
         ];
 
         // Conditionally require referenceNumber for non-Cash payments
         $inputMethod = $request->input('method');
-        if ($inputMethod !== 'Cash') {
+        if (in_array($inputMethod, ['Bank', 'GCash', 'Cebuana', 'Metrobank'], true)) {
             $rules['referenceNumber'] = 'required|string|max:255';
         } else {
             $rules['referenceNumber'] = 'nullable|string|max:255';
@@ -105,8 +109,7 @@ class RepaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $methodEnum = PaymentMethod::from($inputMethod);
-            $methodValue = $methodEnum->value;
+            $methodValue = $this->normalizePaymentMethod($inputMethod)->value;
 
             // Generate receipt number (unique payment ID)
             $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
@@ -136,71 +139,48 @@ class RepaymentController extends Controller
                 }
             }
 
-            // Ensure schedule_id is provided - if not, find the first unpaid schedule
-            $scheduleId = $request->schedule_id;
-            if (! $scheduleId) {
-                $loan = \App\Models\Loan::find($request->loanNo);
-                if ($loan) {
-                    $firstUnpaidSchedule = $loan->amortizationSchedules()
-                        ->whereIn('status', [\App\Models\ScheduleStatus::Unpaid, \App\Models\ScheduleStatus::Overdue])
-                        ->orderBy('due_date', 'asc')
-                        ->first();
-                    
-                    if ($firstUnpaidSchedule) {
-                        $scheduleId = $firstUnpaidSchedule->ID;
-                    }
-                }
-            }
+            $loan = \App\Models\Loan::find($request->loanNo);
+            $selectedScheduleIds = collect($request->input('schedule_ids', []))
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->unique()
+                ->values();
 
-            if (! $scheduleId) {
+            if (! $loan || $selectedScheduleIds->isEmpty()) {
                 DB::rollBack();
-                return redirect()->back()->withErrors(['error' => 'No unpaid schedule found for this loan.']);
+                return redirect()->back()->withErrors(['error' => 'Please select at least one schedule to pay.']);
             }
 
-            \Log::info('Creating payment', [
-                'receipt_number' => $receiptNumber,
-                'loan_id' => $request->loanNo,
-                'amount' => $request->amount,
-                'payment_method' => $methodEnum->value,
-                'verified_by' => $request->collectedBy,
-                'payment_date' => $request->collectionDate,
-                'reference_no' => $referenceNo ?? '',
-                'schedule_id' => $scheduleId,
-            ]);
+            $eligibleSchedules = $loan->amortizationSchedules()
+                ->whereIn('ID', $selectedScheduleIds->all())
+                ->whereIn('status', [\App\Models\ScheduleStatus::Unpaid, \App\Models\ScheduleStatus::Overdue])
+                ->orderBy('due_date', 'asc')
+                ->get();
+
+            if ($eligibleSchedules->isEmpty()) {
+                DB::rollBack();
+                return redirect()->back()->withErrors(['error' => 'Selected schedules are not eligible for payment.']);
+            }
+
+            $primaryScheduleId = (int) $eligibleSchedules->first()->ID;
 
             $payment = Payment::create([
                 'receipt_number' => $receiptNumber,
                 'loan_id' => $request->loanNo,
                 'amount' => (float) $request->amount,  
-                'payment_method' => $methodEnum,
+                'payment_method' => $methodValue,
                 'verified_by' => $request->collectedBy,
                 'payment_date' => $request->collectionDate,
                 'reference_no' => $referenceNo,
-                'schedule_id' => $scheduleId,
+                'schedule_id' => $primaryScheduleId,
             ]);
 
-            \Log::info('Payment created', ['payment_id' => $payment->ID, 'receipt_number' => $payment->receipt_number]);
-
-            // Refresh payment to load relationships
             $payment->refresh();
             $payment->load('loan');
 
-            \Log::info('Processing payment', ['payment_id' => $payment->ID, 'loan_id' => $payment->loan_id]);
-
-            // Process payment using RepaymentService
-            try {
-                $this->repaymentService->processPayment($payment);
-            } catch (\Throwable $e) {
-                \Log::error('Payment processing failed: '.$e->getMessage());
-                throw $e; // still throw to trigger rollback
-            }
-            
-
-            \Log::info('Payment processed successfully', ['payment_id' => $payment->ID]);
+            $this->repaymentService->processPayment($payment, $eligibleSchedules->pluck('ID')->all());
 
             DB::commit();
-
-            \Log::info('Transaction committed', ['payment_id' => $payment->ID]);
 
             return redirect()->route('repayments.index')->with('success', 'Payment processed successfully! Receipt Number: '.$receiptNumber);
         } catch (\Throwable $e) {
@@ -219,10 +199,25 @@ class RepaymentController extends Controller
 
     public function index()
     {
-        $payments = Payment::with(['loan.borrower', 'jamoUser', 'amortizationSchedule'])
+        $relations = ['loan.borrower', 'jamoUser', 'amortizationSchedule'];
+        if (Schema::hasTable('payment_schedule_allocations')) {
+            $relations[] = 'scheduleAllocations.amortizationSchedule';
+        }
+
+        $payments = Payment::with($relations)
             ->orderBy('payment_date', 'desc')
             ->get()
             ->map(function ($p) {
+                $scheduleNos = [];
+                if (Schema::hasTable('payment_schedule_allocations')) {
+                    $scheduleNos = $p->scheduleAllocations
+                        ->pluck('amortizationSchedule.installment_no')
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all();
+                }
+
                 return [
                     'id' => $p->ID,
                     'receiptNumber' => $p->receipt_number ?? 'N/A',
@@ -231,6 +226,7 @@ class RepaymentController extends Controller
                         : 'N/A',
                     'loanNo' => $p->loan?->ID ?? 'N/A',
                     'scheduleNo' => $p->amortizationSchedule?->installment_no ?? 'N/A',
+                    'scheduleNos' => $scheduleNos,
                     'method' => $p->payment_method ?? 'N/A',
                     'referenceNo' => $p->reference_no ?? 'N/A',
                     'collectedBy' => $p->jamoUser?->first_name
@@ -244,5 +240,16 @@ class RepaymentController extends Controller
         return Inertia::render('repayments/index', [
             'repayments' => $payments,
         ]);
+    }
+
+    private function normalizePaymentMethod(string $inputMethod): PaymentMethod
+    {
+        return match ($inputMethod) {
+            'Cash', 'Cash Voucher', 'Cheque Voucher' => PaymentMethod::Cash,
+            'GCash' => PaymentMethod::GCash,
+            'Cebuana' => PaymentMethod::Cebuana,
+            'Bank', 'Metrobank' => PaymentMethod::Bank,
+            default => throw new \InvalidArgumentException('Unsupported payment method: '.$inputMethod),
+        };
     }
 }

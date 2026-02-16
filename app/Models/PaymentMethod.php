@@ -6,7 +6,7 @@ enum PaymentMethod: string
 {
     case Cash = 'Cash';
     case GCash = 'GCash';
-    case Metrobank = 'Metrobank';
+    case Bank = 'Bank';
     case Cebuana = 'Cebuana';
 
     public function label(): string
