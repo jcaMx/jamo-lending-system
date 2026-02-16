@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\NotifyUser;
+use Illuminate\Validation\Rule;
+
 
 
 class RepaymentController extends Controller
@@ -122,7 +124,8 @@ class RepaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $methodValue = $this->normalizePaymentMethod($inputMethod)->value;
+            $methodEnum = $this->normalizePaymentMethod($inputMethod);
+            $methodValue = $methodEnum->value;
 
             // Generate unique receipt number
             do {
@@ -133,12 +136,12 @@ class RepaymentController extends Controller
             // Generate reference number only for Bank/GCash/Cebuana
             $referenceNo = null;
 
-            if (in_array($methodValue, ['Bank', 'GCash', 'Cebuana'], true)) {
+            if (in_array($methodValue, [PaymentMethod::Bank->value, PaymentMethod::GCash->value, PaymentMethod::Cebuana->value], true)) {
                 $referenceNo = $request->reference_number
                     ?? 'REF-' . strtoupper(substr(uniqid(), -8)) . '-' . now()->format('Ymd');
-            } elseif ($methodValue === 'Cash Voucher') {
+            } elseif ($inputMethod === 'Cash Voucher') {
                 $referenceNo = $request->voucher_number;
-            } elseif ($methodValue === 'Cheque Voucher') {
+            } elseif ($inputMethod === 'Cheque Voucher') {
                 $referenceNo = $request->cheque_number;
             }
 
@@ -181,7 +184,7 @@ class RepaymentController extends Controller
                 'receipt_number' => $receiptNumber,
                 'loan_id' => $request->loanNo,
                 'amount' => (float) $request->amount,  
-                'payment_method' => $methodEnum->value,
+                'payment_method' => $methodValue,
                 'verified_by' => $request->collectedBy,
                 'payment_date' => $request->collectionDate,
                 'reference_no' => $referenceNo,
