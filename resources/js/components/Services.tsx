@@ -12,7 +12,7 @@ const Services = () => {
       image: personalLoanImg,
     },
     {
-      title: "Home Loans",
+      title: "Salary Loans",
       description: "Realize your dream home you've always dreamed of! Our Home Loans offer affordable financing options to help you purchase, renovate, or refinance your property, ensuring peace of mind every step of the way.",
       image: homeLoanImg,
     },
