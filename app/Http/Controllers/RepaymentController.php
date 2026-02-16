@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use App\Notifications\NotifyUser;
 
 
 class RepaymentController extends Controller
@@ -97,13 +99,24 @@ class RepaymentController extends Controller
         ];
 
         // Conditionally require referenceNumber for non-Cash payments
-        $inputMethod = $request->input('method');
-        if (in_array($inputMethod, ['Bank', 'GCash', 'Cebuana', 'Metrobank'], true)) {
-            $rules['referenceNumber'] = 'required|string|max:255';
-        } else {
-            $rules['referenceNumber'] = 'nullable|string|max:255';
+        $inputMethod = preg_replace('/\s+/', ' ', trim($request->input('method')));
+
+        if (in_array($inputMethod, ['Bank', 'GCash', 'Cebuana'])) {
+            $rules['reference_number'] = 'required|string|max:255';
         }
 
+        // Validation for Cash Voucher
+        if ($inputMethod === 'Cash Voucher') {
+            $rules['voucher_number'] = 'required|string|max:255';
+            $rules['voucher_date'] = 'nullable|date';
+        }
+
+        // Validation for Cheque Voucher
+        if ($inputMethod === 'Cheque Voucher') {
+            $rules['cheque_number'] = 'required|string|max:255';
+            $rules['bank_name'] = 'required|string|max:255';
+            $rules['cheque_date'] = 'required|date';
+        }
         $request->validate($rules);
 
         try {
@@ -111,24 +124,24 @@ class RepaymentController extends Controller
 
             $methodValue = $this->normalizePaymentMethod($inputMethod)->value;
 
-            // Generate receipt number (unique payment ID)
-            $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
-            
-            // Ensure receipt number is unique
-            while (Payment::where('receipt_number', $receiptNumber)->exists()) {
-                $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
+            // Generate unique receipt number
+            do {
+                $receiptNumber = 'RCP-' . strtoupper(substr(uniqid(), -8)) . '-' . now()->format('YmdHis');
+            } while (Payment::where('receipt_number', $receiptNumber)->exists());
+
+
+            // Generate reference number only for Bank/GCash/Cebuana
+            $referenceNo = null;
+
+            if (in_array($methodValue, ['Bank', 'GCash', 'Cebuana'], true)) {
+                $referenceNo = $request->reference_number
+                    ?? 'REF-' . strtoupper(substr(uniqid(), -8)) . '-' . now()->format('Ymd');
+            } elseif ($methodValue === 'Cash Voucher') {
+                $referenceNo = $request->voucher_number;
+            } elseif ($methodValue === 'Cheque Voucher') {
+                $referenceNo = $request->cheque_number;
             }
 
-            // Generate reference number if not provided and not Cash
-            $referenceNo = $request->referenceNumber;
-            if ($methodValue !== PaymentMethod::Cash->value && ! $referenceNo) {
-                $referenceNo = 'REF-'.strtoupper(substr(uniqid(), -8)).'-'.date('Ymd');
-            }
-
-            // For Cash payments, use NULL instead of empty string (allows multiple cash payments)
-            if ($methodValue === PaymentMethod::Cash->value) {
-                $referenceNo = null;
-            }
 
             // Check if reference number already exists (for non-cash)
             if ($methodValue !== PaymentMethod::Cash->value && $referenceNo) {
@@ -168,7 +181,7 @@ class RepaymentController extends Controller
                 'receipt_number' => $receiptNumber,
                 'loan_id' => $request->loanNo,
                 'amount' => (float) $request->amount,  
-                'payment_method' => $methodValue,
+                'payment_method' => $methodEnum->value,
                 'verified_by' => $request->collectedBy,
                 'payment_date' => $request->collectionDate,
                 'reference_no' => $referenceNo,

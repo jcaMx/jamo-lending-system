@@ -37,14 +37,14 @@ class UserService
     /**
      * Create a new user and assign role.
      */
-    public function createUser(array $data)
+    public function createUser(array $data, bool $sendNotification = true)
     {
         $username = $this->generateUsername($data['fName'], $data['lName']);
         $generatedPassword = $this->generatePassword();
 
         $user = null;
 
-        DB::transaction(function () use ($data, $username, $generatedPassword, &$user) {
+        DB::transaction(function () use ($data, $username, $generatedPassword, $sendNotification,&$user) {
             $user = User::create([
                 'name' => "{$data['fName']} {$data['lName']}",
                 'fName' => $data['fName'],
@@ -67,14 +67,16 @@ class UserService
                 ]);
             }
 
-            $message = "Welcome {$data['fName']}! Your account has been created.\n\n".
-                   "Email: {$data['email']} \nPassword: $generatedPassword";
+            if ($sendNotification) {
+                $message = "Welcome {$data['fName']}! Your account has been created.\n\n". 
+                    "Email: {$data['email']} \nPassword: $generatedPassword";
 
-            $user->notify(new NotifyUser(
-                message: $message,
-                email: $user->email,
-                sms: $user->profile->phone ?? null
-            ));
+                $user->notify(new NotifyUser(
+                    message: $message,
+                    email: $user->email,
+                    sms: $user->profile->phone ?? null
+                ));
+            }
 
         });
 
@@ -92,7 +94,7 @@ class UserService
             'lName' => $data['lName'],
             'email' => $data['email'],
             'role'  => 'customer',
-        ]);
+        ], false);
 
         /** @var \App\Models\User $user */
         $user = $result['user'];

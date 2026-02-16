@@ -1,10 +1,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import StepIndicator from "./StepIndicator";
-import { Users, Plus, Trash2 } from "lucide-react";
+import { Users, Plus, Trash2, Home, CreditCard, DollarSign} from "lucide-react";
 import { useForm } from "@inertiajs/react";
 import { FormField, SectionHeader } from "@/components/FormField";
 import type { CoBorrower, SharedFormData } from "./sharedFormData";
+
 
 const maritalStatusOptions = [
   { value: "Single", label: "Single" },
@@ -101,7 +102,12 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
 
         <StepIndicator
           currentStep={2}
-          steps={["Borrower", "Co-Borrower", "Collateral", "Loan", "Payment"]}
+          steps={[
+            "Loan Details",
+            "Co-Borrower",
+            "Collateral",
+            "Payment",
+          ]}
         />
 
         <form

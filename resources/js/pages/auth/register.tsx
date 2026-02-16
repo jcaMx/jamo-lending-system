@@ -37,6 +37,7 @@ export default function Register() {
                                     autoComplete="name"
                                     name="name"
                                     placeholder="Full name"
+                                    className="placeholder:text-gray-400"
                                 />
                                 <InputError
                                     message={errors.name}
@@ -54,6 +55,7 @@ export default function Register() {
                                     autoComplete="email"
                                     name="email"
                                     placeholder="email@example.com"
+                                    className="placeholder:text-gray-400"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -68,6 +70,7 @@ export default function Register() {
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
+                                    className="placeholder:text-gray-400"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -84,6 +87,7 @@ export default function Register() {
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
+                                    className="placeholder:text-gray-400"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -92,7 +96,7 @@ export default function Register() {
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full bg-[#FABF24]"
+                                className="mt-2 w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium"
                                 tabIndex={5}
                                 data-test="register-user-button"
                             >

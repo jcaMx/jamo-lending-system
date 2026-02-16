@@ -1,4 +1,4 @@
-import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
+import { User, Home, Briefcase, FileCheck } from "lucide-react";
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -6,7 +6,7 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
-  const icons = [ DollarSign, Users, Home, CreditCard];
+  const icons = [ User, Home, Briefcase, FileCheck];
 
   return (
     <div className="flex items-center justify-center gap-2 md:gap-4 mb-12">

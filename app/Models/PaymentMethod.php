@@ -8,6 +8,8 @@ enum PaymentMethod: string
     case GCash = 'GCash';
     case Bank = 'Bank';
     case Cebuana = 'Cebuana';
+    case CashVoucher = 'Cash Voucher';
+    case ChequeVoucher = 'Cheque Voucher';
 
     public function label(): string
     {
@@ -16,6 +18,8 @@ enum PaymentMethod: string
             self::GCash => 'GCash',
             self::Bank => 'Bank',
             self::Cebuana => 'Cebuana',
+            self::CashVoucher => 'Cash Voucher',
+            self::ChequeVoucher => 'Cheque Voucher',
         };
     }
 }

@@ -11,6 +11,7 @@ use App\Repositories\Interfaces\IHolidayService;
 use App\Repositories\Interfaces\IPenaltyCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\NotifyUser;
 
 class DefaultPenaltyService implements IPenaltyCalculator
 {
@@ -89,6 +90,11 @@ class DefaultPenaltyService implements IPenaltyCalculator
                         'schedule_id' => $nextInstallment->ID,
                     ]);
 
+                    $borrower = $loan->borrower;
+                    $borrower->notify(new NotifyUser(
+                        message: "A penalty of ₱{$penaltyAmount} has been applied to your loan #{$loan->ID} for overdue payment.",
+                        email: $borrower->email
+                    ));
                     // Update loan balance
                     $loan->balance_remaining += $penaltyAmount;
                 }

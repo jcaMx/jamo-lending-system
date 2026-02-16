@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Borrower;
 use App\Models\BorrowerId;
 use App\Models\Collateral;
-use App\Models\File;
+use App\Models\Files;
 use App\Models\Loan;
 use App\Models\LoanComment;
 use App\Models\Payment;
@@ -112,16 +112,9 @@ class BorrowerService
         $activeLoan = $this->formatLoan($activeLoanModel);      // formatted array for frontend
 
         $comments = $activeLoanModel
-            ? LoanComment::with('user')
-                ->where('loan_id', $activeLoanModel->ID)
+            ? LoanComment::where('loan_id', $activeLoanModel->id)
                 ->orderByDesc('comment_date')
                 ->get()
-                ->map(fn (LoanComment $comment) => [
-                    'ID' => $comment->ID,
-                    'comment_text' => $comment->comment_text,
-                    'commented_by' => $comment->user?->name ?? 'Unknown',
-                    'comment_date' => optional($comment->comment_date)?->toISOString(),
-                ])
             : collect();
 
         return [
@@ -192,7 +185,6 @@ class BorrowerService
             : (string) ($loan->status ?? '');
 
         return [
-            'ID' => $loan->ID,
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
@@ -367,37 +359,56 @@ class BorrowerService
             }
 
             // -------------------------------
-            // Borrower ID
+            // Borrower ID (optional when documents are used as source of truth)
             // -------------------------------
-            BorrowerId::create([
-                'borrower_id' => $borrower->ID,
-                'id_type' => $clean($data['valid_id_type'] ?? null),
-                'id_number' => $clean($data['valid_id_number'] ?? null),
-            ]);
+            $validIdType = $clean($data['valid_id_type'] ?? null);
+            $validIdNumber = $clean($data['valid_id_number'] ?? null);
+
+            if ($validIdType && $validIdNumber) {
+                BorrowerId::create([
+                    'borrower_id' => $borrower->ID,
+                    'id_type' => $validIdType,
+                    'id_number' => $validIdNumber,
+                ]);
+            }
 
             // -------------------------------
-            // Files
+            // Documents (polymorphic files)
             // -------------------------------
-            if (! empty($data['files']) && is_array($data['files'])) {
-                $allowedTypes = ['jpg', 'jpeg', 'png', 'pdf'];
-                $maxSize = 5 * 1024 * 1024; // 5MB
+            $documentCategories = ['borrower_identity', 'borrower_address', 'borrower_employment'];
+            $fileTypeByCategory = [
+                'borrower_identity' => 'id_document',
+                'borrower_address' => 'contract',
+                'borrower_employment' => 'contract',
+            ];
 
-                foreach ($data['files'] as $file) {
-                    if ($file instanceof UploadedFile &&
-                        $file->getSize() <= $maxSize &&
-                        in_array(strtolower($file->getClientOriginalExtension()), $allowedTypes)) {
+            foreach ($documentCategories as $category) {
+                $documents = $data['documents'][$category] ?? [];
 
-                        $path = $file->store('borrowers', 'public');
+                if (! is_array($documents)) {
+                    continue;
+                }
 
-                        File::create([
-                            'borrower_id' => $borrower->ID,
-                            'file_type' => 'ID',
-                            'file_name' => $file->getClientOriginalName(),
-                            'file_path' => $path,
-                            'uploaded_at' => now(),
-                            'description' => 'Borrower ID Upload',
-                        ]);
+                foreach ($documents as $document) {
+                    $file = $document['file'] ?? null;
+                    $documentTypeId = isset($document['document_type_id']) ? (int) $document['document_type_id'] : null;
+
+                    if (! $file instanceof UploadedFile || ! $documentTypeId) {
+                        continue;
                     }
+
+                    $storedPath = $file->store("borrowers/{$borrower->ID}/{$category}", 'public');
+
+                    Files::create([
+                        'file_type' => $fileTypeByCategory[$category] ?? 'contract',
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $storedPath,
+                        'uploaded_at' => now(),
+                        // Keep selected document type traceable even without document_type_id column.
+                        'description' => $category . ' (type_id:' . $documentTypeId . ')',
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => null,
+                    ]);
                 }
             }
 

@@ -34,6 +34,9 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: "Repayments", href: "/repayments/add" }
 ];
 
+const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+
 const inputClass =
   "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FABF24] focus:border-transparent";
 
@@ -78,7 +81,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   }, [form.search, normalizedBorrowers]);
 
   const generateReferenceNumber = () => {
-    const prefix = form.method === 'Metrobank' ? 'MB' : form.method === 'Cebuana' ? 'CB' : form.method === 'GCash' ? 'GC' : '';
+    const prefix = form.method === 'Bank' ? 'MB' : form.method === 'Cebuana' ? 'CB' : form.method === 'GCash' ? 'GC' : '';
     if (prefix) {
       return `${prefix}-${Date.now().toString().slice(-8)}`;
     }
@@ -508,13 +511,15 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
               </div>
 
               {/* Collection Date */}
+              
               <div>
                 <label className="block text-sm font-medium mb-1">Collection Date</label>
                 <input
                   type="date"
-                  value={form.collectionDate}
+                  value={form.collectionDate || today}//on default today
                   onChange={(e) => update("collectionDate", e.target.value)}
                   className={inputClass}
+                  
                 />
               </div>
             </div>

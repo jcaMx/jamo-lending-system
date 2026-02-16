@@ -64,16 +64,27 @@ const toArray = <T,>(value: T[] | Record<string, T> | null | undefined): T[] => 
   return [];
 };
 
-export default function MyLoan({ authUser, collaterals = [], activeLoan = null }: { authUser: any; collaterals: Collateral[]; activeLoan: Loan | null }) {
+export default function MyLoan({ authUser, collaterals = [], activeLoan = null, hasLoan = true }: { authUser: any; collaterals: Collateral[]; activeLoan: Loan | null; hasLoan?: boolean }) {
   type TabKey = 'loanTerms' | 'loanSchedule' | 'loanCollateral';
   const [activeTab, setActiveTab] = useState<TabKey>('loanSchedule');
+
+  if (!hasLoan) {
+    return (
+      <DashboardLayout>
+        <Head title="My Loan Details" />
+        <div className="m-4">
+          <NoLoansPlaceholder message="You don't have a loans yet. Please apply for a loan to create one." />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!authUser) {
     return (
       <DashboardLayout>
         <Head title="My Loan Details" />
         <div className="m-4">
-          <NoLoansPlaceholder message="You don't have a borrower profile yet. Please apply for a loan to create one." />
+          <NoLoansPlaceholder message="No borrower profile found." />
         </div>
       </DashboardLayout>
     );

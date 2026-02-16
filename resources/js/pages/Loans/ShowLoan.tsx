@@ -13,6 +13,54 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Loan Details', href: '#' },
 ];
 
+type FileItem = {
+  ID?: number;
+  id?: number;
+  file_name?: string;
+  file_path?: string;
+  description?: string | null;
+};
+
+const toArray = <T,>(value: T[] | T | null | undefined): T[] => {
+  if (Array.isArray(value)) return value;
+  if (value) return [value];
+  return [];
+};
+
+const toStorageUrl = (filePath?: string) => {
+  if (!filePath) return '#';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
+  return `/storage/${filePath.replace(/^\/+/, '').replace(/^public\//, '')}`;
+};
+
+const FilesList = ({ files }: { files: FileItem[] }) => {
+  if (!files.length) {
+    return <p className="text-sm text-gray-500">No files uploaded.</p>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {files.map((file, index) => {
+        const key = file.ID ?? file.id ?? `${file.file_path}-${index}`;
+        return (
+          <li key={key} className="text-sm">
+            <a
+              href={toStorageUrl(file.file_path)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-600 hover:underline break-all"
+            >
+              {file.file_name || `File ${index + 1}`}
+            </a>
+            {file.description && <p className="text-xs text-gray-500">{file.description}</p>}
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
+
 interface LoanDetailsProps {
   loan: {
     ID: number;
@@ -63,6 +111,7 @@ interface LoanDetailsProps {
         city?: string;
         province?: string;
       };
+      files?: FileItem[];
     };
     collateral?: {
       ID: number;
@@ -90,6 +139,7 @@ interface LoanDetailsProps {
         account_no?: string;
         cardno_4digits?: number;
       };
+      files?: FileItem[] | FileItem;
     };
     amortizationSchedules?: Array<{
       ID: number;
@@ -111,6 +161,9 @@ interface LoanDetailsProps {
 }
 
 export default function ShowLoan({ loan }: LoanDetailsProps) {
+  const borrowerFiles = toArray<FileItem>(loan.borrower?.files);
+  const collateralFiles = toArray<FileItem>(loan.collateral?.files);
+
   // Fee percentages
   const PROCESSING_FEE_RATE = 0.03; // 3%
   const INSURANCE_FEE_RATE = 0.02; // 2%
@@ -323,6 +376,10 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
               </>
             )}
           </div>
+          <div className="mt-5 border-t pt-4">
+            <h3 className="text-base font-semibold text-gray-700 mb-2">Borrower Files</h3>
+            <FilesList files={borrowerFiles} />
+          </div>
         </div>
 
         {/* Loan Details */}
@@ -475,6 +532,10 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                   </div>
                 </>
               )}
+            </div>
+            <div className="mt-5 border-t pt-4">
+              <h3 className="text-base font-semibold text-gray-700 mb-2">Collateral Files</h3>
+              <FilesList files={collateralFiles} />
             </div>
           </div>
         )}
