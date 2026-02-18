@@ -163,6 +163,7 @@ interface LoanDetailsProps {
 export default function ShowLoan({ loan }: LoanDetailsProps) {
   const borrowerFiles = toArray<FileItem>(loan.borrower?.files);
   const collateralFiles = toArray<FileItem>(loan.collateral?.files);
+  const MAX_TERM_MONTHS = 840;
 
   // Fee percentages
   const PROCESSING_FEE_RATE = 0.03; // 3%
@@ -185,6 +186,11 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
   const [showReleaseForm, setShowReleaseForm] = useState(false);
 
   const handleApprove = () => {
+    if (!Number.isInteger(loan.term_months) || loan.term_months < 1 || loan.term_months > MAX_TERM_MONTHS) {
+      alert(`Cannot approve this loan because term is invalid (${loan.term_months} months). Allowed range is 1-${MAX_TERM_MONTHS} months.`);
+      return;
+    }
+
     const amount = parseFloat(releasedAmount);
     if (!releasedAmount || isNaN(amount) || amount <= 0) {
       alert('Please enter a valid released amount greater than 0.');

@@ -129,15 +129,15 @@ Based on the numeric rules we just defined, here are the clean, structured **pro
 
 ---
 
-# 🏦 Personal Loan – Policy
+#  Personal Loan – Policy
 
-### 📌 Purpose
+###  Purpose
 
 Short-term unsecured / semi-secured loan for individuals.
 
 ---
 
-## ✅ Eligibility Inputs Required
+##  Eligibility Inputs Required
 
 The system must collect:
 
@@ -147,9 +147,9 @@ The system must collect:
 
 ---
 
-## 🔒 Risk Control Policies
+##  Risk Control Policies
 
-### 1️⃣ Collateral Policy
+### 1️ Collateral Policy
 
 Collateral is required if:
 
@@ -170,7 +170,7 @@ This acts as:
 
 ---
 
-### 2️⃣ Co-Borrower Policy
+###  Co-Borrower Policy
 
 Co-borrower is required if:
 
@@ -190,7 +190,7 @@ This acts as:
 
 ---
 
-## 🧠 Risk Philosophy (Personal Loan)
+##  Risk Philosophy (Personal Loan)
 
 | Risk Area         | Control Mechanism      |
 | ----------------- | ---------------------- |
@@ -203,15 +203,15 @@ This is a **moderate-risk retail lending product**.
 
 ---
 
-# 🏢 Business Loan – Policy
+#  Business Loan – Policy
 
-### 📌 Purpose
+###  Purpose
 
 Loan for business expansion or operations.
 
 ---
 
-## ✅ Eligibility Inputs Required
+##  Eligibility Inputs Required
 
 The system must collect:
 
@@ -221,9 +221,9 @@ The system must collect:
 
 ---
 
-## 🔒 Risk Control Policies
+##  Risk Control Policies
 
-### 1️⃣ Collateral Policy
+###  Collateral Policy
 
 Collateral is required if:
 
@@ -244,7 +244,7 @@ This ensures:
 
 ---
 
-### 2️⃣ Co-Borrower Policy
+###  Co-Borrower Policy
 
 Co-borrower required if:
 
@@ -264,7 +264,7 @@ This acts as:
 
 ---
 
-## 🧠 Risk Philosophy (Business Loan)
+## Risk Philosophy (Business Loan)
 
 | Risk Area              | Control Mechanism           |
 | ---------------------- | --------------------------- |
@@ -277,7 +277,7 @@ This is a **cashflow-backed commercial lending product**.
 
 ---
 
-# 📊 Policy Comparison
+#  Policy Comparison
 
 | Feature             | Personal Loan   | Business Loan     |
 | ------------------- | --------------- | ----------------- |
@@ -289,7 +289,7 @@ This is a **cashflow-backed commercial lending product**.
 
 ---
 
-# 🏗 In System Terms
+#  In System Terms
 
 Your dynamic rules now represent:
 

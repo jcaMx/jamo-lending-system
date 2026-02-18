@@ -50,7 +50,7 @@ class StoreLoanRequest extends FormRequest
             'interest_type' => 'required|string|in:Compound,Diminishing',
             'interest_rate' => 'required|numeric|min:0|max:100',
             'repayment_frequency' => 'required|string|in:Weekly,Monthly,Yearly',
-            'term' => 'required|integer|min:1',
+            'term' => 'required|integer|min:1|max:840',
 
             // Collateral
             'collateral_type' => $requiresCollateral
