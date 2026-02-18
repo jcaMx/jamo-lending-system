@@ -215,8 +215,8 @@ const Collateral = ({
   };
 
   return (
-    <section className="bg-[#F7F5F3] py-8 px-6 w-full">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg space-y-6">
+    <section className="py-8 px-6 w-full">
+      <div className="max-w-4xl mx-auto bg-[#F7F5F3] p-6 rounded-lg space-y-6">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <CreditCard className="w-6 h-6 text-golden" />
@@ -228,8 +228,14 @@ const Collateral = ({
           currentStep={3}
           steps={["Loan Details", "Co-Borrower", "Collateral", "Payment"]}
         />
-
-        <FormField
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+          className="bg-white rounded-lg shadow-sm p-6 md:p-8 space-y-6"
+        >
+           <FormField
           label="Collateral Type"
           name="collateral_type"
           type="select"
@@ -249,6 +255,7 @@ const Collateral = ({
               type="text"
               list="vehicle-makes"
               placeholder="Select or type vehicle make"
+              required
             />
             <datalist id="vehicle-makes">
               {makeTypeOptions.map((opt) => (
@@ -263,6 +270,7 @@ const Collateral = ({
               value={data.fuel}
               onChange={(v) => setData("fuel", v)}
               options={fuelOptions}
+              required
             />
             <FormField
               label="Vehicle Type"
@@ -271,6 +279,7 @@ const Collateral = ({
               value={data.vehicle_type}
               onChange={(v) => setData("vehicle_type", v)}
               options={vehicleTypeOptions}
+              required
             />
             <FormField
               label="Transmission Type"
@@ -279,18 +288,21 @@ const Collateral = ({
               value={data.transmission_type}
               onChange={(v) => setData("transmission_type", v)}
               options={transmissionOptions}
+              required
             />
             <FormField
               label="Plate Number"
               name="plate_no"
               value={data.plate_no}
               onChange={(v) => setData("plate_no", sanitize.alphaNum(v))}
+              required
             />
             <FormField
               label="Engine Number"
               name="engine_no"
               value={data.engine_no}
               onChange={(v) => setData("engine_no", sanitize.alphaNum(v))}
+              required
             />
             <FormField
               label="Year Model"
@@ -298,12 +310,14 @@ const Collateral = ({
               value={data.year_model}
               onChange={(v) => setData("year_model", sanitize.number(v))}
               maxLength={4}
+              required
             />
             <FormField
               label="Series"
               name="series"
               value={data.series}
               onChange={(v) => setData("series", sanitize.trim(v))}
+              required
             />
           </>
         )}
@@ -321,18 +335,21 @@ const Collateral = ({
               name="location"
               value={data.location}
               onChange={(v) => setData("location", sanitize.trim(v))}
+              required
             />
             <FormField
               label="Description"
               name="description"
               value={data.description}
               onChange={(v) => setData("description", sanitize.trim(v))}
+              required
             />
             <FormField
               label="Area (sqm)"
               name="area"
               value={data.area}
               onChange={(v) => setData("area", sanitize.number(v))}
+              required
             />
           </>
         )}
@@ -346,6 +363,7 @@ const Collateral = ({
               onChange={(v) => setData("bank_name", sanitize.trim(v))}
               list="bank-names"
               placeholder="Select or type bank name"
+              required
             />
             <datalist id="bank-names">
               {bankOptions.map((opt) => (
@@ -358,6 +376,7 @@ const Collateral = ({
               name="account_no"
               value={data.account_no}
               onChange={(v) => setData("account_no", sanitize.number(v))}
+              required
             />
             <FormField
               label="Card Last 4 Digits"
@@ -365,6 +384,7 @@ const Collateral = ({
               value={data.cardno_4digits}
               onChange={(v) => setData("cardno_4digits", sanitize.number(v).slice(0, 4))}
               maxLength={4}
+              required
             />
           </>
         )}
@@ -409,6 +429,11 @@ const Collateral = ({
             })}
           </div>
         )}
+
+          
+        </form>
+
+       
 
         <div className="flex justify-between pt-6">
           <Button variant="outline" onClick={onPrev}>

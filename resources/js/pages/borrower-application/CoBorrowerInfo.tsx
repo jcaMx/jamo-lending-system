@@ -117,7 +117,6 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
           }}
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
-          <SectionHeader title="Co-Borrowers" />
 
           {data.coBorrowers.map((co, i) => (
             <div key={i} className="relative border p-4 rounded-lg space-y-4">
@@ -155,6 +154,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 type="date"
                 value={co.birth_date}
                 onChange={(v) => handleChange(i, "birth_date", v)}
+                required
               />
 
               <FormField
@@ -164,6 +164,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 value={co.marital_status}
                 onChange={(v) => handleChange(i, "marital_status", v)}
                 options={maritalStatusOptions}
+                required
               />
 
               <FormField
@@ -172,6 +173,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 value={co.mobile}
                 onChange={(v) => handleChange(i, "mobile", v)}
                 maxLength={11}
+                required
               />
 
               <FormField
@@ -180,6 +182,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 type="number"
                 value={co.dependents}
                 onChange={(v) => handleChange(i, "dependents", v)}
+                required
               />
 
               <FormField
@@ -187,15 +190,16 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 name="address"
                 value={co.address}
                 onChange={(v) => handleChange(i, "address", v)}
+                required
               />
 
               <FormField
                 label="Occupation"
                 name="occupation"
-                type="select"
+                type="input"
                 value={co.occupation}
                 onChange={(v) => handleChange(i, "occupation", v)}
-                options={occupationOptions}
+                required
               />
 
               <FormField
@@ -203,6 +207,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 name="position"
                 value={co.position}
                 onChange={(v) => handleChange(i, "position", v)}
+                
               />
 
               <FormField

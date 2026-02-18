@@ -205,8 +205,8 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
   };
 
   return (
-    <section title="Loan Details" className="w-full h-full flex flex-col m-3">
-      <div className="w-full max-w-full px-4 bg-white p-6 rounded-lg space-y-6">
+    <section title="Loan Details" className="w-full h-full flex flex-col bg-[#F7F5F3]">
+      <div className="w-full max-w-full px-4 bg-[#F7F5F3] p-10 rounded-lg space-y-6 ">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <CreditCard className="w-6 h-6 text-golden" />
@@ -223,8 +223,14 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
             "Payment",
           ]}
         />
-
-        <FormField
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          className="bg-white rounded-lg shadow-sm p-6 mx-40 md:p-8 space-y-6"
+        >
+          <FormField
           label="Loan Type"
           name="loan_type"
           type="select"
@@ -289,7 +295,11 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           onChange={(v) => setData("term", sanitize.number(v))}
           required
           error={errors.term}
-        />
+        />  
+
+
+        </form>
+        
 
         <div className="flex justify-between mt-6">
           <button type="button" className="px-4 py-1 border border-gray-300 rounded-md hover:bg-gray-400" onClick={onPrev}>
