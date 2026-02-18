@@ -6,6 +6,7 @@ use App\Models\Borrower;
 use App\Models\DocumentType;
 use App\Services\BorrowerService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class BorrowerController extends Controller
@@ -92,8 +93,8 @@ class BorrowerController extends Controller
             'valid_id_number' => 'nullable|string|max:50',
 
             // spouse fields if married
-            'spouse_first_name' => 'nullable|string|max:255',
-            'spouse_last_name' => 'nullable|string|max:255',
+            'spouse_first_name' => 'required_if:marital_status,Married|nullable|string|max:255',
+            'spouse_last_name' => 'required_if:marital_status,Married|nullable|string|max:255',
             'spouse_mobile_number' => 'nullable|string|max:15',
             'spouse_occupation' => 'nullable|string|max:100',
             'spouse_position' => 'nullable|string|max:100',
@@ -114,6 +115,25 @@ class BorrowerController extends Controller
             'documents.borrower_employment.*.document_type_id' => 'required|integer|exists:document_types,id',
             'documents.borrower_employment.*.file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        if (($validated['marital_status'] ?? null) === 'Married') {
+            $marriageCertTypeId = DocumentType::query()
+                ->where('code', 'MARRIAGE_CERT')
+                ->value('id');
+
+            if ($marriageCertTypeId) {
+                $identityDocs = collect($request->input('documents.borrower_identity', []));
+                $matchingIndex = $identityDocs->search(function ($row) use ($marriageCertTypeId) {
+                    return isset($row['document_type_id']) && (int) $row['document_type_id'] === (int) $marriageCertTypeId;
+                });
+
+                if ($matchingIndex === false || ! $request->hasFile("documents.borrower_identity.{$matchingIndex}.file")) {
+                    throw ValidationException::withMessages([
+                        'documents.borrower_identity' => 'Marriage Contract is required for married borrowers.',
+                    ]);
+                }
+            }
+        }
 
         $exists = Borrower::where('first_name', $validated['borrower_first_name'])
             ->where('last_name', $validated['borrower_last_name'])

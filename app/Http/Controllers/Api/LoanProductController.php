@@ -3,36 +3,35 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\LoanProduct;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class LoanProductController extends Controller
 {
     public function index(): JsonResponse
     {
-        $products = DB::table('loan_products as lp')
-            ->leftJoin('loan_product_rules as lpr', 'lpr.loan_product_id', '=', 'lp.id')
-            ->select([
-                'lp.id',
-                'lp.name',
-                'lp.description',
-                'lpr.requires_collateral',
-                'lpr.requires_coborrower',
-                'lpr.collateral_required_above',
-            ])
-            ->orderBy('lp.name')
+        $products = LoanProduct::query()
+            ->with('rules')
+            ->orderBy('name')
             ->get()
-            ->map(static function ($row) {
+            ->map(static function (LoanProduct $product) {
                 return [
-                    'id' => (int) $row->id,
-                    'name' => $row->name,
-                    'description' => $row->description,
+                    'id' => (int) $product->id,
+                    'name' => $product->name,
+                    'description' => $product->description,
                     'rules' => [
-                        'requires_collateral' => (bool) $row->requires_collateral,
-                        'requires_coborrower' => (bool) $row->requires_coborrower,
-                        'collateral_required_above' => $row->collateral_required_above !== null
-                            ? (float) $row->collateral_required_above
-                            : null,
+                        // These are placeholders; real requirement evaluation is dynamic.
+                        'requires_collateral' => false,
+                        'requires_coborrower' => false,
+                        'collateral_required_above' => null,
+                        'dynamic_rules' => $product->rules->map(static fn ($rule) => [
+                            'rule_type' => $rule->rule_type,
+                            'condition_key' => $rule->condition_key,
+                            'operator' => $rule->operator,
+                            'condition_value' => $rule->condition_value !== null
+                                ? (float) $rule->condition_value
+                                : null,
+                        ])->values(),
                     ],
                 ];
             })

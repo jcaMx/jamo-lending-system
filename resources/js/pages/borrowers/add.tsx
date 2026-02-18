@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AddBorrowerStepIndicator from './components/AddBorrowerStepIndicator';
 import RenderDocumentUploader, {
   type BorrowerDocumentCategory,
@@ -111,7 +111,10 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
     valid_id_number: '',
 
     documents: {
-      borrower_identity: [{ document_type_id: '', file: null }],
+      borrower_identity: [
+        { document_type_id: '', file: null },
+        { document_type_id: '', file: null },
+      ],
       borrower_address: [{ document_type_id: '', file: null }],
       borrower_employment: [{ document_type_id: '', file: null }],
     },
@@ -139,6 +142,74 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
     }),
     [documentTypesByCategory],
   );
+
+  const marriageCertOption = useMemo(
+    () =>
+      (documentTypeOptions.borrower_identity ?? []).find(
+        (option) => String(option.code ?? '').toUpperCase() === 'MARRIAGE_CERT',
+      ) ?? null,
+    [documentTypeOptions.borrower_identity],
+  );
+
+  const identityTypeOptions = useMemo(
+    () =>
+      (documentTypeOptions.borrower_identity ?? []).filter(
+        (option) => String(option.code ?? '').toUpperCase() !== 'MARRIAGE_CERT',
+      ),
+    [documentTypeOptions.borrower_identity],
+  );
+
+  const setIdentityRow = (index: number, patch: Partial<BorrowerDocumentUploadItem>) => {
+    const current = [...data.documents.borrower_identity];
+    while (current.length <= index) {
+      current.push({ document_type_id: '', file: null });
+    }
+    current[index] = { ...current[index], ...patch };
+    setData('documents', {
+      ...data.documents,
+      borrower_identity: current,
+    });
+  };
+
+  useEffect(() => {
+    if (data.documents.borrower_identity.length >= 2) return;
+    setData('documents', {
+      ...data.documents,
+      borrower_identity: [
+        ...data.documents.borrower_identity,
+        ...Array.from({ length: 2 - data.documents.borrower_identity.length }, () => ({
+          document_type_id: '',
+          file: null,
+        })),
+      ],
+    });
+  }, [data.documents, setData]);
+
+  useEffect(() => {
+    if (!marriageCertOption) return;
+
+    const marriageId = String(marriageCertOption.id);
+    const identityRows = data.documents.borrower_identity;
+    const hasMarriageRow = identityRows.some((row) => String(row.document_type_id) === marriageId);
+
+    if (data.marital_status === 'Married' && !hasMarriageRow) {
+      setData('documents', {
+        ...data.documents,
+        borrower_identity: [
+          ...identityRows,
+          { document_type_id: marriageId, file: null },
+        ],
+      });
+      return;
+    }
+
+    if (data.marital_status !== 'Married' && hasMarriageRow) {
+      setData('documents', {
+        ...data.documents,
+        borrower_identity: identityRows.filter((row) => String(row.document_type_id) !== marriageId),
+      });
+    }
+  }, [data.marital_status, data.documents, marriageCertOption, setData]);
 
   const updateDocRow = (
     category: BorrowerDocumentCategory,
@@ -182,7 +253,45 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
 
     if (step === 1 && data.marital_status === 'Married') {
       const spouseRequired = [data.spouse_first_name, data.spouse_last_name].some((v) => !v?.trim());
-      if (spouseRequired) return;
+      if (spouseRequired) {
+        setSubmitError('Please complete spouse first name and last name.');
+        return;
+      }
+    }
+
+    if (step === 1) {
+      const primary = data.documents.borrower_identity[0];
+      const secondary = data.documents.borrower_identity[1];
+
+      if (!primary?.document_type_id || !primary?.file) {
+        setSubmitError('Primary ID type and file are required.');
+        return;
+      }
+
+      if (!secondary?.document_type_id || !secondary?.file) {
+        setSubmitError('Secondary ID type and file are required.');
+        return;
+      }
+
+      if (String(primary.document_type_id) === String(secondary.document_type_id)) {
+        setSubmitError('Primary and secondary ID types must be different.');
+        return;
+      }
+
+      if (data.marital_status === 'Married') {
+        if (!marriageCertOption) {
+          setSubmitError('Marriage Certificate document type is not configured.');
+          return;
+        }
+
+        const marriageRow = data.documents.borrower_identity.find(
+          (row) => String(row.document_type_id) === String(marriageCertOption.id),
+        );
+        if (!marriageRow?.file) {
+          setSubmitError('Marriage Contract file is required for married borrowers.');
+          return;
+        }
+      }
     }
 
     if (!hasEmptyFields && step < addBorrowerSteps.length) {
@@ -370,22 +479,107 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
                     />
                     {errors.spouse_agency_address && <p className="text-red-500 text-xs mt-1">{errors.spouse_agency_address}</p>}
                   </div>
-                  </>
+
+                  {marriageCertOption && (
+                    <div className="md:col-span-2">
+                      <Label required>Marriage Contract</Label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => {
+                          setIdentityRow(
+                            Math.max(
+                              data.documents.borrower_identity.findIndex(
+                                (row) => String(row.document_type_id) === String(marriageCertOption.id),
+                              ),
+                              2,
+                            ),
+                            {
+                              document_type_id: String(marriageCertOption.id),
+                              file: e.target.files?.[0] ?? null,
+                            },
+                          );
+                        }}
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <SectionHeader title='Documents'></SectionHeader>
-              <RenderDocumentUploader
-                title="Identification documents"
-                category="borrower_identity"
-                rows={data.documents.borrower_identity}
-                optionsByCategory={documentTypeOptions}
-                minRequired={MIN_DOCUMENTS_PER_CATEGORY.borrower_identity}
-                inputClass={inputClass}
-                onAdd={addDocRow}
-                onRemove={removeDocRow}
-                onUpdate={updateDocRow}
-                getFieldError={getError}
-              />
+            <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
+              <h3 className="font-semibold text-gray-700">Identification documents</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label required>Primary ID Type</Label>
+                  <select
+                    value={data.documents.borrower_identity[0]?.document_type_id ?? ''}
+                    onChange={(e) => setIdentityRow(0, { document_type_id: e.target.value })}
+                    className={inputClass}
+                    required
+                  >
+                    <option value="">Select primary ID type</option>
+                    {identityTypeOptions.map((option) => (
+                      <option key={option.id} value={String(option.id)}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                  {getError('documents.borrower_identity.0.document_type_id') && (
+                    <p className="text-xs text-red-500 mt-1">{getError('documents.borrower_identity.0.document_type_id')}</p>
+                  )}
+                </div>
+                <div>
+                  <Label required>Primary ID File</Label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setIdentityRow(0, { file: e.target.files?.[0] ?? null })}
+                    className={inputClass}
+                    required
+                  />
+                  {data.documents.borrower_identity[0]?.file && (
+                    <p className="text-xs text-gray-600 mt-1">Selected: {data.documents.borrower_identity[0].file?.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label required>Secondary ID Type</Label>
+                  <select
+                    value={data.documents.borrower_identity[1]?.document_type_id ?? ''}
+                    onChange={(e) => setIdentityRow(1, { document_type_id: e.target.value })}
+                    className={inputClass}
+                    required
+                  >
+                    <option value="">Select secondary ID type</option>
+                    {identityTypeOptions.map((option) => (
+                      <option key={option.id} value={String(option.id)}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                  {getError('documents.borrower_identity.1.document_type_id') && (
+                    <p className="text-xs text-red-500 mt-1">{getError('documents.borrower_identity.1.document_type_id')}</p>
+                  )}
+                </div>
+                <div>
+                  <Label required>Secondary ID File</Label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setIdentityRow(1, { file: e.target.files?.[0] ?? null })}
+                    className={inputClass}
+                    required
+                  />
+                  {data.documents.borrower_identity[1]?.file && (
+                    <p className="text-xs text-gray-600 mt-1">Selected: {data.documents.borrower_identity[1].file?.name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import BorrowerInfo from "./borrower-application/BorrowerInfo";
 import CoBorrowerInfo from "./borrower-application/CoBorrowerInfo";
 import Collateral from "./borrower-application/Collateral";
 import LoanDetails from "./borrower-application/LoanDetails";
 import Confirmation from "./borrower-application/Confirmation";
-import type { LoanProductRule, SharedFormData } from "./borrower-application/sharedFormData";
+import type { SharedFormData } from "./borrower-application/sharedFormData";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import type { BorrowerDocumentTypeOption } from "./borrowers/components/RenderDocumentUploader";
 
@@ -19,6 +18,10 @@ interface BorrowerApplicationProps {
     payment_method?: string;
   };
   documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
+  borrowerRuleContext?: {
+    monthly_income?: number | null;
+    dti_ratio?: number | null;
+  };
 }
 
 type StepKey = "borrower" | "loan" | "coborrower" | "collateral" | "confirmation";
@@ -29,55 +32,21 @@ interface StepConfig {
   render: () => JSX.Element;
 }
 
-const FALLBACK_RULES_BY_LOAN_TYPE: Record<string, LoanProductRule> = {
-  personal: {
-    requires_collateral: false,
-    requires_coborrower: true,
-    collateral_required_above: null,
-  },
-  home: {
-    requires_collateral: true,
-    requires_coborrower: true,
-    collateral_required_above: null,
-  },
-  business: {
-    requires_collateral: true,
-    requires_coborrower: true,
-    collateral_required_above: null,
-  },
+const toNumber = (value: unknown): number => {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const toLoanTypeKey = (loanType: string | undefined) =>
-  (loanType ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+loan$/i, "")
-    .replace(/[\s-]+/g, "_");
-
-const normalizeRule = (value: unknown): LoanProductRule | null => {
-  if (!value || typeof value !== "object") {
-    return null;
-  }
-
-  const row = value as Record<string, unknown>;
-  const threshold = row.collateral_required_above;
-
-  return {
-    requires_collateral:
-      row.requires_collateral === true || row.requires_collateral === 1 || row.requires_collateral === "1",
-    requires_coborrower:
-      row.requires_coborrower === true || row.requires_coborrower === 1 || row.requires_coborrower === "1",
-    collateral_required_above:
-      threshold === null || threshold === undefined || threshold === ""
-        ? null
-        : Number.isFinite(Number(threshold))
-        ? Number(threshold)
-        : null,
-  };
-};
-
-const BorrowerApplication = ({ application, documentTypesByCategory = {} }: BorrowerApplicationProps) => {
+const BorrowerApplication = ({
+  application,
+  documentTypesByCategory = {},
+  borrowerRuleContext,
+}: BorrowerApplicationProps) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [ruleRequirements, setRuleRequirements] = useState<{ collateral: boolean; coborrower: boolean }>({
+    collateral: false,
+    coborrower: false,
+  });
 
   const [formData, setFormData] = useState<SharedFormData>({
     coBorrowers: [],
@@ -112,6 +81,14 @@ const BorrowerApplication = ({ application, documentTypesByCategory = {} }: Borr
     interest_rate: "",
     repayment_frequency: "",
     term: "",
+    monthly_income:
+      borrowerRuleContext?.monthly_income !== null && borrowerRuleContext?.monthly_income !== undefined
+        ? String(borrowerRuleContext.monthly_income)
+        : "",
+    dti_ratio:
+      borrowerRuleContext?.dti_ratio !== null && borrowerRuleContext?.dti_ratio !== undefined
+        ? String(borrowerRuleContext.dti_ratio)
+        : "",
     payment_method: "",
   });
 
@@ -123,35 +100,100 @@ const BorrowerApplication = ({ application, documentTypesByCategory = {} }: Borr
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  const selectedLoanRule = useMemo(() => {
-    const ruleFromSelectedProduct = normalizeRule(formData.loan_product_rule);
-
-    if (ruleFromSelectedProduct) {
-      return ruleFromSelectedProduct;
+  const loanAmountValue = useMemo(() => toNumber(formData.loan_amount), [formData.loan_amount]);
+  const termValue = useMemo(() => toNumber(formData.term), [formData.term]);
+  const monthlyIncomeValue = useMemo(() => toNumber(formData.monthly_income), [formData.monthly_income]);
+  const providedDtiRatio = useMemo(() => toNumber(formData.dti_ratio), [formData.dti_ratio]);
+  const computedDtiRatio = useMemo(() => {
+    if (monthlyIncomeValue <= 0 || termValue <= 0) {
+      return 0;
     }
 
-    const fallbackKey = toLoanTypeKey(formData.loan_type);
-    return FALLBACK_RULES_BY_LOAN_TYPE[fallbackKey] ?? null;
-  }, [formData.loan_product_rule, formData.loan_type]);
+    const monthlyObligation = loanAmountValue / termValue;
+    return (monthlyObligation / monthlyIncomeValue) * 100;
+  }, [loanAmountValue, monthlyIncomeValue, termValue]);
+  const dtiRatioValue = useMemo(
+    () => (providedDtiRatio > 0 ? providedDtiRatio : computedDtiRatio),
+    [computedDtiRatio, providedDtiRatio],
+  );
 
-  const loanAmountValue = useMemo(() => {
-    const parsed = Number(formData.loan_amount ?? 0);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }, [formData.loan_amount]);
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      dti_ratio: Number(dtiRatioValue.toFixed(2)),
+    }));
+  }, [dtiRatioValue, setFormData]);
 
-  const needsCollateral = useMemo(() => {
-    if (!selectedLoanRule?.requires_collateral) {
-      return false;
+  useEffect(() => {
+    const loanProductId = Number(formData.loan_product_id ?? 0);
+    const loanType = String(formData.loan_type ?? "").trim();
+    const hasRuleInput = loanProductId > 0 || loanType !== "";
+
+    if (!hasRuleInput) {
+      setRuleRequirements({ collateral: false, coborrower: false });
+      return;
     }
 
-    if (selectedLoanRule.collateral_required_above === null) {
-      return true;
-    }
+    const controller = new AbortController();
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
 
-    return loanAmountValue > selectedLoanRule.collateral_required_above;
-  }, [loanAmountValue, selectedLoanRule]);
+    const run = async () => {
+      try {
+        const response = await fetch("/api/evaluate-loan-rules", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+          },
+          body: JSON.stringify({
+            loan_product_id: loanProductId > 0 ? loanProductId : null,
+            loan_type: loanType || null,
+            loan_amount: loanAmountValue,
+            term: termValue,
+            monthly_income: monthlyIncomeValue,
+            dti_ratio: dtiRatioValue,
+          }),
+          signal: controller.signal,
+        });
 
-  const needsCoBorrower = !!selectedLoanRule?.requires_coborrower;
+        if (!response.ok) {
+          throw new Error(`Rule evaluation failed (${response.status})`);
+        }
+
+        const payload = (await response.json()) as Partial<{ collateral: boolean; coborrower: boolean }>;
+        setRuleRequirements({
+          collateral: !!payload.collateral,
+          coborrower: !!payload.coborrower,
+        });
+      } catch (error) {
+        if ((error as { name?: string })?.name === "AbortError") {
+          return;
+        }
+        setRuleRequirements({ collateral: false, coborrower: false });
+      }
+    };
+
+    const timeoutId = window.setTimeout(() => {
+      void run();
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [
+    formData.loan_product_id,
+    formData.loan_type,
+    loanAmountValue,
+    termValue,
+    monthlyIncomeValue,
+    dtiRatioValue,
+  ]);
+
+  const needsCollateral = ruleRequirements.collateral;
+  const needsCoBorrower = ruleRequirements.coborrower;
 
   const steps = useMemo<StepConfig[]>(() => {
     const stepDefinitions: Array<StepConfig & { include: boolean }> = [

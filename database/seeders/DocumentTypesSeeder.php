@@ -25,11 +25,14 @@ class DocumentTypesSeeder extends Seeder
             ['code' => 'VOTERS_ID', 'name' => "Voter's ID", 'category' => 'borrower_identity'],
             ['code' => 'BARANGAY_ID', 'name' => 'Barangay ID', 'category' => 'borrower_identity'],
             ['code' => 'UMID', 'name' => 'Unified Multi-Purpose ID (UMID)', 'category' => 'borrower_identity'],
+            ['code' => 'BIRTH_CERT', 'name' => 'Birth Certificate', 'category' => 'borrower_identity'],
+            ['code' => 'MARRIAGE_CERT', 'name' => 'Marriage Certificate', 'category' => 'borrower_identity'],
             ['code' => 'OTHER_ID', 'name' => 'Other ID', 'category' => 'borrower_identity'],
 
             // =========================
             // Borrower Address Documents
             // =========================
+            ['code' => 'PROOF_OF_BILLING', 'name' => 'Proof of Billing', 'category' => 'borrower_address'],
             ['code' => 'UTILITY_BILL', 'name' => 'Utility Bill (Electricity/Water/Internet)', 'category' => 'borrower_address'],
             ['code' => 'BARANGAY_CERT', 'name' => 'Barangay Certificate', 'category' => 'borrower_address'],
             ['code' => 'LEASE_CONTRACT', 'name' => 'Lease Contract', 'category' => 'borrower_address'],
@@ -44,12 +47,28 @@ class DocumentTypesSeeder extends Seeder
             ['code' => 'EMPLOYMENT_CONTRACT', 'name' => 'Employment Contract', 'category' => 'borrower_employment'],
 
             // =========================
-            // Collateral Documents
+            // Collateral Vehicle Documents
             // =========================
-            ['code' => 'LAND_TITLE', 'name' => 'Land Title', 'category' => 'collateral'],
-            ['code' => 'OR_CR', 'name' => 'Official Receipt / Certificate of Registration (Vehicle)', 'category' => 'collateral'],
-            ['code' => 'APPRAISAL_REPORT', 'name' => 'Appraisal Report', 'category' => 'collateral'],
-            ['code' => 'COLLATERAL_PHOTO', 'name' => 'Collateral Photos', 'category' => 'collateral'],
+            ['code' => 'VEHICLE_OR', 'name' => 'Official Receipt (OR)', 'category' => 'collateral_vehicle'],
+            ['code' => 'VEHICLE_CR', 'name' => 'Certificate of Registration (CR)', 'category' => 'collateral_vehicle'],
+            ['code' => 'BARANGAY_CLEARANCE', 'name' => 'Barangay Clearance', 'category' => 'collateral_vehicle'],
+
+            // =========================
+            // Collateral General Documents
+            // =========================
+            ['code' => 'APPRAISAL_REPORT', 'name' => 'Appraisal Report', 'category' => 'collateral_general'],
+            ['code' => 'COLLATERAL_PHOTO', 'name' => 'Collateral Photos', 'category' => 'collateral_general'],
+
+            // =========================
+            // Collateral Land Documents
+            // =========================
+            ['code' => 'LAND_TITLE', 'name' => 'Land Title', 'category' => 'collateral_land'],
+            ['code' => 'TAX_DECLARATION', 'name' => 'Latest Tax Declaration', 'category' => 'collateral_land'],
+            ['code' => 'PROPERTY_PHOTO', 'name' => 'Picture of Property', 'category' => 'collateral_land'],
+            ['code' => 'TRANSFER_CERT', 'name' => 'Certificate of True Copy of Transfer', 'category' => 'collateral_land'],
+            ['code' => 'REAL_ESTATE_TAX', 'name' => 'Updated Real Estate Tax Receipt', 'category' => 'collateral_land'],
+            ['code' => 'TAX_CLEARANCE', 'name' => 'Tax Clearance', 'category' => 'collateral_land'],
+            ['code' => 'VICINITY_MAP', 'name' => 'Vicinity Map', 'category' => 'collateral_land'],
 
             // =========================
             // Co-borrower Documents
@@ -60,16 +79,20 @@ class DocumentTypesSeeder extends Seeder
         ];
 
         foreach ($documentTypes as $doc) {
-            DB::table('document_types')->updateOrInsert(
-                ['code' => $doc['code']],
+            // FK-safe: update if exists, insert if not
+            $updated = DB::table('document_types')->updateOrInsert(
+                ['code' => $doc['code']], // lookup by code only
                 [
                     'name' => $doc['name'],
-                    'category' => $doc['category'],
+                    'category' => trim($doc['category']),
                     'is_active' => true,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]
             );
+
+            // Optional: show debug info in console
+            dump($doc['code'], $updated ? 'inserted/updated' : 'skipped');
         }
     }
 }

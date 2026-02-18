@@ -203,8 +203,14 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     ->name('customer.profile.update');
 
     Route::get('/applynow', function () {
+        $collateralDocumentCategories = [
+            'collateral_general',
+            'collateral_vehicle',
+            'collateral_land',
+        ];
+
         $documentTypesByCategory = DocumentType::query()
-            ->where('category', 'collateral')
+            ->whereIn('category', $collateralDocumentCategories)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'category'])
@@ -212,12 +218,40 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
             ->map(fn ($items) => $items->values())
             ->toArray();
 
+        $borrower = Auth::user()?->borrower;
+        $monthlyIncome = $borrower?->borrowerEmployment?->monthly_income;
+
         return Inertia::render('BorrowerApplication', [
             'documentTypesByCategory' => $documentTypesByCategory,
+            'borrowerRuleContext' => [
+                'monthly_income' => $monthlyIncome !== null ? (float) $monthlyIncome : null,
+                'dti_ratio' => null, // can be hydrated from backend once available
+            ],
         ]);
     })->name('apply');
+    Route::post('/api/evaluate-loan-rules', [ApplicationController::class, 'evaluateRules'])
+    ->name('api.evaluate-rules');
+
 
     Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
+
+    Route::get('/test-rule-evaluator', function () {
+        $service = app(\App\Services\RuleEvaluatorService::class);
+        $product = \App\Models\LoanProduct::with('rules')->first();
+        
+        if (!$product) {
+            return 'No loan products found';
+        }
+        
+        $result = $service->evaluate($product, null, [
+            'loan_amount' => 200501,
+            'monthly_income' => 50000,
+            'term' => 12,
+    ]);
+    
+    return $result;
+});
+
 
 });
 

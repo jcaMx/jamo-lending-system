@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\LoanProduct;
+use App\Services\RuleEvaluatorService;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Services\LoanProductRuleResolver;
 
 class StoreLoanRequest extends FormRequest
 {
@@ -19,11 +20,23 @@ class StoreLoanRequest extends FormRequest
         $loanType = $this->input('loan_type');
         $loanAmount = (float) $this->input('loan_amount', 0);
 
-        /** @var LoanProductRuleResolver $ruleResolver */
-        $ruleResolver = app(LoanProductRuleResolver::class);
-        $loanRule = $ruleResolver->resolve($loanProductId, $loanType);
-        $requiresCollateral = $ruleResolver->requiresCollateral($loanRule, $loanAmount);
-        $requiresCoBorrower = $ruleResolver->requiresCoBorrower($loanRule);
+        $borrowerIdRaw = $this->input('borrower_id');
+        $borrowerId = is_numeric($borrowerIdRaw) ? (int) $borrowerIdRaw : null;
+        $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+
+        /** @var RuleEvaluatorService $ruleEvaluator */
+        $ruleEvaluator = app(RuleEvaluatorService::class);
+        $evaluation = $loanProduct
+            ? $ruleEvaluator->evaluate($loanProduct, $borrowerId, [
+                'loan_amount' => $loanAmount,
+                'term' => $this->input('term'),
+                'dti_ratio' => $this->input('dti_ratio'),
+                'monthly_obligation' => $this->input('monthly_obligation'),
+            ])
+            : ['collateral' => false, 'coborrower' => false];
+
+        $requiresCollateral = (bool) ($evaluation['collateral'] ?? false);
+        $requiresCoBorrower = (bool) ($evaluation['coborrower'] ?? false);
 
         $rules = [
             // Borrower Information
@@ -108,5 +121,21 @@ class StoreLoanRequest extends FormRequest
             'account_no.required' => 'Account number is required.',
             'cardno_4digits.required' => 'Card last 4 digits is required.',
         ];
+    }
+
+    private function resolveLoanProduct(?int $loanProductId, ?string $loanType): ?LoanProduct
+    {
+        if ($loanProductId) {
+            return LoanProduct::query()->with('rules')->find($loanProductId);
+        }
+
+        if (! empty($loanType)) {
+            return LoanProduct::query()
+                ->with('rules')
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($loanType))])
+                ->first();
+        }
+
+        return null;
     }
 }

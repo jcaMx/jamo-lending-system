@@ -114,12 +114,200 @@ Defines dynamic rules for loan products regarding collateral and co-borrowers.
 * Loan products determine whether **Collateral** and **Co-borrower** forms are displayed.
 * Rules are defined in `loan_product_rules`:
 
-| Loan Product   | Collateral Required      | Co-borrower Required       |
-| -------------- | ------------------------ | -------------------------- |
-| Personal Loan  | ❌ Optional               | ⚠ Optional (based on risk) |
-| Home Loan      | ✅ Required               | ⚠ Required/Conditional     |
-| Business Loan  | ⚠ Required (high amount) | ⚠ Often Required           |
-| Emergency Loan | ❌ Not required           | ❌ Not required             |
+
+
+| Loan Product  | Collateral Requirement                                                                         | Co-borrower Requirement                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Personal Loan | ❌ Not required if loan amount ≤ X% of monthly income<br>⚠ Required if amount exceeds threshold | ❌ Not required if income capacity sufficient<br>⚠ Required if Debt-to-Income (DTI) exceeds limit |                    |
+| Business Loan | ⚠ Required if loan amount exceeds income/cash-flow multiplier (e.g., 6× monthly net)           | ⚠ Required if business age < X years or income documents insufficient                            |
+
+
+
+Great question — this is where your **business logic becomes formal lending policy** instead of just DB rules 👌
+
+Based on the numeric rules we just defined, here are the clean, structured **product policies** for Jamo Lending.
+
+---
+
+# 🏦 Personal Loan – Policy
+
+### 📌 Purpose
+
+Short-term unsecured / semi-secured loan for individuals.
+
+---
+
+## ✅ Eligibility Inputs Required
+
+The system must collect:
+
+* `loan_amount`
+* `monthly_income`
+* `dti_ratio`
+
+---
+
+## 🔒 Risk Control Policies
+
+### 1️⃣ Collateral Policy
+
+Collateral is required if:
+
+```
+loan_amount > (monthly_income × 5)
+```
+
+### Meaning:
+
+* Borrower can borrow up to **5× monthly income unsecured**
+* Beyond that → collateral is mandatory
+
+This acts as:
+
+* Exposure cap
+* Income-based risk control
+* Protection against over-leverage
+
+---
+
+### 2️⃣ Co-Borrower Policy
+
+Co-borrower is required if:
+
+```
+DTI ratio > 40%
+```
+
+### Meaning:
+
+* If borrower’s debt burden exceeds 40%, risk increases
+* A co-borrower offsets repayment risk
+
+This acts as:
+
+* Cash flow protection
+* Repayment strength enhancement
+
+---
+
+## 🧠 Risk Philosophy (Personal Loan)
+
+| Risk Area         | Control Mechanism      |
+| ----------------- | ---------------------- |
+| Over-borrowing    | Income multiplier (5×) |
+| Over-indebtedness | 40% DTI cap            |
+| High exposure     | Collateral             |
+| Weak cash flow    | Co-borrower            |
+
+This is a **moderate-risk retail lending product**.
+
+---
+
+# 🏢 Business Loan – Policy
+
+### 📌 Purpose
+
+Loan for business expansion or operations.
+
+---
+
+## ✅ Eligibility Inputs Required
+
+The system must collect:
+
+* `loan_amount`
+* `monthly_net_cashflow`
+* `business_age_years`
+
+---
+
+## 🔒 Risk Control Policies
+
+### 1️⃣ Collateral Policy
+
+Collateral is required if:
+
+```
+loan_amount > (monthly_net_cashflow × 6)
+```
+
+### Meaning:
+
+* Business can borrow up to **6× monthly net cashflow unsecured**
+* Beyond that → collateral required
+
+This ensures:
+
+* Cashflow-backed lending
+* Sustainable debt coverage
+* Protection against overextension
+
+---
+
+### 2️⃣ Co-Borrower Policy
+
+Co-borrower required if:
+
+```
+business_age_years < 2
+```
+
+### Meaning:
+
+* Startups under 2 years are high risk
+* Personal guarantor / co-borrower mitigates risk
+
+This acts as:
+
+* Track record protection
+* Stability assurance
+
+---
+
+## 🧠 Risk Philosophy (Business Loan)
+
+| Risk Area              | Control Mechanism           |
+| ---------------------- | --------------------------- |
+| Startup risk           | <2 years requires guarantor |
+| Weak operating history | Co-borrower                 |
+| Cashflow instability   | 6× multiplier               |
+| High exposure          | Collateral                  |
+
+This is a **cashflow-backed commercial lending product**.
+
+---
+
+# 📊 Policy Comparison
+
+| Feature             | Personal Loan   | Business Loan     |
+| ------------------- | --------------- | ----------------- |
+| Income Multiplier   | 5×              | 6×                |
+| DTI Check           | Yes             | No                |
+| Business Age Check  | No              | Yes               |
+| Primary Risk Driver | Salary          | Cashflow          |
+| Risk Level          | Moderate retail | Higher commercial |
+
+---
+
+# 🏗 In System Terms
+
+Your dynamic rules now represent:
+
+```
+Product → Risk Policy → Trigger → Requirement
+```
+
+Example:
+
+```
+Personal Loan
+    → If income capacity exceeded → require collateral
+    → If debt burden high → require co-borrower
+```
+
+
+---
+
 
 * Collateral and Co-borrower documents are uploaded using **polymorphic documents**.
 

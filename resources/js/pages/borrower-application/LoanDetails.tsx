@@ -4,6 +4,7 @@ import { FormField } from "@/components/FormField";
 import type { LoanProductRule, SharedFormData } from "./sharedFormData";
 import { CreditCard } from "lucide-react";
 import StepIndicator from "./StepIndicator";
+import { Label } from '@/components/ui/required-label';
 
 interface LoanDetailsProps {
   onNext: () => void;
@@ -59,6 +60,27 @@ const normalizeLoanProduct = (value: unknown): LoanProductItem | null => {
         collateralThreshold === null || Number.isNaN(collateralThreshold)
           ? null
           : collateralThreshold,
+      dynamic_rules: Array.isArray(rulesRaw.dynamic_rules)
+        ? rulesRaw.dynamic_rules
+            .map((raw) => {
+              if (!raw || typeof raw !== "object") return null;
+              const row = raw as Record<string, unknown>;
+              const ruleType = String(row.rule_type ?? "");
+              if (ruleType !== "collateral" && ruleType !== "coborrower") {
+                return null;
+              }
+              return {
+                rule_type: ruleType as "collateral" | "coborrower",
+                condition_key: String(row.condition_key ?? ""),
+                operator: String(row.operator ?? ""),
+                condition_value:
+                  row.condition_value === null || row.condition_value === undefined || row.condition_value === ""
+                    ? null
+                    : Number(row.condition_value),
+              };
+            })
+            .filter((item): item is NonNullable<typeof item> => item !== null)
+        : [],
     },
   };
 };
@@ -184,7 +206,7 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
 
   return (
     <section title="Loan Details" className="w-full h-full flex flex-col m-3">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg space-y-6">
+      <div className="w-full max-w-full px-4 bg-white p-6 rounded-lg space-y-6">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <CreditCard className="w-6 h-6 text-golden" />
@@ -226,6 +248,7 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           required
           error={errors.loan_amount}
         />
+
 
         <FormField
           label="Interest Type"

@@ -33,7 +33,8 @@ export const FormField = ({
   disabled?: boolean;  // <-- Add this property
 }) => (
   <div>
-    <label className="block text-sm font-medium mb-2">{label}</label>
+    <label className="block text-sm font-medium mb-2 flex items-center">{label}</label>
+    {required && <span className="text-red-500 ml-1">*</span>}
     {type === "select" ? (
       <select
         value={value}

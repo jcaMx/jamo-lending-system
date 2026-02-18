@@ -15,6 +15,12 @@ export interface LoanProductRule {
   requires_collateral: boolean;
   requires_coborrower: boolean;
   collateral_required_above: number | null;
+  dynamic_rules?: {
+    rule_type: "collateral" | "coborrower";
+    condition_key: string;
+    operator: string;
+    condition_value: number | null;
+  }[];
 }
 
 export interface DocumentUploadItem {
@@ -91,6 +97,8 @@ export interface SharedFormData {
   interest_rate?: number | string;
   repayment_frequency?: string;
   term?: number | string;
+  monthly_income?: number | string;
+  dti_ratio?: number | string;
 
   payment_method?: string;
 
