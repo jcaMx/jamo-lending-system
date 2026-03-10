@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -164,43 +163,9 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
   const borrowerFiles = toArray<FileItem>(loan.borrower?.files);
   const collateralFiles = toArray<FileItem>(loan.collateral?.files);
 
-  // Fee percentages
-  const PROCESSING_FEE_RATE = 0.03; // 3%
-  const INSURANCE_FEE_RATE = 0.02; // 2%
-  const NOTARY_FEE_RATE = 0.01; // 1%
-  const SAVINGS_CONTRIBUTION_RATE = 0.02; // 2%
-  const TOTAL_FEE_RATE = PROCESSING_FEE_RATE + INSURANCE_FEE_RATE + NOTARY_FEE_RATE + SAVINGS_CONTRIBUTION_RATE; // 8%
-
-  // Calculate fees and released amount
-  const principalAmount = loan.principal_amount;
-  const processingFee = principalAmount * PROCESSING_FEE_RATE;
-  const insuranceFee = principalAmount * INSURANCE_FEE_RATE;
-  const notaryFee = principalAmount * NOTARY_FEE_RATE;
-  const savingsContribution = principalAmount * SAVINGS_CONTRIBUTION_RATE;
-  const totalFees = processingFee + insuranceFee + notaryFee + savingsContribution;
-  const computedReleasedAmount = principalAmount - totalFees;
-
-  const [releasedAmount, setReleasedAmount] = useState<string>(computedReleasedAmount.toFixed(2));
-  const [releasedDate, setReleasedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [showReleaseForm, setShowReleaseForm] = useState(false);
-
   const handleApprove = () => {
-    const amount = parseFloat(releasedAmount);
-    if (!releasedAmount || isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid released amount greater than 0.');
-      return;
-    }
-
-    if (!releasedDate) {
-      alert('Please select a releasing date.');
-      return;
-    }
-
-    if (confirm(`Are you sure you want to approve this loan?\n\nPrincipal: ₱${principalAmount.toLocaleString()}\nReleased Amount: ₱${amount.toLocaleString()}\nReleasing Date: ${new Date(releasedDate).toLocaleDateString()}\n\nThis will generate amortization schedules.`)) {
-      router.post(route('loans.approve', loan.ID), {
-        released_amount: amount,
-        released_date: releasedDate,
-      }, {
+    if (confirm('Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.')) {
+      router.post(route('loans.approve', loan.ID), {}, {
         onSuccess: () => {
           router.visit(route('loans.view-approved'));
         },
@@ -230,87 +195,12 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
           <div className="flex gap-2">
             {loan.status === 'Pending' && (
               <>
-                {!showReleaseForm ? (
-                  <Button
-                    onClick={() => setShowReleaseForm(true)}
-                    className="bg-green-600 text-white hover:bg-green-700"
-                  >
-                    Approve Loan
-                  </Button>
-                ) : (
-                  <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-lg border">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-gray-700">Loan Releasing Breakdown</h3>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <p className="text-gray-600">Principal Amount:</p>
-                          <p className="font-medium">₱{principalAmount.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Processing Fee (3%):</p>
-                          <p className="font-medium">₱{processingFee.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Insurance (2%):</p>
-                          <p className="font-medium">₱{insuranceFee.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Notary Fee (1%):</p>
-                          <p className="font-medium">₱{notaryFee.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Savings Contribution (2%):</p>
-                          <p className="font-medium">₱{savingsContribution.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Total Fees (8%):</p>
-                          <p className="font-medium">₱{totalFees.toFixed(2)}</p>
-                        </div>
-                      </div>
-                      <div className="pt-2 border-t">
-                        <div className="flex items-center gap-2 mb-3">
-                          <label className="text-sm font-medium text-gray-700">Released Amount:</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            value={releasedAmount}
-                            readOnly
-                            className="px-4 py-2 border rounded shadow-sm w-48 bg-gray-100 cursor-not-allowed"
-                          />
-                          <span className="text-sm text-gray-500">(Computed: ₱{computedReleasedAmount.toFixed(2)})</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-gray-700">Releasing Date:</label>
-                          <input
-                            type="date"
-                            value={releasedDate}
-                            onChange={(e) => setReleasedDate(e.target.value)}
-                            className="px-4 py-2 border rounded shadow-sm w-48"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleApprove}
-                        className="bg-green-600 text-white hover:bg-green-700"
-                      >
-                        Confirm Approval
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setShowReleaseForm(false);
-                          setReleasedAmount(computedReleasedAmount.toFixed(2));
-                          setReleasedDate(new Date().toISOString().split('T')[0]);
-                        }}
-                        className="bg-gray-600 text-white hover:bg-gray-700"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <Button
+                  onClick={handleApprove}
+                  className="bg-green-600 text-white hover:bg-green-700"
+                >
+                  Approve Loan
+                </Button>
                 <Button
                   onClick={handleReject}
                   className="bg-red-600 text-white hover:bg-red-700"
@@ -318,6 +208,14 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                   Reject
                 </Button>
               </>
+            )}
+            {loan.status === 'Active' && (
+              <Button
+                onClick={() => router.visit(`/disbursements?loan_id=${loan.ID}`)}
+                className="bg-[#FABF24] text-black hover:bg-[#f8b80f]"
+              >
+                Disburse Loan
+              </Button>
             )}
             <Button
               onClick={() => {

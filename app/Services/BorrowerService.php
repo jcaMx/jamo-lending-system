@@ -208,7 +208,7 @@ class BorrowerService
 
         return Payment::query()
             ->where('loan_id', $loan->ID)
-            ->with(['jamoUser', 'loan.borrower'])
+            ->with(['verifiedBy', 'loan.borrower'])
             ->latest('payment_date')
             ->get()
             ->map(function (Payment $payment) use ($loan) {
@@ -218,10 +218,7 @@ class BorrowerService
                     : ($loan->borrower?->first_name ?? '').' '.($loan->borrower?->last_name ?? '');
                 $borrowerName = $borrowerName ?: 'Unknown Borrower';
 
-                $verifiedByName = $payment->jamoUser
-                    ? ($payment->jamoUser->first_name ?? '').' '.($payment->jamoUser->last_name ?? '')
-                    : 'Unverified';
-                $verifiedByName = trim($verifiedByName) ?: 'Unverified';
+                $verifiedByName = trim((string) ($payment->verifiedBy?->name ?? '')) ?: 'Unverified';
 
                 return [
                     'id' => $payment->ID,

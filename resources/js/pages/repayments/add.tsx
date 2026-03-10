@@ -73,6 +73,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   const [submittedRefs, setSubmittedRefs] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const isCashMethod = form.method === "Cash";
 
   const filteredBorrowers = useMemo(() => {
     return normalizedBorrowers.filter((b) =>
@@ -131,9 +132,12 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   };
 
   const handleMethodChange = (method: string) => {
+    const isCash = method === "Cash";
     setForm((prev) => ({
       ...prev,
       method,
+      collectedBy: isCash ? (prev.collectedBy || (initialCollectors.length > 0 ? String(initialCollectors[0].id) : "")) : "",
+      collectionDate: isCash ? (prev.collectionDate || today) : "",
       referenceNumber: "",
       voucherNumber: "",
       voucherDate: "",
@@ -153,11 +157,11 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
 
     if (!selectedBorrower) return alert("Please select a borrower.");
     if (!selectedSchedules.length) return alert("Please select at least one schedule.");
-    if (!collectedBy) return alert("Please select a collector.");
     if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
     if (Number(amount) > 10_000_000) return alert("Amount cannot exceed 10,000,000.");
     if (!method) return alert("Please select a payment method.");
-    if (!collectionDate) return alert("Please select a collection date.");
+    if (isCashMethod && !collectedBy) return alert("Please select a collector.");
+    if (isCashMethod && !collectionDate) return alert("Please select a collection date.");
 
     // Basic client-side validation for voucher fields
     if (method === "Cash Voucher" && !form.voucherNumber.trim()) {
@@ -178,9 +182,12 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
       schedule_ids: selectedSchedules.map((s) => s.ID),
       amount,
       method,
-      collectedBy,
-      collectionDate,
     };
+
+    if (isCashMethod) {
+      payload.collectedBy = collectedBy;
+      payload.collectionDate = collectionDate;
+    }
 
     // Add method-specific fields
     if (method === "Cash Voucher") {
@@ -497,6 +504,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                   value={form.collectedBy}
                   onChange={(e) => update("collectedBy", e.target.value)}
                   className={inputClass}
+                  disabled={!isCashMethod}
                 >
                   {initialCollectors.length > 0 ? (
                     initialCollectors.map((c) => (
@@ -519,7 +527,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                   value={form.collectionDate || today}//on default today
                   onChange={(e) => update("collectionDate", e.target.value)}
                   className={inputClass}
-                  
+                  disabled={!isCashMethod}
                 />
               </div>
             </div>

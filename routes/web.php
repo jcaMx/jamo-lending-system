@@ -5,6 +5,7 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DisbursementController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
@@ -117,6 +118,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/daily-collections/export-pdf', [DailyCollectionController::class, 'exportPdf'])
         ->name('daily-collections.export');
 
+    // Disbursements
+    Route::prefix('disbursements')
+        ->group(function () {
+            Route::middleware(['role:cashier|admin'])->group(function () {
+            Route::get('/', [DisbursementController::class, 'index'])->name('disbursements.index');
+            Route::post('/', [DisbursementController::class, 'store'])->name('disbursements.store');
+            });
+
+            Route::middleware(['role:admin'])->group(function () {
+            Route::post('/{disbursement}/approve', [DisbursementController::class, 'approve'])->name('disbursements.approve');
+            Route::post('/{disbursement}/complete', [DisbursementController::class, 'complete'])->name('disbursements.complete');
+            Route::post('/{disbursement}/fail', [DisbursementController::class, 'fail'])->name('disbursements.fail');
+            });
+        });
+
     // Repayments (match sidebar hrefs: /repayments, /repayments/add)
     Route::prefix('repayments')
         ->middleware(['role:cashier|admin'])
@@ -124,6 +140,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
             Route::post('/store', [RepaymentController::class, 'store'])->name('repayments.store');
+            Route::post('/{payment}/confirm', [RepaymentController::class, 'confirm'])->name('repayments.confirm');
+            Route::post('/{payment}/reject', [RepaymentController::class, 'reject'])->name('repayments.reject');
         });
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)

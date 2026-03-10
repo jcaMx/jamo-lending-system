@@ -35,8 +35,4 @@ class UserAccount extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function jamoUser()
-    {
-        return $this->hasOne(JamoUser::class, 'account_id', 'ID');
-    }
 }

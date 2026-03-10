@@ -228,16 +228,9 @@ class LoanController extends Controller
                 return back()->withErrors(['error' => 'User not authenticated.']);
             }
 
-            $request = request();
-            $releasedAmount = $request->input('released_amount');
+            $this->loanService->approveLoan($loan, $approvedBy);
 
-            if (! $releasedAmount || $releasedAmount <= 0) {
-                return back()->withErrors(['error' => 'Released amount is required and must be greater than 0.']);
-            }
-
-            $this->loanService->approveLoan($loan, $approvedBy, (float) $releasedAmount);
-
-            return redirect()->route('loans.view-approved')->with('success', 'Loan approved successfully!');
+            return redirect()->route('loans.view-approved')->with('success', 'Loan approved. Proceed to Disbursement for fund release.');
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Failed to approve loan: '.$e->getMessage()]);
         }

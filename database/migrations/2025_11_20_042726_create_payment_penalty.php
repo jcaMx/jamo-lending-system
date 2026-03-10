@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignId('loan_id')->constrained('loan');
             
             $table->foreign('verified_by', 'FK_Payment_Users')
-                ->references('ID')->on('jamouser')
+                ->references('id')->on('users')
                 ->onUpdate('cascade');
         });
             

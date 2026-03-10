@@ -56,47 +56,17 @@ class LoanService
         return Loan::addLoan($data);
     }
 
-    public function approveLoan(Loan $loan, int $approvedByUser, float $releasedAmount, ?string $releasedDate = null): Loan
+    public function approveLoan(Loan $loan, int $approvedByUser): Loan
     {
-        DB::transaction(function () use ($loan, $approvedByUser, $releasedAmount, $releasedDate) {
+        DB::transaction(function () use ($loan, $approvedByUser) {
             $loan->approved_by = $approvedByUser;
             $loan->status = 'Active';
-            $loan->released_amount = $releasedAmount;
-            $loan->released_date = $releasedDate ? Carbon::parse($releasedDate) : Carbon::now();
+            $loan->released_amount = 0;
+            $loan->released_date = null;
 
             // Set borrower status to Active
             $loan->borrower->status = 'Active';
             $loan->borrower->save();
-
-            // Set start_date to today (first installment will be due on start_date)
-            $loan->start_date = Carbon::now();
-
-            // Calculate end_date based on term and repayment frequency
-            $totalInstallments = match ($loan->repayment_frequency) {
-                'Weekly' => (int) ceil($loan->term_months * 4.345),
-                'Monthly' => $loan->term_months,
-                'Yearly' => (int) ceil($loan->term_months / 12),
-                default => $loan->term_months
-            };
-
-            $endDate = $loan->start_date->copy();
-            $endDate = match ($loan->repayment_frequency) {
-                'Weekly' => $endDate->addWeeks($totalInstallments - 1),
-                'Monthly' => $endDate->addMonthsNoOverflow($totalInstallments - 1),
-                'Yearly' => $endDate->addYears($totalInstallments - 1),
-                default => $endDate->addMonthsNoOverflow($totalInstallments - 1)
-            };
-            $loan->end_date = $endDate;
-
-            // Use released_amount as the base for balance and amortization
-            $loan->balance_remaining = $releasedAmount;
-            $loan->save();
-
-            // Generate amortization schedules using released_amount
-            $schedules = $this->generateAmortization($loan, $releasedAmount);
-
-            // Update balance_remaining to sum of all installment amounts
-            $loan->balance_remaining = $schedules->sum('installment_amount');
             $loan->save();
         });
 
@@ -117,6 +87,44 @@ class LoanService
             email: $borrower->email,
             // sms: $borrower->$user->profile->phone ?? null
         ));
+
+        return $loan->fresh();
+    }
+
+    public function finalizeLoanDisbursement(Loan $loan, float $releasedAmount, ?string $releasedDate = null): Loan
+    {
+        DB::transaction(function () use ($loan, $releasedAmount, $releasedDate) {
+            $loan->released_amount = $releasedAmount;
+            $loan->released_date = $releasedDate ? Carbon::parse($releasedDate) : Carbon::now();
+
+            // Set start_date to disbursement date (first installment due starts from this baseline)
+            $loan->start_date = $loan->released_date->copy();
+
+            // Calculate end_date based on term and repayment frequency
+            $totalInstallments = match ($loan->repayment_frequency) {
+                'Weekly' => (int) ceil($loan->term_months * 4.345),
+                'Monthly' => $loan->term_months,
+                'Yearly' => (int) ceil($loan->term_months / 12),
+                default => $loan->term_months
+            };
+
+            $endDate = $loan->start_date->copy();
+            $endDate = match ($loan->repayment_frequency) {
+                'Weekly' => $endDate->addWeeks($totalInstallments - 1),
+                'Monthly' => $endDate->addMonthsNoOverflow($totalInstallments - 1),
+                'Yearly' => $endDate->addYears($totalInstallments - 1),
+                default => $endDate->addMonthsNoOverflow($totalInstallments - 1)
+            };
+            $loan->end_date = $endDate;
+
+            // Use released amount as basis of schedule
+            $loan->balance_remaining = $releasedAmount;
+            $loan->save();
+
+            $schedules = $this->generateAmortization($loan, $releasedAmount);
+            $loan->balance_remaining = $schedules->sum('installment_amount');
+            $loan->save();
+        });
 
         return $loan->fresh();
     }

@@ -68,7 +68,9 @@ class MyRepaymentsController extends Controller
                     'amount' => (float) $payment->amount,
                     'method' => $payment->payment_method?->value ?? (string) $payment->payment_method ?? 'Cash',
                     'payment_date' => optional($payment->payment_date)?->toDateString(),
-                    'status' => $payment->verified_date ? 'Completed' : 'Pending',
+                    'status' => strtolower((string) ($payment->status ?? 'pending')) === 'confirmed'
+                        ? 'Completed'
+                        : (strtolower((string) ($payment->status ?? 'pending')) === 'rejected' ? 'Failed' : 'Pending'),
                 ];
             })
             ->values();

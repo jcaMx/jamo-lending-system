@@ -38,7 +38,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('approved_by', 'FK_Loan_User')
-                ->references('ID')->on('jamouser');
+                ->references('id')->on('users');
         });
 
         // Amortization table
@@ -73,7 +73,7 @@ return new class extends Migration
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
 
             $table->foreign('appraised_by', 'FK_Collateral_User')
-                ->references('ID')->on('jamouser');
+                ->references('id')->on('users');
         });
 
         // ATM Collateral

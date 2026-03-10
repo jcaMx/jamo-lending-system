@@ -43,4 +43,24 @@ class User extends Authenticatable
     {
         return $this->hasOne(Borrower::class, 'user_id');
     }
+
+    public function createdDisbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'created_by', 'id');
+    }
+
+    public function approvedDisbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'approved_by', 'id');
+    }
+
+    public function processedDisbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'processed_by', 'id');
+    }
+
+    public function disbursementEvents()
+    {
+        return $this->hasMany(DisbursementEvent::class, 'actor_id', 'id');
+    }
 }
