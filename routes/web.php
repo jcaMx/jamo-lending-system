@@ -121,6 +121,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
             Route::post('/store', [RepaymentController::class, 'store'])->name('repayments.store');
+            Route::get('/pending', [RepaymentController::class, 'pending'])->name('repayments.pending');
+            Route::post('/verify/{payment}', [RepaymentController::class, 'verify'])->name('repayments.verify');
         });
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
@@ -203,7 +205,8 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
 
     Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
 
-});
+    
 
+});
 
 require __DIR__.'/settings.php';

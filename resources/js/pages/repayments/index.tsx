@@ -39,7 +39,7 @@ export default function RepaymentsIndex({ repayments }: Props) {
       
       {/* Header & Search */}
       <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">Repayments</h1>
+        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">View Repayments</h1>
 
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />

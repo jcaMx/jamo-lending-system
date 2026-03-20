@@ -94,10 +94,10 @@ class RepaymentController extends Controller
 
         // Conditionally require referenceNumber for non-Cash payments
         $inputMethod = $request->input('method');
-        if ($inputMethod !== 'Cash') {
-            $rules['referenceNumber'] = 'required|string|max:255';
+        if ($inputMethod !== ['Bank', 'GCash', 'Cebuana', 'Cash Voucher', 'Cheque Voucher']) {
+            $rules['reference_number'] = 'required|string|max:255';
         } else {
-            $rules['referenceNumber'] = 'nullable|string|max:255';
+            $rules['reference_number'] = 'nullable|string|max:255';
         }
 
         $request->validate($rules);
@@ -117,8 +117,8 @@ class RepaymentController extends Controller
             }
 
             // Generate reference number if not provided and not Cash
-            $referenceNo = $request->referenceNumber;
-            if ($methodValue !== PaymentMethod::Cash->value && ! $referenceNo) {
+            $referenceNo = $request->reference_number;
+        if ($methodValue !== PaymentMethod::Cash->value && ! $referenceNo) {
                 $referenceNo = 'REF-'.strtoupper(substr(uniqid(), -8)).'-'.date('Ymd');
             }
 
@@ -245,4 +245,40 @@ class RepaymentController extends Controller
             'repayments' => $payments,
         ]);
     }
+public function pending()
+{
+    $pendingPayments = Payment::where('status', 'pending')
+        ->with(['loan.borrower', 'jamoUser', 'amortizationSchedule'])
+        ->orderBy('payment_date', 'desc')
+        ->get()
+        ->map(function ($p) {
+            return [
+                'id' => $p->ID,
+                'borrowerName' => $p->loan?->borrower
+                    ? $p->loan->borrower->first_name . ' ' . $p->loan->borrower->last_name
+                    : 'N/A',
+                'loanNo' => $p->loan?->ID ?? 'N/A',
+                'amount' => $p->amount,
+                'method' => $p->payment_method,
+                'referenceNo' => $p->reference_no,
+                'collectedBy' => $p->jamoUser?->first_name
+                    ? $p->jamoUser->first_name . ' ' . $p->jamoUser->last_name
+                    : 'N/A',
+                'collectionDate' => $p->payment_date?->toDateString() ?? null,
+            ];
+        });
+
+    return Inertia::render('repayments/pending', [
+        'pendingPayments' => $pendingPayments,
+    ]);
+}
+
+public function verify(Payment $payment)
+{
+    $payment->status = 'verified';
+    $payment->save();
+
+    return redirect()->route('repayments.pending')->with('success', 'Payment verified successfully!');
+}
+
 }
