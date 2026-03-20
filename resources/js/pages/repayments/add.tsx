@@ -118,7 +118,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     if (schedule.due_date) update("collectionDate", schedule.due_date);
   };
 
-  const handleMethodChange = (method: string) => {
+ const handleMethodChange = (method: string) => {
   let referenceNumber = "";
   let voucherNumber = "";
   let chequeNumber = "";
@@ -132,16 +132,16 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     referenceNumber = generateCode("REF");
   }
 
-  // CASH VOUCHER
+  // CASH VOUCHER (NO REFERENCE ❗)
   if (method === "Cash Voucher") {
     voucherNumber = generateCode("CV");
-    referenceNumber = generateCode("REF");
+    referenceNumber = ""; // ✅ FIXED
   }
 
-  // CHEQUE VOUCHER ✅ ADD THIS
+  // CHEQUE VOUCHER
   if (method === "Cheque Voucher") {
-    chequeNumber = generateCode("CHK"); // 👈 AUTO GENERATE
-    referenceNumber = generateCode("REF"); // (optional but recommended)
+    chequeNumber = generateCode("CHK");
+    referenceNumber = generateCode("REF");
   }
 
   setForm((prev) => ({
@@ -149,14 +149,14 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     method,
     referenceNumber,
     voucherNumber,
-    chequeNumber, // 👈 IMPORTANT
+    chequeNumber,
     voucherDate: "",
     bankName: "",
     chequeDate: "",
   }));
 };
 
- const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault();
 
   const { selectedBorrower, collectedBy, amount, method, collectionDate } = form;
@@ -168,25 +168,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   if (!method) return alert("Please select a payment method.");
   if (!collectionDate) return alert("Please select a collection date.");
 
-  // Auto-generate reference number if needed
-  if (!form.referenceNumber.trim()) {
-    if (ONLINE_METHODS.includes(method) || method === "Cash Voucher" || method === "Cheque Voucher") {
-      update("referenceNumber", generateReferenceNumber());
-    }
-  }
-
-  if (method === "Cash Voucher" && !form.voucherNumber.trim()) {
-    return alert("Voucher Number is required for Cash Voucher payments.");
-  }
-
-  if (method === "Cheque Voucher") {
-    if (!form.chequeNumber.trim()) return alert("Cheque Number is required.");
-    if (!form.bankName.trim()) return alert("Bank Name is required.");
-    if (!form.chequeDate) return alert("Cheque Date is required.");
-  }
-
-  const isOnline = ONLINE_METHODS.includes(method);
-  const status = method === "Cash" || method === "Cash Voucher" ? "verified" : "pending";
+  // ❌ REMOVE FAKE STATUS (backend controls it)
 
   const payload: any = {
     borrower_id: selectedBorrower.id,
@@ -196,14 +178,22 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     method,
     collectedBy,
     collectionDate,
-    status,
-    reference_number: form.referenceNumber.trim(), // always include
+    reference_number: form.referenceNumber?.trim() || null, // ✅ FIXED
   };
 
   if (method === "Cash Voucher") {
+    if (!form.voucherNumber.trim()) {
+      return alert("Voucher Number is required for Cash Voucher payments.");
+    }
     payload.voucher_number = form.voucherNumber.trim();
     payload.voucher_date = form.voucherDate || null;
-  } else if (method === "Cheque Voucher") {
+  }
+
+  if (method === "Cheque Voucher") {
+    if (!form.chequeNumber.trim()) return alert("Cheque Number is required.");
+    if (!form.bankName.trim()) return alert("Bank Name is required.");
+    if (!form.chequeDate) return alert("Cheque Date is required.");
+
     payload.cheque_number = form.chequeNumber.trim();
     payload.bank_name = form.bankName.trim();
     payload.cheque_date = form.chequeDate;
@@ -211,17 +201,13 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
 
   router.post("/repayments/store", payload, {
     onSuccess: () => {
-      if (status === "pending") {
+      // ✅ ONLY pending methods redirect
+      if (ONLINE_METHODS.includes(method) || method === "Cheque Voucher") {
         router.visit(`/repayments/pending?ref=${form.referenceNumber}`);
       } else {
         setSuccessMessage("Payment verified successfully!");
       }
 
-      if (form.referenceNumber && isOnline) {
-        setSubmittedRefs((prev) => [...prev, form.referenceNumber]);
-      }
-
-      // Reset form
       setForm({
         search: "",
         selectedBorrower: null,

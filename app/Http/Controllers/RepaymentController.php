@@ -80,142 +80,151 @@ class RepaymentController extends Controller
     }
     
 
-    public function store(Request $request)
-    {
-        $rules = [
-            'borrower_id' => 'required|exists:borrower,ID',
-            'loanNo' => 'required|exists:loan,ID',
-            'schedule_id' => 'nullable|exists:amortizationschedule,ID',
-            'amount' => 'required|numeric|min:0.01',
-            'method' => ['required', Rule::enum(PaymentMethod::class)],
-            'collectedBy' => 'required|exists:jamouser,ID',
-            'collectionDate' => 'required|date',
-        ];
+   public function store(Request $request)
+{
+    $rules = [
+        'borrower_id' => 'required|exists:borrower,ID',
+        'loanNo' => 'required|exists:loan,ID',
+        'schedule_id' => 'nullable|exists:amortizationschedule,ID',
+        'amount' => 'required|numeric|min:0.01',
+        'method' => ['required', Rule::enum(PaymentMethod::class)],
+        'collectedBy' => 'required|exists:jamouser,ID',
+        'collectionDate' => 'required|date',
+    ];
 
-        // Conditionally require referenceNumber for non-Cash payments
-        $inputMethod = $request->input('method');
-        if ($inputMethod !== ['Bank', 'GCash', 'Cebuana', 'Cash Voucher', 'Cheque Voucher']) {
-            $rules['reference_number'] = 'required|string|max:255';
-        } else {
-            $rules['reference_number'] = 'nullable|string|max:255';
-        }
+    $inputMethod = $request->input('method');
 
-        $request->validate($rules);
-
-        try {
-            DB::beginTransaction();
-
-            $methodEnum = PaymentMethod::from($inputMethod);
-            $methodValue = $methodEnum->value;
-
-            // Generate receipt number (unique payment ID)
-            $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
-            
-            // Ensure receipt number is unique
-            while (Payment::where('receipt_number', $receiptNumber)->exists()) {
-                $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
-            }
-
-            // Generate reference number if not provided and not Cash
-            $referenceNo = $request->reference_number;
-        if ($methodValue !== PaymentMethod::Cash->value && ! $referenceNo) {
-                $referenceNo = 'REF-'.strtoupper(substr(uniqid(), -8)).'-'.date('Ymd');
-            }
-
-            // For Cash payments, use NULL instead of empty string (allows multiple cash payments)
-            if ($methodValue === PaymentMethod::Cash->value) {
-                $referenceNo = null;
-            }
-
-            // Check if reference number already exists (for non-cash)
-            if ($methodValue !== PaymentMethod::Cash->value && $referenceNo) {
-                $existingPayment = Payment::where('reference_no', $referenceNo)->first();
-                if ($existingPayment) {
-                    DB::rollBack();
-                    return redirect()->back()->withErrors(['referenceNumber' => 'This reference number has already been used.']);
-                }
-            }
-
-            // Ensure schedule_id is provided - if not, find the first unpaid schedule
-            $scheduleId = $request->schedule_id;
-            if (! $scheduleId) {
-                $loan = \App\Models\Loan::find($request->loanNo);
-                if ($loan) {
-                    $firstUnpaidSchedule = $loan->amortizationSchedules()
-                        ->whereIn('status', [\App\Models\ScheduleStatus::Unpaid, \App\Models\ScheduleStatus::Overdue])
-                        ->orderBy('due_date', 'asc')
-                        ->first();
-                    
-                    if ($firstUnpaidSchedule) {
-                        $scheduleId = $firstUnpaidSchedule->ID;
-                    }
-                }
-            }
-
-            if (! $scheduleId) {
-                DB::rollBack();
-                return redirect()->back()->withErrors(['error' => 'No unpaid schedule found for this loan.']);
-            }
-
-            \Log::info('Creating payment', [
-                'receipt_number' => $receiptNumber,
-                'loan_id' => $request->loanNo,
-                'amount' => $request->amount,
-                'payment_method' => $methodEnum->value,
-                'verified_by' => $request->collectedBy,
-                'payment_date' => $request->collectionDate,
-                'reference_no' => $referenceNo ?? '',
-                'schedule_id' => $scheduleId,
-            ]);
-
-            $payment = Payment::create([
-                'receipt_number' => $receiptNumber,
-                'loan_id' => $request->loanNo,
-                'amount' => (float) $request->amount,  
-                'payment_method' => $methodEnum,
-                'verified_by' => $request->collectedBy,
-                'payment_date' => $request->collectionDate,
-                'reference_no' => $referenceNo,
-                'schedule_id' => $scheduleId,
-            ]);
-
-            \Log::info('Payment created', ['payment_id' => $payment->ID, 'receipt_number' => $payment->receipt_number]);
-
-            // Refresh payment to load relationships
-            $payment->refresh();
-            $payment->load('loan');
-
-            \Log::info('Processing payment', ['payment_id' => $payment->ID, 'loan_id' => $payment->loan_id]);
-
-            // Process payment using RepaymentService
-            try {
-                $this->repaymentService->processPayment($payment);
-            } catch (\Throwable $e) {
-                \Log::error('Payment processing failed: '.$e->getMessage());
-                throw $e; // still throw to trigger rollback
-            }
-            
-
-            \Log::info('Payment processed successfully', ['payment_id' => $payment->ID]);
-
-            DB::commit();
-
-            \Log::info('Transaction committed', ['payment_id' => $payment->ID]);
-
-            return redirect()->route('repayments.index')->with('success', 'Payment processed successfully! Receipt Number: '.$receiptNumber);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-
-            // Log the full error for debugging
-            \Log::error('Payment processing failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all(),
-            ]);
-
-            return redirect()->back()->withErrors(['error' => 'Failed to process payment: '.$e->getMessage()]);
-        }
+    // ✅ FIXED: Proper condition
+    if (!in_array($inputMethod, ['Cash', 'Cash Voucher'])) {
+        $rules['reference_number'] = 'required|string|max:255';
+    } else {
+        $rules['reference_number'] = 'nullable|string|max:255';
     }
+
+    $request->validate($rules);
+
+    try {
+        DB::beginTransaction();
+
+        $methodEnum = PaymentMethod::from($inputMethod);
+        $methodValue = $methodEnum->value;
+
+        // Generate receipt number
+        $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
+
+        while (Payment::where('receipt_number', $receiptNumber)->exists()) {
+            $receiptNumber = 'RCP-'.strtoupper(substr(uniqid(), -8)).'-'.date('YmdHis');
+        }
+
+        // Get reference number
+        $referenceNo = $request->reference_number;
+
+        // ✅ FIXED: Exclude BOTH Cash and Cash Voucher
+        if (!in_array($methodValue, [
+            PaymentMethod::Cash->value,
+            PaymentMethod::CashVoucher->value
+        ]) && ! $referenceNo) {
+            $referenceNo = 'REF-'.strtoupper(substr(uniqid(), -8)).'-'.date('Ymd');
+        }
+
+        // ✅ Cash = NULL reference
+        if (in_array($methodValue, [
+            PaymentMethod::Cash->value,
+            PaymentMethod::CashVoucher->value
+        ])) {
+            $referenceNo = null;
+        }
+
+        // Check duplicate reference (non-cash only)
+        if (!in_array($methodValue, [
+            PaymentMethod::Cash->value,
+            PaymentMethod::CashVoucher->value
+        ]) && $referenceNo) {
+            $existingPayment = Payment::where('reference_no', $referenceNo)->first();
+            if ($existingPayment) {
+                DB::rollBack();
+                return redirect()->back()->withErrors([
+                    'referenceNumber' => 'This reference number has already been used.'
+                ]);
+            }
+        }
+
+        // Get schedule if not provided
+        $scheduleId = $request->schedule_id;
+
+        if (! $scheduleId) {
+            $loan = \App\Models\Loan::find($request->loanNo);
+            if ($loan) {
+                $firstUnpaidSchedule = $loan->amortizationSchedules()
+                    ->whereIn('status', [
+                        \App\Models\ScheduleStatus::Unpaid,
+                        \App\Models\ScheduleStatus::Overdue
+                    ])
+                    ->orderBy('due_date', 'asc')
+                    ->first();
+
+                if ($firstUnpaidSchedule) {
+                    $scheduleId = $firstUnpaidSchedule->ID;
+                }
+            }
+        }
+
+        if (! $scheduleId) {
+            DB::rollBack();
+            return redirect()->back()->withErrors([
+                'error' => 'No unpaid schedule found for this loan.'
+            ]);
+        }
+
+      $status = in_array($methodValue, [
+    PaymentMethod::Cash->value,
+    PaymentMethod::CashVoucher->value
+]) ? 'verified' : 'pending';
+        \Log::info('Creating payment', [
+            'receipt_number' => $receiptNumber,
+            'loan_id' => $request->loanNo,
+            'amount' => $request->amount,
+            'payment_method' => $methodValue,
+            'status' => $status,
+        ]);
+
+        $payment = Payment::create([
+            'receipt_number' => $receiptNumber,
+            'loan_id' => $request->loanNo,
+            'amount' => (float) $request->amount,
+            'payment_method' => $methodEnum,
+            'verified_by' => $request->collectedBy,
+            'payment_date' => $request->collectionDate,
+            'reference_no' => $referenceNo,
+            'schedule_id' => $scheduleId,
+            'status' => $status, // ✅ IMPORTANT
+        ]);
+
+        $payment->refresh();
+        $payment->load('loan');
+
+        // Process payment
+        $this->repaymentService->processPayment($payment);
+
+        DB::commit();
+
+        return redirect()->route('repayments.index')
+            ->with('success', 'Payment processed successfully! Receipt Number: '.$receiptNumber);
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+
+        \Log::error('Payment processing failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'request' => $request->all(),
+        ]);
+
+        return redirect()->back()->withErrors([
+            'error' => 'Failed to process payment: '.$e->getMessage()
+        ]);
+    }
+}
 
     public function index()
     {
@@ -245,6 +254,31 @@ class RepaymentController extends Controller
             'repayments' => $payments,
         ]);
     }
+    public function verifyPage(Request $request)
+{
+    $ref = $request->query('ref');
+
+    $pendingPayments = Payment::with(['loan.borrower', 'jamoUser'])
+        ->where('status', 'pending')
+        ->when($ref, fn($q) => $q->where('reference_no', $ref))
+        ->orderBy('payment_date', 'desc')
+        ->get()
+        ->map(fn($p) => [
+            'id' => $p->ID,
+            'borrower' => $p->loan?->borrower?->first_name.' '.$p->loan?->borrower?->last_name,
+            'loanNo' => $p->loan?->ID,
+            'amount' => $p->amount,
+            'method' => $p->payment_method,
+            'referenceNo' => $p->reference_no,
+            'collectedBy' => $p->jamoUser?->first_name.' '.$p->jamoUser?->last_name,
+            'collectionDate' => $p->payment_date?->toDateString(),
+        ]);
+
+    return Inertia::render('repayments/verify', [
+        'pendingPayments' => $pendingPayments,
+    ]);
+}
+
 public function pending()
 {
     $pendingPayments = Payment::where('status', 'pending')
