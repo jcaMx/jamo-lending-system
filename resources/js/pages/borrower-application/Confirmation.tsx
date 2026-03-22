@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import StepIndicator from "./StepIndicator";
-import { CreditCard } from "lucide-react";
+import { CreditCard,DollarSign, Users, Home } from "lucide-react";
 import { router, useForm } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import type { SharedFormData } from "./sharedFormData";
@@ -121,12 +121,24 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     appendIfPresent(payload, "appraisal_date", formData.appraisal_date);
     appendIfPresent(payload, "appraised_by", formData.appraised_by);
 
+    if (formData.documents?.collateral?.length) {
+      formData.documents.collateral.forEach((row, index) => {
+        if (row.document_type_id) {
+          payload.append(`documents[collateral][${index}][document_type_id]`, String(row.document_type_id));
+        }
+        if (row.file) {
+          payload.append(`documents[collateral][${index}][file]`, row.file);
+        }
+      });
+    }
+
     if (formData.ownership_proof) {
       payload.append("ownership_proof", formData.ownership_proof);
     }
   };
 
   const appendLoan = (payload: FormData) => {
+    appendIfPresent(payload, "loan_product_id", formData.loan_product_id);
     appendIfPresent(payload, "loan_type", formData.loan_type);
     appendIfPresent(payload, "loan_amount", formData.loan_amount);
     appendIfPresent(payload, "interest_type", formData.interest_type);
@@ -197,12 +209,11 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
         </div>
 
         <StepIndicator
-          currentStep={5}
+          currentStep={4}
           steps={[
-            "Borrower",
+            "Loan Details",
             "Co-Borrower",
             "Collateral",
-            "Loan Details",
             "Payment",
           ]}
         />

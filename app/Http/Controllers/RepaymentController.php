@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Borrower;
-use App\Models\JamoUser;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\User;
 use App\Services\RepaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\NotifyUser;
+use Illuminate\Validation\Rule;
+
 
 class RepaymentController extends Controller
 {
@@ -78,10 +81,18 @@ class RepaymentController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'referenceNumber' => $request->input('referenceNumber', $request->input('reference_number')),
+        ]);
+
+        $inputMethod = preg_replace('/\s+/', ' ', trim((string) $request->input('method')));
+        $isDirectCash = $inputMethod === PaymentMethod::Cash->value;
+
         $rules = [
             'borrower_id' => 'required|exists:borrower,ID',
             'loanNo' => 'required|exists:loan,ID',
-            'schedule_id' => 'nullable|exists:amortizationschedule,ID',
+            'schedule_ids' => 'required|array|min:1',
+            'schedule_ids.*' => 'integer|exists:amortizationschedule,ID',
             'amount' => 'required|numeric|min:0.01',
             'method' => ['required', Rule::enum(PaymentMethod::class)],
             'collectedBy' => 'required|exists:jamouser,ID',
@@ -96,6 +107,11 @@ class RepaymentController extends Controller
 
             $methodEnum = PaymentMethod::from($request->method);
             $methodValue = $methodEnum->value;
+            $paymentStatus = $isDirectCash ? 'confirmed' : 'pending';
+            $isConfirmedPayment = $paymentStatus === 'confirmed';
+            $paymentDate = $isConfirmedPayment
+                ? $request->input('collectionDate')
+                : now();
 
             // Generate unique receipt
             do {
@@ -181,6 +197,65 @@ class RepaymentController extends Controller
         }
     }
 
+    public function confirm(Request $request, Payment $payment)
+    {
+        $validated = $request->validate([
+            'collectedBy' => 'required|exists:users,id',
+            'collectionDate' => 'required|date',
+        ]);
+
+        try {
+            DB::transaction(function () use ($payment, $validated) {
+                $lockedPayment = Payment::query()
+                    ->with('loan')
+                    ->lockForUpdate()
+                    ->findOrFail($payment->ID);
+
+                if (strtolower((string) $lockedPayment->status) !== 'pending') {
+                    throw new \RuntimeException('Only pending repayments can be confirmed.');
+                }
+
+                $lockedPayment->status = 'confirmed';
+                $lockedPayment->verified_by = (int) $validated['collectedBy'];
+                $lockedPayment->verified_date = now();
+                $lockedPayment->payment_date = $validated['collectionDate'];
+                $lockedPayment->save();
+
+                $this->repaymentService->processPayment($lockedPayment, []);
+            });
+
+            return redirect()->route('repayments.index')->with('success', 'Pending repayment confirmed successfully.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to confirm repayment: '.$e->getMessage()]);
+        }
+    }
+
+    public function reject(Request $request, Payment $payment)
+    {
+        $validated = $request->validate([
+            'remarks' => 'nullable|string|max:100',
+        ]);
+
+        try {
+            $updatedRows = Payment::query()
+                ->where('ID', $payment->ID)
+                ->whereRaw('LOWER(status) = ?', ['pending'])
+                ->update([
+                    'status' => 'rejected',
+                    'remarks' => $validated['remarks'] ?? null,
+                    'verified_date' => now(),
+                ]);
+
+            if ($updatedRows === 0) {
+                return redirect()->back()->withErrors(['error' => 'Only pending repayments can be rejected.']);
+            }
+
+            return redirect()->route('repayments.index')->with('success', 'Pending repayment rejected successfully.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to reject repayment: '.$e->getMessage()]);
+        }
+    }
+
     public function index()
     {
         $payments = Payment::where('status', 'verified') // ✅ Only verified
@@ -188,6 +263,16 @@ class RepaymentController extends Controller
             ->orderBy('payment_date', 'desc')
             ->get()
             ->map(function ($p) {
+                $scheduleNos = [];
+                if (Schema::hasTable('payment_schedule_allocations')) {
+                    $scheduleNos = $p->scheduleAllocations
+                        ->pluck('amortizationSchedule.installment_no')
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all();
+                }
+
                 return [
                     'id' => $p->ID,
                     'receiptNumber' => $p->receipt_number ?? 'N/A',
@@ -208,6 +293,14 @@ class RepaymentController extends Controller
 
         return Inertia::render('repayments/index', [
             'repayments' => $payments,
+            'collectors' => User::query()
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($collector) => [
+                    'id' => $collector->id,
+                    'name' => $collector->name,
+                ])
+                ->values(),
         ]);
     }
 

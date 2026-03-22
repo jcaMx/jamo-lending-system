@@ -58,8 +58,8 @@ class Collateral extends Model
         return $this->belongsTo(Loan::class, 'loan_id', 'ID');
     }
 
-    public function jamouser()
+    public function appraiser()
     {
-        return $this->belongsTo(JamoUser::class, 'appraised_by', 'ID');
+        return $this->belongsTo(User::class, 'appraised_by', 'id');
     }
 }

@@ -238,14 +238,14 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
 
                       {/* DELETE — admin only */}
                       {/* {user?.role && String(user.role) === 'admin' && ( */}
-                        <Button
+                        {/* <Button
                           variant="default"
                           size="sm"
                           className="p-1 text-red-600 hover:text-red-800"
                           onClick={(e) => handleDeleteClick(b.id, fullName, e)}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       {/* )} */}
                     </td>
 

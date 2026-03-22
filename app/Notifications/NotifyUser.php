@@ -50,6 +50,7 @@ class NotifyUser extends Notification
             ->line($this->message);
     }
 
+
     /**
      * SMS Notification
      */

@@ -15,7 +15,7 @@ return new class extends Migration
         // Add foreign key constraint for loan.approved_by -> users.id
         if (Schema::hasTable('loan') && Schema::hasTable('users')) {
             Schema::table('loan', function (Blueprint $table) {
-                if (! $this->foreignKeyExists('loan', 'loan_approved_by_foreign')) {
+                if (! $this->foreignKeyOnColumnExists('loan', 'approved_by')) {
                     $table->foreign('approved_by')
                         ->references('id')
                         ->on('users')
@@ -27,7 +27,7 @@ return new class extends Migration
         // Add foreign key constraint for collateral.appraised_by -> users.id
         if (Schema::hasTable('collateral') && Schema::hasTable('users')) {
             Schema::table('collateral', function (Blueprint $table) {
-                if (! $this->foreignKeyExists('collateral', 'collateral_appraised_by_foreign')) {
+                if (! $this->foreignKeyOnColumnExists('collateral', 'appraised_by')) {
                     $table->foreign('appraised_by')
                         ->references('id')
                         ->on('users')
@@ -39,7 +39,7 @@ return new class extends Migration
         // Add foreign key constraint for amortizationschedule.holiday_id -> holidays.id
         if (Schema::hasTable('amortizationschedule') && Schema::hasTable('holidays')) {
             Schema::table('amortizationschedule', function (Blueprint $table) {
-                if (! $this->foreignKeyExists('amortizationschedule', 'amortizationschedule_holiday_id_foreign')) {
+                if (! $this->foreignKeyOnColumnExists('amortizationschedule', 'holiday_id')) {
                     $table->foreign('holiday_id')
                         ->references('id')
                         ->on('holidays')
@@ -51,7 +51,7 @@ return new class extends Migration
         // Add foreign key constraint for payment.verified_by -> users.id
         if (Schema::hasTable('payment') && Schema::hasTable('users')) {
             Schema::table('payment', function (Blueprint $table) {
-                if (! $this->foreignKeyExists('payment', 'payment_verified_by_foreign')) {
+                if (! $this->foreignKeyOnColumnExists('payment', 'verified_by')) {
                     $table->foreign('verified_by')
                         ->references('id')
                         ->on('users')
@@ -63,7 +63,7 @@ return new class extends Migration
         // Add foreign key constraint for payment.schedule_id -> amortizationschedule.id
         if (Schema::hasTable('payment') && Schema::hasTable('amortizationschedule')) {
             Schema::table('payment', function (Blueprint $table) {
-                if (! $this->foreignKeyExists('payment', 'payment_schedule_id_foreign')) {
+                if (! $this->foreignKeyOnColumnExists('payment', 'schedule_id')) {
                     $table->foreign('schedule_id')
                         ->references('id')
                         ->on('amortizationschedule')
@@ -75,7 +75,7 @@ return new class extends Migration
         // Add foreign key constraint for sessions.user_id -> users.id
         if (Schema::hasTable('sessions') && Schema::hasTable('users')) {
             Schema::table('sessions', function (Blueprint $table) {
-                if (! $this->foreignKeyExists('sessions', 'sessions_user_id_foreign')) {
+                if (! $this->foreignKeyOnColumnExists('sessions', 'user_id')) {
                     $table->foreign('user_id')
                         ->references('id')
                         ->on('users')
@@ -125,7 +125,7 @@ return new class extends Migration
     /**
      * Check if a foreign key constraint exists.
      */
-    private function foreignKeyExists(string $table, string $constraintName): bool
+    private function foreignKeyOnColumnExists(string $table, string $columnName): bool
     {
         try {
             $connection = Schema::getConnection();
@@ -136,8 +136,9 @@ return new class extends Migration
                  FROM information_schema.KEY_COLUMN_USAGE 
                  WHERE TABLE_SCHEMA = ? 
                  AND TABLE_NAME = ? 
-                 AND CONSTRAINT_NAME = ?',
-                [$database, $table, $constraintName]
+                 AND COLUMN_NAME = ?
+                 AND REFERENCED_TABLE_NAME IS NOT NULL',
+                [$database, $table, $columnName]
             );
 
             return count($result) > 0;

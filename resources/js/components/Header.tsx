@@ -74,12 +74,12 @@ export default function Header() {
                   Log in
                 </Button>
               </Link>
-              <Link href="/register">
+              {/* <Link href="/register">
                 <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
                   Register
                 </Button>
 
-              </Link>
+              </Link> */}
             </>
           )}
 

@@ -1,37 +1,130 @@
 import React, { useState, useMemo } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Repayments', href: '/repayments' },
-];
 
 type Repayment = {
   id: number;
   borrowerName: string;
   loanNo: string;
+  scheduleNos?: (number | string)[];
   method: string;
+  status: string;
+  referenceNo: string;
   collectedBy: string;
-  collectionDate: string;
+  collectionDate: string | null;
+  submittedDate: string | null;
   amount: number;
 };
 
 type Props = {
   repayments: Repayment[];
+  collectors: Array<{ id: number; name: string }>;
 };
 
-export default function RepaymentsIndex({ repayments }: Props) {
+export default function RepaymentsIndex({ repayments, collectors }: Props) {
+  const today = new Date().toISOString().split('T')[0];
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'history'>('all');
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [confirmCollectedBy, setConfirmCollectedBy] = useState<string>(collectors[0] ? String(collectors[0].id) : '');
+  const [confirmCollectionDate, setConfirmCollectionDate] = useState<string>(today);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectRemarks, setRejectRemarks] = useState('');
 
   const filteredRepayments = useMemo(() => {
-    return repayments.filter(r =>
+    return repayments.filter((r) =>
       r.borrowerName.toLowerCase().includes(search.toLowerCase()) ||
-      r.loanNo.toLowerCase().includes(search.toLowerCase())
+      String(r.loanNo).toLowerCase().includes(search.toLowerCase())
     );
   }, [repayments, search]);
+
+  const pendingRepayments = useMemo(() => {
+    return filteredRepayments.filter((r) => r.status?.toLowerCase() === 'pending');
+  }, [filteredRepayments]);
+
+  const historyRepayments = useMemo(() => {
+    return filteredRepayments.filter((r) => ['confirmed', 'rejected'].includes(r.status?.toLowerCase()));
+  }, [filteredRepayments]);
+
+  const visibleRepayments =
+    activeTab === 'pending'
+      ? pendingRepayments
+      : activeTab === 'history'
+        ? historyRepayments
+        : filteredRepayments;
+
+  const formatDate = (value: string | null) => {
+    if (!value) return 'N/A';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleDateString('en-PH');
+  };
+
+  const renderStatus = (status: string) => {
+    const normalizedStatus = status?.toLowerCase() ?? 'pending';
+    const className =
+      normalizedStatus === 'confirmed'
+        ? 'bg-green-100 text-green-700'
+        : normalizedStatus === 'rejected'
+          ? 'bg-red-100 text-red-700'
+          : 'bg-yellow-100 text-yellow-700';
+
+    return (
+      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ${className}`}>
+        {normalizedStatus}
+      </span>
+    );
+  };
+
+  const submitConfirm = (paymentId: number) => {
+    if (!confirmCollectedBy) {
+      alert('Please select a collector.');
+      return;
+    }
+
+    if (!confirmCollectionDate) {
+      alert('Please select a collection date.');
+      return;
+    }
+
+    router.post(
+      `/repayments/${paymentId}/confirm`,
+      {
+        collectedBy: confirmCollectedBy,
+        collectionDate: confirmCollectionDate,
+      },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setConfirmingId(null);
+          setConfirmRemarksDefaults();
+        },
+      }
+    );
+  };
+
+  const setConfirmRemarksDefaults = () => {
+    setConfirmCollectedBy(collectors[0] ? String(collectors[0].id) : '');
+    setConfirmCollectionDate(today);
+    setRejectRemarks('');
+    setRejectingId(null);
+  };
+
+  const submitReject = (paymentId: number) => {
+    router.post(
+      `/repayments/${paymentId}/reject`,
+      {
+        remarks: rejectRemarks.trim() || null,
+      },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setRejectingId(null);
+          setRejectRemarks('');
+        },
+      }
+    );
+  };
 
   return (
     <AppLayout>
@@ -53,36 +146,209 @@ export default function RepaymentsIndex({ repayments }: Props) {
         </div>
       </div>
 
+      <div className="mx-10 mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('all')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            activeTab === 'all' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          All ({filteredRepayments.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('pending')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            activeTab === 'pending' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Pending ({pendingRepayments.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('history')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            activeTab === 'history' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          History ({historyRepayments.length})
+        </button>
+      </div>
+
       {/* Repayments Table */}
       <div className="mx-10 overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">ID</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Borrower Name</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Loan No</th>
+              {activeTab !== 'pending' && (
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Loan No</th>
+              )}
+              {activeTab !== 'pending' && (
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Schedules</th>
+              )}
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Method</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collected By</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collection Date</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Paid Amount</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Reference</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                {activeTab === 'pending' ? 'Submitted Date' : 'Collection Date'}
+              </th>
+              {activeTab !== 'pending' && (
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collected By</th>
+              )}
+              {activeTab !== 'pending' && (
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+              )}
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                {activeTab === 'pending' ? 'Amount' : 'Paid Amount'}
+              </th>
+              {activeTab === 'pending' && (
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Action</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
-            {filteredRepayments.length > 0 ? (
-              filteredRepayments.map(r => (
-                <tr key={r.id} className="hover:bg-[#FFF8E6] transition-colors duration-150">
-                  <td className="px-4 py-3 text-sm text-gray-600">{r.id}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.borrowerName}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{r.loanNo}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{r.method}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{r.collectedBy}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{new Date(r.collectionDate).toLocaleString('en-PH')}</td>
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">{r.amount.toLocaleString('en-PH', {style: 'currency', currency: 'PHP'})}</td>
-                </tr>
+            {visibleRepayments.length > 0 ? (
+              visibleRepayments.map((r) => (
+                <React.Fragment key={r.id}>
+                  <tr className="hover:bg-[#FFF8E6] transition-colors duration-150">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.borrowerName}</td>
+                    {activeTab !== 'pending' && <td className="px-4 py-3 text-sm text-gray-700">{r.loanNo}</td>}
+                    {activeTab !== 'pending' && (
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {r.scheduleNos && r.scheduleNos.length ? r.scheduleNos.join(', ') : 'N/A'}
+                      </td>
+                    )}
+                    <td className="px-4 py-3 text-sm text-gray-700">{r.method}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{r.referenceNo ?? 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {formatDate(activeTab === 'pending' ? r.submittedDate : r.collectionDate)}
+                    </td>
+                    {activeTab !== 'pending' && <td className="px-4 py-3 text-sm text-gray-700">{r.collectedBy}</td>}
+                    {activeTab !== 'pending' && <td className="px-4 py-3 text-sm text-gray-700">{renderStatus(r.status)}</td>}
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                      {r.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+                    </td>
+                    {activeTab === 'pending' && (
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectingId(null);
+                              setConfirmingId(r.id);
+                            }}
+                            className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmingId(null);
+                              setRejectingId(r.id);
+                            }}
+                            className="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+
+                  {activeTab === 'pending' && confirmingId === r.id && (
+                    <tr className="bg-gray-50">
+                      <td colSpan={6} className="px-4 py-4">
+                        <div className="grid gap-3 md:grid-cols-3">
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-gray-700">Collected By</label>
+                            <select
+                              value={confirmCollectedBy}
+                              onChange={(e) => setConfirmCollectedBy(e.target.value)}
+                              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                            >
+                              <option value="">Select collector</option>
+                              {collectors.map((collector) => (
+                                <option key={collector.id} value={collector.id}>
+                                  {collector.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-gray-700">Collection Date</label>
+                            <input
+                              type="date"
+                              value={confirmCollectionDate}
+                              onChange={(e) => setConfirmCollectionDate(e.target.value)}
+                              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                            />
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => submitConfirm(r.id)}
+                              className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                            >
+                              Save Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmingId(null)}
+                              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {activeTab === 'pending' && rejectingId === r.id && (
+                    <tr className="bg-red-50">
+                      <td colSpan={6} className="px-4 py-4">
+                        <div className="grid gap-3 md:grid-cols-3">
+                          <div className="md:col-span-2">
+                            <label className="mb-1 block text-xs font-semibold text-gray-700">Remarks (Optional)</label>
+                            <input
+                              type="text"
+                              value={rejectRemarks}
+                              onChange={(e) => setRejectRemarks(e.target.value)}
+                              maxLength={100}
+                              placeholder="Reason for rejection"
+                              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                            />
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => submitReject(r.id)}
+                              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                            >
+                              Confirm Reject
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectingId(null);
+                                setRejectRemarks('');
+                              }}
+                              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="text-center py-6 text-gray-500 text-sm italic">
+                <td colSpan={activeTab === 'pending' ? 6 : 9} className="text-center py-6 text-gray-500 text-sm italic">
                   No repayments found matching your search.
                 </td>
               </tr>

@@ -82,7 +82,7 @@ type DashboardPageProps = {
   loans?: RawLoan[];
   recentPayments?: RawPayment[];
   stats?: DashboardStats;
-  hasBorrower?: boolean;
+  hasLoan?: boolean;
 };
 
 const formatCurrency = (amount: number) => {
@@ -109,15 +109,15 @@ const CustomerDashboard = () => {
     loans = [],
     recentPayments = [],
     stats,
-    hasBorrower = true,
+    hasLoan = true,
   } = usePage<InertiaPageProps & DashboardPageProps>().props;
 
-  if (!hasBorrower) {
+  if (!hasLoan) {
     return (
       <DashboardLayout>
         <Head title="Repayments" />
         <div className="m-4">
-          <NoLoansPlaceholder message="You don't have a borrower profile yet. Please apply for a loan to create one." />
+          <NoLoansPlaceholder message="You don't have a loans yet. Please apply for a loan to create one." />
         </div>
       </DashboardLayout>
     );
@@ -337,19 +337,12 @@ const CustomerDashboard = () => {
               </div>
             </div>
           </div>
-        );
-      })
-    ) : (
-      <div className="space-y-2 text-sm text-gray-600">
-        
-        {pendingLoans.length > 0 && (
-          <p className="text-amber-700">
-            Your loan application is pending review. You can view the summary on the My Loan page.
-          </p>
-        )}
-      </div>
-    )}
-  </div>
+                  );
+                })
+              ) : (
+                <NoLoansPlaceholder message="No active loans at the moment." />
+              )}
+            </div>
 
 
             {/* Loan History */}
@@ -403,3 +396,4 @@ const CustomerDashboard = () => {
 };
 
 export default CustomerDashboard;
+

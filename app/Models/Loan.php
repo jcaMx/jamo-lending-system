@@ -109,12 +109,17 @@ class Loan extends Model
 
     public function approver()
     {
-        return $this->belongsTo(JamoUser::class, 'approved_by', 'ID');
+        return $this->belongsTo(User::class, 'approved_by', 'id');
     }
 
     public function formula()
     {
         return $this->belongsTo(Formula::class, 'formula_id', 'ID');
+    }
+
+    public function disbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'loan_id', 'ID');
     }
     
 }

@@ -34,7 +34,7 @@ class MyProfileController extends Controller
             ]);
         }
 
-        return Inertia::render('customer/profile', [
+        return Inertia::render('customer/MyProfile', [
             'borrower' => [
                 'id' => $borrower->ID,
                 'name' => trim(($borrower->first_name ?? '').' '.($borrower->last_name ?? '')),

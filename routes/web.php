@@ -5,6 +5,7 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DisbursementController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
@@ -17,6 +18,7 @@ use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Models\Loan;
+use App\Models\DocumentType;
 use App\Http\Controllers\LoanCommentController;
 
 
@@ -113,6 +115,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Daily Collection Sheets
     Route::get('/daily-collections', [DailyCollectionController::class, 'index'])->name('index');
+    Route::post('/daily-collections/export-pdf', [DailyCollectionController::class, 'exportPdf'])
+        ->name('daily-collections.export');
+
+    // Disbursements
+    Route::prefix('disbursements')
+        ->group(function () {
+            Route::middleware(['role:cashier|admin'])->group(function () {
+            Route::get('/', [DisbursementController::class, 'index'])->name('disbursements.index');
+            Route::post('/', [DisbursementController::class, 'store'])->name('disbursements.store');
+            });
+
+            Route::middleware(['role:admin'])->group(function () {
+            Route::post('/{disbursement}/approve', [DisbursementController::class, 'approve'])->name('disbursements.approve');
+            Route::post('/{disbursement}/complete', [DisbursementController::class, 'complete'])->name('disbursements.complete');
+            Route::post('/{disbursement}/fail', [DisbursementController::class, 'fail'])->name('disbursements.fail');
+            });
+        });
 
     // Repayments (match sidebar hrefs: /repayments, /repayments/add)
     Route::prefix('repayments')
@@ -127,11 +146,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
     Route::prefix('Reports')->middleware([RoleMiddleware::class.':admin'])->group(function () {
-        Route::get('/DCPR', fn () => Inertia::render('Reports/DCPR'))->name('reports.dcpr');
+        Route::get('/DCPR', [DCPRController::class, 'index'])->name('reports.dcpr');
         Route::post('/dcpr/export-pdf', [DCPRController::class, 'exportPdf'])->name('reports.dcpr.export');
         Route::post('/dcpr/print', [DCPRController::class, 'printPreview'])->name('reports.dcpr.print');
 
-        Route::get('/MonthlyReport', fn () => Inertia::render('Reports/MonthlyReport'))->name('reports.monthly');
+        Route::get('/MonthlyReport', [MCPRController::class, 'index'])->name('reports.monthly');
         Route::post('/monthly/export-pdf', [MCPRController::class, 'exportPdf'])->name('reports.monthly.export');
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
     });
@@ -201,7 +220,20 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::put('/my-profile', [MyProfileController::class, 'update'])
     ->name('customer.profile.update');
 
-    Route::get('/applynow', fn () => Inertia::render('BorrowerApplication'))->name('apply');
+    Route::get('/applynow', function () {
+        $documentTypesByCategory = DocumentType::query()
+            ->where('category', 'collateral')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'category'])
+            ->groupBy('category')
+            ->map(fn ($items) => $items->values())
+            ->toArray();
+
+        return Inertia::render('BorrowerApplication', [
+            'documentTypesByCategory' => $documentTypesByCategory,
+        ]);
+    })->name('apply');
 
     Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
 

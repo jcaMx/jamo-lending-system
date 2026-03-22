@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Services\LoanProductRuleResolver;
 
 class StoreLoanRequest extends FormRequest
 {
@@ -13,10 +14,22 @@ class StoreLoanRequest extends FormRequest
 
     public function rules(): array
     {
+        $loanProductId = $this->input('loan_product_id');
+        $loanProductId = is_numeric($loanProductId) ? (int) $loanProductId : null;
+        $loanType = $this->input('loan_type');
+        $loanAmount = (float) $this->input('loan_amount', 0);
+
+        /** @var LoanProductRuleResolver $ruleResolver */
+        $ruleResolver = app(LoanProductRuleResolver::class);
+        $loanRule = $ruleResolver->resolve($loanProductId, $loanType);
+        $requiresCollateral = $ruleResolver->requiresCollateral($loanRule, $loanAmount);
+        $requiresCoBorrower = $ruleResolver->requiresCoBorrower($loanRule);
+
         $rules = [
             // Borrower Information
             'borrower_name' => 'required|string|max:255',
             'borrower_id' => 'required|integer|exists:borrower,ID',
+            'loan_product_id' => 'nullable|integer|exists:loan_products,id',
 
             // Loan Details
             'loan_type' => 'required|string|max:255',
@@ -27,11 +40,13 @@ class StoreLoanRequest extends FormRequest
             'term' => 'required|integer|min:1',
 
             // Collateral
-            'collateral_type' => 'required|string|in:vehicle,land,atm',
+            'collateral_type' => $requiresCollateral
+                ? 'required|string|in:vehicle,land,atm'
+                : 'nullable|string|in:vehicle,land,atm',
             'ownership_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
 
             // Co-Borrowers
-            'coBorrowers' => 'nullable|array',
+            'coBorrowers' => $requiresCoBorrower ? 'required|array|min:1' : 'nullable|array',
             'coBorrowers.*.first_name' => 'required_with:coBorrowers|string|max:255',
             'coBorrowers.*.last_name' => 'required_with:coBorrowers|string|max:255',
             'coBorrowers.*.address' => 'nullable|string|max:255',
@@ -44,7 +59,7 @@ class StoreLoanRequest extends FormRequest
         ];
 
         // Vehicle Collateral Rules
-        if ($this->input('collateral_type') === 'vehicle') {
+        if ($this->filled('collateral_type') && $this->input('collateral_type') === 'vehicle') {
             $rules['make'] = 'required|string|max:255';
             $rules['chassis_no'] = 'nullable|string|max:255';
             $rules['body_type'] = 'nullable|string|max:255';
@@ -56,7 +71,7 @@ class StoreLoanRequest extends FormRequest
         }
 
         // Land Collateral Rules
-        if ($this->input('collateral_type') === 'land') {
+        if ($this->filled('collateral_type') && $this->input('collateral_type') === 'land') {
             $rules['certificate_of_title_no'] = 'required|string|max:255';
             $rules['location'] = 'required|string|max:255';
             $rules['description'] = 'nullable|string|max:500';
@@ -64,7 +79,7 @@ class StoreLoanRequest extends FormRequest
         }
 
         // ATM Collateral Rules
-        if ($this->input('collateral_type') === 'atm') {
+        if ($this->filled('collateral_type') && $this->input('collateral_type') === 'atm') {
             $rules['bank_name'] = 'required|string|max:255';
             $rules['account_no'] = 'required|string|max:255';
             $rules['cardno_4digits'] = 'required|string|size:4';

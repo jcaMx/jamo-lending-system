@@ -74,6 +74,16 @@ const mainNavItems: NavItem[] = [
     ]
   },
 
+  {
+    type: "group",
+    title: "Disbursements",
+    icon: Coins,
+    roles: ["cashier", "admin"],
+    subItems: [
+      { type: "link", title: "Manage Disbursements", href: "/disbursements" },
+    ]
+  },
+
   { type: "link", title: "Daily Collection Sheets", icon: HandCoins, href: "/daily-collections", roles: ["cashier", "admin"] },
 
   {
@@ -230,4 +240,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

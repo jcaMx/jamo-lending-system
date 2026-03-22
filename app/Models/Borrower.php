@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Notifications\Notifiable;
+
 
 class Borrower extends Model
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     public $timestamps = false;
 
@@ -95,5 +97,10 @@ class Borrower extends Model
         return $this->hasOne(Loan::class, 'borrower_id', 'ID')
             ->whereIn('status', ['Active', 'Pending', 'Fully_Paid', 'Bad_Debt', 'Rejected'])
             ->latest('start_date');
+    }
+
+    public function disbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'borrower_id', 'ID');
     }
 }
