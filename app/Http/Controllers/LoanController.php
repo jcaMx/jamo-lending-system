@@ -9,18 +9,18 @@ use App\Models\DocumentType;
 use App\Models\Files;
 use App\Models\Formula;
 use App\Models\Loan;
-use App\Models\LoanComment;
 use App\Models\LoanProduct;
 use App\Services\LoanService;
 use App\Services\RuleEvaluatorService;
-use Illuminate\Http\Request;
+use App\Models\LoanComment;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
     protected LoanService $loanService;
-
     public function __construct(LoanService $loanService)
     {
         $this->loanService = $loanService;
@@ -43,18 +43,15 @@ class LoanController extends Controller
 
     public function add()
     {
-        $blockedBorrowerIds = Loan::query()
-            ->whereActiveOrPending()
+        $blockedBorrowerIds = Loan::whereRaw('LOWER(status) IN (?, ?)', ['pending', 'active'])
             ->pluck('borrower_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->all();
+            ->flip();
 
         $borrowers = Borrower::orderBy('last_name')->orderBy('first_name')->get()->map(function ($b) use ($blockedBorrowerIds) {
             return [
                 'id' => $b->ID,
                 'name' => $b->first_name.' '.$b->last_name,
-                'has_active_or_pending_loan' => in_array((int) $b->ID, $blockedBorrowerIds, true),
+                'has_active_or_pending_loan' => $blockedBorrowerIds->has((int) $b->ID),
             ];
         });
 
@@ -273,7 +270,7 @@ class LoanController extends Controller
     public function approve(Loan $loan)
     {
         try {
-            $approvedBy = auth()->id();
+            $approvedBy = Auth::id();
             if (! $approvedBy) {
                 return back()->withErrors(['error' => 'User not authenticated.']);
             }
@@ -410,7 +407,7 @@ class LoanController extends Controller
         // Use the relationship to create comment
         $comment = $loan->loanComments()->create([
             'comment_text' => $request->input('comment_text'),
-            'commented_by' => auth()->id(),
+            'commented_by' => Auth::id(),
             'comment_date' => now(),
         ]);
 
