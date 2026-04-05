@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "@inertiajs/react";
 import { FormField } from "@/components/FormField";
 import type { SharedFormData } from "./sharedFormData";
@@ -16,6 +16,9 @@ interface CollateralProps {
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
   documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
+  stepLabels?: string[];
+  stepIndex?: number;
+  required?: boolean;
 }
 
 const collateralTypeOptions = [
@@ -103,6 +106,9 @@ const Collateral = ({
   formData,
   setFormData,
   documentTypesByCategory = {},
+  stepLabels,
+  stepIndex,
+  required = false,
 }: CollateralProps) => {
   const initial = formData ?? {};
   const { data, setData } = useForm({
@@ -135,6 +141,11 @@ const Collateral = ({
         : [],
     },
   });
+  const [stepError, setStepError] = useState("");
+
+  const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
+  const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
+  const indicatorIndex = stepIndex ?? 3;
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -204,13 +215,55 @@ const Collateral = ({
   };
 
   const submit = () => {
-    const missingRequiredFiles = data.documents.collateral.some((row) => !row.file);
-
-    if (data.collateral_type && missingRequiredFiles) {
-      window.alert("Please upload all required collateral documents.");
+    if (!data.collateral_type) {
+      if (required) {
+        setStepError("Collateral is required for this loan product.");
+        return;
+      }
+      setStepError("");
+      onNext();
       return;
     }
 
+    if (
+      data.collateral_type === "vehicle" &&
+      (!data.make ||
+        !data.fuel ||
+        !data.vehicle_type ||
+        !data.transmission_type ||
+        !data.plate_no ||
+        !data.engine_no ||
+        !data.year_model ||
+        !data.series)
+    ) {
+      setStepError("Please complete all required vehicle collateral fields.");
+      return;
+    }
+
+    if (
+      data.collateral_type === "land" &&
+      (!data.certificate_of_title_no || !data.location || !data.description || !data.area)
+    ) {
+      setStepError("Please complete all required land collateral fields.");
+      return;
+    }
+
+    if (
+      data.collateral_type === "atm" &&
+      (!data.bank_name || !data.account_no || !data.cardno_4digits)
+    ) {
+      setStepError("Please complete all required ATM collateral fields.");
+      return;
+    }
+
+    const missingRequiredFiles = data.documents.collateral.some((row) => !row.file);
+
+    if (missingRequiredFiles) {
+      setStepError("Please upload all required collateral documents.");
+      return;
+    }
+
+    setStepError("");
     onNext();
   };
 
@@ -224,10 +277,7 @@ const Collateral = ({
           </div>
         </div>
 
-        <StepIndicator
-          currentStep={3}
-          steps={["Loan Details", "Co-Borrower", "Collateral", "Payment"]}
-        />
+        <StepIndicator currentStep={indicatorIndex} steps={indicatorLabels} />
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -235,6 +285,9 @@ const Collateral = ({
           }}
           className="bg-white rounded-lg shadow-sm p-6 md:p-8 space-y-6"
         >
+          {stepError && (
+            <p className="text-sm text-red-600">{stepError}</p>
+          )}
            <FormField
           label="Collateral Type"
           name="collateral_type"

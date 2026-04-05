@@ -24,7 +24,7 @@ interface BorrowerApplicationProps {
   };
 }
 
-type StepKey = "borrower" | "loan" | "coborrower" | "collateral" | "confirmation";
+type StepKey = "loan" | "coborrower" | "collateral" | "confirmation";
 
 interface StepConfig {
   key: StepKey;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -116,5 +117,15 @@ class Loan extends Model
     {
         return $this->belongsTo(Formula::class, 'formula_id', 'ID');
     }
-    
+
+    /**
+     * Loan applications that are still in progress (pending approval or actively paying).
+     *
+     * @param  Builder<Loan>  $query
+     * @return Builder<Loan>
+     */
+    public function scopeWhereActiveOrPending(Builder $query): Builder
+    {
+        return $query->whereRaw('LOWER(TRIM(COALESCE(status, ""))) IN (?, ?)', ['pending', 'active']);
+    }
 }

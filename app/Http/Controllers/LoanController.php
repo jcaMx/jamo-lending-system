@@ -5,18 +5,22 @@ namespace App\Http\Controllers;
 use App\Factories\CollateralFactory;
 use App\Http\Requests\StoreLoanRequest;
 use App\Models\Borrower;
+use App\Models\DocumentType;
 use App\Models\Files;
 use App\Models\Formula;
 use App\Models\Loan;
-use App\Services\LoanService;
 use App\Models\LoanComment;
+use App\Models\LoanProduct;
+use App\Services\LoanService;
+use App\Services\RuleEvaluatorService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
     protected LoanService $loanService;
+
     public function __construct(LoanService $loanService)
     {
         $this->loanService = $loanService;
@@ -39,15 +43,34 @@ class LoanController extends Controller
 
     public function add()
     {
-        $borrowers = Borrower::orderBy('last_name')->orderBy('first_name')->get()->map(function ($b) {
+        $blockedBorrowerIds = Loan::query()
+            ->whereActiveOrPending()
+            ->pluck('borrower_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        $borrowers = Borrower::orderBy('last_name')->orderBy('first_name')->get()->map(function ($b) use ($blockedBorrowerIds) {
             return [
                 'id' => $b->ID,
                 'name' => $b->first_name.' '.$b->last_name,
+                'has_active_or_pending_loan' => in_array((int) $b->ID, $blockedBorrowerIds, true),
             ];
         });
 
+        $categories = ['collateral_vehicle', 'collateral_land', 'collateral_general'];
+        $documentTypesByCategory = DocumentType::query()
+            ->whereIn('category', $categories)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'category'])
+            ->groupBy('category')
+            ->map(fn ($items) => $items->values())
+            ->toArray();
+
         return Inertia::render('Loans/AddLoan', [
             'borrowers' => $borrowers,
+            'documentTypesByCategory' => $documentTypesByCategory,
         ]);
     }
 
@@ -101,7 +124,7 @@ class LoanController extends Controller
             $collateralTypeInput = $request->input('collateral_type');
             if ($collateralTypeInput) {
                 // Create Collateral using CollateralFactory
-                $collateralType = match($collateralTypeInput) {
+                $collateralType = match ($collateralTypeInput) {
                     'vehicle' => 'Vehicle',
                     'land' => 'Land',
                     'atm' => 'ATM',
@@ -169,7 +192,7 @@ class LoanController extends Controller
 
             DB::commit();
 
-            return redirect()->route('loans.view')->with('success', 'Loan application created successfully!');
+            return redirect()->route('loans.show', $loan->ID)->with('success', 'Loan application created successfully!');
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -178,6 +201,33 @@ class LoanController extends Controller
                 'error' => 'Failed to create loan application: '.$e->getMessage(),
             ])->withInput();
         }
+    }
+
+    public function evaluateRules(Request $request, RuleEvaluatorService $ruleEvaluator)
+    {
+        $loanProductId = $request->integer('loan_product_id') ?: null;
+        $loanType = $request->input('loan_type');
+        $loanAmount = (float) $request->input('loan_amount', 0);
+        $borrowerId = $request->integer('borrower_id') ?: null;
+
+        $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+
+        if (! $loanProduct) {
+            return response()->json([
+                'collateral' => false,
+                'coborrower' => false,
+            ]);
+        }
+
+        $requirements = $ruleEvaluator->evaluate($loanProduct, $borrowerId, [
+            'loan_amount' => $loanAmount,
+            'term' => $request->input('term'),
+            'monthly_income' => $request->input('monthly_income'),
+            'dti_ratio' => $request->input('dti_ratio'),
+            'monthly_obligation' => $request->input('monthly_obligation'),
+        ]);
+
+        return response()->json($requirements);
     }
 
     public function show(Loan $loan)
@@ -197,8 +247,8 @@ class LoanController extends Controller
             'amortizationSchedules',
             'formula',
             'loanComments' => function ($query) {
-                    $query->orderBy('comment_date', 'desc');
-            }
+                $query->orderBy('comment_date', 'desc');
+            },
         ]);
 
         if ($loan->relationLoaded('loanComments')) {
@@ -367,7 +417,6 @@ class LoanController extends Controller
         return back()->with('success', 'Comment added successfully.');
     }
 
-
     public function deleteComment(LoanComment $comment)
     {
         try {
@@ -379,4 +428,19 @@ class LoanController extends Controller
         }
     }
 
+    private function resolveLoanProduct(?int $loanProductId, ?string $loanType): ?LoanProduct
+    {
+        if ($loanProductId) {
+            return LoanProduct::query()->with('rules')->find($loanProductId);
+        }
+
+        if (! empty($loanType)) {
+            return LoanProduct::query()
+                ->with('rules')
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($loanType))])
+                ->first();
+        }
+
+        return null;
+    }
 }
