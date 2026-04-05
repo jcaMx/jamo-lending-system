@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\JamoUser;
 
 class Payment extends Model
 {
@@ -50,5 +51,10 @@ class Payment extends Model
     public function verifiedBy()
     {
         return $this->belongsTo(User::class, 'verified_by', 'id');
+    }
+
+    public function jamoUser()
+    {
+        return $this->belongsTo(JamoUser::class, 'verified_by', 'ID');
     }
 }

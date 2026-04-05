@@ -116,10 +116,33 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     }
   };
 
-  const handleSelectSchedule = (schedule: Schedule) => {
-    update("selectedSchedule", schedule);
-    update("amount", schedule.total_due.toFixed(2));
-    if (schedule.due_date) update("collectionDate", schedule.due_date);
+  const computeTotalDue = (schedules: Schedule[]) =>
+    schedules.reduce((sum, s) => sum + (s.total_due || 0), 0);
+
+  const getSortedSchedules = (schedules: Schedule[]) =>
+    [...schedules].sort((a, b) => {
+      const aTime = a.due_date ? new Date(a.due_date).getTime() : Number.MAX_SAFE_INTEGER;
+      const bTime = b.due_date ? new Date(b.due_date).getTime() : Number.MAX_SAFE_INTEGER;
+      return aTime - bTime;
+    });
+
+  const handleToggleSchedule = (schedule: Schedule) => {
+    if (schedule.status === "Paid") return;
+
+    const exists = form.selectedSchedules.some((s) => s.ID === schedule.ID);
+    const nextSelected = exists
+      ? form.selectedSchedules.filter((s) => s.ID !== schedule.ID)
+      : [...form.selectedSchedules, schedule];
+
+    const sortedSelected = getSortedSchedules(nextSelected);
+    const nextAmount = computeTotalDue(sortedSelected);
+
+    update("selectedSchedules", sortedSelected);
+    update("amount", nextAmount ? nextAmount.toFixed(2) : "");
+
+    if (sortedSelected.length > 0 && sortedSelected[0].due_date) {
+      update("collectionDate", sortedSelected[0].due_date);
+    }
   };
 
  const handleMethodChange = (method: string) => {
@@ -166,6 +189,9 @@ const handleSubmit = (e: React.FormEvent) => {
   const { selectedBorrower, collectedBy, amount, method, collectionDate } = form;
 
   if (!selectedBorrower) return alert("Please select a borrower.");
+  if (!form.selectedSchedules || form.selectedSchedules.length === 0) {
+    return alert("Please select at least one schedule.");
+  }
   if (!collectedBy) return alert("Please select a collector.");
   if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
   if (Number(amount) > 10_000_000) return alert("Amount cannot exceed 10,000,000.");
@@ -177,7 +203,8 @@ const handleSubmit = (e: React.FormEvent) => {
   const payload: any = {
     borrower_id: selectedBorrower.id,
     loanNo: selectedBorrower.loanNo,
-    schedule_id: form.selectedSchedule?.ID || null,
+    schedule_ids: form.selectedSchedules.map((s) => s.ID),
+    schedule_id: form.selectedSchedules[0]?.ID || null,
     amount,
     method,
     collectedBy,
@@ -215,7 +242,7 @@ const handleSubmit = (e: React.FormEvent) => {
       setForm({
         search: "",
         selectedBorrower: null,
-        selectedSchedule: null,
+        selectedSchedules: [],
         amount: "",
         method: "",
         collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",

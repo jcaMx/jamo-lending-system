@@ -6,6 +6,7 @@ use App\Models\Borrower;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\User;
+use App\Models\JamoUser;
 use App\Services\RepaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -258,36 +259,29 @@ class RepaymentController extends Controller
 
     public function index()
     {
-        $payments = Payment::where('status', 'verified') // ✅ Only verified
+        $payments = Payment::whereIn('status', ['verified', 'pending', 'confirmed', 'rejected'])
             ->with(['loan.borrower', 'jamoUser', 'amortizationSchedule'])
             ->orderBy('payment_date', 'desc')
             ->get()
             ->map(function ($p) {
-                $scheduleNos = [];
-                if (Schema::hasTable('payment_schedule_allocations')) {
-                    $scheduleNos = $p->scheduleAllocations
-                        ->pluck('amortizationSchedule.installment_no')
-                        ->filter()
-                        ->unique()
-                        ->values()
-                        ->all();
-                }
+                $scheduleNos = $p->amortizationSchedule ? [$p->amortizationSchedule->installment_no] : [];
 
                 return [
                     'id' => $p->ID,
-                    'receiptNumber' => $p->receipt_number ?? 'N/A',
                     'borrowerName' => $p->loan?->borrower
                         ? $p->loan->borrower->first_name.' '.$p->loan->borrower->last_name
                         : 'N/A',
                     'loanNo' => $p->loan?->ID ?? 'N/A',
-                    'scheduleNo' => $p->amortizationSchedule?->installment_no ?? 'N/A',
-                    'method' => $p->payment_method,
+                    'scheduleNos' => $scheduleNos,
+                    'method' => $p->payment_method instanceof PaymentMethod ? $p->payment_method->value : (string)$p->payment_method,
+                    'status' => $p->status,
                     'referenceNo' => $p->reference_no ?? 'N/A',
                     'collectedBy' => $p->jamoUser?->first_name
                         ? $p->jamoUser->first_name.' '.$p->jamoUser->last_name
                         : 'N/A',
                     'collectionDate' => $p->payment_date?->toDateString(),
-                    'amount' => $p->amount,
+                    'submittedDate' => $p->created_at?->toDateString() ?? $p->payment_date?->toDateString(),
+                    'amount' => (float)$p->amount,
                 ];
             });
 
