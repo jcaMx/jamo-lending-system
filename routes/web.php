@@ -1,33 +1,27 @@
 <?php
-use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\MyLoanController;
+use App\Http\Controllers\Customer\MyProfileController;
+use App\Http\Controllers\Customer\MyRepaymentsController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisbursementController;
+use App\Http\Controllers\LoanCommentController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use App\Http\Controllers\UserController;
-
+use App\Models\DocumentType;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
-use App\Models\Loan;
-use App\Models\DocumentType;
-use App\Http\Controllers\LoanCommentController;
-
-
-
-use App\Http\Controllers\Customer\CustomerDashboardController;
-use App\Http\Controllers\Customer\MyLoanController;
-use App\Http\Controllers\Customer\MyRepaymentsController;
-
-use App\Http\Controllers\Customer\MyProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
         Route::get('/search', [BorrowerController::class, 'search'])->name('borrowers.search');
         Route::get('/{id}/loans', [BorrowerController::class, 'checkLoans'])->name('borrowers.check-loans');
+        Route::get('/{id}/income', [BorrowerController::class, 'income'])->name('borrowers.income');
         Route::delete('{id}', [BorrowerController::class, 'destroy'])->name('borrowers.destroy');
     });
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
@@ -176,14 +171,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
     Route::prefix('api')->group(function () {
-    Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
-    Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
-    Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
-    Route::get('/all-loans', [DashboardController::class, 'allLoans']);
-});
+        Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
+        Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
+        Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
+        Route::get('/all-loans', [DashboardController::class, 'allLoans']);
+        Route::post('/staff/evaluate-loan-rules', [LoanController::class, 'evaluateRules'])
+            ->middleware(['role:admin'])
+            ->name('api.staff.evaluate-rules');
+    });
 
-   Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])
-    ->name('loans.comments.store');
+    Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])
+        ->name('loans.comments.store');
 
 });
 
@@ -191,7 +189,6 @@ Route::middleware(['auth', 'role:admin|cashier'])->group(function () {
     Route::post('/loans/{loan}/comments', [LoanController::class, 'addComment'])->name('loans.comments.add');
     Route::delete('/loans/comments/{comment}', [LoanController::class, 'deleteComment'])->name('loans.comments.delete');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -211,18 +208,24 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
 
     Route::get('/my-loan', [MyLoanController::class, 'index'])
         ->name('customer.MyLoan');
-    
+
     Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
 
     Route::get('/my-profile', [MyProfileController::class, 'index'])
-    ->name('customer.profile');
+        ->name('customer.profile');
 
     Route::put('/my-profile', [MyProfileController::class, 'update'])
-    ->name('customer.profile.update');
+        ->name('customer.profile.update');
 
     Route::get('/applynow', function () {
+        $collateralDocumentCategories = [
+            'collateral_general',
+            'collateral_vehicle',
+            'collateral_land',
+        ];
+
         $documentTypesByCategory = DocumentType::query()
-            ->where('category', 'collateral')
+            ->whereIn('category', $collateralDocumentCategories)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'category'])
@@ -230,14 +233,39 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
             ->map(fn ($items) => $items->values())
             ->toArray();
 
+        $borrower = Auth::user()?->borrower;
+        $monthlyIncome = $borrower?->borrowerEmployment?->monthly_income;
+
         return Inertia::render('BorrowerApplication', [
             'documentTypesByCategory' => $documentTypesByCategory,
+            'borrowerRuleContext' => [
+                'monthly_income' => $monthlyIncome !== null ? (float) $monthlyIncome : null,
+                'dti_ratio' => null, // can be hydrated from backend once available
+            ],
         ]);
     })->name('apply');
+    Route::post('/api/evaluate-loan-rules', [ApplicationController::class, 'evaluateRules'])
+        ->name('api.evaluate-rules');
 
     Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
 
     
+    Route::get('/test-rule-evaluator', function () {
+        $service = app(\App\Services\RuleEvaluatorService::class);
+        $product = \App\Models\LoanProduct::with('rules')->first();
+
+        if (! $product) {
+            return 'No loan products found';
+        }
+
+        $result = $service->evaluate($product, null, [
+            'loan_amount' => 200501,
+            'monthly_income' => 50000,
+            'term' => 12,
+        ]);
+
+        return $result;
+    });
 
 });
 

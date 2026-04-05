@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Hash;
 
 class PasswordController extends Controller
 {
@@ -30,7 +31,7 @@ class PasswordController extends Controller
         ]);
 
         $request->user()->update([
-            'password' => $validated['password'],
+            'password' => Hash::make($validated['password']),
         ]);
 
         return back();

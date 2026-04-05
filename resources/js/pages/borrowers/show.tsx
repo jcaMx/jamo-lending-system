@@ -25,7 +25,7 @@ type Loan = {
   repayment_frequency: string;
   principal: number;
   interest: string;
-  interestType: string;
+  interest_type: string;
   loan_type: string;
   penalty: number;
   due: number;
@@ -200,10 +200,10 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
               <td className="px-3 py-2">{safeLoan.loanNo}</td>
               <td className="px-3 py-2">{safeLoan.released}</td>
               <td className="px-3 py-2">{safeLoan.maturity}</td>
-              <td className="px-3 py-2">{safeLoan.repayment}</td>
+              <td className="px-3 py-2">{safeLoan.repayment_frequency}</td>
               <td className="px-3 py-2">₱{safeLoan.principal.toLocaleString()}</td>
               <td className="px-3 py-2">{safeLoan.interest}</td>
-              <td className="px-3 py-2">{safeLoan.interestType}</td>
+              <td className="px-3 py-2">{safeLoan.interest_type}</td>
               <td className="px-3 py-2">{safeLoan.penalty}</td>
               <td className="px-3 py-2">₱{safeLoan.due.toLocaleString()}</td>
               <td className="px-3 py-2">₱{safeLoan.balance.toLocaleString()}</td>
