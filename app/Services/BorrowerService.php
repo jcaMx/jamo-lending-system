@@ -59,6 +59,7 @@ class BorrowerService
                 'loans.collateral.landDetails',
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
+                'loans.collateral.files',
                 'loans.amortizationSchedules',
             ])
             ->findOrFail($borrowerId);
@@ -170,6 +171,7 @@ class BorrowerService
             'land_details' => $collateral->landDetails,
             'vehicle_details' => $collateral->vehicleDetails,
             'atm_details' => $collateral->atmDetails,
+            'files' => $collateral->files ? [$collateral->files] : [],
         ])
             ->values()
             ->all();

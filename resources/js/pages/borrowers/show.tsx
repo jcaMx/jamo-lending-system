@@ -26,12 +26,25 @@ type Loan = {
   principal: number;
   interest: string;
   interest_type: string;
+  interestType: string;
   loan_type: string;
   penalty: number;
   due: number;
   balance: number;
   status: string;
 };
+
+type FileItem = {
+  ID?: number;
+  id?: number;
+  file_name?: string;
+  file_type?: string;
+  file_path?: string;
+  uploaded_at?: string;
+  description?: string;
+  source?: string;
+};
+
 
 // Add after line 8 in show.tsx
 type Collateral = {
@@ -63,12 +76,16 @@ type Collateral = {
     account_no: string;
     cardno_4digits: number;
   };
+  files?: FileItem[] | FileItem;
 };
 
-const toArray = <T,>(value: T[] | Record<string, T> | null | undefined): T[] => {
+const toArray = <T,>(value: T[] | T | Record<string, T> | null | undefined): T[] => {
   if (Array.isArray(value)) return value;
-  if (value && typeof value === 'object') return Object.values(value as Record<string, T>);
-  return [];
+  if (value && typeof value === 'object') {
+    const values = Object.values(value as Record<string, T>);
+    if (values.length > 0) return values;
+  }
+  return value ? [value as T] : [];
 };
 
 export default function Show({ borrower, collaterals = [], activeLoan = null, repayments = [] }: { borrower: any; collaterals: Collateral[]; activeLoan: Loan | null; repayments: Repayment[] }) {
@@ -90,9 +107,15 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
 
   const safeCollaterals = toArray<Collateral>(collaterals);
   const safeRepayments: Repayment[] = toArray(repayments ?? borrower.repayments);
+  const borrowerFiles = toArray<FileItem>(normalizedBorrower.files);
+  const collateralFiles = safeCollaterals.flatMap((collateral) => toArray<FileItem>(collateral.files));
+  const allFiles = [
+    ...borrowerFiles.map((f) => ({ ...f, source: f.source ?? 'Borrower', ID: f.ID ?? 0 })),
+    ...collateralFiles.map((f) => ({ ...f, source: f.source ?? 'Collateral', ID: f.ID ?? 0 })),
+  ];
 
   const safeLoan: Loan =
-    activeLoan ?? 
+    activeLoan ??
     normalizedBorrower.loans[0] ?? {
       ID: 0,
       loanNo: '-',
@@ -101,6 +124,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       repayment: '',
       principal: 0,
       interest: '',
+      interest_type: '',
       interestType: '',
       loan_type: '',
       penalty: 0,
@@ -137,6 +161,11 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         key: 'loanCollateral' as TabKey,
         label: 'Loan Collateral',
         content: <LoanCollateralTab collaterals={safeCollaterals} />,
+      },
+      {
+        key: 'loanFiles' as TabKey,
+        label: 'Loan Files',
+        content: <LoanFilesTab files={allFiles} />,
       },
       {
         key: 'coBorrower' as TabKey,
