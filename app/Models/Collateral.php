@@ -50,7 +50,7 @@ class Collateral extends Model
 
     public function files()
     {
-        return $this->hasOne(Files::class, 'collateral_id', 'ID');
+        return $this->hasMany(Files::class, 'collateral_id', 'ID');
     }
 
     public function loan()

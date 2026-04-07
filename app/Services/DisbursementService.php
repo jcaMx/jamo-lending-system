@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\BankAccount;
+use App\Models\ChequeDetail;
 use App\Models\Disbursement;
 use App\Models\Loan;
+use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -76,6 +79,35 @@ class DisbursementService
                 'created_by' => $actorId,
             ]);
 
+            if (in_array($disbursement->method, ['Cash', 'Cheque Voucher'], true)) {
+                $voucher = Voucher::create([
+                    'disbursement_id' => $disbursement->ID,
+                    'loan_id' => $loan->ID,
+                    'voucher_no' => $data['voucher_no'],
+                    'voucher_type' => $disbursement->method === 'Cheque Voucher' ? 'cheque' : 'cash',
+                    'voucher_date' => $data['voucher_date'],
+                    'payee_name' => $data['payee_name'],
+                    'payee_address' => $data['payee_address'] ?? null,
+                    'payee_tin' => $data['payee_tin'] ?? null,
+                    'particulars' => $data['particulars'],
+                    'gross_amount' => $data['gross_amount'] ?? $grossAmount,
+                    'prepared_by_user_id' => $actorId,
+                    'status' => 'draft',
+                ]);
+
+                if ($disbursement->method === 'Cheque Voucher') {
+                    $bankAccount = BankAccount::query()->where('is_active', true)->findOrFail((int) $data['bank_account_id']);
+
+                    ChequeDetail::create([
+                        'voucher_id' => $voucher->ID,
+                        'bank_account_id' => $bankAccount->ID,
+                        'bank_name' => $bankAccount->bank_name,
+                        'cheque_no' => $data['cheque_no'],
+                        'cheque_date' => $data['cheque_date'],
+                    ]);
+                }
+            }
+
             $this->addEvent($disbursement, 'Requested', null, 'Pending', $actorId, [
                 'method' => $disbursement->method,
                 'reference_no' => $disbursement->reference_no,
@@ -107,15 +139,28 @@ class DisbursementService
             $locked->approved_at = now();
             $locked->save();
 
+            if ($locked->voucher && $locked->voucher->status === 'draft') {
+                $locked->voucher->approved_by_user_id = $actorId;
+                $locked->voucher->status = 'approved';
+                $locked->voucher->save();
+            }
+
             $this->addEvent($locked, 'Approved', $oldStatus, $locked->status, $actorId);
 
             return $locked->fresh();
         });
     }
 
-    public function complete(Disbursement $disbursement, int $actorId, ?string $referenceNo = null, ?string $disbursedAt = null): Disbursement
+    public function complete(
+        Disbursement $disbursement,
+        int $actorId,
+        ?string $referenceNo = null,
+        ?string $disbursedAt = null,
+        ?string $receivedByName = null,
+        ?string $receivedAt = null
+    ): Disbursement
     {
-        return DB::transaction(function () use ($disbursement, $actorId, $referenceNo, $disbursedAt) {
+        return DB::transaction(function () use ($disbursement, $actorId, $referenceNo, $disbursedAt, $receivedByName, $receivedAt) {
             $locked = Disbursement::query()->lockForUpdate()->findOrFail($disbursement->ID);
 
             if ($locked->status !== 'Processing') {
@@ -139,11 +184,6 @@ class DisbursementService
                 $locked->reference_no = $referenceNo;
             }
 
-            if (in_array($locked->method, ['Bank', 'GCash', 'Cebuana', 'Cheque Voucher'], true) &&
-                empty($locked->reference_no)) {
-                throw new \RuntimeException('Reference number is required to complete this disbursement method.');
-            }
-
             $locked->save();
 
             $loan = Loan::query()->findOrFail($locked->loan_id);
@@ -152,6 +192,14 @@ class DisbursementService
                 (float) $locked->amount,
                 optional($finalDisbursedAt)->toDateTimeString()
             );
+
+            if ($locked->voucher) {
+                $voucherReceivedAt = $receivedAt ? Carbon::parse($receivedAt) : $finalDisbursedAt;
+                $locked->voucher->status = 'released';
+                $locked->voucher->received_by_name = $receivedByName;
+                $locked->voucher->received_at = $voucherReceivedAt;
+                $locked->voucher->save();
+            }
 
             $this->addEvent($locked, 'Completed', $oldStatus, $locked->status, $actorId, [
                 'reference_no' => $locked->reference_no,
@@ -176,6 +224,12 @@ class DisbursementService
             $locked->failure_code = $failureCode;
             $locked->failure_reason = $failureReason;
             $locked->save();
+
+            if ($locked->voucher && $locked->voucher->status !== 'released') {
+                $locked->voucher->status = 'void';
+                $locked->voucher->void_reason = $failureReason;
+                $locked->voucher->save();
+            }
 
             $this->addEvent($locked, 'Failed', $oldStatus, $locked->status, $actorId, [
                 'failure_code' => $failureCode,

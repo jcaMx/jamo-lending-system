@@ -4,6 +4,8 @@ import type { BorrowerDocumentTypeOption } from "@/pages/borrowers/components/Re
 interface Borrower {
   id: number;
   name: string;
+  coBorrowers: CoBorrowerForm[];
+};
   has_active_or_pending_loan?: boolean;
   has_active_loan?: boolean;
   loan_status?: string;
@@ -11,6 +13,804 @@ interface Borrower {
 
 interface AddLoanProps {
   borrowers?: Borrower[];
+};
+
+type CoBorrowerForm = {
+  first_name: string;
+  last_name: string;
+  address: string;
+  email: string;
+  contact: string;
+  birth_date: string;
+  marital_status: string;
+  occupation: string;
+  net_pay: string;
+};
+
+const emptyCoBorrower = (): CoBorrowerForm => ({
+  first_name: '',
+  last_name: '',
+  address: '',
+  email: '',
+  contact: '',
+  birth_date: '',
+  marital_status: '',
+  occupation: '',
+  net_pay: '',
+});
+
+const cloneCoBorrowers = (coBorrowers: CoBorrowerForm[] = []): CoBorrowerForm[] =>
+  coBorrowers.length > 0 ? coBorrowers.map((co) => ({ ...co })) : [emptyCoBorrower()];
+
+// Main Component
+export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
+  // Form Data
+  const { data, setData, processing, errors } = useForm({
+    // Borrower Information
+    borrower_name: '',
+    borrower_id: '' as string | number,
+    co_borrower_source: 'previous',
+    // Loan Details
+    loan_type: '',
+    loan_amount: '',
+    interest_type: '',
+    interest_rate: '5',
+    repayment_frequency: '',
+    term: '',
+    // Collateral
+    collateral_type: 'vehicle',
+    // Vehicle Collateral
+    make: '',
+    vehicle_type: '',
+    transmission_type: '',
+    plate_no: '',
+    engine_no: '',
+    year_model: '',
+    series: '',
+    fuel: '',
+    // Land Collateral
+    certificate_of_title_no: '',
+    location: '',
+    description: '',
+    area: '',
+    // ATM Collateral
+    atm_type: '',
+    bank_name: '',
+    account_no: '',
+    cardno_4digits: '',
+    ownership_proof: null,
+    coBorrowers: [] as CoBorrowerForm[],
+  });
+
+
+  
+
+  // State
+  const [coBorrowers, setCoBorrowers] = useState<CoBorrowerForm[]>([emptyCoBorrower()]);
+  const [activeStep, setActiveStep] = useState(0);
+  const [borrowerSearch, setBorrowerSearch] = useState('');
+  const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(null);
+  const [borrowerError, setBorrowerError] = useState<string>('');
+
+  // Filter borrowers based on search
+  const filteredBorrowers = useMemo(() => {
+    if (!borrowerSearch.trim()) return [];
+    return initialBorrowers.filter((b) =>
+      b.name.toLowerCase().includes(borrowerSearch.toLowerCase())
+    );
+  }, [borrowerSearch, initialBorrowers]);
+
+  const selectedBorrowerCoBorrowers = useMemo(
+    () => selectedBorrower?.coBorrowers ?? [],
+    [selectedBorrower]
+  );
+
+  const applyCoBorrowerSource = useCallback(
+    (source: 'previous' | 'new', borrower: Borrower | null = selectedBorrower) => {
+      if (source === 'previous' && borrower?.coBorrowers?.length) {
+        setCoBorrowers(cloneCoBorrowers(borrower.coBorrowers));
+        return;
+      }
+
+      setCoBorrowers([emptyCoBorrower()]);
+    },
+    [selectedBorrower]
+  );
+
+  // Handle borrower selection
+  const handleSelectBorrower = (borrower: Borrower) => {
+    setSelectedBorrower(borrower);
+    setBorrowerSearch(borrower.name);
+    setData('borrower_name', borrower.name);
+    setData('borrower_id', borrower.id);
+    setBorrowerError('');
+    applyCoBorrowerSource(data.co_borrower_source as 'previous' | 'new', borrower);
+  };
+
+  useEffect(() => {
+    if (!selectedBorrower) {
+      setCoBorrowers([emptyCoBorrower()]);
+      return;
+    }
+
+    applyCoBorrowerSource(data.co_borrower_source as 'previous' | 'new', selectedBorrower);
+  }, [data.co_borrower_source, selectedBorrower, applyCoBorrowerSource]);
+
+  // Check if borrower has existing loan
+  const checkExistingLoan = useCallback(async (borrowerId: number) => {
+    try {
+      const response = await fetch(`/borrowers/${borrowerId}/loans`);
+      const result = await response.json();
+      if (result.hasActiveLoan) {
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+      }
+  }, []);
+
+  // Event Handlers
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (e.target instanceof HTMLInputElement && e.target.files) {
+      setData(name as any, e.target.files[0]);
+    } else {
+      setData(name as any, value);
+    }
+  };
+
+  const handleCoBorrowerChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const updated = [...coBorrowers];
+    updated[index] = { ...updated[index], [e.target.name]: e.target.value };
+    setCoBorrowers(updated);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // Filter out empty co-borrowers before submitting
+    // Only include co-borrowers with first_name and last_name (required by backend validation)
+    const validCoBorrowers = coBorrowers.filter(
+      (co) => co.first_name.trim() !== '' && co.last_name.trim() !== ''
+    );
+
+    // Transform data to match backend expectations - ensure borrower_id is a number
+    const borrowerIdNum = typeof data.borrower_id === 'string' && data.borrower_id 
+      ? parseInt(data.borrower_id, 10) 
+      : (typeof data.borrower_id === 'number' ? data.borrower_id : 0);
+    
+    const loanAmountNum = typeof data.loan_amount === 'string' && data.loan_amount 
+      ? parseFloat(data.loan_amount) 
+      : (typeof data.loan_amount === 'number' ? data.loan_amount : 0);
+    
+    const interestRateNum = typeof data.interest_rate === 'string' && data.interest_rate 
+      ? parseFloat(data.interest_rate) 
+      : (typeof data.interest_rate === 'number' ? data.interest_rate : 0);
+    
+    const termNum = typeof data.term === 'string' && data.term 
+      ? parseInt(data.term, 10) 
+      : (typeof data.term === 'number' ? data.term : 0);
+
+    router.post(
+      store.url(),
+      {
+        ...data,
+        borrower_id: borrowerIdNum,
+        loan_amount: loanAmountNum,
+        interest_rate: interestRateNum,
+        term: termNum,
+        coBorrowers: validCoBorrowers,
+      },
+      {
+        preserveScroll: true,
+        forceFormData: true,
+        onError: (formErrors) => {
+          console.error('Form submission errors:', formErrors);
+        },
+        onSuccess: () => {
+          console.log('Form submitted successfully');
+        },
+      }
+    );
+  };
+
+  // Co-Borrower Management
+  const addCoBorrower = () =>
+    setCoBorrowers([...coBorrowers, emptyCoBorrower()]);
+
+  const removeCoBorrower = (index: number) => setCoBorrowers(coBorrowers.filter((_, i) => i !== index));
+
+  // Step Validation
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 0:
+        return !!(selectedBorrower && data.borrower_id && data.borrower_name.trim());
+      case 1:
+        return !!(
+          data.loan_type &&
+          data.loan_amount &&
+          data.interest_type &&
+          data.interest_rate &&
+          data.repayment_frequency &&
+          data.term
+        );
+      case 2:
+        if (!data.collateral_type) return false;
+        if (data.collateral_type === 'vehicle') {
+          return !!(data.make && data.vehicle_type && data.transmission_type);
+        }
+        if (data.collateral_type === 'land') {
+          return !!(data.certificate_of_title_no && data.location);
+        }
+        if (data.collateral_type === 'atm') {
+          return !!(data.bank_name && data.account_no && data.cardno_4digits);
+        }
+        return false;
+      case 3:
+        // Co-borrowers are optional, but if any exist, first_name and last_name are required
+        return coBorrowers.every((co) => {
+          const hasName = co.first_name.trim() || co.last_name.trim();
+          return !hasName || (co.first_name.trim() && co.last_name.trim());
+        });
+      case 4:
+        return true; // Review step has no inputs
+      default:
+        return false;
+    }
+  };
+
+  // Step Navigation
+  const nextStep = async () => {
+    // Validate borrower on step 0 before proceeding
+    if (activeStep === 0) {
+      if (!selectedBorrower || !data.borrower_id) {
+        setBorrowerError('Please select a borrower from the list.');
+        return;
+      }
+      // Check if borrower has existing loan
+      const hasLoan = await checkExistingLoan(selectedBorrower.id);
+      if (hasLoan) {
+        alert('This borrower already has an active loan. A borrower cannot reloan if they have an existing unpaid loan.');
+        return;
+      }
+    }
+    if (!isStepValid(activeStep)) {
+      return;
+    }
+    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+  };
+  const prevStep = () => setActiveStep((prev) => Math.max(prev - 1, 0));
+
+  // Helper Functions
+  const toCapitalCase = (str: string) =>
+    str
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+  // Step Rendering
+  const renderStep = () => {
+    const reviewCoBorrowers = coBorrowers.filter(
+      (co) => co.first_name.trim() !== '' && co.last_name.trim() !== ''
+    );
+
+    switch (activeStep) {
+      case 0:
+        return (
+          <SectionContainer title="Borrower Information">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                Borrower Name
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={borrowerSearch}
+                  onChange={(e) => {
+                    setBorrowerSearch(e.target.value);
+                    if (!e.target.value) {
+                      setSelectedBorrower(null);
+                      setData('borrower_id', '');
+                      setData('borrower_name', '');
+                      applyCoBorrowerSource('new', null);
+                    }
+                  }}
+                  placeholder="Search borrower..."
+                  className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+                />
+                {borrowerSearch.length > 0 && filteredBorrowers.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredBorrowers.map((b) => (
+                      <div
+                        key={b.id}
+                        onClick={() => handleSelectBorrower(b)}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {b.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {selectedBorrower && (
+                <p className="text-green-500 text-sm mt-1">✓ Borrower selected (ID: {selectedBorrower.id})</p>
+              )}
+              {borrowerError && <p className="text-red-500 text-sm mt-1">{borrowerError}</p>}
+              <FieldError field="borrower_name" errors={errors} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                Borrower ID
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <input 
+                type="text" 
+                name="borrower_id" 
+                value={data.borrower_id ?? ''} 
+                onChange={handleChange}
+                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+                readOnly
+              />
+              <FieldError field="borrower_id" errors={errors} />
+            </div>
+          </SectionContainer>
+        );
+
+      case 1:
+        return (
+          <SectionContainer title="Loan Details">
+            
+            <FormField label="Loan Type" name="loan_type" value={data.loan_type} onChange={handleChange} required 
+              type="select"
+              options={[
+                { value: 'Personal Loan', label: 'Personal Loan' },
+                { value: 'Business Loan', label: 'Business Loan' },
+                { value: 'Home Loan', label: 'Home Loan' },
+                { value: 'Education Loan', label: 'Education Loan' },
+              ]}/>
+            <FormField label="Loan Amount (₱)" name="loan_amount" value={data.loan_amount} onChange={handleChange} required />
+            <FormField
+              label="Interest Type"
+              name="interest_type"
+              type="select"
+              value={data.interest_type}
+              onChange={handleChange}
+              required
+              options={[
+                { value: 'Compound', label: 'Compound' },
+                { value: 'Diminishing', label: 'Diminishing' },
+              ]}
+            />
+            <FormField label="Interest Rate (%)" name="interest_rate" onChange={handleChange} value={data.interest_rate} required>
+              <input
+                name="interest_rate"
+                list="interestRateOptions"
+                value={data.interest_rate}
+                onChange={handleChange}
+                required
+                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+                placeholder="Enter interest rate"
+              />
+              <datalist id="interestRateOptions">{Array.from({ length: 10 }, (_, i) => i + 1).map((rate) => <option key={rate} value={rate} />)}</datalist>
+            </FormField>
+            <FormField
+              label="Repayment Frequency"
+              name="repayment_frequency"
+              type="select"
+              value={data.repayment_frequency}
+              onChange={handleChange}
+              required
+              options={[
+                { value: 'Weekly', label: 'Weekly' },
+                { value: 'Monthly', label: 'Monthly' },
+                { value: 'Yearly', label: 'Yearly' },
+              ]}
+            />
+            <FormField label="Term (months)" name="term" onChange={handleChange} value={data.term} required>
+              <input
+                name="term"
+                list="termOptions"
+                value={data.term}
+                onChange={handleChange}
+                required
+                className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
+                placeholder="Enter term in months"
+              />
+              <datalist id="termOptions">{Array.from({ length: 24 }, (_, i) => i + 1).map((month) => <option key={month} value={month} />)}</datalist>
+            </FormField>
+          </SectionContainer>
+        );
+
+      case 2: {
+        const vehicleOptions: Record<string, string[]> = { make: ['Toyota','Honda','Nissan','Ford','Chevrolet','BMW','Mercedes-Benz','Audi','Volkswagen','Hyundai','Kia','Mazda','Subaru','Jeep','Dodge','Tesla','Volvo','Jaguar','Land Rover','Mitsubishi'], fuel: ['Gasoline', 'Diesel', 'Electric'] };
+        const landOptions: Record<string, string[]> = { location: ['Manila', 'Cebu', 'Davao'] };
+        const atmOptions: Record<string, string[]> = { bank_name: ['BDO', 'BPI', 'Metrobank'] };
+        type DataKey = keyof typeof data;
+
+        return (
+          <SectionContainer title="Collateral">
+            <FormField
+              label="Collateral Type"
+              name="collateral_type"
+              type="select"
+              value={data.collateral_type}
+              onChange={handleChange}
+              required
+              options={[
+                { value: 'vehicle', label: 'Vehicle' },
+                { value: 'land', label: 'Land Title' },
+                { value: 'atm', label: 'ATM' },
+              ]}
+            />
+
+            {/* Vehicle Collateral Fields */}
+            {data.collateral_type === 'vehicle' && (
+              <>
+                <FormField
+                  label="Vehicle Type"
+                  name="vehicle_type"
+                  type="select"
+                  value={data.vehicle_type}
+                  onChange={handleChange}
+                  required
+                  options={[
+                    { value: 'Car', label: 'Car' },
+                    { value: 'Motorcycle', label: 'Motorcycle' },
+                    { value: 'Truck', label: 'Truck' },
+                  ]}
+                />
+                <FormField
+                  label="Transmission Type"
+                  name="transmission_type"
+                  type="select"
+                  value={data.transmission_type}
+                  onChange={handleChange}
+                  required
+                  options={[
+                    { value: 'Manual', label: 'Manual' },
+                    { value: 'Automatic', label: 'Automatic' },
+                  ]}
+                />
+                {(['make', 'plate_no', 'engine_no', 'year_model', 'series', 'fuel'] as DataKey[]).map((field) => {
+                const fieldStr = String(field);
+                const options = vehicleOptions[fieldStr];
+                const isRequired = fieldStr === 'make';
+                return (
+                  <div key={fieldStr}>
+                    <FormField label={toCapitalCase(fieldStr)} name={fieldStr} value={data[field]} onChange={handleChange} list={`${fieldStr}-options`} required={isRequired} />
+                    {options && (
+                      <datalist id={`${fieldStr}-options`}>
+                        {options.map((opt) => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    )}
+                  </div>
+                );
+              })}
+              </>
+            )}
+
+            {/* Land Collateral Fields */}
+            {data.collateral_type === 'land' &&
+              (['certificate_of_title_no', 'location', 'description', 'area'] as DataKey[]).map((field) => {
+                const fieldStr = String(field);
+                const options = landOptions[fieldStr];
+                const isRequired = fieldStr === 'certificate_of_title_no' || fieldStr === 'location';
+                return (
+                  <div key={fieldStr}>
+                    <FormField label={toCapitalCase(fieldStr)} name={fieldStr} value={data[field]} onChange={handleChange} list={`${fieldStr}-options`} required={isRequired} />
+                    {options && (
+                      <datalist id={`${fieldStr}-options`}>
+                        {options.map((opt) => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    )}
+                  </div>
+                );
+              })}
+
+            {/* ATM Collateral Fields */}
+            {data.collateral_type === 'atm' &&
+              (['bank_name', 'account_no', 'cardno_4digits'] as DataKey[]).map((field) => {
+                const fieldStr = String(field);
+                const options = atmOptions[fieldStr];
+                const isRequired = fieldStr === 'bank_name' || fieldStr === 'account_no' || fieldStr === 'cardno_4digits';
+                return (
+                  <div key={fieldStr}>
+                    <FormField label={toCapitalCase(fieldStr)} name={fieldStr} value={data[field]} onChange={handleChange} list={`${fieldStr}-options`} required={isRequired} />
+                    {options && (
+                      <datalist id={`${fieldStr}-options`}>
+                        {options.map((opt) => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    )}
+                  </div>
+                );
+              })}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Upload Ownership Proof</label>
+              <input type="file" name="ownership_proof" onChange={handleChange} className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2" />
+            </div>
+          </SectionContainer>
+        );
+      }
+
+      case 3:
+      // Options for dropdowns
+      const maritalStatusOptions = [
+        { value: 'Single', label: 'Single' },
+        { value: 'Married', label: 'Married' },
+        { value: 'Widowed', label: 'Widowed' },
+        { value: 'Divorced', label: 'Divorced' },
+      ];
+
+      const occupationOptions = [
+        { value: 'Employee', label: 'Employee' },
+        { value: 'Self-Employed', label: 'Self-Employed' },
+        { value: 'Unemployed', label: 'Unemployed' },
+        { value: 'Retired', label: 'Retired' },
+      ];
+
+      return (
+        <SectionContainer title="Co-Borrowers">
+          <div className="md:col-span-2 space-y-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  label="Co-Borrower Source"
+                  name="co_borrower_source"
+                  type="select"
+                  value={data.co_borrower_source}
+                  onChange={handleChange}
+                  options={[
+                    { value: 'previous', label: 'Use Previous Co-Borrowers' },
+                    { value: 'new', label: 'Add New Co-Borrowers' },
+                  ]}
+                />
+                <div className="rounded-md border border-amber-200 bg-white px-4 py-3 text-sm text-gray-700">
+                  {selectedBorrower ? (
+                    data.co_borrower_source === 'previous' ? (
+                      selectedBorrowerCoBorrowers.length > 0 ? (
+                        <span>
+                          Loaded {selectedBorrowerCoBorrowers.length} saved co-borrower{selectedBorrowerCoBorrowers.length > 1 ? 's' : ''} for this borrower. You can still edit or remove them before submit.
+                        </span>
+                      ) : (
+                        <span>No saved co-borrowers found for this borrower. Start with a new entry below.</span>
+                      )
+                    ) : null
+                  ) : (
+                    <span>Select a borrower first to choose whether to reuse saved co-borrowers or add new ones.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {coBorrowers.map((co, i) => (
+            <div key={i} className="relative border-white p-4 rounded-lg mb-4">
+              {coBorrowers.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeCoBorrower(i)}
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+              {(Object.keys(co) as Array<keyof typeof co>).map((key) => {
+                const keyStr = String(key);
+                const isRequired = keyStr === 'first_name' || keyStr === 'last_name';
+
+                // Dropdowns for specific fields
+                if (keyStr === 'marital_status') {
+                  return (
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="select"
+                      value={co[key]}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                      options={maritalStatusOptions}
+                      required={isRequired}
+                    />
+                  );
+                }
+
+                if (keyStr === 'occupation') {
+                  return (
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="select"
+                      value={co[key]}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                      options={occupationOptions}
+                      required={isRequired}
+                    />
+                  );
+                }
+
+                if (keyStr === 'birth_date') {
+                  return (
+                    <FormField
+                      key={keyStr}
+                      label={toCapitalCase(keyStr)}
+                      name={keyStr}
+                      type="date"
+                      value={co.birth_date}
+                      onChange={(e) => handleCoBorrowerChange(i, e)}
+                    />
+                  );
+                }
+
+                // Default to text input for other fields
+                return (
+                  <FormField
+                    key={keyStr}
+                    label={toCapitalCase(keyStr)}
+                    name={keyStr}
+                    value={co[key]}
+                    onChange={(e) => handleCoBorrowerChange(i, e)}
+                    required={isRequired}
+                  />
+                );
+              })}
+            </div>
+          ))}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              className="bg-yellow-500 text-black hover:bg-yellow-600"
+              onClick={addCoBorrower}
+            >
+              <Plus size={14} /> Add Co-Borrower
+            </Button>
+          </div>
+        </SectionContainer>
+      );
+
+
+      case 4:
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+        Review Loan Application
+      </h2>
+
+      {/* Borrower Info */}
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">
+          Borrower Information
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <span className="font-semibold">Name:</span> {data.borrower_name}
+          </div>
+          <div>
+            <span className="font-semibold">Borrower ID:</span> {data.borrower_id}
+          </div>
+        </div>
+      </div>
+
+      {/* Loan Details */}
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">
+          Loan Details
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div><span className="font-semibold">Loan Type:</span> {data.loan_type}</div>
+          <div><span className="font-semibold">Loan Amount:</span> ₱{data.loan_amount}</div>
+          <div><span className="font-semibold">Interest Type:</span> {data.interest_type}</div>
+          <div><span className="font-semibold">Interest Rate:</span> {data.interest_rate}%</div>
+          <div><span className="font-semibold">Repayment:</span> {data.repayment_frequency}</div>
+          <div><span className="font-semibold">Term:</span> {data.term} months</div>
+        </div>
+      </div>
+
+      {/* Collateral */}
+      <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium text-gray-600 mb-3">
+          Collateral
+        </h3>
+
+        <p className="mb-2">
+          <span className="font-semibold">Type:</span>{' '}
+          {toCapitalCase(data.collateral_type)}
+        </p>
+
+        {data.collateral_type === 'vehicle' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><span className="font-semibold">Make:</span> {data.make}</div>
+            <div><span className="font-semibold">Vehicle Type:</span> {data.vehicle_type}</div>
+            <div><span className="font-semibold">Transmission:</span> {data.transmission_type}</div>
+            <div><span className="font-semibold">Plate No:</span> {data.plate_no}</div>
+            <div><span className="font-semibold">Engine No:</span> {data.engine_no}</div>
+            <div><span className="font-semibold">Year Model:</span> {data.year_model}</div>
+            <div><span className="font-semibold">Series:</span> {data.series}</div>
+            <div><span className="font-semibold">Fuel:</span> {data.fuel}</div>
+          </div>
+        )}
+
+        {data.collateral_type === 'land' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><span className="font-semibold">Title No:</span> {data.certificate_of_title_no}</div>
+            <div><span className="font-semibold">Location:</span> {data.location}</div>
+            <div className="col-span-2">
+              <span className="font-semibold">Description:</span> {data.description}
+            </div>
+            <div><span className="font-semibold">Area:</span> {data.area}</div>
+          </div>
+        )}
+
+        {data.collateral_type === 'atm' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><span className="font-semibold">Bank:</span> {data.bank_name}</div>
+            <div><span className="font-semibold">Account No:</span> {data.account_no}</div>
+            <div><span className="font-semibold">Card Last 4:</span> {data.cardno_4digits}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Co-Borrowers */}
+      {reviewCoBorrowers.length > 0 && (
+        <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-600 mb-3">
+            Co-Borrowers
+          </h3>
+          <p className="mb-3 text-sm text-gray-500">
+            Source: {data.co_borrower_source === 'previous' ? 'Previous co-borrowers' : 'New co-borrowers'}
+          </p>
+
+          {reviewCoBorrowers.map((co, i) => (
+            <div key={i} className="mb-4 border-b pb-3 last:border-b-0">
+              <p className="font-semibold mb-1">
+                Co-Borrower {i + 1}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><span className="font-semibold">Name:</span> {co.first_name} {co.last_name}</div>
+                <div><span className="font-semibold">Contact:</span> {co.contact}</div>
+                <div><span className="font-semibold">Email:</span> {co.email}</div>
+                <div><span className="font-semibold">Marital Status:</span> {co.marital_status}</div>
+                <div><span className="font-semibold">Occupation:</span> {co.occupation}</div>
+                <div><span className="font-semibold">Net Pay:</span> {co.net_pay}</div>
+                <div className="col-span-2">
+                  <span className="font-semibold">Address:</span> {co.address}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+    }
+  };
+
+  return (
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="Add Loan Application" />
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
+        {/* Global errors from server */}
+        {errors && Object.keys(errors).length > 0 && (
+          <div className="bg-red-100 text-red-800 p-3 rounded mb-4">
+            <ul className="list-disc list-inside">
+              {Object.entries(errors).map(([key, msg]) => (
+                <li key={key}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
   documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
 }
 

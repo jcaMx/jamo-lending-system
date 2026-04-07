@@ -69,4 +69,9 @@ class Disbursement extends Model
     {
         return $this->hasMany(DisbursementEvent::class, 'disbursement_id', 'ID');
     }
+
+    public function voucher()
+    {
+        return $this->hasOne(Voucher::class, 'disbursement_id', 'ID');
+    }
 }

@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->string('disbursement_no', 50)->unique();
                 $table->decimal('amount', 10, 2);
                 $table->char('currency', 3)->default('PHP');
-                $table->enum('method', ['Bank', 'Cash', 'GCash', 'Cebuana', 'Cheque Voucher']);
+                $table->enum('method', ['Cash', 'Cheque Voucher']);
                 $table->string('reference_no', 100)->nullable();
 
                 $table->enum('status', ['Draft', 'Pending', 'Processing', 'Completed', 'Failed', 'Reversed'])
@@ -47,9 +47,9 @@ return new class extends Migration
                 $table->foreign('created_by')->references('id')->on('users')->restrictOnDelete();
             });
         } else {
-            // Align method enum for existing tables to include Cheque Voucher.
+            // Align method enum for existing tables to Cash/Cheque Voucher only.
             try {
-                DB::statement("ALTER TABLE disbursement MODIFY method ENUM('Bank','Cash','GCash','Cebuana','Cheque Voucher') NOT NULL");
+                DB::statement("ALTER TABLE disbursement MODIFY method ENUM('Cash','Cheque Voucher') NOT NULL");
             } catch (\Throwable $e) {
                 // Keep migration resilient across engines/versions.
             }
