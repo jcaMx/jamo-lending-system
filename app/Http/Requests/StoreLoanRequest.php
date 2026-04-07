@@ -30,6 +30,7 @@ class StoreLoanRequest extends FormRequest
             'borrower_name' => 'required|string|max:255',
             'borrower_id' => 'required|integer|exists:borrower,ID',
             'loan_product_id' => 'nullable|integer|exists:loan_products,id',
+            'co_borrower_source' => 'nullable|string|in:previous,new',
 
             // Loan Details
             'loan_type' => 'required|string|max:255',

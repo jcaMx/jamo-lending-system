@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -22,6 +23,7 @@ interface Loan {
   status: string;
   balance_remaining: number;
   released_amount?: number;
+  can_delete?: boolean;
   start_date?: string;
   end_date?: string;
   borrower: {
@@ -61,6 +63,20 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
+
+  const deleteLoan = (loan: Loan) => {
+    const confirmed = window.confirm(
+      `Delete loan #${loan.ID} for ${loan.borrower.first_name} ${loan.borrower.last_name}? This cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    router.delete(route('loans.destroy', loan.ID), {
+      preserveScroll: true,
+    });
+  };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -138,6 +154,17 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
                       >
                         Schedule
                       </Button>
+                      {loan.can_delete && (
+                        <button
+                          type="button"
+                          onClick={() => deleteLoan(loan)}
+                          className="rounded border border-red-200 bg-red-50 p-2 text-red-600 hover:bg-red-100"
+                          title="Delete loan"
+                          aria-label="Delete loan"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -149,4 +176,3 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
     </AppLayout>
   );
 }
-

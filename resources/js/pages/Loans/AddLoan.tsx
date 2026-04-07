@@ -65,19 +65,48 @@ const SectionContainer = ({ title, children }: { title: string; children: React.
 type Borrower = {
   id: number;
   name: string;
+  coBorrowers: CoBorrowerForm[];
 };
 
 type Props = {
   borrowers?: Borrower[];
 };
 
+type CoBorrowerForm = {
+  first_name: string;
+  last_name: string;
+  address: string;
+  email: string;
+  contact: string;
+  birth_date: string;
+  marital_status: string;
+  occupation: string;
+  net_pay: string;
+};
+
+const emptyCoBorrower = (): CoBorrowerForm => ({
+  first_name: '',
+  last_name: '',
+  address: '',
+  email: '',
+  contact: '',
+  birth_date: '',
+  marital_status: '',
+  occupation: '',
+  net_pay: '',
+});
+
+const cloneCoBorrowers = (coBorrowers: CoBorrowerForm[] = []): CoBorrowerForm[] =>
+  coBorrowers.length > 0 ? coBorrowers.map((co) => ({ ...co })) : [emptyCoBorrower()];
+
 // Main Component
 export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
   // Form Data
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, processing, errors } = useForm({
     // Borrower Information
     borrower_name: '',
     borrower_id: '' as string | number,
+    co_borrower_source: 'previous',
     // Loan Details
     loan_type: '',
     loan_amount: '',
@@ -107,16 +136,14 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
     account_no: '',
     cardno_4digits: '',
     ownership_proof: null,
-    coBorrowers: [] as Array<{ first_name: string; last_name: string; address: string; email: string; contact: string; birth_date: string; marital_status: string; occupation: string; net_pay: string }>,
+    coBorrowers: [] as CoBorrowerForm[],
   });
 
 
   
 
   // State
-  const [coBorrowers, setCoBorrowers] = useState([
-    { first_name: '', last_name: '', address: '', email: '', contact: '', birth_date: '', marital_status: '', occupation: '', net_pay: '' },
-  ]);
+  const [coBorrowers, setCoBorrowers] = useState<CoBorrowerForm[]>([emptyCoBorrower()]);
   const [activeStep, setActiveStep] = useState(0);
   const [borrowerSearch, setBorrowerSearch] = useState('');
   const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(null);
@@ -130,6 +157,23 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
     );
   }, [borrowerSearch, initialBorrowers]);
 
+  const selectedBorrowerCoBorrowers = useMemo(
+    () => selectedBorrower?.coBorrowers ?? [],
+    [selectedBorrower]
+  );
+
+  const applyCoBorrowerSource = useCallback(
+    (source: 'previous' | 'new', borrower: Borrower | null = selectedBorrower) => {
+      if (source === 'previous' && borrower?.coBorrowers?.length) {
+        setCoBorrowers(cloneCoBorrowers(borrower.coBorrowers));
+        return;
+      }
+
+      setCoBorrowers([emptyCoBorrower()]);
+    },
+    [selectedBorrower]
+  );
+
   // Handle borrower selection
   const handleSelectBorrower = (borrower: Borrower) => {
     setSelectedBorrower(borrower);
@@ -137,7 +181,17 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
     setData('borrower_name', borrower.name);
     setData('borrower_id', borrower.id);
     setBorrowerError('');
+    applyCoBorrowerSource(data.co_borrower_source as 'previous' | 'new', borrower);
   };
+
+  useEffect(() => {
+    if (!selectedBorrower) {
+      setCoBorrowers([emptyCoBorrower()]);
+      return;
+    }
+
+    applyCoBorrowerSource(data.co_borrower_source as 'previous' | 'new', selectedBorrower);
+  }, [data.co_borrower_source, selectedBorrower, applyCoBorrowerSource]);
 
   // Check if borrower has existing loan
   const checkExistingLoan = useCallback(async (borrowerId: number) => {
@@ -195,30 +249,32 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
       ? parseInt(data.term, 10) 
       : (typeof data.term === 'number' ? data.term : 0);
 
-    // Update form data with transformed values
-    setData('borrower_id', borrowerIdNum as any);
-    setData('loan_amount', loanAmountNum as any);
-    setData('interest_rate', interestRateNum as any);
-    setData('term', termNum as any);
-    setData('coBorrowers', validCoBorrowers.length > 0 ? validCoBorrowers : []);
-
-    // Submit after React batches the state updates
-    setTimeout(() => {
-      post(store.url(), { 
+    router.post(
+      store.url(),
+      {
+        ...data,
+        borrower_id: borrowerIdNum,
+        loan_amount: loanAmountNum,
+        interest_rate: interestRateNum,
+        term: termNum,
+        coBorrowers: validCoBorrowers,
+      },
+      {
         preserveScroll: true,
-        onError: (errors) => {
-          console.error('Form submission errors:', errors);
+        forceFormData: true,
+        onError: (formErrors) => {
+          console.error('Form submission errors:', formErrors);
         },
         onSuccess: () => {
           console.log('Form submitted successfully');
-        }
-      });
-    }, 50);
+        },
+      }
+    );
   };
 
   // Co-Borrower Management
   const addCoBorrower = () =>
-    setCoBorrowers([...coBorrowers, { first_name: '', last_name: '', address: '', email: '', contact: '', birth_date: '', marital_status: '', occupation: '', net_pay: '' }]);
+    setCoBorrowers([...coBorrowers, emptyCoBorrower()]);
 
   const removeCoBorrower = (index: number) => setCoBorrowers(coBorrowers.filter((_, i) => i !== index));
 
@@ -292,6 +348,10 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
 
   // Step Rendering
   const renderStep = () => {
+    const reviewCoBorrowers = coBorrowers.filter(
+      (co) => co.first_name.trim() !== '' && co.last_name.trim() !== ''
+    );
+
     switch (activeStep) {
       case 0:
         return (
@@ -311,6 +371,7 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
                       setSelectedBorrower(null);
                       setData('borrower_id', '');
                       setData('borrower_name', '');
+                      applyCoBorrowerSource('new', null);
                     }
                   }}
                   placeholder="Search borrower..."
@@ -555,6 +616,39 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
 
       return (
         <SectionContainer title="Co-Borrowers">
+          <div className="md:col-span-2 space-y-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  label="Co-Borrower Source"
+                  name="co_borrower_source"
+                  type="select"
+                  value={data.co_borrower_source}
+                  onChange={handleChange}
+                  options={[
+                    { value: 'previous', label: 'Use Previous Co-Borrowers' },
+                    { value: 'new', label: 'Add New Co-Borrowers' },
+                  ]}
+                />
+                <div className="rounded-md border border-amber-200 bg-white px-4 py-3 text-sm text-gray-700">
+                  {selectedBorrower ? (
+                    data.co_borrower_source === 'previous' ? (
+                      selectedBorrowerCoBorrowers.length > 0 ? (
+                        <span>
+                          Loaded {selectedBorrowerCoBorrowers.length} saved co-borrower{selectedBorrowerCoBorrowers.length > 1 ? 's' : ''} for this borrower. You can still edit or remove them before submit.
+                        </span>
+                      ) : (
+                        <span>No saved co-borrowers found for this borrower. Start with a new entry below.</span>
+                      )
+                    ) : null
+                  ) : (
+                    <span>Select a borrower first to choose whether to reuse saved co-borrowers or add new ones.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {coBorrowers.map((co, i) => (
             <div key={i} className="relative border-white p-4 rounded-lg mb-4">
               {coBorrowers.length > 1 && (
@@ -724,13 +818,16 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
       </div>
 
       {/* Co-Borrowers */}
-      {coBorrowers.length > 0 && (
+      {reviewCoBorrowers.length > 0 && (
         <div className="p-5 bg-gray-50 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-medium text-gray-600 mb-3">
             Co-Borrowers
           </h3>
+          <p className="mb-3 text-sm text-gray-500">
+            Source: {data.co_borrower_source === 'previous' ? 'Previous co-borrowers' : 'New co-borrowers'}
+          </p>
 
-          {coBorrowers.map((co, i) => (
+          {reviewCoBorrowers.map((co, i) => (
             <div key={i} className="mb-4 border-b pb-3 last:border-b-0">
               <p className="font-semibold mb-1">
                 Co-Borrower {i + 1}

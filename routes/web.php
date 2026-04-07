@@ -105,11 +105,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/ViewLoans', [LoanController::class, 'viewApproved'])->name('loans.view-approved');
         Route::get('/{loan}/schedule', [LoanController::class, 'showSchedule'])->name('loans.schedule');
         Route::post('/', [LoanController::class, 'store'])->name('loans.store');
+        Route::put('/{loan}/borrower', [LoanController::class, 'updateBorrowerDetails'])->name('loans.borrower.update');
+        Route::delete('/{loan}/borrower-files/{file}', [LoanController::class, 'destroyBorrowerFile'])->name('loans.borrower-files.destroy');
+        Route::put('/{loan}/collateral', [LoanController::class, 'updateCollateral'])->name('loans.collateral.update');
+        Route::post('/{loan}/collateral-files', [LoanController::class, 'storeCollateralFiles'])->name('loans.collateral-files.store');
+        Route::delete('/{loan}/collateral-files/{file}', [LoanController::class, 'destroyCollateralFile'])->name('loans.collateral-files.destroy');
         Route::get('/{loan}', [LoanController::class, 'show'])->name('loans.show');
         Route::middleware(['role:admin'])->group(function () {
             Route::post('/approve/{loan}', [LoanController::class, 'approve'])->name('loans.approve');
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
             Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
+            Route::delete('/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
         });
     });
 
@@ -123,13 +129,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->group(function () {
             Route::middleware(['role:cashier|admin'])->group(function () {
             Route::get('/', [DisbursementController::class, 'index'])->name('disbursements.index');
+            Route::get('/{disbursement}/voucher', [DisbursementController::class, 'printVoucher'])->name('disbursements.voucher.print');
             Route::post('/', [DisbursementController::class, 'store'])->name('disbursements.store');
             });
 
             Route::middleware(['role:admin'])->group(function () {
+            Route::post('/bank-accounts', [DisbursementController::class, 'storeBankAccount'])->name('disbursements.bank-accounts.store');
             Route::post('/{disbursement}/approve', [DisbursementController::class, 'approve'])->name('disbursements.approve');
             Route::post('/{disbursement}/complete', [DisbursementController::class, 'complete'])->name('disbursements.complete');
             Route::post('/{disbursement}/fail', [DisbursementController::class, 'fail'])->name('disbursements.fail');
+            Route::delete('/{disbursement}', [DisbursementController::class, 'destroy'])->name('disbursements.destroy');
             });
         });
 

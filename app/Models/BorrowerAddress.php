@@ -10,6 +10,9 @@ class BorrowerAddress extends Model
     use HasFactory;
 
     protected $table = 'borrower_addresses';
+    protected $primaryKey = 'ID';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'borrower_id',
