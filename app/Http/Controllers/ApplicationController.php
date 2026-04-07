@@ -2,32 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DocumentType;
+use App\Models\LoanProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use App\Services\ApplicationService;
-use App\Services\LoanProductRuleResolver;
+use App\Services\RuleEvaluatorService;
+use Illuminate\Support\Facades\Log;
 
 class ApplicationController extends Controller
 {
     protected $service;
-    protected LoanProductRuleResolver $ruleResolver;
+    protected RuleEvaluatorService $ruleEvaluator;
 
-    public function __construct(ApplicationService $service, LoanProductRuleResolver $ruleResolver)
+    public function __construct(ApplicationService $service, RuleEvaluatorService $ruleEvaluator)
     {
         $this->service = $service;
-        $this->ruleResolver = $ruleResolver;
+        $this->ruleEvaluator = $ruleEvaluator;
     }
 
     public function confirm(Request $request)
     {
+        Log::info('CONFIRM METHOD CALLED', $request->all());
         $loanProductId = $request->integer('loan_product_id') ?: null;
         $loanType = $request->input('loan_type');
         $loanAmount = (float) $request->input('loan_amount', 0);
 
-        $loanRule = $this->ruleResolver->resolve($loanProductId, $loanType);
-        $requiresCollateral = $this->ruleResolver->requiresCollateral($loanRule, $loanAmount);
-        $requiresCoBorrower = $this->ruleResolver->requiresCoBorrower($loanRule);
+        $borrowerId = Auth::user()?->borrower?->ID;
+        $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+        Log::info('LOAN PRODUCT RESOLVED', ['product' => $loanProduct?->id ?? 'NULL']);
+
+        $ruleEvaluation = $loanProduct
+            ? $this->ruleEvaluator->evaluate($loanProduct, $borrowerId, [
+                'loan_amount' => $loanAmount,
+                'term' => $request->input('term'),
+                'monthly_income' => $request->input('monthly_income'),
+                // 'dti_ratio' => $request->input('dti_ratio'),
+            ])
+            : ['collateral' => false, 'coborrower' => false];
+
+        $requiresCollateral = (bool) ($ruleEvaluation['collateral'] ?? false);
+        $requiresCoBorrower = (bool) ($ruleEvaluation['coborrower'] ?? false);
         $hasCollateralPayload = $request->filled('collateral_type')
             || $request->hasFile('ownership_proof')
             || $request->hasFile('documents.collateral.0.file');
@@ -136,6 +153,59 @@ class ApplicationController extends Controller
 
         $validated = Validator::make($request->all(), $rules)->validate();
 
+        if ($requiresCollateral || $hasCollateralPayload) {
+            $collateralType = strtolower((string) $request->input('collateral_type'));
+            $requiredTypes = $this->requiredCollateralDocumentTypes($collateralType);
+
+            if ($requiredTypes->isNotEmpty()) {
+                $requiredTypeIds = $requiredTypes->pluck('id')->map(fn ($id) => (int) $id)->all();
+                $requiredCodesById = $requiredTypes->pluck('code', 'id');
+
+                $submittedRows = collect($request->input('documents.collateral', []));
+
+                $submittedTypeIds = $submittedRows
+                    ->pluck('document_type_id')
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->values();
+
+                $invalidTypeIds = $submittedTypeIds
+                    ->reject(fn ($id) => in_array($id, $requiredTypeIds, true))
+                    ->values()
+                    ->all();
+
+                if (! empty($invalidTypeIds)) {
+                    throw ValidationException::withMessages([
+                        'documents.collateral' => 'Selected collateral document type(s) are not valid for the chosen collateral type.',
+                    ]);
+                }
+
+                $submittedTypeIdsWithFiles = $submittedRows
+                    ->map(function ($row, $index) use ($request) {
+                        $documentTypeId = isset($row['document_type_id']) ? (int) $row['document_type_id'] : null;
+                        $hasFile = $request->hasFile("documents.collateral.{$index}.file");
+
+                        return $documentTypeId && $hasFile ? $documentTypeId : null;
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $missingCodes = collect($requiredTypeIds)
+                    ->reject(fn ($id) => in_array($id, $submittedTypeIdsWithFiles, true))
+                    ->map(fn ($id) => $requiredCodesById[$id] ?? null)
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (! empty($missingCodes)) {
+                    throw ValidationException::withMessages([
+                        'documents.collateral' => 'Missing required collateral document(s): '.implode(', ', $missingCodes),
+                    ]);
+                }
+            }
+        }
+
         $loan = $this->service->createFullApplication(
             $validated,
             [
@@ -148,5 +218,74 @@ class ApplicationController extends Controller
 
         return redirect()->route('customer.MyLoan')
                          ->with('success', 'Application submitted successfully.');
+    }
+
+    public function evaluateRules(Request $request)
+    {
+        $loanProductId = $request->integer('loan_product_id') ?: null;
+        $loanType = $request->input('loan_type');
+        $loanAmount = (float) $request->input('loan_amount', 0);
+        
+        $borrowerId = Auth::user()?->borrower?->ID;
+        $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+        
+        if (!$loanProduct) {
+            return response()->json([
+                'collateral' => false,
+                'coborrower' => false,
+            ]);
+        }
+        
+        $requirements = $this->ruleEvaluator->evaluate($loanProduct, $borrowerId, [
+            'loan_amount' => $loanAmount,
+            'term' => $request->input('term'),
+            'monthly_income' => $request->input('monthly_income'),
+            // 'dti_ratio' => $request->input('dti_ratio'),
+        ]);
+        Log::info('Term received', ['term' => $request->input('term'), 'type' => gettype($request->input('term'))]);
+
+        
+        return response()->json($requirements);
+    }
+
+
+    private function collateralCategoriesByType(string $collateralType): array
+    {
+        return match (strtolower($collateralType)) {
+            'vehicle' => ['collateral_vehicle', 'collateral_general'],
+            'land' => ['collateral_land', 'collateral_general'],
+            'atm' => ['collateral_general'],
+            default => [],
+        };
+    }
+
+    private function requiredCollateralDocumentTypes(string $collateralType)
+    {
+        $categories = $this->collateralCategoriesByType($collateralType);
+
+        if (empty($categories)) {
+            return collect();
+        }
+
+        return DocumentType::query()
+            ->whereIn('category', $categories)
+            ->where('is_active', true)
+            ->get(['id', 'code', 'category']);
+    }
+
+    private function resolveLoanProduct(?int $loanProductId, ?string $loanType): ?LoanProduct
+    {
+        if ($loanProductId) {
+            return LoanProduct::query()->with('rules')->find($loanProductId);
+        }
+
+        if (! empty($loanType)) {
+            return LoanProduct::query()
+                ->with('rules')
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($loanType))])
+                ->first();
+        }
+
+        return null;
     }
 }

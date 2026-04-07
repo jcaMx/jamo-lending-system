@@ -237,78 +237,97 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
               </ul>
             </div>
           )}
-
           {/* Application Summary */}
           <div className="border-2 border-golden rounded-lg p-6 space-y-6 bg-golden/5">
             <h3 className="text-xl font-bold mb-4">Application Summary</h3>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-semibold">Application ID</Label>
-                <div className="bg-white p-3 rounded border">
-                  {application?.id ?? "-"}
+            {/* Loan Details Section - Always shown */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-golden" />
+                Loan Details
+              </h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold">Loan Amount</Label>
+                  <div className="bg-white p-3 rounded border">
+                    ₱{formData?.loan_amount ?? application?.loan?.loan_amount ?? "-"}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Date</Label>
-                <div className="bg-white p-3 rounded border">
-                  {application?.created_at
-                    ? new Date(application.created_at).toLocaleDateString()
-                    : "-"}
+                <div>
+                  <Label className="text-sm font-semibold">Term</Label>
+                  <div className="bg-white p-3 rounded border">
+                    {formData?.term ?? application?.loan?.term ? `${formData?.term ?? application?.loan?.term} months` : "-"}
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-semibold">Borrower</Label>
-                <div className="bg-white p-3 rounded border">
-                  {formData?.borrower_first_name || application?.borrower
-                    ? `${formData?.borrower_first_name ?? application?.borrower?.first_name} ${formData?.borrower_last_name ?? application?.borrower?.last_name}`.trim()
-                    : "-"}
+                <div>
+                  <Label className="text-sm font-semibold">Loan Type</Label>
+                  <div className="bg-white p-3 rounded border">
+                    {formData?.loan_type ?? "-"}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Co-Borrower</Label>
-                <div className="bg-white p-3 rounded border">
-                  {formData?.coBorrowers?.[0]?.first_name
-                    ? `${formData.coBorrowers[0].first_name} ${formData.coBorrowers[0].last_name}`
-                    : application?.co_borrower?.full_name ?? "-"}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-semibold">Loan Amount</Label>
-                <div className="bg-white p-3 rounded border">
-                  {formData?.loan_amount ?? application?.loan?.loan_amount ?? "-"}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Term</Label>
-                <div className="bg-white p-3 rounded border">
-                  {formData?.term ?? application?.loan?.term ? `${formData?.term ?? application?.loan?.term} months` : "-"}
+                <div>
+                  <Label className="text-sm font-semibold">Interest Rate</Label>
+                  <div className="bg-white p-3 rounded border">
+                    {formData?.interest_rate ? `${formData.interest_rate}%` : "-"}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-semibold">Collateral</Label>
-                <div className="bg-white p-3 rounded border">
-                  {formData?.collateral_type ?? application?.collateral?.collateral_type ?? "-"}
+            {/* Co-Borrower Section - Only if exists */}
+            {((formData?.coBorrowers?.length ?? 0) > 0 || application?.co_borrower) && (
+              <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-semibold text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5 text-golden" />
+                  Co-Borrower
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold">Name</Label>
+                    <div className="bg-white p-3 rounded border">
+                      {formData?.coBorrowers?.[0]?.first_name
+                        ? `${formData.coBorrowers[0].first_name} ${formData.coBorrowers[0].last_name}`
+                        : application?.co_borrower?.full_name ?? "-"}
+                    </div>
+                  </div>
+                  {formData?.coBorrowers?.[0]?.mobile && (
+                    <div>
+                      <Label className="text-sm font-semibold">Contact</Label>
+                      <div className="bg-white p-3 rounded border">
+                        {formData.coBorrowers[0].mobile}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div>
-                <Label className="text-sm font-semibold">Monthly Installment</Label>
-                <div className="bg-white p-3 rounded border">
-                  {application?.loan?.loan_amount && application?.loan?.term
-                    ? (application.loan.loan_amount / application.loan.term).toFixed(2)
-                    : "-"}
+            )}
+
+            {/* Collateral Section - Only if exists */}
+            {(formData?.collateral_type || application?.collateral) && (
+              <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-semibold text-lg flex items-center gap-2">
+                  <Home className="w-5 h-5 text-golden" />
+                  Collateral
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold">Type</Label>
+                    <div className="bg-white p-3 rounded border capitalize">
+                      {formData?.collateral_type ?? application?.collateral?.collateral_type ?? "-"}
+                    </div>
+                  </div>
+                  {formData?.estimated_value && (
+                    <div>
+                      <Label className="text-sm font-semibold">Estimated Value</Label>
+                      <div className="bg-white p-3 rounded border">
+                        ₱{formData.estimated_value}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Navigation buttons */}

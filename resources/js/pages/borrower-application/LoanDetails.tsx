@@ -4,12 +4,15 @@ import { FormField } from "@/components/FormField";
 import type { LoanProductRule, SharedFormData } from "./sharedFormData";
 import { CreditCard } from "lucide-react";
 import StepIndicator from "./StepIndicator";
+import { Label } from '@/components/ui/required-label';
 
 interface LoanDetailsProps {
   onNext: () => void;
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  stepLabels?: string[];
+  stepIndex?: number;
 }
 
 interface LoanProductItem {
@@ -59,11 +62,32 @@ const normalizeLoanProduct = (value: unknown): LoanProductItem | null => {
         collateralThreshold === null || Number.isNaN(collateralThreshold)
           ? null
           : collateralThreshold,
+      dynamic_rules: Array.isArray(rulesRaw.dynamic_rules)
+        ? rulesRaw.dynamic_rules
+            .map((raw) => {
+              if (!raw || typeof raw !== "object") return null;
+              const row = raw as Record<string, unknown>;
+              const ruleType = String(row.rule_type ?? "");
+              if (ruleType !== "collateral" && ruleType !== "coborrower") {
+                return null;
+              }
+              return {
+                rule_type: ruleType as "collateral" | "coborrower",
+                condition_key: String(row.condition_key ?? ""),
+                operator: String(row.operator ?? ""),
+                condition_value:
+                  row.condition_value === null || row.condition_value === undefined || row.condition_value === ""
+                    ? null
+                    : Number(row.condition_value),
+              };
+            })
+            .filter((item): item is NonNullable<typeof item> => item !== null)
+        : [],
     },
   };
 };
 
-const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps) => {
+const LoanDetails = ({ onNext, onPrev, formData, setFormData, stepLabels, stepIndex }: LoanDetailsProps) => {
   const initial = formData ?? {};
   const { data, setData, errors } = useForm({
     loan_type: initial.loan_type ?? "",
@@ -77,6 +101,7 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
   const [loanProducts, setLoanProducts] = useState<LoanProductItem[]>([]);
   const [isLoadingLoanProducts, setIsLoadingLoanProducts] = useState(false);
   const [loanProductsError, setLoanProductsError] = useState<string>("");
+  const [stepError, setStepError] = useState<string>("");
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -178,13 +203,33 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
     }));
   };
 
+  const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
+  const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
+  const indicatorIndex = stepIndex ?? 1;
+
+  const isMissingLoanDetails = () => {
+    return (
+      !String(data.loan_type ?? "").trim() ||
+      !String(data.loan_amount ?? "").trim() ||
+      !String(data.interest_type ?? "").trim() ||
+      !String(data.interest_rate ?? "").trim() ||
+      !String(data.repayment_frequency ?? "").trim() ||
+      !String(data.term ?? "").trim()
+    );
+  };
+
   const handleSubmit = () => {
+    if (isMissingLoanDetails()) {
+      setStepError("Please complete all required loan details before proceeding.");
+      return;
+    }
+    setStepError("");
     onNext();
   };
 
   return (
-    <section title="Loan Details" className="w-full h-full flex flex-col m-3">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg space-y-6">
+    <section title="Loan Details" className="w-full h-full flex flex-col bg-[#F7F5F3]">
+      <div className="w-full max-w-full px-4 bg-[#F7F5F3] p-10 rounded-lg space-y-6 ">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <CreditCard className="w-6 h-6 text-golden" />
@@ -192,17 +237,15 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           </div>
         </div>
 
-        <StepIndicator
-          currentStep={1}
-          steps={[
-            "Loan Details",
-            "Co-Borrower",
-            "Collateral",
-            "Payment",
-          ]}
-        />
-
-        <FormField
+        <StepIndicator currentStep={indicatorIndex} steps={indicatorLabels} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          className="bg-white rounded-lg shadow-sm p-6 mx-40 md:p-8 space-y-6"
+        >
+          <FormField
           label="Loan Type"
           name="loan_type"
           type="select"
@@ -217,6 +260,9 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
         {loanProductsError && (
           <p className="text-sm text-red-600">{loanProductsError}</p>
         )}
+        {stepError && (
+          <p className="text-sm text-red-600">{stepError}</p>
+        )}
 
         <FormField
           label="Loan Amount (PHP)"
@@ -226,6 +272,16 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           required
           error={errors.loan_amount}
         />
+
+        <FormField
+          label="Monthly Income (PHP)"
+          name="monthly_income"
+          value={String(formData.monthly_income ?? "")}
+          onChange={() => {}}
+          placeholder="Auto-filled from borrower"
+          disabled
+        />
+
 
         <FormField
           label="Interest Type"
@@ -266,7 +322,7 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           onChange={(v) => setData("term", sanitize.number(v))}
           required
           error={errors.term}
-        />
+        />  
 
         <div className="flex justify-between mt-6">
           <button type="button" className="px-4 py-1 border border-gray-300 rounded-md hover:bg-gray-400" onClick={onPrev}>
@@ -276,6 +332,12 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
             Next
           </button>
         </div>
+
+
+        </form>
+        
+
+
       </div>
     </section>
   );

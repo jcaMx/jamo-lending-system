@@ -63,7 +63,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
   const renderStatus = (status: string) => {
     const normalizedStatus = status?.toLowerCase() ?? 'pending';
     const className =
-      normalizedStatus === 'confirmed'
+      normalizedStatus === 'verified'
         ? 'bg-green-100 text-green-700'
         : normalizedStatus === 'rejected'
           ? 'bg-red-100 text-red-700'
@@ -76,32 +76,23 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     );
   };
 
-  const submitConfirm = (paymentId: number) => {
+  const handleVerify = (paymentId: number) => {
+
     if (!confirmCollectedBy) {
       alert('Please select a collector.');
       return;
     }
+    if (!confirm('Mark this payment as verified?')) return;
 
-    if (!confirmCollectionDate) {
-      alert('Please select a collection date.');
-      return;
-    }
-
-    router.post(
-      `/repayments/${paymentId}/confirm`,
-      {
-        collectedBy: confirmCollectedBy,
-        collectionDate: confirmCollectionDate,
+    router.post(`/repayments/verify/${paymentId}`, {}, {
+      onSuccess: () => {
+        // router.reload({ only: ['repayments'] });
+        router.get('/repayments', {}, { preserveState: true, preserveScroll: true });
       },
-      {
-        preserveScroll: true,
-        onSuccess: () => {
-          setConfirmingId(null);
-          setConfirmRemarksDefaults();
-        },
-      }
-    );
+    });
   };
+
+
 
   const setConfirmRemarksDefaults = () => {
     setConfirmCollectedBy(collectors[0] ? String(collectors[0].id) : '');
@@ -126,13 +117,16 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     );
   };
 
+
+
+
   return (
     <AppLayout>
       <Head title="Repayments" />
       
       {/* Header & Search */}
       <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">Repayments</h1>
+        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">View Repayments</h1>
 
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -185,9 +179,9 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
               {activeTab !== 'pending' && (
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Loan No</th>
               )}
-              {activeTab !== 'pending' && (
+              {/* {activeTab !== 'pending' && (
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Schedules</th>
-              )}
+              )} */}
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Method</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Reference</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
@@ -214,11 +208,11 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                   <tr className="hover:bg-[#FFF8E6] transition-colors duration-150">
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.borrowerName}</td>
                     {activeTab !== 'pending' && <td className="px-4 py-3 text-sm text-gray-700">{r.loanNo}</td>}
-                    {activeTab !== 'pending' && (
+                    {/* {activeTab !== 'pending' && (
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {r.scheduleNos && r.scheduleNos.length ? r.scheduleNos.join(', ') : 'N/A'}
                       </td>
-                    )}
+                    )} */}
                     <td className="px-4 py-3 text-sm text-gray-700">{r.method}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{r.referenceNo ?? 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
@@ -240,7 +234,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                             }}
                             className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
                           >
-                            Confirm
+                            Verify
                           </button>
                           <button
                             type="button"
@@ -288,7 +282,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                           <div className="flex items-end gap-2">
                             <button
                               type="button"
-                              onClick={() => submitConfirm(r.id)}
+                              onClick={() => handleVerify(r.id)}
                               className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
                             >
                               Save Confirm

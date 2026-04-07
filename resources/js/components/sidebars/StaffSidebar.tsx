@@ -69,6 +69,8 @@ const mainNavItems: NavItem[] = [
     subItems: [
       { type: "link", title: "View Repayments", href: "/repayments" },
       { type: "link", title: "Add Repayment", href: "/repayments/add" },
+      { type: "link", title: "Pending Payments", href: "/repayments/pending"},
+
     ]
   },
 
@@ -103,6 +105,7 @@ const mainNavItems: NavItem[] = [
     subItems: [
       { type: "link", title: "View Users", href: "/users" },
       { type: "link", title: "Add User", href: "/users/add" },
+
     ]
   },
 ];

@@ -40,6 +40,8 @@ const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
 const inputClass =
   "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FABF24] focus:border-transparent";
 
+const ONLINE_METHODS = ["Bank", "GCash", "Cebuana"];
+
 export default function Add({ borrowers: initialBorrowers = [], collectors: initialCollectors = [] }: Props) {
   const today = new Date().toISOString().split('T')[0];
 
@@ -82,14 +84,17 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   }, [form.search, normalizedBorrowers]);
 
   const generateReferenceNumber = () => {
-    const prefix = form.method === 'Bank' ? 'MB' : form.method === 'Cebuana' ? 'CB' : form.method === 'GCash' ? 'GC' : '';
-    if (prefix) {
-      return `${prefix}-${Date.now().toString().slice(-8)}`;
-    }
-    return '';
+    const prefix =
+      form.method === "Metrobank"
+        ? "MB"
+        : form.method === "Cebuana"
+        ? "CB"
+        : form.method === "GCash"
+        ? "GC"
+        : "BN"; // default for other banks
+    return `${prefix}-${Date.now().toString().slice(-8)}`;
   };
 
-  // Handlers
   const update = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -98,154 +103,177 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     update("search", b.name);
 
     const nextDueSchedule = b.schedules
-      .filter(s => s.status !== "Paid")
+      .filter((s) => s.status !== "Paid")
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0] || null;
 
     if (nextDueSchedule) {
       update("selectedSchedules", [nextDueSchedule]);
       update("amount", nextDueSchedule.total_due.toFixed(2));
-      if (nextDueSchedule.due_date) {
-        update("collectionDate", nextDueSchedule.due_date);
-      }
+      if (nextDueSchedule.due_date) update("collectionDate", nextDueSchedule.due_date);
     } else {
       update("selectedSchedules", []);
       update("amount", "");
     }
   };
 
+  const computeTotalDue = (schedules: Schedule[]) =>
+    schedules.reduce((sum, s) => sum + (s.total_due || 0), 0);
+
+  const getSortedSchedules = (schedules: Schedule[]) =>
+    [...schedules].sort((a, b) => {
+      const aTime = a.due_date ? new Date(a.due_date).getTime() : Number.MAX_SAFE_INTEGER;
+      const bTime = b.due_date ? new Date(b.due_date).getTime() : Number.MAX_SAFE_INTEGER;
+      return aTime - bTime;
+    });
+
   const handleToggleSchedule = (schedule: Schedule) => {
+    if (schedule.status === "Paid") return;
+
     const exists = form.selectedSchedules.some((s) => s.ID === schedule.ID);
     const nextSelected = exists
       ? form.selectedSchedules.filter((s) => s.ID !== schedule.ID)
-      : [...form.selectedSchedules, schedule].sort(
-          (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-        );
+      : [...form.selectedSchedules, schedule];
 
-    update("selectedSchedules", nextSelected);
+    const sortedSelected = getSortedSchedules(nextSelected);
+    const nextAmount = computeTotalDue(sortedSelected);
 
-    const total = nextSelected.reduce((sum, s) => sum + (Number(s.total_due) || 0), 0);
-    update("amount", total > 0 ? total.toFixed(2) : "");
+    update("selectedSchedules", sortedSelected);
+    update("amount", nextAmount ? nextAmount.toFixed(2) : "");
 
-    if (!exists && schedule.due_date) {
-      update("collectionDate", schedule.due_date);
+    if (sortedSelected.length > 0 && sortedSelected[0].due_date) {
+      update("collectionDate", sortedSelected[0].due_date);
     }
   };
 
-  const handleMethodChange = (method: string) => {
-    const isCash = method === "Cash";
-    setForm((prev) => ({
-      ...prev,
-      method,
-      collectedBy: isCash ? (prev.collectedBy || (initialCollectors.length > 0 ? String(initialCollectors[0].id) : "")) : "",
-      collectionDate: isCash ? (prev.collectionDate || today) : "",
-      referenceNumber: "",
-      voucherNumber: "",
-      voucherDate: "",
-      chequeNumber: "",
-      bankName: "",
-      chequeDate: "",
-      ...(["Bank", "Cebuana", "GCash"].includes(method)
-        ? { referenceNumber: generateReferenceNumber() }
-        : {}),
-    }));
+ const handleMethodChange = (method: string) => {
+  let referenceNumber = "";
+  let voucherNumber = "";
+  let chequeNumber = "";
+
+  const generateCode = (prefix: string) => {
+    return `${prefix}-${Date.now().toString().slice(-8)}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // ONLINE PAYMENTS
+  if (["Bank", "GCash", "Cebuana"].includes(method)) {
+    referenceNumber = generateCode("REF");
+  }
 
-    const { selectedBorrower, selectedSchedules, collectedBy, amount, method, collectionDate } = form;
+  // CASH VOUCHER (NO REFERENCE ❗)
+  if (method === "Cash Voucher") {
+    voucherNumber = generateCode("CV");
+    referenceNumber = ""; // ✅ FIXED
+  }
 
-    if (!selectedBorrower) return alert("Please select a borrower.");
-    if (!selectedSchedules.length) return alert("Please select at least one schedule.");
-    if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
-    if (Number(amount) > 10_000_000) return alert("Amount cannot exceed 10,000,000.");
-    if (!method) return alert("Please select a payment method.");
-    if (isCashMethod && !collectedBy) return alert("Please select a collector.");
-    if (isCashMethod && !collectionDate) return alert("Please select a collection date.");
+  // CHEQUE VOUCHER
+  if (method === "Cheque Voucher") {
+    chequeNumber = generateCode("CHK");
+    referenceNumber = generateCode("REF");
+  }
 
-    // Basic client-side validation for voucher fields
-    if (method === "Cash Voucher" && !form.voucherNumber.trim()) {
+  setForm((prev) => ({
+    ...prev,
+    method,
+    referenceNumber,
+    voucherNumber,
+    chequeNumber,
+    voucherDate: "",
+    bankName: "",
+    chequeDate: "",
+  }));
+};
+
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const { selectedBorrower, collectedBy, amount, method, collectionDate } = form;
+
+  if (!selectedBorrower) return alert("Please select a borrower.");
+  if (!form.selectedSchedules || form.selectedSchedules.length === 0) {
+    return alert("Please select at least one schedule.");
+  }
+  if (!collectedBy) return alert("Please select a collector.");
+  if (!amount || Number(amount) <= 0) return alert("Please enter a valid amount.");
+  if (Number(amount) > 10_000_000) return alert("Amount cannot exceed 10,000,000.");
+  if (!method) return alert("Please select a payment method.");
+  if (!collectionDate) return alert("Please select a collection date.");
+
+  // ❌ REMOVE FAKE STATUS (backend controls it)
+
+  const payload: any = {
+    borrower_id: selectedBorrower.id,
+    loanNo: selectedBorrower.loanNo,
+    schedule_ids: form.selectedSchedules.map((s) => s.ID),
+    schedule_id: form.selectedSchedules[0]?.ID || null,
+    amount,
+    method,
+    collectedBy,
+    collectionDate,
+    reference_number: form.referenceNumber?.trim() || null, // ✅ FIXED
+  };
+
+  if (method === "Cash Voucher") {
+    if (!form.voucherNumber.trim()) {
       return alert("Voucher Number is required for Cash Voucher payments.");
     }
-    if (method === "Cheque Voucher") {
-      if (!form.chequeNumber.trim()) return alert("Cheque Number is required.");
-      if (!form.bankName.trim()) return alert("Bank Name is required.");
-      if (!form.chequeDate) return alert("Cheque Date is required.");
-    }
-    if (["Bank", "GCash", "Cebuana"].includes(method) && !form.referenceNumber.trim()) {
-      return alert("Reference Number is required for this payment method.");
-    }
+    payload.voucher_number = form.voucherNumber.trim();
+    payload.voucher_date = form.voucherDate || null;
+  }
 
-    const payload: any = {
-      borrower_id: selectedBorrower.id,
-      loanNo: selectedBorrower.loanNo,
-      schedule_ids: selectedSchedules.map((s) => s.ID),
-      amount,
-      method,
-    };
+  if (method === "Cheque Voucher") {
+    if (!form.chequeNumber.trim()) return alert("Cheque Number is required.");
+    if (!form.bankName.trim()) return alert("Bank Name is required.");
+    if (!form.chequeDate) return alert("Cheque Date is required.");
 
-    if (isCashMethod) {
-      payload.collectedBy = collectedBy;
-      payload.collectionDate = collectionDate;
-    }
+    payload.cheque_number = form.chequeNumber.trim();
+    payload.bank_name = form.bankName.trim();
+    payload.cheque_date = form.chequeDate;
+  }
 
-    // Add method-specific fields
-    if (method === "Cash Voucher") {
-      payload.voucher_number = form.voucherNumber.trim();
-      payload.voucher_date = form.voucherDate || null;
-    } else if (method === "Cheque Voucher") {
-      payload.cheque_number = form.chequeNumber.trim();
-      payload.bank_name = form.bankName.trim();
-      payload.cheque_date = form.chequeDate;
-    } else if (["Bank", "GCash", "Cebuana"].includes(method)) {
-      payload.reference_number = form.referenceNumber.trim() || null;
-    }
+  router.post("/repayments/store", payload, {
+    onSuccess: () => {
+      // ✅ ONLY pending methods redirect
+      if (ONLINE_METHODS.includes(method) || method === "Cheque Voucher") {
+        router.visit(`/repayments/pending?ref=${form.referenceNumber}`);
+      } else {
+        setSuccessMessage("Payment verified successfully!");
+      }
 
-    router.post("/repayments/store", payload, {
-      onSuccess: () => {
-        setSuccessMessage("Payment submitted successfully!");
-
-        if (form.referenceNumber && ["Bank", "GCash", "Cebuana"].includes(method)) {
-          setSubmittedRefs((prev) => [...prev, form.referenceNumber]);
-        }
-
-        setForm({
-          search: "",
-          selectedBorrower: null,
-          selectedSchedules: [],
-          amount: "",
-          method: "",
-          collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
-          collectionDate: today,
-          referenceNumber: "",
-          voucherNumber: "",
-          voucherDate: "",
-          chequeNumber: "",
-          bankName: "",
-          chequeDate: "",
-        });
-      },
-      onError: (errors) => {
-        const errorMessages = Object.values(errors).flat();
-        setErrorMessage(errorMessages.join(", ") || "Failed to process payment.");
-      },
-    });
-  };
+      setForm({
+        search: "",
+        selectedBorrower: null,
+        selectedSchedules: [],
+        amount: "",
+        method: "",
+        collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
+        collectionDate: today,
+        referenceNumber: "",
+        voucherNumber: "",
+        voucherDate: "",
+        chequeNumber: "",
+        bankName: "",
+        chequeDate: "",
+      });
+    },
+    onError: (errors) => {
+      const errorMessages = Object.values(errors).flat();
+      setErrorMessage(errorMessages.join(", ") || "Failed to process payment.");
+    },
+  });
+};
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Add Repayment" />
-
       <div className="w-full mx-auto bg-white shadow-lg rounded-2xl p-10 mb-16 border border-gray-100">
         <form onSubmit={handleSubmit} className="space-y-10">
-
+          {/* Repayment Section */}
           <section>
             <div className="border-b-4 border-[#FABF24] rounded-t-lg pb-3 mb-6 bg-[#FFF8E2] p-5">
               <h2 className="text-2xl font-semibold text-gray-800">Repayment</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-
               {/* Borrower Search */}
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Borrower</label>
@@ -259,7 +287,6 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                   />
                   <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-500" />
                 </div>
-
                 {form.search.length > 0 && (
                   <div className="border rounded-lg mt-2 bg-white shadow max-h-32 overflow-y-auto">
                     {filteredBorrowers.length > 0 ? (
@@ -290,7 +317,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 />
               </div>
 
-              {/* Amortization Schedule Table */}
+              {/* Schedules Table */}
               {form.selectedBorrower && form.selectedBorrower.schedules?.length > 0 && (
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1">Amortization Schedule</label>
@@ -319,9 +346,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                               }`}
                             >
                               <td className="px-4 py-3">{schedule.installment_no}</td>
-                              <td className="px-4 py-3">
-                                {schedule.due_date ? new Date(schedule.due_date).toLocaleDateString() : 'N/A'}
-                              </td>
+                              <td className="px-4 py-3">{schedule.due_date ? new Date(schedule.due_date).toLocaleDateString() : 'N/A'}</td>
                               <td className="px-4 py-3">₱{schedule.installment_amount.toLocaleString()}</td>
                               <td className="px-4 py-3">₱{schedule.interest_amount.toLocaleString()}</td>
                               <td className="px-4 py-3">₱{schedule.penalty_amount.toLocaleString()}</td>
@@ -364,16 +389,6 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 </div>
               )}
 
-              {form.selectedBorrower && (!form.selectedBorrower.schedules || form.selectedBorrower.schedules.length === 0) && (
-                <div className="col-span-2">
-                  <div className="border rounded-lg p-4 bg-yellow-50">
-                    <p className="text-sm text-yellow-800">
-                      No amortization schedules found for this borrower's active loan.
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Amount */}
               <div>
                 <label className="block text-sm font-medium mb-1">Amount</label>
@@ -410,90 +425,72 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
                 </select>
               </div>
 
-              {/* ─── Conditional Fields ──────────────────────────────────────── */}
+              {/* Conditional Fields */}
+              {form.method === "Cash Voucher" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Voucher Number *</label>
+                    <input
+                      type="text"
+                      value={form.voucherNumber}
+                      onChange={(e) => update("voucherNumber", e.target.value)}
+                      placeholder="e.g. CV-2025-00421"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Issued / Valid Until</label>
+                    <input
+                      type="date"
+                      value={form.voucherDate}
+                      onChange={(e) => update("voucherDate", e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </>
+              )}
 
-             {form.method === "Cash Voucher" && (
-  <>
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        Voucher Number <span className="text-red-600">*</span>
-      </label>
-      <input
-        type="text"
-        value={form.voucherNumber}
-        onChange={(e) => update("voucherNumber", e.target.value)}
-        placeholder="e.g. CV-2025-00421"
-        className={inputClass}
-        required
-      />
-    </div>
-    <div>
-      <label className="block text-sm font-medium mb-1">Issued / Valid Until</label>
-      <input
-        type="date"
-        value={form.voucherDate}
-        onChange={(e) => update("voucherDate", e.target.value)}
-        className={inputClass}
-      />
-    </div>
-  </>
-)}
               {form.method === "Cheque Voucher" && (
-  <>
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        Cheque Number <span className="text-red-600">*</span>
-      </label>
-      <input
-        type="text"
-        value={form.chequeNumber}
-        onChange={(e) => update("chequeNumber", e.target.value)}
-        placeholder="e.g. 012345"
-        className={inputClass}
-        required
-      />
-    </div>
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        Bank Name <span className="text-red-600">*</span>
-      </label>
-      <input
-        type="text"
-        value={form.bankName}
-        onChange={(e) => update("bankName", e.target.value)}
-        placeholder="e.g. BDO, Metrobank, BPI"
-        className={inputClass}
-        required
-      />
-    </div>
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        Cheque Date <span className="text-red-600">*</span>
-      </label>
-      <input
-        type="date"
-        value={form.chequeDate}
-        onChange={(e) => update("chequeDate", e.target.value)}
-        className={inputClass}
-        required
-      />
-    </div>
-  </>
-)}
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Cheque Number *</label>
+                    <input
+  type="text"
+  value={form.chequeNumber}
+  readOnly
+  className={inputClass + " bg-gray-100"}
+/>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Bank Name *</label>
+                    <input
+                      type="text"
+                      value={form.bankName}
+                      onChange={(e) => update("bankName", e.target.value)}
+                      placeholder="e.g. BDO, Metrobank, BPI"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Cheque Date *</label>
+                    <input
+                      type="date"
+                      value={form.chequeDate}
+                      onChange={(e) => update("chequeDate", e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </>
+              )}
 
-              {/* Reference Number – for electronic/third-party methods */}
-              {["Bank", "GCash", "Cebuana"].includes(form.method) && (
+              {ONLINE_METHODS.includes(form.method) && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Reference Number <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    value={form.referenceNumber}
-                    onChange={(e) => update("referenceNumber", e.target.value)}
-                    placeholder="Transaction ref / OR number / Confirmation code"
-                    className={inputClass}
-                    required
-                  />
+                  <label className="block text-sm font-medium mb-1">Reference Number</label>
+                 <input
+  value={form.referenceNumber}
+  readOnly
+  className={inputClass + " bg-gray-100"}
+/>
                 </div>
               )}
 
@@ -533,14 +530,15 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
             </div>
           </section>
 
+          {/* Messages */}
           {successMessage && (
             <div className="bg-green-100 text-green-800 p-3 rounded-md">{successMessage}</div>
           )}
-
           {errorMessage && (
             <div className="bg-red-100 text-red-800 p-3 rounded-md">{errorMessage}</div>
           )}
 
+          {/* Submit Button */}
           <div className="flex justify-end">
             <button
               type="submit"

@@ -7,9 +7,20 @@ type FileType = {
   file_path: string;
   uploaded_at: string;
   description?: string;
+  source?: string;
+};
+
+const toStorageUrl = (filePath?: string) => {
+  if (!filePath) return '#';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
+  return `/storage/${filePath.replace(/^\/+/, '').replace(/^public\//, '')}`;
 };
 
 export default function LoanFilesTab({ files }: { files: FileType[] }) {
+  if (!files || files.length === 0) {
+    return <p className="p-4 text-sm text-gray-500">No files uploaded.</p>;
+  }
+
   return (
     <div className="p-4 bg-gray-50 text-gray-700 rounded-lg">
       <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -28,8 +39,21 @@ export default function LoanFilesTab({ files }: { files: FileType[] }) {
 
             {/* File info */}
             <div className="flex flex-col overflow-hidden">
-              <span className="font-medium truncate">{file.file_name}</span>
-              <span className="text-xs text-gray-400 truncate">{file.uploaded_at.split('T')[0]}</span>
+              <a
+                href={toStorageUrl(file.file_path)}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium truncate text-blue-600 hover:underline"
+              >
+                {file.file_name || 'View file'}
+              </a>
+              <span className="text-xs text-gray-400 truncate">
+                {file.uploaded_at ? file.uploaded_at.split('T')[0] : 'Unknown date'}
+                {file.source ? ` · ${file.source}` : ''}
+              </span>
+              {file.description && (
+                <span className="text-xs text-gray-500 truncate">{file.description}</span>
+              )}
             </div>
           </li>
         ))}

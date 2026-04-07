@@ -1,74 +1,17 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { type BreadcrumbItem } from '@/types';
-import { store } from '@/actions/App/Http/Controllers/LoanController';
+import AddLoanPage from "./AddLoan/AddLoan";
+import type { BorrowerDocumentTypeOption } from "@/pages/borrowers/components/RenderDocumentUploader";
 
-// Constants
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Loans', href: '/loans' },
-  { title: 'Add Loan', href: '/loans/add' },
-];
-
-const steps = ['Borrower', 'Loan Details', 'Collateral', 'Co-Borrowers', 'Review & Submit'];
-
-// Types
-interface FormFieldProps {
-  label: string;
-  name: string;
-  type?: string;
-  value?: any;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  options?: { value: string; label: string }[];
-  list?: string;
-  children?: React.ReactNode;
-  required?: boolean;
-}
-
-// Reusable Components
-const FieldError = ({ field, errors }: { field: string; errors: any }) =>
-  errors[field] ? <p className="text-red-500 text-sm mt-1">{errors[field]}</p> : null;
-
-const FormField = ({ label, name, type = 'text', value, onChange, options, list, children, required = false }: FormFieldProps) => (
-  <div>
-    <label className="block text-sm font-medium mb-1 text-gray-700">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-    {type === 'select' && options ? (
-      <select name={name} value={value ?? ''} onChange={onChange} required={required} className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2">
-        <option value="">Select {label}</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    ) : children ? (
-      children
-    ) : (
-      <input type={type} name={name} value={value ?? ''} onChange={onChange} required={required} className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2" {...(list ? { list } : {})} />
-    )}
-  </div>
-);
-
-const SectionContainer = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-    <h2 className="text-xl font-semibold text-gray-700 mb-4">{title}</h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
-  </div>
-);
-
-type Borrower = {
+interface Borrower {
   id: number;
   name: string;
   coBorrowers: CoBorrowerForm[];
 };
+  has_active_or_pending_loan?: boolean;
+  has_active_loan?: boolean;
+  loan_status?: string;
+}
 
-type Props = {
+interface AddLoanProps {
   borrowers?: Borrower[];
 };
 
@@ -868,44 +811,11 @@ export default function AddLoan({ borrowers: initialBorrowers = [] }: Props) {
             </ul>
           </div>
         )}
-
-        <div className="border-b-4 border-[#FABF24] bg-[#FFF8E2] pb-4 mb-8 p-5">
-          <h1 className="text-3xl font-semibold text-gray-800">Add Loan</h1>
-          <p className="text-gray-500 text-sm">
-            Step {activeStep + 1} of {steps.length}
-          </p>
-          <p className="text-gray-600 text-sm mt-2">
-            <span className="text-red-500">*</span> indicates required fields
-          </p>
-        </div>
-        {renderStep()}
-        <div className="flex justify-between mt-6">
-          <div>
-            {activeStep > 0 && (
-              <Button type="button" className="bg-yellow-500 hover:bg-yellow-600 text-black" onClick={prevStep}>
-                Previous
-              </Button>
-            )}
-          </div>
-          <div>
-            {activeStep < steps.length - 1 && (
-              <Button 
-                type="button" 
-                className="bg-yellow-500 text-black hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed" 
-                onClick={nextStep}
-                disabled={!isStepValid(activeStep)}
-              >
-                Next
-              </Button>
-            )}
-            {activeStep === steps.length - 1 && (
-              <Button type="submit" disabled={processing} className="bg-yellow-500 text-black hover:bg-yellow-600">
-                {processing ? 'Submitting...' : 'Submit Loan'}
-              </Button>
-            )}
-          </div>
-        </div>
-      </form>
-    </AppLayout>
-  );
+  documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
 }
+
+export default function AddLoan(props: AddLoanProps) {
+  return <AddLoanPage {...props} />;
+}
+
+// AYAW TAROGI ni nga file - wrapper ra ni

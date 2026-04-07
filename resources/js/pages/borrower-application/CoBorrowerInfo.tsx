@@ -26,6 +26,9 @@ interface CoBorrowerInfoProps {
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  stepLabels?: string[];
+  stepIndex?: number;
+  required?: boolean;
 
 }
 
@@ -48,7 +51,15 @@ const sanitize = {
   trim: (v: string) => v.trim(),
 };
 
-const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInfoProps) => {
+const CoBorrowerInfo = ({
+  onNext,
+  onPrev,
+  formData,
+  setFormData,
+  stepLabels,
+  stepIndex,
+  required = false,
+}: CoBorrowerInfoProps) => {
   const initial =
     formData?.coBorrowers && formData.coBorrowers.length > 0
       ? formData.coBorrowers
@@ -56,6 +67,11 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
   const { data, setData } = useForm({
     coBorrowers: initial,
   });
+  const [stepError, setStepError] = React.useState("");
+
+  const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
+  const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
+  const indicatorIndex = stepIndex ?? 2;
 
   const handleChange = (index: number, field: keyof CoBorrower, value: string) => {
     const updated = [...data.coBorrowers];
@@ -84,7 +100,42 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
     setFormData((prev) => ({ ...prev, coBorrowers: updated }));
   };
 
+  const isCoBorrowerEmpty = (co: CoBorrower) =>
+    Object.values(co).every((value) => !String(value ?? "").trim());
+
+  const hasMissingRequired = (co: CoBorrower) => {
+    const requiredFields: Array<keyof CoBorrower> = [
+      "first_name",
+      "last_name",
+      "birth_date",
+      "marital_status",
+      "mobile",
+      "dependents",
+      "address",
+      "occupation",
+    ];
+
+    return requiredFields.some((field) => !String(co[field] ?? "").trim());
+  };
+
   const submit = () => {
+    const nonEmptyBorrowers = data.coBorrowers.filter((co) => !isCoBorrowerEmpty(co));
+    if (nonEmptyBorrowers.length === 0) {
+      if (required) {
+        setStepError("At least one co-borrower is required for this loan product.");
+        return;
+      }
+      setStepError("");
+      onNext();
+      return;
+    }
+
+    if (nonEmptyBorrowers.some(hasMissingRequired)) {
+      setStepError("Please complete all required co-borrower fields or remove the entry.");
+      return;
+    }
+
+    setStepError("");
     onNext();
   };
 
@@ -100,15 +151,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
           </div>
         </div>
 
-        <StepIndicator
-          currentStep={2}
-          steps={[
-            "Loan Details",
-            "Co-Borrower",
-            "Collateral",
-            "Payment",
-          ]}
-        />
+        <StepIndicator currentStep={indicatorIndex} steps={indicatorLabels} />
 
         <form
           onSubmit={(e) => {
@@ -117,7 +160,9 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
           }}
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
-          <SectionHeader title="Co-Borrowers" />
+          {stepError && (
+            <p className="text-sm text-red-600">{stepError}</p>
+          )}
 
           {data.coBorrowers.map((co, i) => (
             <div key={i} className="relative border p-4 rounded-lg space-y-4">
@@ -155,6 +200,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 type="date"
                 value={co.birth_date}
                 onChange={(v) => handleChange(i, "birth_date", v)}
+                required
               />
 
               <FormField
@@ -164,6 +210,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 value={co.marital_status}
                 onChange={(v) => handleChange(i, "marital_status", v)}
                 options={maritalStatusOptions}
+                required
               />
 
               <FormField
@@ -172,6 +219,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 value={co.mobile}
                 onChange={(v) => handleChange(i, "mobile", v)}
                 maxLength={11}
+                required
               />
 
               <FormField
@@ -180,6 +228,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 type="number"
                 value={co.dependents}
                 onChange={(v) => handleChange(i, "dependents", v)}
+                required
               />
 
               <FormField
@@ -187,15 +236,16 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 name="address"
                 value={co.address}
                 onChange={(v) => handleChange(i, "address", v)}
+                required
               />
 
               <FormField
                 label="Occupation"
                 name="occupation"
-                type="select"
+                type="input"
                 value={co.occupation}
                 onChange={(v) => handleChange(i, "occupation", v)}
-                options={occupationOptions}
+                required
               />
 
               <FormField
@@ -203,6 +253,7 @@ const CoBorrowerInfo = ({ onNext, onPrev, formData, setFormData }: CoBorrowerInf
                 name="position"
                 value={co.position}
                 onChange={(v) => handleChange(i, "position", v)}
+                
               />
 
               <FormField
