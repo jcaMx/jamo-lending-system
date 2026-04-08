@@ -34,6 +34,24 @@ const toStorageUrl = (filePath?: string) => {
   return `/storage/${filePath.replace(/^\/+/, '').replace(/^public\//, '')}`;
 };
 
+const formatCurrency = (value?: number | string | null) => {
+  if (value === null || value === undefined || value === '') return 'N/A';
+
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  if (Number.isNaN(numericValue)) return 'N/A';
+
+  return `PHP ${numericValue.toLocaleString()}`;
+};
+
+const formatDateValue = (value?: string | null) => {
+  if (!value) return 'N/A';
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleDateString();
+};
+
+const getFormError = (errors: Record<string, string | undefined>, key: string) => errors[key];
+
 const FilesList = ({ files }: { files: FileItem[] }) => {
   if (!files.length) {
     return <p className="text-sm text-gray-500">No files uploaded.</p>;
@@ -75,8 +93,8 @@ interface LoanDetailsProps {
     end_date?: string;
     status: string;
     balance_remaining: number;
-    released_amount?: number;
-    released_date?: string;
+    released_amount?: number | string | null;
+    released_date?: string | null;
     borrower: {
       ID: number;
       first_name: string;
@@ -205,6 +223,8 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
     cardno_4digits: loan.collateral?.atmDetails?.cardno_4digits?.toString() || '',
     files: [] as File[],
   });
+  const borrowerErrorBag = borrowerForm.errors as Record<string, string | undefined>;
+  const collateralErrorBag = collateralForm.errors as Record<string, string | undefined>;
 
   const resetBorrowerForm = () => {
     borrowerForm.setData({
@@ -534,7 +554,7 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
             </div>
             <div>
               <p className="text-sm text-gray-600">Principal Amount</p>
-              <p className="font-medium">₱{loan.principal_amount.toLocaleString()}</p>
+              <p className="font-medium">{formatCurrency(loan.principal_amount)}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Interest Rate</p>
@@ -558,30 +578,30 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
             </div>
             <div>
               <p className="text-sm text-gray-600">Balance Remaining</p>
-              <p className="font-medium">₱{loan.balance_remaining.toLocaleString()}</p>
+              <p className="font-medium">{formatCurrency(loan.balance_remaining)}</p>
             </div>
-            {loan.released_amount && (
+            {loan.released_amount !== null && loan.released_amount !== undefined && loan.released_amount !== '' && (
               <div>
                 <p className="text-sm text-gray-600">Released Amount</p>
-                <p className="font-medium">₱{loan.released_amount.toLocaleString()}</p>
+                <p className="font-medium">{formatCurrency(loan.released_amount)}</p>
               </div>
             )}
             {loan.released_date && (
               <div>
                 <p className="text-sm text-gray-600">Released Date</p>
-                <p className="font-medium">{new Date(loan.released_date).toLocaleDateString()}</p>
+                <p className="font-medium">{formatDateValue(loan.released_date)}</p>
               </div>
             )}
             {loan.start_date && (
               <div>
                 <p className="text-sm text-gray-600">Start Date</p>
-                <p className="font-medium">{new Date(loan.start_date).toLocaleDateString()}</p>
+                <p className="font-medium">{formatDateValue(loan.start_date)}</p>
               </div>
             )}
             {loan.end_date && (
               <div>
                 <p className="text-sm text-gray-600">End Date</p>
-                <p className="font-medium">{new Date(loan.end_date).toLocaleDateString()}</p>
+                <p className="font-medium">{formatDateValue(loan.end_date)}</p>
               </div>
             )}
           </div>
@@ -832,9 +852,9 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                     Borrower information saved successfully.
                   </div>
                 )}
-                {borrowerForm.errors.error && (
+                {getFormError(borrowerErrorBag, 'error') && (
                   <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {borrowerForm.errors.error}
+                    {getFormError(borrowerErrorBag, 'error')}
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -919,9 +939,9 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                     Collateral information saved successfully.
                   </div>
                 )}
-                {collateralForm.errors.error && (
+                {getFormError(collateralErrorBag, 'error') && (
                   <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {collateralForm.errors.error}
+                    {getFormError(collateralErrorBag, 'error')}
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -946,17 +966,17 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Title Number</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.titleNo} onChange={(e) => collateralForm.setData('titleNo', e.target.value)} />
-                        {collateralForm.errors['land_details.titleNo'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['land_details.titleNo']}</p>}
+                        {getFormError(collateralErrorBag, 'land_details.titleNo') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'land_details.titleNo')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Location</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.location} onChange={(e) => collateralForm.setData('location', e.target.value)} />
-                        {collateralForm.errors['land_details.location'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['land_details.location']}</p>}
+                        {getFormError(collateralErrorBag, 'land_details.location') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'land_details.location')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Area Size</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.areaSize} onChange={(e) => collateralForm.setData('areaSize', e.target.value)} />
-                        {collateralForm.errors['land_details.areaSize'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['land_details.areaSize']}</p>}
+                        {getFormError(collateralErrorBag, 'land_details.areaSize') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'land_details.areaSize')}</p>}
                       </div>
                     </>
                   )}
@@ -966,42 +986,42 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Vehicle Type</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.vehicle_type} onChange={(e) => collateralForm.setData('vehicle_type', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.type'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.type']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.type') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.type')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Brand</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.brand} onChange={(e) => collateralForm.setData('brand', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.brand'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.brand']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.brand') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.brand')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Model</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.model} onChange={(e) => collateralForm.setData('model', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.model'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.model']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.model') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.model')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Year Model</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.year_model} onChange={(e) => collateralForm.setData('year_model', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.year_model'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.year_model']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.year_model') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.year_model')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Plate Number</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.plate_no} onChange={(e) => collateralForm.setData('plate_no', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.plate_no'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.plate_no']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.plate_no') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.plate_no')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Engine Number</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.engine_no} onChange={(e) => collateralForm.setData('engine_no', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.engine_no'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.engine_no']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.engine_no') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.engine_no')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Transmission Type</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.transmission_type} onChange={(e) => collateralForm.setData('transmission_type', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.transmission_type'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.transmission_type']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.transmission_type') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.transmission_type')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Fuel Type</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.fuel_type} onChange={(e) => collateralForm.setData('fuel_type', e.target.value)} />
-                        {collateralForm.errors['vehicle_details.fuel_type'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['vehicle_details.fuel_type']}</p>}
+                        {getFormError(collateralErrorBag, 'vehicle_details.fuel_type') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.fuel_type')}</p>}
                       </div>
                     </>
                   )}
@@ -1011,17 +1031,17 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Bank Name</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.bank_name} onChange={(e) => collateralForm.setData('bank_name', e.target.value)} />
-                        {collateralForm.errors['atm_details.bank_name'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['atm_details.bank_name']}</p>}
+                        {getFormError(collateralErrorBag, 'atm_details.bank_name') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'atm_details.bank_name')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Account Number</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.account_no} onChange={(e) => collateralForm.setData('account_no', e.target.value)} />
-                        {collateralForm.errors['atm_details.account_no'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['atm_details.account_no']}</p>}
+                        {getFormError(collateralErrorBag, 'atm_details.account_no') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'atm_details.account_no')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Card Last 4 Digits</label>
                         <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.cardno_4digits} onChange={(e) => collateralForm.setData('cardno_4digits', e.target.value)} />
-                        {collateralForm.errors['atm_details.cardno_4digits'] && <p className="mt-1 text-xs text-red-600">{collateralForm.errors['atm_details.cardno_4digits']}</p>}
+                        {getFormError(collateralErrorBag, 'atm_details.cardno_4digits') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'atm_details.cardno_4digits')}</p>}
                       </div>
                     </>
                   )}
