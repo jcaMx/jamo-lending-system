@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
+
 class LoanController extends Controller
 {
     protected LoanService $loanService;
@@ -44,40 +45,45 @@ class LoanController extends Controller
 
     public function add()
     {
-        $borrowers = Borrower::with('coBorrowers')
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->get()
-            ->map(function ($b) {
-            return [
-                'id' => $b->ID,
-                'name' => $b->first_name.' '.$b->last_name,
-                'coBorrowers' => $b->coBorrowers->map(function ($coBorrower) {
-                    return [
-                        'first_name' => $coBorrower->first_name ?? '',
-                        'last_name' => $coBorrower->last_name ?? '',
-                        'address' => $coBorrower->address ?? '',
-                        'email' => $coBorrower->email ?? '',
-                        'contact' => $coBorrower->contact_no ?? '',
-                        'birth_date' => $coBorrower->birth_date ? \Carbon\Carbon::parse($coBorrower->birth_date)->toDateString() : '',
-                        'marital_status' => $coBorrower->marital_status ?? '',
-                        'occupation' => $coBorrower->occupation ?? '',
-                        'net_pay' => '',
-                    ];
-                })->values()->all(),
+        // Get blocked borrower IDs first
         $blockedBorrowerIds = Loan::whereRaw('LOWER(status) IN (?, ?)', ['pending', 'active'])
             ->pluck('borrower_id')
             ->flip();
 
-        $borrowers = Borrower::orderBy('last_name')->orderBy('first_name')->get()->map(function ($b) use ($blockedBorrowerIds) {
-            return [
-                'id' => $b->ID,
-                'name' => $b->first_name.' '.$b->last_name,
-                'has_active_or_pending_loan' => $blockedBorrowerIds->has((int) $b->ID),
-            ];
-        });
+        $borrowers = Borrower::with('coBorrowers')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(function ($b) use ($blockedBorrowerIds) {
+                return [
+                    'id' => $b->ID,
+                    'name' => $b->first_name . ' ' . $b->last_name,
+
+                    // ✅ retain blocked borrower logic
+                    'has_active_or_pending_loan' => $blockedBorrowerIds->has((int) $b->ID),
+
+                    // ✅ retain coBorrowers
+                    'coBorrowers' => $b->coBorrowers->map(function ($coBorrower) {
+                        return [
+                            'first_name' => $coBorrower->first_name ?? '',
+                            'last_name' => $coBorrower->last_name ?? '',
+                            'address' => $coBorrower->address ?? '',
+                            'email' => $coBorrower->email ?? '',
+                            'contact' => $coBorrower->contact_no ?? '',
+                            'birth_date' => $coBorrower->birth_date 
+                                ? \Carbon\Carbon::parse($coBorrower->birth_date)->toDateString() 
+                                : '',
+                            'marital_status' => $coBorrower->marital_status ?? '',
+                            'occupation' => $coBorrower->occupation ?? '',
+                            'net_pay' => '',
+                        ];
+                    })->values()->all(),
+                ];
+            })
+            ->values();
 
         $categories = ['collateral_vehicle', 'collateral_land', 'collateral_general'];
+
         $documentTypesByCategory = DocumentType::query()
             ->whereIn('category', $categories)
             ->where('is_active', true)
@@ -409,7 +415,9 @@ class LoanController extends Controller
 
     public function destroy(Loan $loan)
     {
-        if (! auth()->user()?->hasRole('admin')) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (! $user?->hasRole('admin')) {
             abort(403, 'Only admin can delete loans.');
         }
 

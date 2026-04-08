@@ -144,7 +144,6 @@ export default function EditUser({ user }: EditProps) {
                 <option value="">Select Role</option>
                 <option value="Admin">Admin</option>
                 <option value="Cashier">Cashier</option>
-                <option value="Manager">Manager</option>
               </select>
             </div>
           </section>

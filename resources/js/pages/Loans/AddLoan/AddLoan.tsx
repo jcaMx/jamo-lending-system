@@ -313,7 +313,9 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
             Accept: "application/json",
             "Content-Type": "application/json",
             "X-CSRF-TOKEN": getCsrfToken(),
+            "X-Requested-With": "XMLHttpRequest",
           },
+          credentials: "same-origin",
           signal: controller.signal,
           body: JSON.stringify({
             borrower_id: formData.borrower_id || null,
@@ -477,6 +479,9 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
             if (processing) return;
             setProcessing(true);
 
+            console.log("[AddLoan] Submit clicked");
+            console.log("[AddLoan] Form data snapshot", formData);
+
             const payload = new FormData();
             const appendIfPresent = (key: string, value: unknown) => {
               if (value === undefined || value === null || value === "") return;
@@ -554,14 +559,22 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
               });
             }
 
+            console.log("[AddLoan] Posting to", store.url());
+            console.log("[AddLoan] Payload keys", Array.from(payload.keys()));
+
             router.post(store.url(), payload, {
               forceFormData: true,
               preserveScroll: true,
               onFinish: () => setProcessing(false),
-              onError: () => setProcessing(false),
+              onError: (errors) => {
+                console.error("[AddLoan] Submit errors", errors);
+                setProcessing(false);
+              },
               onSuccess: (page) => {
+                console.log("[AddLoan] Submit success", page);
                 const loanId = toNumber((page as any).props?.loanId);
                 if (!loanId) {
+                  console.warn("[AddLoan] No loanId in response props");
                   return;
                 }
 

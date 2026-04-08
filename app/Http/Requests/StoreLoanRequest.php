@@ -30,6 +30,7 @@ class StoreLoanRequest extends FormRequest
             ? $ruleEvaluator->evaluate($loanProduct, $borrowerId, [
                 'loan_amount' => $loanAmount,
                 'term' => $this->input('term'),
+                'monthly_income' => $this->input('monthly_income'),
                 'dti_ratio' => $this->input('dti_ratio'),
                 'monthly_obligation' => $this->input('monthly_obligation'),
             ])
