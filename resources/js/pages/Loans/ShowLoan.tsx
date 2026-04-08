@@ -574,7 +574,7 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
             </div>
             <div>
               <p className="text-sm text-gray-600">Status</p>
-              <p className="font-medium">{loan.status}</p>
+              <p className="font-mediusm">{loan.status}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Balance Remaining</p>
