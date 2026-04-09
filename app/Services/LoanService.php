@@ -294,10 +294,12 @@ class LoanService
             ->each(function ($schedule) {
                 $borrower = $schedule->loan->borrower;
                 $borrower->notify(new NotifyUser(
-                    message: "Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
+                    subject: 'Upcoming Loan Payment Due',
+                    message: "Hi {$borrower->name}!, Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
                     email: $borrower->email
                 ));
             });
+
     }
 
 }
