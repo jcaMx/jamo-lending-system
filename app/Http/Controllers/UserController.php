@@ -15,10 +15,10 @@ class UserController extends Controller
     public function index()
     {
         $users = $this->service->getAll();
-
+    
         $transformed = isset($users['data'])
-            ? collect($users['data'])->map(fn ($u) => $this->transformUser($u))->toArray()
-            : collect($users)->map(fn ($u) => $this->transformUser($u))->toArray();
+            ? collect($users['data'])->map(fn ($u) => $this->service->transformUser($u))->toArray()
+            : collect($users)->map(fn ($u) => $this->service->transformUser($u))->toArray();
 
         return Inertia::render('users/index', [
             'users' => $transformed
@@ -35,7 +35,7 @@ class UserController extends Controller
         }
 
         return Inertia::render('users/show', [
-            'user' => $this->transformUser($user->toArray())
+            'user' => $this->service->transformUser($user->toArray())
         ]);
     }
 
@@ -76,7 +76,7 @@ class UserController extends Controller
         abort_if(!$user, 404);
 
         return Inertia::render('users/edit', [
-            'user'  => $this->transformUser($user->toArray()),
+            'user'  => $this->service->transformUser($user->toArray()),
             'roles' => Role::whereIn('name', ['admin', 'cashier'])
                 ->pluck('name')
                 ->toArray(),

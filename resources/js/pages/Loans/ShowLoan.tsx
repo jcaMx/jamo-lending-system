@@ -365,30 +365,10 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
 
     router.delete(route('loans.collateral-files.destroy', { loan: loan.ID, file: fileId }));
   };
-  const MAX_TERM_MONTHS = 840;
 
   const handleApprove = () => {
-    if (!Number.isInteger(loan.term_months) || loan.term_months < 1 || loan.term_months > MAX_TERM_MONTHS) {
-      alert(`Cannot approve this loan because term is invalid (${loan.term_months} months). Allowed range is 1-${MAX_TERM_MONTHS} months.`);
-      return;
-    }
-
-    const amount = parseFloat(releasedAmount);
-    if (!releasedAmount || isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid released amount greater than 0.');
-      return;
-    }
-
-    if (!releasedDate) {
-      alert('Please select a releasing date.');
-      return;
-    }
-
-    if (confirm(`Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.\n\nPrincipal: ₱${principalAmount.toLocaleString()}\nReleased Amount: ₱${amount.toLocaleString()}\nReleasing Date: ${new Date(releasedDate).toLocaleDateString()}\n\nThis will generate amortization schedules.`)) {
-      router.post(route('loans.approve', loan.ID), {
-        released_amount: amount,
-        released_date: releasedDate,
-      }, {
+    if (confirm('Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.')) {
+      router.post(route('loans.approve', loan.ID), {}, {
         onSuccess: () => {
           router.visit(route('loans.view-approved'));
         },

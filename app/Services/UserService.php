@@ -34,7 +34,7 @@ class UserService
         return $this->users->findById($id);
     }
 
-       private function transformUser(array $user): array
+    public function transformUser(array $user): array
     {
         // Use actual DB fields
         $fName = $user['fName'] ?? '';
