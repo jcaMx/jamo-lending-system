@@ -123,6 +123,7 @@ const Collateral = ({
     fuel: initial.fuel ?? "",
 
     certificate_of_title_no: initial.certificate_of_title_no ?? "",
+    lot_no: initial.lot_no ?? "",
     location: initial.location ?? "",
     description: initial.description ?? "",
     area: initial.area ?? "",
@@ -384,17 +385,23 @@ const Collateral = ({
               onChange={(v) => setData("certificate_of_title_no", sanitize.alphaNum(v))}
             />
             <FormField
+              label="Lot No."
+              name="lot_no"
+              value={data.lot_no}
+              onChange={(v) => setData("lot_no", sanitize.alphaNum(v))}
+            />
+            <FormField
               label="Location"
               name="location"
               value={data.location}
-              onChange={(v) => setData("location", sanitize.trim(v))}
+              onChange={(v) => setData("location", v)}
               required
             />
             <FormField
               label="Description"
               name="description"
               value={data.description}
-              onChange={(v) => setData("description", sanitize.trim(v))}
+              onChange={(v) => setData("description", v)}
               required
             />
             <FormField

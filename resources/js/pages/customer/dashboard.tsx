@@ -148,9 +148,9 @@ const CustomerDashboard = () => {
     repaymentType: loan.repaymentType ?? loan.repayment ?? loan.repayment_frequency ?? "",
     interestType: loan.interestType ?? loan.interest_type ?? "",
     interestRate: normalizeNumber(loan.interestRate ?? loan.interest ?? loan.interest_rate),
-    releasedAmount: normalizeNumber(loan.releasedAmount ?? loan.released_amount ?? 0),
-    releasedDate: loan.releasedDate ?? loan.released_date ?? "",
-    startDate: loan.startDate ?? loan.start_date ?? "",
+    releasedAmount: normalizeNumber(loan.released_amount ?? loan.released_amount ?? 0),
+    releasedDate: loan.released_date ?? loan.released_date ?? "",
+    startDate: loan.start_date ?? loan.start_date ?? "",
   }));
 
   const normalizedPayments = recentPayments.map((payment) => ({

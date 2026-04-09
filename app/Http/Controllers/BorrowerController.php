@@ -177,7 +177,14 @@ class BorrowerController extends Controller
                 ->withInput();
         }
 
-        $borrower = $this->borrowerService->createBorrower($validated);
+        // $borrower = $this->borrowerService->createBorrower($validated);
+        try {
+            $borrower = $this->borrowerService->createBorrower($validated);
+            return redirect()->route('borrowers.show', ['id' => $borrower->ID])
+                ->with('success', 'Borrower created successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
 
         return Inertia::location(route('borrowers.show', ['id' => $borrower->ID]));
     }

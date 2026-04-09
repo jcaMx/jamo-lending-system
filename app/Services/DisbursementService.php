@@ -10,6 +10,7 @@ use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Notifications\NotifyUser;
 
 class DisbursementService
 {
@@ -192,6 +193,17 @@ class DisbursementService
                 (float) $locked->amount,
                 optional($finalDisbursedAt)->toDateTimeString()
             );
+
+            
+            $borrower = $loan->borrower;
+            
+            if ($borrower && $borrower->email) {
+                $borrower->notify(new NotifyUser(
+                    message: $message ?? "Your loan has been successfully released. You may now claim your funds.",
+                    subject: "Loan Disbursed",
+                    email: $borrower->email,
+                ));
+            }
 
             if ($locked->voucher) {
                 $voucherReceivedAt = $receivedAt ? Carbon::parse($receivedAt) : $finalDisbursedAt;

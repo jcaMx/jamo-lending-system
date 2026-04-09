@@ -60,6 +60,7 @@ const BorrowerApplication = ({
     series: "",
     fuel: "",
     certificate_of_title_no: "",
+    lot_no: "",
     location: "",
     description: "",
     area: "",

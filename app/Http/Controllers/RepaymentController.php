@@ -162,7 +162,7 @@ class RepaymentController extends Controller
             $status = in_array($methodValue, [
                 PaymentMethod::Cash->value,
                 PaymentMethod::CashVoucher->value
-            ]) ? 'verified' : 'pending';
+            ]) ? 'confirmed' : 'pending';
 
             $payment = Payment::create([
                 'receipt_number' => $receiptNumber,
@@ -176,8 +176,8 @@ class RepaymentController extends Controller
                 'status' => $status,
             ]);
 
-            // Process immediately ONLY if verified
-            if ($status === 'verified') {
+            // Process immediately ONLY if confirmed
+            if ($status === 'confirmed') {
                 $this->repaymentService->processPayment($payment);
             }
 
@@ -259,7 +259,7 @@ class RepaymentController extends Controller
 
     public function index()
     {
-        $payments = Payment::whereIn('status', ['verified', 'pending', 'confirmed', 'rejected'])
+        $payments = Payment::whereIn('status', ['pending', 'confirmed', 'rejected'])
             ->with(['loan.borrower', 'jamoUser', 'amortizationSchedule'])
             ->orderBy('payment_date', 'desc')
             ->get()
@@ -330,14 +330,14 @@ class RepaymentController extends Controller
 
     public function verify(Payment $payment)
     {
-        $payment->status = 'verified';
+        $payment->status = 'confirmed';
         $payment->save();
 
         // ✅ Process only on verify
         $this->repaymentService->processPayment($payment);
 
         return redirect()->route('repayments.pending')
-            ->with('success', 'Payment verified and processed!');
+            ->with('success', 'Payment confirmed and processed!');
     }
 
     public function verifyPage(Request $request)
@@ -365,3 +365,6 @@ class RepaymentController extends Controller
         ]);
     }
 }
+
+
+

@@ -85,6 +85,7 @@ class LoanService
 
         $borrower = $loan->borrower;
         $borrower->notify(new NotifyUser(
+            subject: 'Your Loan Application is Approved',
             message: $message,
             email: $borrower->email,
             // sms: $borrower->$user->profile->phone ?? null
@@ -152,6 +153,7 @@ class LoanService
         $borrower = $loan->borrower;
         $borrower->notify(new NotifyUser(
             message: $message,
+            subject: 'Your Loan Application has been Rejected',
             email: $borrower->email,
             // sms: $borrower->$user->profile->phone ?? null
         ));

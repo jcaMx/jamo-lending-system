@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use App\Notifications\NotifyUser;
 
 
 class LoanController extends Controller
@@ -294,6 +295,9 @@ class LoanController extends Controller
         }
 
         $loanData = $loan->toArray();
+        $loanData['has_completed_disbursement'] = $loan->disbursements()
+            ->where('status', 'Completed')
+            ->exists();
 
         if ($loan->borrower) {
             $loanData['borrower'] = [

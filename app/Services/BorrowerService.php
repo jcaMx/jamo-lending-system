@@ -295,7 +295,22 @@ class BorrowerService
 
         return DB::transaction(function () use ($data, $clean) {
             $email = $clean($data['email'] ?? null);
+            $firstName = $clean($data['borrower_first_name'] ?? null);
+             $lastName = $clean($data['borrower_last_name'] ?? null);
 
+            // Guard: Check if borrower with same email and name already exists
+            if ($email && $firstName && $lastName) {
+                $existingBorrower = Borrower::query()
+                    ->where('email', $email)
+                    ->where('first_name', $firstName)
+                    ->where('last_name', $lastName)
+                    ->first();
+
+                if ($existingBorrower) {
+                    throw new \Exception("A borrower with email '{$email}' and name '{$firstName} {$lastName}' already exists.");
+                }
+            }
+            
             $userId = null;
             // 1) If admin explicitly provided a user_id, use it
             if (! empty($data['user_id'])) {
@@ -334,6 +349,8 @@ class BorrowerService
                 'membership_date' => now(),
                 'status' => 'Pending',
             ]);
+
+            
 
             // -------------------------------
             // Borrower Address

@@ -73,6 +73,7 @@ export interface SharedFormData {
   fuel?: string;
 
   certificate_of_title_no?: string;
+  lot_no?: string;
   location?: string;
   description?: string;
   area?: string;

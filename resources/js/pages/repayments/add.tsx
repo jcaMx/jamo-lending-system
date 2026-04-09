@@ -155,9 +155,9 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   };
 
   // ONLINE PAYMENTS
-  if (["Bank", "GCash", "Cebuana"].includes(method)) {
-    referenceNumber = generateCode("REF");
-  }
+  // if (["Bank", "GCash", "Cebuana"].includes(method)) {
+  //   referenceNumber = generateCode("REF");
+  // }
 
   // CASH VOUCHER (NO REFERENCE ❗)
   if (method === "Cash Voucher") {
@@ -417,8 +417,8 @@ const handleSubmit = (e: React.FormEvent) => {
                 >
                   <option value="">Select method</option>
                   <option value="Cash">Cash</option>
-                  <option value="Cash Voucher">Cash Voucher</option>
-                  <option value="Cheque Voucher">Cheque Voucher</option>
+                  {/* <option value="Cash Voucher">Cash Voucher</option>
+                  <option value="Cheque Voucher">Cheque Voucher</option> */}
                   <option value="Bank">Bank</option>
                   <option value="Cebuana">Cebuana</option>
                   <option value="GCash">GCash</option>
@@ -455,11 +455,11 @@ const handleSubmit = (e: React.FormEvent) => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Cheque Number *</label>
                     <input
-  type="text"
-  value={form.chequeNumber}
-  readOnly
-  className={inputClass + " bg-gray-100"}
-/>
+                        type="text"
+                        value={form.chequeNumber}
+                        readOnly
+                        className={inputClass + " bg-gray-100"}
+                      />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Bank Name *</label>
@@ -486,11 +486,12 @@ const handleSubmit = (e: React.FormEvent) => {
               {ONLINE_METHODS.includes(form.method) && (
                 <div>
                   <label className="block text-sm font-medium mb-1">Reference Number</label>
-                 <input
-  value={form.referenceNumber}
-  readOnly
-  className={inputClass + " bg-gray-100"}
-/>
+                 <input 
+                  type="text"
+                  value={form.referenceNumber}
+                  onChange={(e) => update("referenceNumber", e.target.value)}
+                  className={inputClass}
+                />
                 </div>
               )}
 

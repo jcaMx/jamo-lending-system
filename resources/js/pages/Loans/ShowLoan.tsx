@@ -95,6 +95,7 @@ interface LoanDetailsProps {
     balance_remaining: number;
     released_amount?: number | string | null;
     released_date?: string | null;
+    has_completed_disbursement?: boolean;
     borrower: {
       ID: number;
       first_name: string;
@@ -412,7 +413,7 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
                 </Button>
               </>
             )}
-            {loan.status === 'Active' && (
+            {loan.status === 'Active' && !loan.has_completed_disbursement && (
               <Button
                 onClick={() => router.visit(`/disbursements?loan_id=${loan.ID}`)}
                 className="bg-[#FABF24] text-black hover:bg-[#f8b80f]"

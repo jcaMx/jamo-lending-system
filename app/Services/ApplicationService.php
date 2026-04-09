@@ -13,6 +13,7 @@ use App\Models\Loan;
 use App\Models\Spouse;
 use App\Models\VehicleCollateralDetails;
 use App\Models\AtmCollateralDetails;
+use App\Models\LandCollateralDetails;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +75,16 @@ class ApplicationService
                     'bank_name' => $data['bank_name'] ?? '',
                     'account_no' => $data['account_no'] ?? '',
                     'cardno_4digits' => $data['cardno_4digits'] ?? 0,
+                ]);
+            }
+
+            if ($collateral && $collateralType === 'land') {
+                LandCollateralDetails::create([
+                    'collateralID' => $collateral->ID,
+                    'titleNo' => $data['certificate_of_title_no'] ?? null,
+                    'lotNo' => $data['lot_no'] ?? null,
+                    'location' => $data['location'] ?? null,
+                    'areaSize' => $data['area'] ?? null,
                 ]);
             }
 

@@ -63,7 +63,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
   const renderStatus = (status: string) => {
     const normalizedStatus = status?.toLowerCase() ?? 'pending';
     const className =
-      normalizedStatus === 'verified'
+      normalizedStatus === 'confirmed'
         ? 'bg-green-100 text-green-700'
         : normalizedStatus === 'rejected'
           ? 'bg-red-100 text-red-700'
@@ -82,7 +82,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
       alert('Please select a collector.');
       return;
     }
-    if (!confirm('Mark this payment as verified?')) return;
+    if (!confirm('Mark this payment as confirmed?')) return;
 
     router.post(`/repayments/verify/${paymentId}`, {}, {
       onSuccess: () => {
@@ -353,3 +353,5 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     </AppLayout>
   );
 }
+
+

@@ -114,11 +114,12 @@ class UserService
             }
 
             if ($sendNotification) {
-                $message = "Welcome {$data['fName']}! Your account has been created.\n\n". 
+                $message = "Welcome to the team, {$data['fName']}! Your account has been created.\n\n". 
                     "Email: {$data['email']} \nPassword: $generatedPassword";
 
                 $user->notify(new NotifyUser(
                     message: $message,
+                    subject: 'Welcome to JAMO Lending System',
                     email: $user->email,
                     sms: $user->profile->phone ?? null
                 ));
@@ -134,31 +135,47 @@ class UserService
 
     public function createCustomerUser(array $data): array
     {
-        // Reuse existing user creation logic
-        $result = $this->createUser([
-            'fName' => $data['fName'],
-            'lName' => $data['lName'],
-            'email' => $data['email'],
-            'role'  => 'customer',
-        ], false);
+        $username = $this->generateUsername($data['fName'], $data['lName']);
+        $generatedPassword = $this->generatePassword();
 
-        /** @var \App\Models\User $user */
-        $user = $result['user'];
-        $generatedPassword = $result['password'];
+        $user = null;
 
-        // Notify user
-        $message =
-            "Welcome {$data['fName']}!\n\n" .
-            "Your customer account has been created.\n\n" .
-            "Email: {$data['email']}\n" .
-            "Temporary Password: {$generatedPassword}\n\n" .
-            "Please change your password after login.";
+        DB::transaction(function () use ($data, $username, $generatedPassword, &$user) {
+            $user = User::create([
+                'name' => "{$data['fName']} {$data['lName']}",
+                'fName' => $data['fName'],
+                'lName' => $data['lName'],
+                'email' => $data['email'],
+                'username' => $username,
+                'password' => Hash::make($generatedPassword),
+                'status' => 'Active',
+            ]);
 
-        $user->notify(new NotifyUser(
-            message: $message,
-            email: $user->email,
-            sms: optional($user->profile)->phone
-        ));
+            $user->assignRole('customer');
+
+            if (! empty($data['phone'])) {
+                $user->profile()->create([
+                    'phone' => $data['phone'],
+                    'email' => $data['email'],
+                    'avatar_url' => $data['userPhoto'] ?? null,
+                ]);
+            }
+
+            // Send customer-specific notification only once
+            $message =
+                "Welcome {$data['fName']}!\n\n" .
+                "Your customer account has been created.\n\n" .
+                "Email: {$data['email']}\n" .
+                "Temporary Password: {$generatedPassword}\n\n" .
+                "Please change your password after login.";
+
+            $user->notify(new NotifyUser(
+                subject: 'Welcome to JAMO Lending System',
+                message: $message,
+                email: $user->email,
+                sms: optional($user->profile)->phone
+            ));
+        });
 
         return [
             'user' => $user,
