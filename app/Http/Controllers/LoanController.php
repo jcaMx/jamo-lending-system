@@ -332,21 +332,9 @@ class LoanController extends Controller
                 return back()->withErrors(['error' => 'User not authenticated.']);
             }
 
-            $request = request();
-            $releasedAmount = $request->input('released_amount');
-            $releasedDate = $request->input('released_date');
+            $this->loanService->approveLoan($loan, $approvedBy);
 
-            if (! $releasedAmount || $releasedAmount <= 0) {
-                return back()->withErrors(['error' => 'Released amount is required and must be greater than 0.']);
-            }
-
-            if ($releasedDate && ! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $releasedDate)) {
-                return back()->withErrors(['error' => 'Released date must be in YYYY-MM-DD format.']);
-            }
-
-            $this->loanService->approveLoan($loan, $approvedBy, (float) $releasedAmount, $releasedDate);
-
-            return redirect()->route('loans.view-approved')->with('success', 'Loan approved successfully!');
+            return redirect()->route('loans.view-approved')->with('success', 'Loan approved. Proceed to Disbursement for fund release.');
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Failed to approve loan: '.$e->getMessage()]);
         }

@@ -58,17 +58,13 @@ class LoanService
 
     public function approveLoan(Loan $loan, int $approvedByUser): Loan
     {
-        DB::transaction(function () use ($loan, $approvedByUser, $releasedAmount, $releasedDate) {
+        DB::transaction(function () use ($loan, $approvedByUser) {
             if ($loan->term_months < 1 || $loan->term_months > 840) {
                 throw new \InvalidArgumentException('Loan term is invalid. Allowed range is 1 to 840 months.');
             }
 
             $loan->approved_by = $approvedByUser;
             $loan->status = 'Active';
-            $loan->released_amount = $releasedAmount;
-            $loan->released_date = $releasedDate
-                ? Carbon::createFromFormat('Y-m-d', $releasedDate)->startOfDay()
-                : Carbon::now();
 
             // Set borrower status to Active
             $loan->borrower->status = 'Active';
