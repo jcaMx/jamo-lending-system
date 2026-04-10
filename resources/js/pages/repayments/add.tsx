@@ -109,7 +109,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     if (nextDueSchedule) {
       update("selectedSchedules", [nextDueSchedule]);
       update("amount", nextDueSchedule.total_due.toFixed(2));
-      if (nextDueSchedule.due_date) update("collectionDate", nextDueSchedule.due_date);
+      // if (nextDueSchedule.due_date) update("collectionDate", nextDueSchedule.due_date);
     } else {
       update("selectedSchedules", []);
       update("amount", "");
@@ -140,9 +140,9 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     update("selectedSchedules", sortedSelected);
     update("amount", nextAmount ? nextAmount.toFixed(2) : "");
 
-    if (sortedSelected.length > 0 && sortedSelected[0].due_date) {
-      update("collectionDate", sortedSelected[0].due_date);
-    }
+    // if (sortedSelected.length > 0 && sortedSelected[0].due_date) {
+    //   update("collectionDate", sortedSelected[0].due_date);
+    // }
   };
 
  const handleMethodChange = (method: string) => {
@@ -522,10 +522,10 @@ const handleSubmit = (e: React.FormEvent) => {
                 <label className="block text-sm font-medium mb-1">Collection Date</label>
                 <input
                   type="date"
-                  value={form.collectionDate || today}//on default today
+                  value={form.collectionDate}//on default today
                   onChange={(e) => update("collectionDate", e.target.value)}
                   className={inputClass}
-                  disabled={!isCashMethod}
+                  // disabled={!isCashMethod}
                 />
               </div>
             </div>

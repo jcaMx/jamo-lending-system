@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
+         Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
         Route::get('/search', [BorrowerController::class, 'search'])->name('borrowers.search');
         Route::get('/{id}/loans', [BorrowerController::class, 'checkLoans'])->name('borrowers.check-loans');
         Route::get('/{id}/income', [BorrowerController::class, 'income'])->name('borrowers.income');
@@ -82,7 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
         Route::post('/', [BorrowerController::class, 'store'])->name('borrowers.store');
-        Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
+       
         Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit');
         // Route::put('/borrowers/{borrower}', [BorrowerController::class, 'update'])->name('borrowers.update');
         Route::put('/{borrower}', [BorrowerController::class, 'update'])->name('borrowers.update');

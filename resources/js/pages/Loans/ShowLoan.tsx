@@ -2,10 +2,17 @@ import { Head, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { route } from 'ziggy-js';
+import { route } from 'ziggy-js';import { SquarePen, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import BorrowerInfoCard from '@/pages/borrowers/BorrowerInfoCard';
+import RepaymentsTab from '@/pages/borrowers/components/Tabs/RepaymentsTab';
+import LoanTermsTab from '@/pages/borrowers/components/Tabs/LoanTermsTab';
+import LoanScheduleTab from '@/pages/borrowers/components/Tabs/LoanScheduleTab';
+import LoanCollateralTab from '@/pages/borrowers/components/Tabs/LoanCollateralTab';
+import LoanFilesTab from '@/pages/borrowers/components/Tabs/LoanFilesTab';
 import LoanCommentsTab from '@/pages/borrowers/components/Tabs/LoanCommentsTab';
-import { SquarePen, Trash2 } from 'lucide-react';
-import React from 'react';
+import CoBorrowerTab from '@/pages/borrowers/components/Tabs/CoBorrowerTab';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -366,28 +373,47 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
 
     router.delete(route('loans.collateral-files.destroy', { loan: loan.ID, file: fileId }));
   };
-
+  
+ const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void; }>({ open: false, title: '', description: '', onConfirm: () => {} });
   const handleApprove = () => {
-    if (confirm('Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.')) {
-      router.post(route('loans.approve', loan.ID), {}, {
-        onSuccess: () => {
-          router.visit(route('loans.view-approved'));
-        },
-        onError: (errors) => {
-          console.error('Approval failed:', errors);
+      setConfirmDialog({
+        open: true,
+        title: 'Approve Loan',
+        description: 'Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.',
+        onConfirm: () => {
+          router.post(route('loans.approve', loan.ID), {}, {
+            onSuccess: () => {
+              setConfirmDialog({ ...confirmDialog, open: false });
+              router.visit(route('loans.view-approved'));
+            },
+            onError: (errors) => {
+              console.error('Approval failed:', errors);
+              setConfirmDialog({ ...confirmDialog, open: false });
+            },
+          });
         },
       });
-    }
-  };
+    };
+
 
   const handleReject = () => {
-    if (confirm('Are you sure you want to reject this loan?')) {
-      router.post(route('loans.reject', loan.ID), {}, {
-        onSuccess: () => {
-          router.visit(route('loans.view')); // Go back to pending loans
-        },
-      });
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Reject Loan',
+      description: 'Are you sure you want to reject this loan?',
+      onConfirm: () => {
+          router.post(route('loans.reject', loan.ID), {}, { 
+            onSuccess: () => {
+              setConfirmDialog({ ...confirmDialog, open: false });
+              router.visit(route('loans.view-rejected'));
+            },
+            onError: (errors) => {
+              console.error('Rejection failed:', errors);
+              setConfirmDialog({ ...confirmDialog, open: false });
+            },
+          }); 
+    },
+  });
   };
 
   return (
@@ -839,6 +865,18 @@ export default function ShowLoan({ loan }: LoanDetailsProps) {
             canDelete={true}
           />
         </div>
+
+        {/* Dialog box for Approve/Reject confirmation Loan Application */}
+        <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
+
 
         {isBorrowerModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

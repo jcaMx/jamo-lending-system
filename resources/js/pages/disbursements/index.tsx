@@ -499,7 +499,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 onChange={(e) => setLoanId(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               >
-                <option value="">Select loan</option>
+                <option value="">Select undisbursed loan</option>
                 {eligibleLoans.map((loan) => (
                   <option key={loan.id} value={loan.id}>
                     #{loan.id} - {loan.borrower_name} ({loan.loan_type})
