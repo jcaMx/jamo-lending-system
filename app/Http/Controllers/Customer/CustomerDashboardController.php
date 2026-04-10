@@ -119,6 +119,11 @@ class CustomerDashboardController extends Controller
         return [
             'loanNo' => (string) $loan->ID,
             'released' => $loan->start_date?->format('Y-m-d') ?? '',
+            'released_date' => $loan->released_date?->format('Y-m-d')
+                ?? $loan->start_date?->format('Y-m-d')
+                ?? '',
+            'released_amount' => (float) ($loan->released_amount ?? 0),
+            'next_payment_date' => $nextSchedule?->due_date?->format('Y-m-d') ?? '',
             'maturity' => $loan->end_date?->format('Y-m-d') ?? '',
             'repayment' => $loan->repayment_frequency ?? '',
             'principal' => (float) $loan->principal_amount,

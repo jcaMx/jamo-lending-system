@@ -159,7 +159,7 @@ class MyLoanController extends Controller
 
     //     return Payment::query()
     //         ->where('loan_id', $loan->ID)
-    //         ->with(['loan.borrower', 'jamoUser'])
+    //         ->with(['loan.borrower', 'verifiedBy'])
     //         ->latest('payment_date')
     //         ->get()
     //         ->map(function (Payment $payment) use ($loan) {
@@ -168,8 +168,8 @@ class MyLoanController extends Controller
     //                 : ($loan->borrower?->first_name ?? '').' '.($loan->borrower?->last_name ?? '');
     //             $borrowerName = $borrowerName ?: 'Unknown Borrower';
 
-    //             $verifiedByName = $payment->jamoUser
-    //                 ? ($payment->jamoUser->first_name ?? '').' '.($payment->jamoUser->last_name ?? '')
+    //             $verifiedByName = $payment->verifiedBy
+    //                 ? ($payment->verifiedBy->name ?? '')
     //                 : 'Unverified';
     //             $verifiedByName = trim($verifiedByName) ?: 'Unverified';
 

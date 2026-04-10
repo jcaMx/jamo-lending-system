@@ -69,6 +69,18 @@ const mainNavItems: NavItem[] = [
     subItems: [
       { type: "link", title: "View Repayments", href: "/repayments" },
       { type: "link", title: "Add Repayment", href: "/repayments/add" },
+      { type: "link", title: "Pending Payments", href: "/repayments/pending"},
+
+    ]
+  },
+
+  {
+    type: "group",
+    title: "Disbursements",
+    icon: Coins,
+    roles: ["cashier", "admin"],
+    subItems: [
+      { type: "link", title: "Manage Disbursements", href: "/disbursements" },
     ]
   },
 
@@ -93,6 +105,7 @@ const mainNavItems: NavItem[] = [
     subItems: [
       { type: "link", title: "View Users", href: "/users" },
       { type: "link", title: "Add User", href: "/users/add" },
+
     ]
   },
 ];
@@ -227,4 +240,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

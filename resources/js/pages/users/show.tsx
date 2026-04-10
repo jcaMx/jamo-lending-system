@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 type User = {
   id: number;          // change from ID -> id
+  name: string;        // full name
   username: string;
   fName: string;
   lName: string;
@@ -41,7 +42,7 @@ export default function Show({ user }: ShowProps) {
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold text-gray-800">
-            {user.fName} {user.lName}
+            {user.fName} {user.lName} {user.name}
           </h1>
 
           <div className="flex gap-2">

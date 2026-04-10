@@ -2,11 +2,10 @@ import HeadingSmall from '@/components/heading-small';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Eye, Edit } from 'lucide-react';
 import React from 'react';
-import {route} from "ziggy-js";
 
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -128,7 +127,7 @@ export default function Index({ users }: { users: UsersProp }) {
                       onClick={(e) => {
                         // Prevent row click if a button inside was clicked
                             if ((e.target as HTMLElement).closest('a')) return;
-                            router.visit(route('users.show', user.id));
+                            router.visit(`/users/${user.id}`);
                             }}
                             className="border-b hover:bg-gray-50 cursor-pointer"
                       >

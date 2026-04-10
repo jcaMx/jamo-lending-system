@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -109,12 +110,32 @@ class Loan extends Model
 
     public function approver()
     {
-        return $this->belongsTo(JamoUser::class, 'approved_by', 'ID');
+        return $this->belongsTo(User::class, 'approved_by', 'id');
     }
 
     public function formula()
     {
         return $this->belongsTo(Formula::class, 'formula_id', 'ID');
     }
+
+    public function disbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'loan_id', 'ID');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'loan_id', 'ID');
+    }
     
+    /**
+     * Loan applications that are still in progress (pending approval or actively paying).
+     *
+     * @param  Builder<Loan>  $query
+     * @return Builder<Loan>
+     */
+    public function scopeWhereActiveOrPending(Builder $query): Builder
+    {
+        return $query->whereRaw('LOWER(TRIM(COALESCE(status, ""))) IN (?, ?)', ['pending', 'active']);
+    }
 }

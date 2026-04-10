@@ -50,7 +50,7 @@ class Collateral extends Model
 
     public function files()
     {
-        return $this->hasOne(Files::class, 'collateral_id', 'ID');
+        return $this->hasMany(Files::class, 'collateral_id', 'ID');
     }
 
     public function loan()
@@ -58,8 +58,8 @@ class Collateral extends Model
         return $this->belongsTo(Loan::class, 'loan_id', 'ID');
     }
 
-    public function jamouser()
+    public function appraiser()
     {
-        return $this->belongsTo(JamoUser::class, 'appraised_by', 'ID');
+        return $this->belongsTo(User::class, 'appraised_by', 'id');
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Borrower;
+use App\Models\BorrowerEmployment;
 use App\Models\DocumentType;
+use App\Models\Loan;
 use App\Services\BorrowerService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -35,6 +37,31 @@ class BorrowerController extends Controller
 
         return Inertia::render('borrowers/index', [
             'borrowers' => $this->borrowerService->getBorrowersForIndex(),
+        ]);
+    }
+
+    public function checkLoans(int $id)
+    {
+        $hasActiveLoan = Loan::query()
+            ->where('borrower_id', $id)
+            ->whereActiveOrPending()
+            ->exists();
+
+        return response()->json([
+            'hasActiveLoan' => $hasActiveLoan,
+            'hasActiveOrPendingLoan' => $hasActiveLoan,
+        ]);
+    }
+
+    public function income(int $id)
+    {
+        $monthlyIncome = BorrowerEmployment::query()
+            ->where('borrower_id', $id)
+            ->latest('ID')
+            ->value('monthly_income');
+
+        return response()->json([
+            'monthly_income' => $monthlyIncome !== null ? (float) $monthlyIncome : null,
         ]);
     }
 
@@ -150,7 +177,14 @@ class BorrowerController extends Controller
                 ->withInput();
         }
 
-        $borrower = $this->borrowerService->createBorrower($validated);
+        // $borrower = $this->borrowerService->createBorrower($validated);
+        try {
+            $borrower = $this->borrowerService->createBorrower($validated);
+            return redirect()->route('borrowers.show', ['id' => $borrower->ID])
+                ->with('success', 'Borrower created successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
 
         return Inertia::location(route('borrowers.show', ['id' => $borrower->ID]));
     }

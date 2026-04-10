@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\JamoUser;
 
 class Payment extends Model
 {
@@ -15,6 +16,7 @@ class Payment extends Model
         'receipt_number',
         'payment_date',
         'amount',
+        'status',
         'payment_method',
         'reference_no',
         'remarks',
@@ -25,15 +27,11 @@ class Payment extends Model
     ];
 
     protected $casts = [
+        'status' => 'string',
         'payment_method' => 'string',
         'payment_date' => 'datetime',
         'verified_date' => 'datetime',
     ];
-
-    public function jamoUser()
-    {
-        return $this->belongsTo(JamoUser::class, 'verified_by', 'ID');
-    }
 
     public function loan()
     {
@@ -52,6 +50,11 @@ class Payment extends Model
 
     public function verifiedBy()
     {
-        return $this->belongsTo(User::class, 'verified_by');
+        return $this->belongsTo(User::class, 'verified_by', 'id');
+    }
+
+    public function jamoUser()
+    {
+        return $this->belongsTo(JamoUser::class, 'verified_by', 'ID');
     }
 }

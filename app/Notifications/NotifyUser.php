@@ -14,10 +14,12 @@ class NotifyUser extends Notification
     private string $message;
     private ?string $email;
     private ?string $sms;
+    private ?string $subject;
 
-    public function __construct(string $message, ?string $email = null, ?string $sms = null)
+    public function __construct(string $message,?string $subject = null,?string $email = null, ?string $sms = null)
     {
         $this->message = $message;
+        $this->subject = $subject;
         $this->email = $email;
         // $this->sms = $sms;
     }
@@ -46,7 +48,7 @@ class NotifyUser extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Notification')
+            ->subject($this->subject ?? 'Notification from JAMO Lending System')
             ->line($this->message);
     }
 

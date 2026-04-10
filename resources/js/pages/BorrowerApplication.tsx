@@ -24,7 +24,7 @@ interface BorrowerApplicationProps {
   };
 }
 
-type StepKey = "borrower" | "loan" | "coborrower" | "collateral" | "confirmation";
+type StepKey = "loan" | "coborrower" | "collateral" | "confirmation";
 
 interface StepConfig {
   key: StepKey;
@@ -60,6 +60,7 @@ const BorrowerApplication = ({
     series: "",
     fuel: "",
     certificate_of_title_no: "",
+    lot_no: "",
     location: "",
     description: "",
     area: "",

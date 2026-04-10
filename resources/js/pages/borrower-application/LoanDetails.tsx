@@ -11,6 +11,8 @@ interface LoanDetailsProps {
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  stepLabels?: string[];
+  stepIndex?: number;
 }
 
 interface LoanProductItem {
@@ -85,7 +87,7 @@ const normalizeLoanProduct = (value: unknown): LoanProductItem | null => {
   };
 };
 
-const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps) => {
+const LoanDetails = ({ onNext, onPrev, formData, setFormData, stepLabels, stepIndex }: LoanDetailsProps) => {
   const initial = formData ?? {};
   const { data, setData, errors } = useForm({
     loan_type: initial.loan_type ?? "",
@@ -99,6 +101,7 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
   const [loanProducts, setLoanProducts] = useState<LoanProductItem[]>([]);
   const [isLoadingLoanProducts, setIsLoadingLoanProducts] = useState(false);
   const [loanProductsError, setLoanProductsError] = useState<string>("");
+  const [stepError, setStepError] = useState<string>("");
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -200,7 +203,27 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
     }));
   };
 
+  const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
+  const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
+  const indicatorIndex = stepIndex ?? 1;
+
+  const isMissingLoanDetails = () => {
+    return (
+      !String(data.loan_type ?? "").trim() ||
+      !String(data.loan_amount ?? "").trim() ||
+      !String(data.interest_type ?? "").trim() ||
+      !String(data.interest_rate ?? "").trim() ||
+      !String(data.repayment_frequency ?? "").trim() ||
+      !String(data.term ?? "").trim()
+    );
+  };
+
   const handleSubmit = () => {
+    if (isMissingLoanDetails()) {
+      setStepError("Please complete all required loan details before proceeding.");
+      return;
+    }
+    setStepError("");
     onNext();
   };
 
@@ -214,15 +237,7 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           </div>
         </div>
 
-        <StepIndicator
-          currentStep={1}
-          steps={[
-            "Loan Details",
-            "Co-Borrower",
-            "Collateral",
-            "Payment",
-          ]}
-        />
+        <StepIndicator currentStep={indicatorIndex} steps={indicatorLabels} />
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -245,6 +260,9 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
         {loanProductsError && (
           <p className="text-sm text-red-600">{loanProductsError}</p>
         )}
+        {stepError && (
+          <p className="text-sm text-red-600">{stepError}</p>
+        )}
 
         <FormField
           label="Loan Amount (PHP)"
@@ -253,6 +271,15 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           onChange={(v) => setData("loan_amount", sanitize.number(v))}
           required
           error={errors.loan_amount}
+        />
+
+        <FormField
+          label="Monthly Income (PHP)"
+          name="monthly_income"
+          value={String(formData.monthly_income ?? "")}
+          onChange={() => {}}
+          placeholder="Auto-filled from borrower"
+          disabled
         />
 
 
@@ -297,10 +324,6 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
           error={errors.term}
         />  
 
-
-        </form>
-        
-
         <div className="flex justify-between mt-6">
           <button type="button" className="px-4 py-1 border border-gray-300 rounded-md hover:bg-gray-400" onClick={onPrev}>
             Back
@@ -309,6 +332,12 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData }: LoanDetailsProps
             Next
           </button>
         </div>
+
+
+        </form>
+        
+
+
       </div>
     </section>
   );

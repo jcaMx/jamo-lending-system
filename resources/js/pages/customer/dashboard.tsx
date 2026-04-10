@@ -41,6 +41,9 @@ type RawLoan = {
   interestRate?: number | string;
   interest?: number | string;
   interest_rate?: number | string;
+  released_date?: string;
+  released_amount?: number | string;
+  start_date?: string;
 };
 
 type Loan = {
@@ -49,6 +52,9 @@ type Loan = {
   principal: number;
   balance: number;
   due: number;
+  releasedDate: string;
+  startDate: string;
+  releasedAmount: number;
   penalty: number;
   status: "Active" | "Paid" | "Overdue" | "Pending" | string;
   nextPaymentDate: string;
@@ -142,6 +148,9 @@ const CustomerDashboard = () => {
     repaymentType: loan.repaymentType ?? loan.repayment ?? loan.repayment_frequency ?? "",
     interestType: loan.interestType ?? loan.interest_type ?? "",
     interestRate: normalizeNumber(loan.interestRate ?? loan.interest ?? loan.interest_rate),
+    releasedAmount: normalizeNumber(loan.released_amount ?? loan.released_amount ?? 0),
+    releasedDate: loan.released_date ?? loan.released_date ?? "",
+    startDate: loan.start_date ?? loan.start_date ?? "",
   }));
 
   const normalizedPayments = recentPayments.map((payment) => ({
@@ -276,11 +285,17 @@ const CustomerDashboard = () => {
           </div>
 
           <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Principal</p>
                   <p className="text-base font-semibold text-gray-900">
                     {formatCurrency(loan.principal)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Released Amount</p>
+                  <p className="text-base font-semibold text-gray-900">
+                    {formatCurrency(loan.releasedAmount)}
                   </p>
                 </div>
                 <div>
@@ -303,7 +318,7 @@ const CustomerDashboard = () => {
                 </div>
               </div>
 
-              <div className="border-t pt-4 grid grid-cols-2 gap-4 text-sm">
+              <div className="border-t pt-4 grid grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-gray-400" />
                   <div>
@@ -319,6 +334,15 @@ const CustomerDashboard = () => {
                     <p className="text-xs text-gray-500">Maturity</p>
                     <p className="font-medium text-gray-900">
                       {formatDate(loan.maturityDate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Release Date</p>
+                    <p className="font-medium text-gray-900">
+                      {formatDate(loan.releasedDate)}
                     </p>
                   </div>
                 </div>

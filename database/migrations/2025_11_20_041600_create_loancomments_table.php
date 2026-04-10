@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
 
             $table->foreign('commented_by', 'FK_LoanComments_User')
-                ->references('ID')->on('jamouser');
+                ->references('id')->on('users');
         });
     }
 
@@ -25,6 +25,5 @@ return new class extends Migration
         Schema::dropIfExists('loancomments');
     }
 };
-
 
 

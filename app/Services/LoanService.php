@@ -56,26 +56,52 @@ class LoanService
         return Loan::addLoan($data);
     }
 
-    public function approveLoan(Loan $loan, int $approvedByUser, float $releasedAmount, ?string $releasedDate = null): Loan
+    public function approveLoan(Loan $loan, int $approvedByUser): Loan
     {
-        DB::transaction(function () use ($loan, $approvedByUser, $releasedAmount, $releasedDate) {
+        DB::transaction(function () use ($loan, $approvedByUser) {
             if ($loan->term_months < 1 || $loan->term_months > 840) {
                 throw new \InvalidArgumentException('Loan term is invalid. Allowed range is 1 to 840 months.');
             }
 
             $loan->approved_by = $approvedByUser;
             $loan->status = 'Active';
-            $loan->released_amount = $releasedAmount;
-            $loan->released_date = $releasedDate
-                ? Carbon::createFromFormat('Y-m-d', $releasedDate)->startOfDay()
-                : Carbon::now();
 
             // Set borrower status to Active
             $loan->borrower->status = 'Active';
             $loan->borrower->save();
+            $loan->save();
+        });
 
-            // Set start_date to today (first installment will be due on start_date)
-            $loan->start_date = Carbon::now();
+        $loan->refresh();
+        $loan->load('borrower');
+        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
+                    Your loan application has been approved.\n\n
+                    Loan Details:\n
+                    - Loan Number: {$loan->ID}\n
+                    - Borrower: {$loan->borrower->first_name} {$loan->borrower->last_name}\n
+                    -Loan Amount: PHP {$loan->principal_amount}\n
+                    
+                    For more information, please log in your account in JAMO Lending System";
+
+        $borrower = $loan->borrower;
+        $borrower->notify(new NotifyUser(
+            subject: 'Your Loan Application is Approved',
+            message: $message,
+            email: $borrower->email,
+            // sms: $borrower->$user->profile->phone ?? null
+        ));
+
+        return $loan->fresh();
+    }
+
+    public function finalizeLoanDisbursement(Loan $loan, float $releasedAmount, ?string $releasedDate = null): Loan
+    {
+        DB::transaction(function () use ($loan, $releasedAmount, $releasedDate) {
+            $loan->released_amount = $releasedAmount;
+            $loan->released_date = $releasedDate ? Carbon::parse($releasedDate) : Carbon::now();
+
+            // Set start_date to disbursement date (first installment due starts from this baseline)
+            $loan->start_date = $loan->released_date->copy();
 
             // Calculate end_date based on term and repayment frequency
             $totalInstallments = match ($loan->repayment_frequency) {
@@ -99,35 +125,14 @@ class LoanService
 
             $loan->end_date = $endDate;
 
-            // Use released_amount as the base for balance and amortization
+            // Use released amount as basis of schedule
             $loan->balance_remaining = $releasedAmount;
             $loan->save();
 
-            // Generate amortization schedules using released_amount
             $schedules = $this->generateAmortization($loan, $releasedAmount);
-
-            // Update balance_remaining to sum of all installment amounts
             $loan->balance_remaining = $schedules->sum('installment_amount');
             $loan->save();
         });
-
-        $loan->refresh();
-        $loan->load('borrower');
-        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
-                    Your loan application has been approved.\n\n
-                    Loan Details:\n
-                    - Loan Number: {$loan->ID}\n
-                    - Borrower: {$loan->borrower->first_name} {$loan->borrower->last_name}\n
-                    -Loan Amount: PHP {$loan->principal_amount}\n
-                    
-                    For more information, please log in your account in JAMO Lending System";
-
-        $borrower = $loan->borrower;
-        $borrower->notify(new NotifyUser(
-            message: $message,
-            email: $borrower->email,
-            // sms: $borrower->$user->profile->phone ?? null
-        ));
 
         return $loan->fresh();
     }
@@ -148,6 +153,7 @@ class LoanService
         $borrower = $loan->borrower;
         $borrower->notify(new NotifyUser(
             message: $message,
+            subject: 'Your Loan Application has been Rejected',
             email: $borrower->email,
             // sms: $borrower->$user->profile->phone ?? null
         ));
@@ -288,10 +294,12 @@ class LoanService
             ->each(function ($schedule) {
                 $borrower = $schedule->loan->borrower;
                 $borrower->notify(new NotifyUser(
-                    message: "Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
+                    subject: 'Upcoming Loan Payment Due',
+                    message: "Hi {$borrower->name}!, Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
                     email: $borrower->email
                 ));
             });
+
     }
 
 }

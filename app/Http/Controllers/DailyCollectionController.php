@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AmortizationSchedule;
-use App\Models\JamoUser;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +18,12 @@ class DailyCollectionController extends Controller
         $date = $request->input('date') ?? Carbon::today()->toDateString();
         [$due_loans, $collections] = $this->buildDailyCollectionData($collector, $date);
 
-        $collectors = JamoUser::pluck('first_name')->unique()->toArray();
+        $collectors = User::query()
+            ->orderBy('name')
+            ->pluck('name')
+            ->unique()
+            ->values()
+            ->all();
 
         return Inertia::render('daily-collection-sheet', [
             'due_loans' => $due_loans,
@@ -54,23 +59,22 @@ class DailyCollectionController extends Controller
             ->whereIn('status', ['Unpaid', 'Overdue'])
             ->when($collector, function ($query, $collector) {
                 $query->whereHas('loan.approver', function ($q) use ($collector) {
-                    $q->where('first_name', 'like', "%{$collector}%")
-                        ->orWhere('last_name', 'like', "%{$collector}%");
+                    $q->where('name', 'like', "%{$collector}%");
                 });
             })
             ->get();
 
-        $paymentRelations = ['loan.borrower', 'jamoUser', 'amortizationSchedule'];
+        $paymentRelations = ['loan.borrower', 'verifiedBy', 'amortizationSchedule'];
         if (Schema::hasTable('payment_schedule_allocations')) {
             $paymentRelations[] = 'scheduleAllocations.amortizationSchedule';
         }
 
         $payments = \App\Models\Payment::with($paymentRelations)
             ->whereDate('payment_date', $date)
+            ->whereRaw('LOWER(status) = ?', ['confirmed'])
             ->when($collector, function ($query, $collector) {
-                $query->whereHas('jamoUser', function ($q) use ($collector) {
-                    $q->where('first_name', 'like', "%{$collector}%")
-                        ->orWhere('last_name', 'like', "%{$collector}%");
+                $query->whereHas('verifiedBy', function ($q) use ($collector) {
+                    $q->where('name', 'like', "%{$collector}%");
                 });
             })
             ->get();
@@ -84,14 +88,14 @@ class DailyCollectionController extends Controller
                 'interest' => $schedule->interest_amount,
                 'penalty' => $schedule->penalty_amount,
                 'total_due' => $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount - $schedule->amount_paid,
-                'collector' => $schedule->loan->approver->first_name ?? '',
+                'collector' => $schedule->loan->approver->name ?? '',
                 'collection_date' => $schedule->due_date->toDateString(),
             ];
         });
 
         $collections = $payments->flatMap(function ($payment) {
             $borrowerName = $payment->loan->borrower->first_name.' '.$payment->loan->borrower->last_name;
-            $collectorName = $payment->jamoUser ? $payment->jamoUser->first_name.' '.$payment->jamoUser->last_name : 'N/A';
+            $collectorName = $payment->verifiedBy?->name ?? 'N/A';
             $paymentMethod = (string) $payment->payment_method;
 
             if (Schema::hasTable('payment_schedule_allocations') && $payment->scheduleAllocations->isNotEmpty()) {

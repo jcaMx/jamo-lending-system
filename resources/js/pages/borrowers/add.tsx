@@ -186,6 +186,32 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
   }, [data.documents, setData]);
 
   useEffect(() => {
+    const ensureMinRows = (category: BorrowerDocumentCategory) => {
+      const current = data.documents[category];
+      const min = MIN_DOCUMENTS_PER_CATEGORY[category];
+      if (current.length >= min) return null;
+      return [
+        ...current,
+        ...Array.from({ length: min - current.length }, () => ({
+          document_type_id: '',
+          file: null,
+        })),
+      ];
+    };
+
+    const nextAddressRows = ensureMinRows('borrower_address');
+    const nextEmploymentRows = ensureMinRows('borrower_employment');
+
+    if (!nextAddressRows && !nextEmploymentRows) return;
+
+    setData('documents', {
+      ...data.documents,
+      borrower_address: nextAddressRows ?? data.documents.borrower_address,
+      borrower_employment: nextEmploymentRows ?? data.documents.borrower_employment,
+    });
+  }, [data.documents, setData]);
+
+  useEffect(() => {
     if (!marriageCertOption) return;
 
     const marriageId = String(marriageCertOption.id);
@@ -509,77 +535,18 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
               )}
             </div>
             <SectionHeader title='Documents'></SectionHeader>
-            <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
-              <h3 className="font-semibold text-gray-700">Identification documents</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label required>Primary ID Type</Label>
-                  <select
-                    value={data.documents.borrower_identity[0]?.document_type_id ?? ''}
-                    onChange={(e) => setIdentityRow(0, { document_type_id: e.target.value })}
-                    className={inputClass}
-                    required
-                  >
-                    <option value="">Select primary ID type</option>
-                    {identityTypeOptions.map((option) => (
-                      <option key={option.id} value={String(option.id)}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                  {getError('documents.borrower_identity.0.document_type_id') && (
-                    <p className="text-xs text-red-500 mt-1">{getError('documents.borrower_identity.0.document_type_id')}</p>
-                  )}
-                </div>
-                <div>
-                  <Label required>Primary ID File</Label>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => setIdentityRow(0, { file: e.target.files?.[0] ?? null })}
-                    className={inputClass}
-                    required
-                  />
-                  {data.documents.borrower_identity[0]?.file && (
-                    <p className="text-xs text-gray-600 mt-1">Selected: {data.documents.borrower_identity[0].file?.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label required>Secondary ID Type</Label>
-                  <select
-                    value={data.documents.borrower_identity[1]?.document_type_id ?? ''}
-                    onChange={(e) => setIdentityRow(1, { document_type_id: e.target.value })}
-                    className={inputClass}
-                    required
-                  >
-                    <option value="">Select secondary ID type</option>
-                    {identityTypeOptions.map((option) => (
-                      <option key={option.id} value={String(option.id)}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                  {getError('documents.borrower_identity.1.document_type_id') && (
-                    <p className="text-xs text-red-500 mt-1">{getError('documents.borrower_identity.1.document_type_id')}</p>
-                  )}
-                </div>
-                <div>
-                  <Label required>Secondary ID File</Label>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => setIdentityRow(1, { file: e.target.files?.[0] ?? null })}
-                    className={inputClass}
-                    required
-                  />
-                  {data.documents.borrower_identity[1]?.file && (
-                    <p className="text-xs text-gray-600 mt-1">Selected: {data.documents.borrower_identity[1].file?.name}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <RenderDocumentUploader
+              title="Identification Documents"
+              category="borrower_identity"
+              rows={data.documents.borrower_identity}
+              optionsByCategory={documentTypeOptions}
+              minRequired={MIN_DOCUMENTS_PER_CATEGORY.borrower_identity}
+              inputClass={inputClass}
+              onAdd={addDocRow}
+              onRemove={removeDocRow}
+              onUpdate={updateDocRow}
+              getFieldError={getError}
+            />
           </div>
         )}
 
@@ -680,6 +647,8 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
               getFieldError={getError}
             />
           </div>
+
+          
         )}
 
 

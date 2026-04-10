@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 
 class RepaymentService
 {
+    private const MONEY_EPSILON = 0.01;
 
     public function fetchBorrowersForRepayment()
     {
@@ -175,14 +176,21 @@ class RepaymentService
         float $remainingAmount,
         Carbon $paymentDate
     ): float {
-        $totalDue = (float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount);
-        $outstanding = max(0, $totalDue - (float) $schedule->amount_paid);
+        $totalDue = round((float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount), 2);
+        $currentPaid = round((float) $schedule->amount_paid, 2);
+        $outstanding = round(max(0, $totalDue - $currentPaid), 2);
 
-        if ($outstanding <= 0) {
+        if ($outstanding <= self::MONEY_EPSILON) {
+            if ($schedule->status !== ScheduleStatus::Paid) {
+                $schedule->amount_paid = $totalDue;
+                $schedule->status = ScheduleStatus::Paid;
+                $schedule->save();
+            }
+
             return $remainingAmount;
         }
 
-        $applied = min($remainingAmount, $outstanding);
+        $applied = round(min($remainingAmount, $outstanding), 2);
         if ($applied <= 0) {
             return $remainingAmount;
         }
@@ -195,16 +203,21 @@ class RepaymentService
         $interestApplied = round($applied * $interestRatio, 2);
         $penaltyApplied = round($applied * $penaltyRatio, 2);
         $delta = round($applied - ($principalApplied + $interestApplied + $penaltyApplied), 2);
-        $principalApplied += $delta;
+        $principalApplied = round($principalApplied + $delta, 2);
 
-        $schedule->amount_paid = (float) $schedule->amount_paid + $applied;
-        if ($schedule->amount_paid >= $totalDue) {
+        $newAmountPaid = round($currentPaid + $applied, 2);
+        $remainingOutstanding = round(max(0, $totalDue - $newAmountPaid), 2);
+
+        if ($remainingOutstanding <= self::MONEY_EPSILON) {
+            $schedule->amount_paid = $totalDue;
             $schedule->status = ScheduleStatus::Paid;
         } else {
+            $schedule->amount_paid = $newAmountPaid;
             $schedule->status = Carbon::parse($schedule->due_date)->lt($paymentDate)
                 ? ScheduleStatus::Overdue
                 : ScheduleStatus::Unpaid;
         }
+
         $schedule->save();
 
         if (Schema::hasTable('payment_schedule_allocations')) {
@@ -222,7 +235,7 @@ class RepaymentService
             );
         }
 
-        return $remainingAmount - $applied;
+        return round($remainingAmount - $applied, 2);
     }
 
     /**
@@ -236,8 +249,9 @@ class RepaymentService
             ->get();
 
         foreach ($unpaidSchedules as $schedule) {
-            $totalDue = $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
-            if ($schedule->amount_paid < $totalDue) {
+            $totalDue = round((float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount), 2);
+            $amountPaid = round((float) $schedule->amount_paid, 2);
+            if (($totalDue - $amountPaid) > self::MONEY_EPSILON) {
                 return false;
             }
         }
@@ -303,6 +317,7 @@ class RepaymentService
     {
         return (float) Payment::query()
             ->where('loan_id', $loan->ID)
+            ->whereRaw('LOWER(status) = ?', ['confirmed'])
             ->sum('amount');
     }
 
@@ -311,3 +326,5 @@ class RepaymentService
 
 
 }
+
+

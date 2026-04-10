@@ -98,4 +98,9 @@ class Borrower extends Model
             ->whereIn('status', ['Active', 'Pending', 'Fully_Paid', 'Bad_Debt', 'Rejected'])
             ->latest('start_date');
     }
+
+    public function disbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'borrower_id', 'ID');
+    }
 }

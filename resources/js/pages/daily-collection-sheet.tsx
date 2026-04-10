@@ -42,6 +42,12 @@ interface Props {
 }
 
 export default function DailyCollectionSheet({ due_loans, collections = [], collectors, date }: Props) {
+  const collectorOptions = Array.isArray(collectors)
+    ? collectors
+    : collectors && typeof collectors === 'object'
+      ? Object.values(collectors as Record<string, string>)
+      : [];
+
   const [searchCollector, setSearchCollector] = useState('');
   const [searchDate, setSearchDate] = useState(date || '');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -202,7 +208,7 @@ export default function DailyCollectionSheet({ due_loans, collections = [], coll
               className="px-3 py-2 border rounded shadow-sm"
             >
               <option value="">All Collectors</option>
-              {collectors.map((collector) => (
+              {collectorOptions.map((collector) => (
                 <option key={collector} value={collector}>{collector}</option>
               ))}
             </select>

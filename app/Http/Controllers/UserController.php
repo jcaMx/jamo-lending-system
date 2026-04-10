@@ -15,10 +15,10 @@ class UserController extends Controller
     public function index()
     {
         $users = $this->service->getAll();
-
+    
         $transformed = isset($users['data'])
-            ? collect($users['data'])->map(fn ($u) => $this->transformUser($u))->toArray()
-            : collect($users)->map(fn ($u) => $this->transformUser($u))->toArray();
+            ? collect($users['data'])->map(fn ($u) => $this->service->transformUser($u))->toArray()
+            : collect($users)->map(fn ($u) => $this->service->transformUser($u))->toArray();
 
         return Inertia::render('users/index', [
             'users' => $transformed
@@ -28,10 +28,14 @@ class UserController extends Controller
     public function show($id)
     {
         $user = $this->service->getById($id);
-        abort_if(!$user, 404);
+        if (! $user) {
+            return Inertia::render('NotFound')
+                ->toResponse(request())
+                ->setStatusCode(404);
+        }
 
         return Inertia::render('users/show', [
-            'user' => $this->transformUser($user->toArray())
+            'user' => $this->service->transformUser($user->toArray())
         ]);
     }
 
@@ -72,7 +76,7 @@ class UserController extends Controller
         abort_if(!$user, 404);
 
         return Inertia::render('users/edit', [
-            'user'  => $this->transformUser($user->toArray()),
+            'user'  => $this->service->transformUser($user->toArray()),
             'roles' => Role::whereIn('name', ['admin', 'cashier'])
                 ->pluck('name')
                 ->toArray(),
@@ -83,50 +87,7 @@ class UserController extends Controller
     /**
      * Transform user array for frontend
      */
-    private function transformUser(array $user): array
-    {
-        // Use actual DB fields
-        $fName = $user['fName'] ?? '';
-        $lName = $user['lName'] ?? '';
-
-        // Roles
-        $roleNames = collect($user['roles'] ?? [])
-            ->map(fn ($r) => is_array($r) ? $r['name'] : $r)
-            ->toArray();
-
-        $primaryRole = $roleNames[0] ?? '';
-
-        // Permissions
-        $permissionNames = collect($user['permissions'] ?? [])
-            ->map(fn ($p) => $p['name'])
-            ->merge(
-                collect($user['roles'] ?? [])->flatMap(function ($r) {
-                    return collect($r['permissions'] ?? [])
-                        ->map(fn ($p) => $p['name']);
-                })
-            )
-            ->unique()
-            ->values()
-            ->toArray();
-
-        // Username fallback
-        $username = $user['username']
-            ?? strtolower(substr($fName, 0, 1) . '.' . $lName);
-
-        return [
-            'id'          => $user['id'],
-            'username'    => $username,
-            'fName'       => $fName,
-            'lName'       => $lName,
-            'role'        => $primaryRole,
-            'roles'       => $roleNames,
-            'permissions' => $permissionNames,
-            'status'      => $user['deleted_at'] ? 'inactive' : 'active',
-            'lastLogin'   => $user['last_login_at'] ?? 'Never',
-            'email'       => $user['email'] ?? '',
-        ];
-    }
-
+ 
 
     public function credentials($id, Request $request)
     {

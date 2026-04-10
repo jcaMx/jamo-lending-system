@@ -1,32 +1,27 @@
 <?php
-use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BorrowerController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\MyLoanController;
+use App\Http\Controllers\Customer\MyProfileController;
+use App\Http\Controllers\Customer\MyRepaymentsController;
 use App\Http\Controllers\DailyCollectionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DisbursementController;
+use App\Http\Controllers\LoanCommentController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
 use App\Http\Controllers\UserController;
-
+use App\Models\DocumentType;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
-use App\Models\Loan;
-use App\Models\DocumentType;
-use App\Http\Controllers\LoanCommentController;
-
-
-
-use App\Http\Controllers\Customer\CustomerDashboardController;
-use App\Http\Controllers\Customer\MyLoanController;
-use App\Http\Controllers\Customer\MyRepaymentsController;
-
-use App\Http\Controllers\Customer\MyProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -79,14 +74,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
+         Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
         Route::get('/search', [BorrowerController::class, 'search'])->name('borrowers.search');
         Route::get('/{id}/loans', [BorrowerController::class, 'checkLoans'])->name('borrowers.check-loans');
+        Route::get('/{id}/income', [BorrowerController::class, 'income'])->name('borrowers.income');
         Route::delete('{id}', [BorrowerController::class, 'destroy'])->name('borrowers.destroy');
     });
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
         Route::post('/', [BorrowerController::class, 'store'])->name('borrowers.store');
-        Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
+       
         Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit');
         // Route::put('/borrowers/{borrower}', [BorrowerController::class, 'update'])->name('borrowers.update');
         Route::put('/{borrower}', [BorrowerController::class, 'update'])->name('borrowers.update');
@@ -104,11 +101,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/ViewLoans', [LoanController::class, 'viewApproved'])->name('loans.view-approved');
         Route::get('/{loan}/schedule', [LoanController::class, 'showSchedule'])->name('loans.schedule');
         Route::post('/', [LoanController::class, 'store'])->name('loans.store');
+        Route::put('/{loan}/borrower', [LoanController::class, 'updateBorrowerDetails'])->name('loans.borrower.update');
+        Route::delete('/{loan}/borrower-files/{file}', [LoanController::class, 'destroyBorrowerFile'])->name('loans.borrower-files.destroy');
+        Route::put('/{loan}/collateral', [LoanController::class, 'updateCollateral'])->name('loans.collateral.update');
+        Route::post('/{loan}/collateral-files', [LoanController::class, 'storeCollateralFiles'])->name('loans.collateral-files.store');
+        Route::delete('/{loan}/collateral-files/{file}', [LoanController::class, 'destroyCollateralFile'])->name('loans.collateral-files.destroy');
         Route::get('/{loan}', [LoanController::class, 'show'])->name('loans.show');
         Route::middleware(['role:admin'])->group(function () {
             Route::post('/approve/{loan}', [LoanController::class, 'approve'])->name('loans.approve');
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
             Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
+            Route::delete('/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
         });
     });
 
@@ -117,6 +120,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/daily-collections/export-pdf', [DailyCollectionController::class, 'exportPdf'])
         ->name('daily-collections.export');
 
+    // Disbursements
+    Route::prefix('disbursements')
+        ->group(function () {
+            Route::middleware(['role:cashier|admin'])->group(function () {
+            Route::get('/', [DisbursementController::class, 'index'])->name('disbursements.index');
+            Route::get('/{disbursement}/voucher', [DisbursementController::class, 'printVoucher'])->name('disbursements.voucher.print');
+            Route::post('/', [DisbursementController::class, 'store'])->name('disbursements.store');
+            });
+
+            Route::middleware(['role:admin'])->group(function () {
+            Route::post('/bank-accounts', [DisbursementController::class, 'storeBankAccount'])->name('disbursements.bank-accounts.store');
+            Route::post('/{disbursement}/approve', [DisbursementController::class, 'approve'])->name('disbursements.approve');
+            Route::post('/{disbursement}/complete', [DisbursementController::class, 'complete'])->name('disbursements.complete');
+            Route::post('/{disbursement}/fail', [DisbursementController::class, 'fail'])->name('disbursements.fail');
+            Route::delete('/{disbursement}', [DisbursementController::class, 'destroy'])->name('disbursements.destroy');
+            });
+        });
+
     // Repayments (match sidebar hrefs: /repayments, /repayments/add)
     Route::prefix('repayments')
         ->middleware(['role:cashier|admin'])
@@ -124,6 +145,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [RepaymentController::class, 'index'])->name('repayments.index');
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
             Route::post('/store', [RepaymentController::class, 'store'])->name('repayments.store');
+            Route::get('/pending', [RepaymentController::class, 'pending'])->name('repayments.pending');
+            Route::post('/verify/{payment}', [RepaymentController::class, 'verify'])->name('repayments.verify');
         });
 
     // Reports (match sidebar hrefs: /Reports/DCPR, /Reports/MonthlyReport)
@@ -158,14 +181,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
 
     Route::prefix('api')->group(function () {
-    Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
-    Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
-    Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
-    Route::get('/all-loans', [DashboardController::class, 'allLoans']);
-});
+        Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
+        Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
+        Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
+        Route::get('/all-loans', [DashboardController::class, 'allLoans']);
+        Route::post('/staff/evaluate-loan-rules', [LoanController::class, 'evaluateRules'])
+            ->middleware(['role:admin'])
+            ->name('api.staff.evaluate-rules');
+    });
 
-   Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])
-    ->name('loans.comments.store');
+    Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])
+        ->name('loans.comments.store');
 
 });
 
@@ -173,7 +199,6 @@ Route::middleware(['auth', 'role:admin|cashier'])->group(function () {
     Route::post('/loans/{loan}/comments', [LoanController::class, 'addComment'])->name('loans.comments.add');
     Route::delete('/loans/comments/{comment}', [LoanController::class, 'deleteComment'])->name('loans.comments.delete');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -193,14 +218,14 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
 
     Route::get('/my-loan', [MyLoanController::class, 'index'])
         ->name('customer.MyLoan');
-    
+
     Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
 
     Route::get('/my-profile', [MyProfileController::class, 'index'])
-    ->name('customer.profile');
+        ->name('customer.profile');
 
     Route::put('/my-profile', [MyProfileController::class, 'update'])
-    ->name('customer.profile.update');
+        ->name('customer.profile.update');
 
     Route::get('/applynow', function () {
         $collateralDocumentCategories = [
@@ -230,33 +255,28 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
         ]);
     })->name('apply');
     Route::post('/api/evaluate-loan-rules', [ApplicationController::class, 'evaluateRules'])
-    ->name('api.evaluate-rules');
-
+        ->name('api.evaluate-rules');
 
     Route::get('/my-loan-details', fn () => redirect('/my-loan'))->name('customer.loan.details');
 
+    
     Route::get('/test-rule-evaluator', function () {
         $service = app(\App\Services\RuleEvaluatorService::class);
         $product = \App\Models\LoanProduct::with('rules')->first();
-        
-        if (!$product) {
+
+        if (! $product) {
             return 'No loan products found';
         }
-        
+
         $result = $service->evaluate($product, null, [
             'loan_amount' => 200501,
             'monthly_income' => 50000,
             'term' => 12,
-    ]);
-    
-    return $result;
+        ]);
+
+        return $result;
+    });
+
 });
-
-
-});
-
-
-
-
 
 require __DIR__.'/settings.php';

@@ -12,6 +12,7 @@ interface BorrowerFormData {
   occupation: string;
   gender: string;
   age: string;
+  monthly_income: string;
   [key: string]: string;
 }
 
@@ -32,6 +33,8 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
     occupation: borrower.occupation ?? '',
     gender: borrower.gender ?? '',
     age: borrower.age ?? '',
+    monthly_income: borrower.monthly_income ?? '',
+
   });
 
   const openEditModal = () => {
@@ -84,6 +87,11 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
             <span className="font-medium">Occupation:</span>
             <span className="text-gray-800">{borrower.occupation || data.occupation || 'N/A'}</span>
           </div>
+         <div className="flex items-center gap-2">
+            <span className="font-medium">Monthly Income:</span>
+            <span className="text-gray-800">{borrower.monthly_income || data.monthly_income || 'N/A'}</span>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="font-medium">Gender:</span>
             <span className="text-gray-800">{borrower.gender || data.gender || 'N/A'}</span>

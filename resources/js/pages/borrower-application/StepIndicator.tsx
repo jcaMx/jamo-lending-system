@@ -6,12 +6,21 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
-  const icons = [ DollarSign, Users, Home, CreditCard];
+  const getIconForStep = (label: string, index: number) => {
+    const normalized = label.toLowerCase();
+    if (normalized.includes("borrower")) return normalized.includes("co") ? Users : User;
+    if (normalized.includes("loan")) return CreditCard;
+    if (normalized.includes("collateral")) return Home;
+    if (normalized.includes("payment") || normalized.includes("review") || normalized.includes("confirmation")) {
+      return DollarSign;
+    }
+    return [User, CreditCard, Home, Users, DollarSign][index] ?? User;
+  };
 
   return (
     <div className="flex items-center justify-center gap-2 md:gap-4 mb-12">
       {steps.map((step, index) => {
-        const Icon = icons[index];
+        const Icon = getIconForStep(step, index);
         const stepNumber = index + 1;
         const isActive = stepNumber === currentStep;
         const isCompleted = stepNumber < currentStep;

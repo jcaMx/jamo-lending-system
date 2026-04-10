@@ -59,6 +59,7 @@ class BorrowerService
                 'loans.collateral.landDetails',
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
+                'loans.collateral.files',
                 'loans.amortizationSchedules',
             ])
             ->findOrFail($borrowerId);
@@ -75,12 +76,13 @@ class BorrowerService
                     'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
                     'released' => optional($loan->start_date)?->toDateString() ?? '',
                     'maturity' => optional($loan->end_date)?->toDateString() ?? '',
-                    'repayment' => $loan->repayment_frequency?->value ?? '',
+                    'repayment' => self::stringOrEnumValue($loan->repayment_frequency),
                     'principal' => (float) $loan->principal_amount,
                     'interest' => number_format($loan->interest_rate, 2).'%',
-                    'interestType' => $loan->interest_type?->value ?? '',
+                    'interestType' => self::stringOrEnumValue($loan->interest_type),
                     'loan_type' => $loan->loan_type ?? '',
-                    'repayment_frequency' => $loan->repayment_frequency?->value ?? '',
+                    'repayment_frequency' => self::stringOrEnumValue($loan->repayment_frequency),
+                    'interest_type' => self::stringOrEnumValue($loan->interest_type),
                     'penalty' => 0,
                     'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
                     'balance' => (float) $loan->balance_remaining,
@@ -124,6 +126,7 @@ class BorrowerService
                 'first_name' => $borrower->first_name,
                 'last_name' => $borrower->last_name,
                 'age' => $this->computeAge($borrower->birth_date),
+                'monthly_income' => $borrower->borrowerEmployment?->monthly_income,
                 'occupation' => $borrower->borrowerEmployment?->occupation,
                 'gender' => $borrower->gender,
                 'address' => $borrower->borrowerAddress?->address,
@@ -168,6 +171,7 @@ class BorrowerService
             'land_details' => $collateral->landDetails,
             'vehicle_details' => $collateral->vehicleDetails,
             'atm_details' => $collateral->atmDetails,
+            'files' => $collateral->files ? [$collateral->files] : [],
         ])
             ->values()
             ->all();
@@ -185,19 +189,37 @@ class BorrowerService
             : (string) ($loan->status ?? '');
 
         return [
+            'ID' => $loan->ID,
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
-            'repayment' => $loan->repayment_frequency?->value ?? '',
+            'repayment' => self::stringOrEnumValue($loan->repayment_frequency),
             'principal' => (float) $loan->principal_amount,
             'interest' => number_format($loan->interest_rate, 2).'%',
-            'interestType' => $loan->interest_type?->value ?? '',
+            'interestType' => self::stringOrEnumValue($loan->interest_type),
             'loan_type' => $loan->loan_type ?? '',
+            'repayment_frequency' => self::stringOrEnumValue($loan->repayment_frequency),
+            'interest_type' => self::stringOrEnumValue($loan->interest_type),
             'penalty' => 0,
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,
             'status' => $status,
         ];
+    }
+
+    /**
+     * @param  mixed  $value
+     */
+    private static function stringOrEnumValue($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+
+        return (string) $value;
     }
 
     private function formatRepayments(?Loan $loan): array
@@ -208,7 +230,7 @@ class BorrowerService
 
         return Payment::query()
             ->where('loan_id', $loan->ID)
-            ->with(['jamoUser', 'loan.borrower'])
+            ->with(['verifiedBy', 'loan.borrower'])
             ->latest('payment_date')
             ->get()
             ->map(function (Payment $payment) use ($loan) {
@@ -218,10 +240,7 @@ class BorrowerService
                     : ($loan->borrower?->first_name ?? '').' '.($loan->borrower?->last_name ?? '');
                 $borrowerName = $borrowerName ?: 'Unknown Borrower';
 
-                $verifiedByName = $payment->jamoUser
-                    ? ($payment->jamoUser->first_name ?? '').' '.($payment->jamoUser->last_name ?? '')
-                    : 'Unverified';
-                $verifiedByName = trim($verifiedByName) ?: 'Unverified';
+                $verifiedByName = trim((string) ($payment->verifiedBy?->name ?? '')) ?: 'Unverified';
 
                 return [
                     'id' => $payment->ID,
@@ -276,7 +295,22 @@ class BorrowerService
 
         return DB::transaction(function () use ($data, $clean) {
             $email = $clean($data['email'] ?? null);
+            $firstName = $clean($data['borrower_first_name'] ?? null);
+             $lastName = $clean($data['borrower_last_name'] ?? null);
 
+            // Guard: Check if borrower with same email and name already exists
+            if ($email && $firstName && $lastName) {
+                $existingBorrower = Borrower::query()
+                    ->where('email', $email)
+                    ->where('first_name', $firstName)
+                    ->where('last_name', $lastName)
+                    ->first();
+
+                if ($existingBorrower) {
+                    throw new \Exception("A borrower with email '{$email}' and name '{$firstName} {$lastName}' already exists.");
+                }
+            }
+            
             $userId = null;
             // 1) If admin explicitly provided a user_id, use it
             if (! empty($data['user_id'])) {
@@ -293,7 +327,7 @@ class BorrowerService
                     ]);
 
                     $userId = $result['user']->id;
-        }
+                }
             }
 
             // -------------------------------
@@ -315,6 +349,8 @@ class BorrowerService
                 'membership_date' => now(),
                 'status' => 'Pending',
             ]);
+
+            
 
             // -------------------------------
             // Borrower Address
@@ -405,7 +441,7 @@ class BorrowerService
                         'file_path' => $storedPath,
                         'uploaded_at' => now(),
                         // Keep selected document type traceable even without document_type_id column.
-                        'description' => $category . ' (type_id:' . $documentTypeId . ')',
+                        'description' => $category.' (type_id:'.$documentTypeId.')',
                         'borrower_id' => $borrower->ID,
                         'collateral_id' => null,
                     ]);

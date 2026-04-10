@@ -19,6 +19,7 @@ class DCPRController extends Controller
 
         $rows = Payment::with(['loan.borrower'])
             ->whereDate('payment_date', $date)
+            ->whereRaw('LOWER(status) = ?', ['confirmed'])
             ->orderBy('payment_date')
             ->get()
             ->map(function ($payment) {
