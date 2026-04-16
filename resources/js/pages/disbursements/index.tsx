@@ -519,7 +519,6 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                readOnly
                 placeholder={selectedLoan ? String(selectedLoan.principal_amount) : '0.00'}
               />
               {formErrors.amount && <p className="mt-1 text-xs text-red-600">{formErrors.amount}</p>}
