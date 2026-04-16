@@ -31,6 +31,15 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  releasing_fees?: {
+    gross_amount: number;
+    processing_fee: number;
+    insurance_fee: number;
+    notary_fee: number;
+    savings_contribution: number;
+    total_fees: number;
+    net_disbursed_amount: number;
+  };
 };
 
 type FileItem = {
@@ -126,6 +135,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       interest_type: '',
       interestType: '',
       loan_type: '',
+      releasing_fees: undefined,
       penalty: 0,
       due: 0,
       balance: 0,

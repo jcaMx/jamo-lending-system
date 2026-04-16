@@ -368,7 +368,9 @@ const handleSubmit = (e: React.FormEvent) => {
                                   type="button"
                                   onClick={() => handleToggleSchedule(schedule)}
                                   className={`px-3 py-1 rounded text-xs font-medium ${
-                                    form.selectedSchedules.some((s) => s.ID === schedule.ID)
+                                    schedule.status === 'Paid'
+                                      ? 'cursor-not-allowed bg-gray-300 text-gray-600'
+                                      : form.selectedSchedules.some((s) => s.ID === schedule.ID)
                                       ? 'bg-yellow-500 text-white'
                                       : 'bg-blue-500 text-white hover:bg-blue-600'
                                   }`}

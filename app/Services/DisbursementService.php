@@ -45,12 +45,13 @@ class DisbursementService
                 throw new \RuntimeException('Loan already has released amount posted.');
             }
 
-            $processingFee = round($grossAmount * self::PROCESSING_FEE_RATE, 2);
-            $insuranceFee = round($grossAmount * self::INSURANCE_FEE_RATE, 2);
-            $notaryFee = round($grossAmount * self::NOTARY_FEE_RATE, 2);
-            $savingsContribution = round($grossAmount * self::SAVINGS_CONTRIBUTION_RATE, 2);
-            $totalFees = round($processingFee + $insuranceFee + $notaryFee + $savingsContribution, 2);
-            $netDisbursedAmount = round($grossAmount - $totalFees, 2);
+            $feeBreakdown = $this->getFeeBreakdown($grossAmount);
+            $processingFee = $feeBreakdown['processing_fee'];
+            $insuranceFee = $feeBreakdown['insurance_fee'];
+            $notaryFee = $feeBreakdown['notary_fee'];
+            $savingsContribution = $feeBreakdown['savings_contribution'];
+            $totalFees = $feeBreakdown['total_fees'];
+            $netDisbursedAmount = $feeBreakdown['net_disbursed_amount'];
 
             if ($netDisbursedAmount <= 0) {
                 throw new \RuntimeException('Net disbursed amount must be greater than zero after fees.');
@@ -132,7 +133,7 @@ class DisbursementService
 
             if ($locked->status !== 'Pending') {
                 throw new \RuntimeException('Only pending disbursements can be approved.');
-            }
+            } 
 
             $oldStatus = $locked->status;
             $locked->status = 'Processing';
@@ -150,6 +151,26 @@ class DisbursementService
 
             return $locked->fresh();
         });
+    }
+
+    public function getFeeBreakdown(float $grossAmount): array
+    {
+        $grossAmount = round(max($grossAmount, 0), 2);
+        $processingFee = round($grossAmount * self::PROCESSING_FEE_RATE, 2);
+        $insuranceFee = round($grossAmount * self::INSURANCE_FEE_RATE, 2);
+        $notaryFee = round($grossAmount * self::NOTARY_FEE_RATE, 2);
+        $savingsContribution = round($grossAmount * self::SAVINGS_CONTRIBUTION_RATE, 2);
+        $totalFees = round($processingFee + $insuranceFee + $notaryFee + $savingsContribution, 2);
+
+        return [
+            'gross_amount' => $grossAmount,
+            'processing_fee' => $processingFee,
+            'insurance_fee' => $insuranceFee,
+            'notary_fee' => $notaryFee,
+            'savings_contribution' => $savingsContribution,
+            'total_fees' => $totalFees,
+            'net_disbursed_amount' => round($grossAmount - $totalFees, 2),
+        ];
     }
 
     public function complete(

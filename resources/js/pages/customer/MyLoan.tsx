@@ -25,6 +25,15 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  releasing_fees?: {
+    gross_amount: number;
+    processing_fee: number;
+    insurance_fee: number;
+    notary_fee: number;
+    savings_contribution: number;
+    total_fees: number;
+    net_disbursed_amount: number;
+  };
 };
 
 type Collateral = {
@@ -100,6 +109,7 @@ export default function MyLoan({ authUser, collaterals = [], activeLoan = null, 
   const safeLoan: Loan = activeLoan ?? normalizedData.loans[0] ?? {
     loanNo: '-', released: '-', maturity: '-', repayment: '-', principal: 0,
     interest: '-', interestType: '-', loan_type: '-', penalty: 0, due: 0, balance: 0, status: 'N/A',
+    releasing_fees: undefined,
   };
 
   const breadcrumbs: BreadcrumbItem[] = [
