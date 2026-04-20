@@ -289,6 +289,10 @@ const Collateral = ({
           {stepError && (
             <p className="text-sm text-red-600">{stepError}</p>
           )}
+          {/* Requirement hint for optional vs required behavior */}
+          <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
+            {required ? "Collateral required for this loan product." : "Optional — you may skip this step."}
+          </p>
            <FormField
           label="Collateral Type"
           name="collateral_type"

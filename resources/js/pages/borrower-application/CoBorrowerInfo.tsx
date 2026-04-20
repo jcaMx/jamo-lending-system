@@ -158,11 +158,16 @@ const CoBorrowerInfo = ({
             e.preventDefault();
             submit();
           }}
+          noValidate
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
           {stepError && (
             <p className="text-sm text-red-600">{stepError}</p>
           )}
+          {/* Requirement hint for optional vs required behavior */}
+          <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
+            {required ? "Co-borrower required for this loan product." : "Optional — you may skip this step."}
+          </p>
 
           {data.coBorrowers.map((co, i) => (
             <div key={i} className="relative border p-4 rounded-lg space-y-4">

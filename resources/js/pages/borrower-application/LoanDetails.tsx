@@ -13,6 +13,7 @@ interface LoanDetailsProps {
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
   stepLabels?: string[];
   stepIndex?: number;
+  ruleRequirements?: { collateral: boolean; coborrower: boolean };
 }
 
 interface LoanProductItem {
@@ -87,7 +88,15 @@ const normalizeLoanProduct = (value: unknown): LoanProductItem | null => {
   };
 };
 
-const LoanDetails = ({ onNext, onPrev, formData, setFormData, stepLabels, stepIndex }: LoanDetailsProps) => {
+const LoanDetails = ({
+  onNext,
+  onPrev,
+  formData,
+  setFormData,
+  stepLabels,
+  stepIndex,
+  ruleRequirements,
+}: LoanDetailsProps) => {
   const initial = formData ?? {};
   const { data, setData, errors } = useForm({
     loan_type: initial.loan_type ?? "",
@@ -206,6 +215,10 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData, stepLabels, stepIn
   const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
   const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
   const indicatorIndex = stepIndex ?? 1;
+  const { collateral: needsCollateral, coborrower: needsCoBorrower } = ruleRequirements ?? {
+    collateral: false,
+    coborrower: false,
+  };
 
   const isMissingLoanDetails = () => {
     return (
@@ -323,6 +336,16 @@ const LoanDetails = ({ onNext, onPrev, formData, setFormData, stepLabels, stepIn
           required
           error={errors.term}
         />  
+
+        {/* Rule requirement status (UX hint for next steps) */}
+        <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
+          <p className={needsCollateral ? "text-red-600" : "text-green-700"}>
+            {needsCollateral ? "Collateral required" : "No collateral required"}
+          </p>
+          <p className={needsCoBorrower ? "text-red-600" : "text-green-700"}>
+            {needsCoBorrower ? "Co-borrower required" : "No co-borrower required"}
+          </p>
+        </div>
 
         <div className="flex justify-between mt-6">
           <button type="button" className="px-4 py-1 border border-gray-300 rounded-md hover:bg-gray-400" onClick={onPrev}>

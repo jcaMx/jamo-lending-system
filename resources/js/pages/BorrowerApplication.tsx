@@ -208,26 +208,32 @@ const BorrowerApplication = ({
             onPrev={prevStep}
             formData={formData}
             setFormData={setFormData}
+            // Pass rule requirements for inline status indicators.
+            ruleRequirements={ruleRequirements}
           />
         ),
       },
       {
         key: "coborrower",
         label: "Co-borrower",
-        include: needsCoBorrower,
+        // Always show step; validation will enforce requirement when needed.
+        include: true,
         render: () => (
           <CoBorrowerInfo
             onNext={nextStep}
             onPrev={prevStep}
             formData={formData}
             setFormData={setFormData}
+            // Let the step enforce required vs optional behavior.
+            required={needsCoBorrower}
           />
         ),
       },
       {
         key: "collateral",
         label: "Collateral",
-        include: needsCollateral,
+        // Always show step; validation will enforce requirement when needed.
+        include: true,
         render: () => (
           <Collateral
             onNext={nextStep}
@@ -235,6 +241,8 @@ const BorrowerApplication = ({
             formData={formData}
             setFormData={setFormData}
             documentTypesByCategory={documentTypesByCategory}
+            // Let the step enforce required vs optional behavior.
+            required={needsCollateral}
           />
         ),
       },

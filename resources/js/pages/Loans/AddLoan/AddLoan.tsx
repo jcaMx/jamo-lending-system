@@ -375,8 +375,8 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
     );
   }, [formData.coBorrowers]);
 
-  const showCollateralStep = ruleRequirements.collateral || hasCollateralPayload;
-  const showCoBorrowerStep = ruleRequirements.coborrower || hasCoBorrowerPayload;
+  const showCollateralStep = true;
+  const showCoBorrowerStep = true;
 
   const stepLabels = useMemo(() => {
     const labels = ["Borrower", "Loan Details"];
@@ -420,6 +420,8 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           setFormData={setFormData}
           stepLabels={stepLabels}
           stepIndex={loanStepIndex}
+          // Pass rule requirements so LoanDetails can show required/optional status.
+          ruleRequirements={ruleRequirements}
         />
       ),
     });
