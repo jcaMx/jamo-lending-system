@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\DB;
 class BorrowerService
 {
     public function __construct(
-        protected UserService $userService
+        protected UserService $userService,
+        protected DisbursementService $disbursementService
     ) {}
 
     public function getBorrowersForIndex(): Collection
@@ -188,6 +189,8 @@ class BorrowerService
             ? $loan->status->value
             : (string) ($loan->status ?? '');
 
+        $releasingFees = $this->disbursementService->getFeeBreakdown((float) $loan->principal_amount);
+
         return [
             'ID' => $loan->ID,
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
@@ -200,6 +203,7 @@ class BorrowerService
             'loan_type' => $loan->loan_type ?? '',
             'repayment_frequency' => self::stringOrEnumValue($loan->repayment_frequency),
             'interest_type' => self::stringOrEnumValue($loan->interest_type),
+            'releasing_fees' => $releasingFees,
             'penalty' => 0,
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,

@@ -1,6 +1,6 @@
 {
   "resources/css/index.css": {
-    "file": "assets/index-BtpbgoZZ.css",
+    "file": "assets/index-BjncH-rO.css",
     "src": "resources/css/index.css",
     "isEntry": true,
     "name": "index",
@@ -9,12 +9,12 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-DNTmmspe.js",
+    "file": "assets/app-CNZLii3h.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
     "css": [
-      "assets/index-BtpbgoZZ.css"
+      "assets/index-BjncH-rO.css"
     ],
     "assets": [
       "assets/hero-Bxiewug7.png",

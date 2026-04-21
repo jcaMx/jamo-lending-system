@@ -11,21 +11,21 @@ const Services = () => {
       description: "Get the financial flexibility you need when you need it most. Our Personal Loans are designed to help you cover life's unexpected expenses, consolidate debt, or fund your dream project. With competitive interest rates and flexible repayment terms...",
       image: personalLoanImg,
     },
-    // {
-    //   title: "Salary Loans",
-    //   description: "Realize your dream home you've always dreamed of! Our Home Loans offer affordable financing options to help you purchase, renovate, or refinance your property, ensuring peace of mind every step of the way.",
-    //   image: homeLoanImg,
-    // },
+    {
+      title: "Home Loans",
+      description: "Realize your dream home you've always dreamed of! Our Home Loans offer affordable financing options to help you purchase, renovate, or refinance your property, ensuring peace of mind every step of the way.",
+      image: homeLoanImg,
+    },
     {
       title: "Business Loans",
       description: "Empower your business to grow and succeed. Our Business Loans provide the capital you need to expand, acquire equipment, or manage cash flow, enabling your business to thrive in today's competitive market.",
       image: businessLoanImg,
     },
-    // {
-    //   title: "Emergency Loans",
-    //   description: "Get immediate financial support when unexpected expenses arise. Our Emergency Loans provide same-day approval and quick processing, and easy repayment options, helping you handle urgent financial needs with confidence.",
-    //   image: emergencyLoanImg,
-    // },
+    {
+      title: "Emergency Loans",
+      description: "Get immediate financial support when unexpected expenses arise. Our Emergency Loans provide same-day approval and quick processing, and easy repayment options, helping you handle urgent financial needs with confidence.",
+      image: emergencyLoanImg,
+    },
   ];
 
   return (

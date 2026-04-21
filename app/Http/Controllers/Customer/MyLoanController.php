@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Borrower;
 use App\Models\Loan;
-use App\Models\Payment;
+use App\Services\DisbursementService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class MyLoanController extends Controller
 {
+    public function __construct(
+        protected DisbursementService $disbursementService
+    ) {}
+
     /**
      * Display the authenticated user's loan details.
      */
@@ -136,14 +140,18 @@ class MyLoanController extends Controller
             ? $loan->status->value
             : (string) ($loan->status ?? '');
 
+        $releasingFees = $this->disbursementService->getFeeBreakdown((float) $loan->principal_amount);
+
         return [
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->ID),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
-            // 'repayment' => $loan->repayment_frequency?->value ?? $loan->repayment_frequency ?? '',
+            'repayment_frequency' => $loan->repayment_frequency?->value ?? $loan->repayment_frequency ?? '',
             'principal' => (float) $loan->principal_amount,
-            'interest' => (float) $loan->interest_rate,
+            'interest' => (string) $loan->interest_rate,
             'interestType' => $loan->interest_type?->value ?? $loan->interest_type ?? '',
+            'loan_type' => (string) ($loan->loan_type ?? ''),
+            'releasing_fees' => $releasingFees,
             'penalty' => 0,
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,

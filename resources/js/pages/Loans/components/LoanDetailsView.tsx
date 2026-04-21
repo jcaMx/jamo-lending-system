@@ -100,6 +100,15 @@ export interface LoanDetailsProps {
     balance_remaining: number;
     released_amount?: number | string | null;
     released_date?: string | null;
+    releasing_fees?: {
+      gross_amount: number;
+      processing_fee: number;
+      insurance_fee: number;
+      notary_fee: number;
+      savings_contribution: number;
+      total_fees: number;
+      net_disbursed_amount: number;
+    };
     has_completed_disbursement?: boolean;
     borrower: {
       ID: number;
@@ -237,6 +246,7 @@ export function LoanDetailsView({
     interest: loan.interest_rate !== undefined && loan.interest_rate !== null ? `${loan.interest_rate}%` : '',
     interestType: loan.interest_type || '',
     loan_type: loan.loan_type || '',
+    releasing_fees: loan.releasing_fees,
     due: 0,
     balance: loan.balance_remaining ?? 0,
     status: loan.status || '',
