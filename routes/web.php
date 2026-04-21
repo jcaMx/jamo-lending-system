@@ -22,6 +22,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use App\Http\Controllers\LoanSettingController;
 use App\Http\Controllers\Api\CoBorrowerController;
 
 
@@ -116,6 +117,14 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
             Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
             Route::delete('/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
+            // Loan settings routes
+            Route::prefix('loan-settings')->group(function () {
+                Route::get('/releasing-fees', [LoanSettingController::class, 'index'])->name('loan-settings.releasing-fees.index');
+                Route::post('/releasing-fees', [LoanSettingController::class, 'store'])->name('loan-settings.releasing-fees.store');
+                Route::put('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'update'])->name('loan-settings.releasing-fees.update');
+                Route::delete('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'destroy'])->name('loan-settings.releasing-fees.destroy');
+            });
+
         });
     });
 
@@ -164,7 +173,7 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
     });
 
-    // Users
+    // Users 
     Route::middleware([RoleMiddleware::class.':admin'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
