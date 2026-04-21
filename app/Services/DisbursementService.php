@@ -6,6 +6,7 @@ use App\Models\BankAccount;
 use App\Models\ChequeDetail;
 use App\Models\Disbursement;
 use App\Models\Loan;
+use App\Models\LoanCharge;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -14,11 +15,6 @@ use App\Notifications\NotifyUser;
 
 class DisbursementService
 {
-    private const PROCESSING_FEE_RATE = 0.03;
-    private const INSURANCE_FEE_RATE = 0.02;
-    private const NOTARY_FEE_RATE = 0.01;
-    private const SAVINGS_CONTRIBUTION_RATE = 0.02;
-
     public function __construct(
         protected LoanService $loanService
     ) {}
@@ -46,10 +42,6 @@ class DisbursementService
             }
 
             $feeBreakdown = $this->getFeeBreakdown($grossAmount);
-            $processingFee = $feeBreakdown['processing_fee'];
-            $insuranceFee = $feeBreakdown['insurance_fee'];
-            $notaryFee = $feeBreakdown['notary_fee'];
-            $savingsContribution = $feeBreakdown['savings_contribution'];
             $totalFees = $feeBreakdown['total_fees'];
             $netDisbursedAmount = $feeBreakdown['net_disbursed_amount'];
 
@@ -114,11 +106,8 @@ class DisbursementService
                 'method' => $disbursement->method,
                 'reference_no' => $disbursement->reference_no,
                 'gross_amount' => $grossAmount,
-                'processing_fee' => $processingFee,
-                'insurance_fee' => $insuranceFee,
-                'notary_fee' => $notaryFee,
-                'savings_contribution' => $savingsContribution,
-                'total_fees' => $totalFees,
+                'charges' => $feeBreakdown['charges'],
+                'total_fees' => $feeBreakdown['total_fees'],
                 'net_disbursed_amount' => $netDisbursedAmount,
             ]);
 
@@ -156,21 +145,27 @@ class DisbursementService
     public function getFeeBreakdown(float $grossAmount): array
     {
         $grossAmount = round(max($grossAmount, 0), 2);
-        $processingFee = round($grossAmount * self::PROCESSING_FEE_RATE, 2);
-        $insuranceFee = round($grossAmount * self::INSURANCE_FEE_RATE, 2);
-        $notaryFee = round($grossAmount * self::NOTARY_FEE_RATE, 2);
-        $savingsContribution = round($grossAmount * self::SAVINGS_CONTRIBUTION_RATE, 2);
-        $totalFees = round($processingFee + $insuranceFee + $notaryFee + $savingsContribution, 2);
-
-        return [
+        $charges = LoanCharge::getActive();
+        
+        $breakdown = [
             'gross_amount' => $grossAmount,
-            'processing_fee' => $processingFee,
-            'insurance_fee' => $insuranceFee,
-            'notary_fee' => $notaryFee,
-            'savings_contribution' => $savingsContribution,
-            'total_fees' => $totalFees,
-            'net_disbursed_amount' => round($grossAmount - $totalFees, 2),
+            'charges' => [],
+            'total_fees' => 0,
         ];
+
+        foreach ($charges as $charge) {
+            $fee = round($grossAmount * $charge->rate, 2);
+            $breakdown['charges'][$charge->name] = [
+                'rate' => (float) $charge->rate,
+                'amount' => $fee,
+            ];
+            $breakdown['total_fees'] += $fee;
+        }
+
+        $breakdown['total_fees'] = round($breakdown['total_fees'], 2);
+        $breakdown['net_disbursed_amount'] = round($grossAmount - $breakdown['total_fees'], 2);
+
+        return $breakdown;
     }
 
     public function complete(
@@ -215,12 +210,11 @@ class DisbursementService
                 optional($finalDisbursedAt)->toDateTimeString()
             );
 
-            
             $borrower = $loan->borrower;
             
             if ($borrower && $borrower->email) {
                 $borrower->notify(new NotifyUser(
-                    message: $message ?? "Your loan has been successfully released. You may now claim your funds.",
+                    message: "Your loan has been successfully released. You may now claim your funds.",
                     subject: "Loan Disbursed",
                     email: $borrower->email,
                 ));

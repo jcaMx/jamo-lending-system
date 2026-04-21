@@ -102,10 +102,7 @@ export interface LoanDetailsProps {
     released_date?: string | null;
     releasing_fees?: {
       gross_amount: number;
-      processing_fee: number;
-      insurance_fee: number;
-      notary_fee: number;
-      savings_contribution: number;
+      charges: Record<string, { rate: number; amount: number }>;
       total_fees: number;
       net_disbursed_amount: number;
     };
@@ -491,7 +488,7 @@ export function LoanDetailsView({
         {
           key: 'loanTerms' as TabKey,
           label: 'Loan Terms',
-          content: <LoanTermsTab loan={mappedLoan} />,
+          content: <LoanTermsTab loan={mappedLoan} releasingFees={mappedLoan?.releasing_fees} />,
         },
       ];
 

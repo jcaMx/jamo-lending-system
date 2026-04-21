@@ -62,6 +62,7 @@ class BorrowerService
                 'loans.collateral.atmDetails',
                 'loans.collateral.files',
                 'loans.amortizationSchedules',
+                'loans.disbursements.events',
             ])
             ->findOrFail($borrowerId);
 
@@ -189,7 +190,8 @@ class BorrowerService
             ? $loan->status->value
             : (string) ($loan->status ?? '');
 
-        $releasingFees = $this->disbursementService->getFeeBreakdown((float) $loan->principal_amount);
+        // Check for historical fees from disbursement events for disbursed loans
+        $releasingFees = $this->getHistoricalOrCurrentFees($loan);
 
         return [
             'ID' => $loan->ID,
@@ -209,6 +211,31 @@ class BorrowerService
             'balance' => (float) $loan->balance_remaining,
             'status' => $status,
         ];
+    }
+
+    private function getHistoricalOrCurrentFees(Loan $loan): array
+    {
+        // For disbursed loans, try to get historical fees from disbursement events
+        $disbursement = $loan->disbursements()->where('status', 'Completed')->first();
+
+        if ($disbursement) {
+            $requestEvent = $disbursement->events()
+                ->where('event_type', 'Requested')
+                ->whereNotNull('payload')
+                ->first();
+
+            if ($requestEvent && isset($requestEvent->payload['charges'])) {
+                return [
+                    'gross_amount' => $requestEvent->payload['gross_amount'] ?? $loan->principal_amount,
+                    'charges' => $requestEvent->payload['charges'],
+                    'total_fees' => $requestEvent->payload['total_fees'] ?? 0,
+                    'net_disbursed_amount' => $requestEvent->payload['net_disbursed_amount'] ?? $loan->principal_amount,
+                ];
+            }
+        }
+
+        // For new loans or loans without historical data, use current active charges
+        return $this->disbursementService->getFeeBreakdown((float) $loan->principal_amount);
     }
 
     /**

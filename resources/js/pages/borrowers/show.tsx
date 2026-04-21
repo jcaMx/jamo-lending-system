@@ -33,10 +33,7 @@ type Loan = {
   status: string;
   releasing_fees?: {
     gross_amount: number;
-    processing_fee: number;
-    insurance_fee: number;
-    notary_fee: number;
-    savings_contribution: number;
+    charges: Record<string, { rate: number; amount: number }>;
     total_fees: number;
     net_disbursed_amount: number;
   };
@@ -159,7 +156,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       {
         key: 'loanTerms' as TabKey,
         label: 'Loan Terms',
-        content: <LoanTermsTab loan={safeLoan} />,
+        content: <LoanTermsTab loan={safeLoan} releasingFees={safeLoan?.releasing_fees} />,
       },
       {
         key: 'loanSchedule' as TabKey,
