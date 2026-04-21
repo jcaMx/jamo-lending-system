@@ -1,24 +1,16 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import StepIndicator from "./StepIndicator";
-import { Users, Plus, Trash2, Home, CreditCard, DollarSign} from "lucide-react";
+import { Users, Plus, Trash2 } from "lucide-react";
 import { useForm } from "@inertiajs/react";
-import { FormField, SectionHeader } from "@/components/FormField";
+import { FormField } from "@/components/FormField";
 import type { CoBorrower, SharedFormData } from "./sharedFormData";
-
 
 const maritalStatusOptions = [
   { value: "Single", label: "Single" },
   { value: "Married", label: "Married" },
   { value: "Widowed", label: "Widowed" },
   { value: "Divorced", label: "Divorced" },
-];
-
-const occupationOptions = [
-  { value: "Employee", label: "Employee" },
-  { value: "Self-Employed", label: "Self-Employed" },
-  { value: "Unemployed", label: "Unemployed" },
-  { value: "Retired", label: "Retired" },
 ];
 
 interface CoBorrowerInfoProps {
@@ -29,7 +21,6 @@ interface CoBorrowerInfoProps {
   stepLabels?: string[];
   stepIndex?: number;
   required?: boolean;
-
 }
 
 const emptyCoBorrower: CoBorrower = {
@@ -64,14 +55,68 @@ const CoBorrowerInfo = ({
     formData?.coBorrowers && formData.coBorrowers.length > 0
       ? formData.coBorrowers
       : [emptyCoBorrower];
+
   const { data, setData } = useForm({
     coBorrowers: initial,
   });
+
   const [stepError, setStepError] = React.useState("");
+
+  // 🔍 SEARCH STATES
+  const [search, setSearch] = React.useState("");
+  const [results, setResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
 
   const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
   const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
   const indicatorIndex = stepIndex ?? 2;
+
+  // 🔍 HANDLE SEARCH
+  const handleSearch = async (query: string) => {
+    setSearch(query);
+
+    if (!query) {
+      setResults([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await fetch(`/co-borrowers?search=${query}`)
+      const data = await res.json();
+
+      setResults(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ SELECT RESULT → AUTO FILL
+  const selectCoBorrower = (item: any) => {
+    const updated = [...data.coBorrowers];
+
+    updated[0] = {
+      first_name: item.first_name || "",
+      last_name: item.last_name || "",
+      birth_date: item.birth_date || "",
+      marital_status: item.marital_status || "",
+      mobile: item.mobile || "",
+      dependents: item.dependents || "",
+      address: item.address || "",
+      occupation: item.occupation || "",
+      position: item.position || "",
+      employer_address: item.employer_address || "",
+    };
+
+    setData("coBorrowers", updated);
+    setFormData((prev) => ({ ...prev, coBorrowers: updated }));
+
+    setResults([]);
+    setSearch("");
+  };
 
   const handleChange = (index: number, field: keyof CoBorrower, value: string) => {
     const updated = [...data.coBorrowers];
@@ -84,7 +129,6 @@ const CoBorrowerInfo = ({
 
     updated[index][field] = sanitize.trim(value);
     setData("coBorrowers", updated);
-    // sync parent
     setFormData((prev) => ({ ...prev, coBorrowers: updated }));
   };
 
@@ -120,9 +164,10 @@ const CoBorrowerInfo = ({
 
   const submit = () => {
     const nonEmptyBorrowers = data.coBorrowers.filter((co) => !isCoBorrowerEmpty(co));
+
     if (nonEmptyBorrowers.length === 0) {
       if (required) {
-        setStepError("At least one co-borrower is required for this loan product.");
+        setStepError("At least one co-borrower is required.");
         return;
       }
       setStepError("");
@@ -131,7 +176,7 @@ const CoBorrowerInfo = ({
     }
 
     if (nonEmptyBorrowers.some(hasMissingRequired)) {
-      setStepError("Please complete all required co-borrower fields or remove the entry.");
+      setStepError("Complete all required fields or remove entry.");
       return;
     }
 
@@ -158,17 +203,41 @@ const CoBorrowerInfo = ({
             e.preventDefault();
             submit();
           }}
-          noValidate
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
-          {stepError && (
-            <p className="text-sm text-red-600">{stepError}</p>
-          )}
-          {/* Requirement hint for optional vs required behavior */}
-          <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
-            {required ? "Co-borrower required for this loan product." : "Optional — you may skip this step."}
-          </p>
+          {stepError && <p className="text-red-600 text-sm">{stepError}</p>}
 
+          {/* 🔍 SEARCH UI */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Search Existing Co-Borrower
+            </label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Search by name..."
+            />
+
+            {loading && <p className="text-sm">Searching...</p>}
+
+            {results.length > 0 && (
+              <div className="border rounded bg-white max-h-40 overflow-y-auto">
+                {results.map((item, index) => (
+                  <div
+                    key={index}
+                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => selectCoBorrower(item)}
+                  >
+                    {item.first_name} {item.last_name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* FORM */}
           {data.coBorrowers.map((co, i) => (
             <div key={i} className="relative border p-4 rounded-lg space-y-4">
               {data.coBorrowers.length > 1 && (
@@ -247,7 +316,6 @@ const CoBorrowerInfo = ({
               <FormField
                 label="Occupation"
                 name="occupation"
-                type="input"
                 value={co.occupation}
                 onChange={(v) => handleChange(i, "occupation", v)}
                 required
@@ -258,7 +326,6 @@ const CoBorrowerInfo = ({
                 name="position"
                 value={co.position}
                 onChange={(v) => handleChange(i, "position", v)}
-                
               />
 
               <FormField

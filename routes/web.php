@@ -22,6 +22,8 @@ use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use App\Http\Controllers\Api\CoBorrowerController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +73,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
+    //co-borrower   
+Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
     // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
