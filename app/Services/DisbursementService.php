@@ -156,6 +156,8 @@ class DisbursementService
         foreach ($charges as $charge) {
             $fee = round($grossAmount * $charge->rate, 2);
             $breakdown['charges'][$charge->name] = [
+                'charge_id' => $charge->id,
+                'name' => $charge->name,
                 'rate' => (float) $charge->rate,
                 'amount' => $fee,
             ];
@@ -166,6 +168,40 @@ class DisbursementService
         $breakdown['net_disbursed_amount'] = round($grossAmount - $breakdown['total_fees'], 2);
 
         return $breakdown;
+    }
+
+    public function getHistoricalOrCurrentFeeBreakdown(Loan $loan): array
+    {
+        $disbursement = $loan->disbursements()
+            ->where('status', 'Completed')
+            ->orderByDesc('disbursed_at')
+            ->orderByDesc('ID')
+            ->first();
+
+        if ($disbursement) {
+            $snapshotEvent = $disbursement->events()
+                ->whereNotNull('payload')
+                ->where(function ($query) {
+                    $query->where('event_type', 'Requested');
+                })
+                ->orderByDesc('created_at')
+                ->orderByDesc('ID')
+                ->get()
+                ->first(function ($event) {
+                    return isset($event->payload['charges']) && is_array($event->payload['charges']);
+                });
+
+            if ($snapshotEvent) {
+                return [
+                    'gross_amount' => $snapshotEvent->payload['gross_amount'] ?? (float) $loan->principal_amount,
+                    'charges' => $snapshotEvent->payload['charges'],
+                    'total_fees' => $snapshotEvent->payload['total_fees'] ?? 0,
+                    'net_disbursed_amount' => $snapshotEvent->payload['net_disbursed_amount'] ?? (float) $loan->principal_amount,
+                ];
+            }
+        }
+
+        return $this->getFeeBreakdown((float) $loan->principal_amount);
     }
 
     public function complete(

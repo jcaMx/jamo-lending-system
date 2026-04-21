@@ -17,7 +17,12 @@ type Loan = {
 interface LoanTermsTabProps {
   loan: Loan;
   releasingFees?: {
-    charges: Record<string, { rate: number; amount: number }>;
+    charges: Record<string, {
+      charge_id?: number;
+      name?: string;
+      rate: number;
+      amount: number;
+    }>;
     total_fees: number;
   };
 }

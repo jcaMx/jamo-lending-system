@@ -140,7 +140,7 @@ class MyLoanController extends Controller
             ? $loan->status->value
             : (string) ($loan->status ?? '');
 
-        $releasingFees = $this->disbursementService->getFeeBreakdown((float) $loan->principal_amount);
+        $releasingFees = $this->disbursementService->getHistoricalOrCurrentFeeBreakdown($loan);
 
         return [
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->ID),

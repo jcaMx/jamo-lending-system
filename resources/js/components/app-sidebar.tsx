@@ -106,8 +106,6 @@ const mainNavItems: NavItem[] = [
     ]
   },
 
-  { type: "link", title: "Loan Settings", icon: Settings, href: "#", roles: ["admin"] },
-
 ];
 
 

@@ -302,7 +302,7 @@ class LoanController extends Controller
         $loanData['has_completed_disbursement'] = $loan->disbursements()
             ->where('status', 'Completed')
             ->exists();
-        $loanData['releasing_fees'] = $this->disbursementService->getFeeBreakdown((float) $loan->principal_amount);
+        $loanData['releasing_fees'] = $this->disbursementService->getHistoricalOrCurrentFeeBreakdown($loan);
 
         if ($loan->borrower) {
             $loanData['borrower'] = [

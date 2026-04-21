@@ -74,6 +74,17 @@ type Props = {
   eligibleLoans: EligibleLoan[];
   bankAccounts: BankAccount[];
   initialLoanId?: number | null;
+  feeConfig: {
+    charges: Record<string, {
+      charge_id?: number;
+      name?: string;
+      rate: number;
+      amount: number;
+    }>;
+    total_fees: number;
+    gross_amount: number;
+    net_disbursed_amount: number;
+  };
 };
 
 type ActionModalState =
@@ -83,12 +94,7 @@ type ActionModalState =
     }
   | null;
 
-export default function DisbursementsIndex({ disbursements, eligibleLoans, bankAccounts, initialLoanId = null }: Props) {
-  const PROCESSING_FEE_RATE = 0.03;
-  const INSURANCE_FEE_RATE = 0.02;
-  const NOTARY_FEE_RATE = 0.01;
-  const SAVINGS_CONTRIBUTION_RATE = 0.02;
-
+export default function DisbursementsIndex({ disbursements, eligibleLoans, bankAccounts, initialLoanId = null, feeConfig }: Props) {
   const page = usePage();
   const roles = (page.props as any)?.auth?.roles ?? [];
   const isAdmin = roles.includes('admin');
@@ -167,12 +173,28 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
   }, [bankAccounts]);
 
   const grossAmount = Number(amount || 0);
-  const processingFee = grossAmount * PROCESSING_FEE_RATE;
-  const insuranceFee = grossAmount * INSURANCE_FEE_RATE;
-  const notaryFee = grossAmount * NOTARY_FEE_RATE;
-  const savingsContribution = grossAmount * SAVINGS_CONTRIBUTION_RATE;
-  const totalFees = processingFee + insuranceFee + notaryFee + savingsContribution;
-  const netDisbursedAmount = Math.max(grossAmount - totalFees, 0);
+  const feeBreakdown = useMemo(() => {
+    const charges = Object.fromEntries(
+      Object.entries(feeConfig?.charges ?? {}).map(([chargeName, charge]) => {
+        const amount = Number((grossAmount * Number(charge.rate || 0)).toFixed(2));
+
+        return [chargeName, {
+          ...charge,
+          amount,
+        }];
+      })
+    );
+
+    const totalFees = Number(
+      Object.values(charges).reduce((sum, charge) => sum + Number(charge.amount || 0), 0).toFixed(2)
+    );
+
+    return {
+      charges,
+      totalFees,
+      netDisbursedAmount: Math.max(Number((grossAmount - totalFees).toFixed(2)), 0),
+    };
+  }, [feeConfig, grossAmount]);
 
   const formatDate = (value?: string | null) => {
     if (!value) return 'N/A';
@@ -482,7 +504,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
             <span className="font-semibold text-red-600">*</span> Required fields
           </p>
           <p className="mb-4 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-            Loan proceeds are released net of 8% fees: Processing (3%), Insurance (2%), Notary (1%), Savings Contribution (2%).
+            Loan proceeds are released net of the currently configured releasing fees.
           </p>
           {eligibleLoans.length === 0 && (
             <p className="mb-4 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
@@ -516,10 +538,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 type="number"
                 min="0.01"
                 step="0.01"
-                value={amount}
+                value={selectedLoan ? String(selectedLoan.principal_amount) : '0.00'}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder={selectedLoan ? String(selectedLoan.principal_amount) : '0.00'}
+                readOnly
               />
               {formErrors.amount && <p className="mt-1 text-xs text-red-600">{formErrors.amount}</p>}
             </div>
@@ -708,14 +730,15 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
             <div className="md:col-span-3 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
               <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
                 <p>Gross Amount: <span className="font-semibold">{grossAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
-                <p>Processing Fee (3%): <span className="font-semibold">{processingFee.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
-                <p>Insurance Fee (2%): <span className="font-semibold">{insuranceFee.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
-                <p>Notary Fee (1%): <span className="font-semibold">{notaryFee.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
-                <p>Savings Contribution (2%): <span className="font-semibold">{savingsContribution.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
-                <p>Total Fees (8%): <span className="font-semibold">{totalFees.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
+                {Object.entries(feeBreakdown.charges).map(([chargeName, charge]) => (
+                  <p key={chargeName}>
+                    {charge.name ?? chargeName} ({(Number(charge.rate) * 100).toFixed(2)}%): <span className="font-semibold">{Number(charge.amount).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
+                  </p>
+                ))}
+                <p>Total Fees: <span className="font-semibold">{feeBreakdown.totalFees.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
               </div>
               <p className="mt-2 border-t pt-2">
-                Net Disbursed Amount: <span className="font-bold">{netDisbursedAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
+                Net Disbursed Amount: <span className="font-bold">{feeBreakdown.netDisbursedAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
               </p>
             </div>
             <div className="md:col-span-3">

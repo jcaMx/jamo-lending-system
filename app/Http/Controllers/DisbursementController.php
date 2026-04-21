@@ -107,6 +107,7 @@ class DisbursementController extends Controller
             'eligibleLoans' => $eligibleLoans,
             'bankAccounts' => $bankAccounts,
             'initialLoanId' => $request->integer('loan_id') ?: null,
+            'feeConfig' => $this->service->getFeeBreakdown(0),
         ]);
     }
 

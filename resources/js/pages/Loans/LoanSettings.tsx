@@ -1,299 +1,166 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Search, Edit2, Trash2, Eye } from 'lucide-react';
+import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import { route } from 'ziggy-js';
-import ConfirmDeleteModal from 'pages\borrowers\components\ConfirmDeleteModal.tsx';
-import { usePage } from '@inertiajs/react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import FeeFormModal from '@/components/FeeFormModal';
+import { Description } from '@radix-ui/react-dialog';
 
+interface LoanCharge {
+  id: number;
+  name: string;
+  description: string | null;
+  rate: string | number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
+interface LoanSettingsProps {
+  fees?: LoanCharge[];
+}
 
-export default function Index({ borrowers }: { borrowers: Borrower[] }) {
-  const breadcrumbs: BreadcrumbItem[] = [{ title: 'Borrowers', href: '/borrowers' }];
+export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
+  const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Loan Settings', href: '/Loans/loan-settings/releasing-fees' },
+    { title: 'Releasing Fees', href: '/Loans/loan-settings/releasing-fees' }
+  ];
 
-  const user = usePage().props.auth.user as { role?: string } | undefined;
-  
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const borrowersPerPage = 10;
+  const itemsPerPage = 10;
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedBorrowerId, setSelectedBorrowerId] = useState<number | null>(null);
-  const [selectedBorrowerName, setSelectedBorrowerName] = useState<string>('');
+  // Modal States
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<LoanCharge | null>(null);
 
-  const getFullName = (b: Borrower) => {
-    const first = b.first_name || b.firstname || b.borrowerFirstName || '';
-    const last = b.last_name || b.lastname || b.borrowerLastName || '';
-    const full = b.name || b.full_name || '';
-    if (full?.trim()) return full.trim();
-    if (first.trim() || last.trim()) return `${first.trim()} ${last.trim()}`.trim();
-    return 'N/A';
+  const getStatusClasses = (status: string) => {
+    const s = status?.toLowerCase() || '';
+    return s === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
   };
 
-  const getStatusInfo = (b: Borrower) => {
-    // Ensure status is a lowercase string
-    const statusRaw = b.activeLoan?.status?.trim() || '';
-    const status = statusRaw.toLowerCase();
-  
-    const statusClasses =
-      status === 'active'
-        ? 'bg-green-100 text-green-800'
-        : status === 'closed'
-        ? 'bg-gray-100 text-gray-800'
-        : status === 'blacklisted'
-        ? 'bg-red-100 text-red-800'
-        : 'bg-yellow-100 text-yellow-800';
-  
-    const statusLabel = statusRaw || 'N/A';
-    return { statusClasses, statusLabel };
+  const filteredFees = useMemo(() => {
+    return fees.filter((f) => 
+      f.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [fees, searchTerm]);
+
+  const paginatedFees = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredFees.slice(start, start + itemsPerPage);
+  }, [filteredFees, currentPage]);
+
+  const totalPages = Math.ceil(filteredFees.length / itemsPerPage);
+
+  // Handlers
+  const handleAdd = () => {
+    setSelectedFee(null);
+    setIsFormModalOpen(true);
   };
-  
 
-  const filteredBorrowers = useMemo(() => {
-    return borrowers.filter((b: Borrower) => {
-      const fullName = getFullName(b).toLowerCase();
-      const matchesSearch =
-        fullName.includes(searchTerm.toLowerCase()) ||
-        (b.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (b.city ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus =
-        statusFilter === 'all'
-          ? true
-          : (b.activeLoan?.status ?? '').toLowerCase() === statusFilter.toLowerCase();
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [borrowers, searchTerm, statusFilter]);
-
-  const paginatedBorrowers = useMemo(() => {
-    const start = (currentPage - 1) * borrowersPerPage;
-    const end = start + borrowersPerPage;
-    return filteredBorrowers.slice(start, end);
-  }, [filteredBorrowers, currentPage]);
-
-  const totalPages = Math.ceil(filteredBorrowers.length / borrowersPerPage);
-
-  // Delete flow
-  const handleDeleteClick = (borrowerId: number, borrowerName: string, e: React.MouseEvent) => {
+  const handleEdit = (e: React.MouseEvent<HTMLButtonElement>, fee: LoanCharge) => {
     e.stopPropagation();
-    setSelectedBorrowerId(borrowerId);
-    setSelectedBorrowerName(borrowerName);
-    setModalOpen(true);
+    setSelectedFee(fee);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>, fee: LoanCharge) => {
+    e.stopPropagation();
+    setSelectedFee(fee);
+    setIsDeleteModalOpen(true);
   };
 
   const confirmDelete = () => {
-    if (!selectedBorrowerId) return;
-
-    router.delete(route('borrowers.destroy', selectedBorrowerId), {
-      onSuccess: () => {
-        router.reload({ only: ['borrowers'] });
-        setModalOpen(false);
-      },
-      onError: () => {
-        // Optionally show a toast or error message
-        setModalOpen(false);
-      },
-      preserveScroll: true,
+    if (!selectedFee) return;
+    router.delete(route('loan-settings.releasing-fees.destroy', selectedFee.id), {
+      onSuccess: () => setIsDeleteModalOpen(false),
     });
   };
 
-  
-
-
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Borrowers List" />
+      <Head title="Loan Settings - Releasing Fees" />
 
-      {/* Header & Actions */}
       <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">Borrowers</h1>
+        <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">Loan Settings</h1>
 
         <div className="flex flex-1 flex-col md:flex-row gap-4 md:gap-3 md:items-center md:justify-end">
-          {/* Search Bar */}
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             <input
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search borrowers..."
-              className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] focus:outline-none transition"
+              placeholder="Search fees..."
+              className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] outline-none transition"
             />
           </div>
-
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-              Status:
-            </label>
-
-            <select
-              id="status-filter"
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] focus:outline-none transition"
-            >
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="delinquent">Delinquent</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-
-          {/* Add Borrower Button for admin only */}
-          {user?.role && String(user.role) === 'admin' && (
-            <Button
-              asChild
-              className="bg-[#FABF24] text-gray-900 font-medium px-4 py-2 rounded-lg shadow-sm hover:bg-[#f8b80f] transition-colors duration-200 inline-flex items-center"
-            >
-              <a href="/borrowers/add">+ Add Borrower</a>
-            </Button>
-          )}
+          <Button onClick={handleAdd} className="bg-[#FABF24] text-black hover:bg-[#e2ac1f]">
+            <Plus className="mr-2 h-4 w-4" /> Add Fee
+          </Button>
         </div>
       </div>
 
-      {/* Borrowers Table */}
-      <div className="mx-10 overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {['#', 'Name', 'Occupation', 'Gender', 'City', 'Email', 'Mobile', 'Status', 'Actions'].map(
-                (header) => (
-                  <th
-                    key={header}
-                    className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider"
-                  >
-                    {header}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {paginatedBorrowers.length > 0 ? (
-              paginatedBorrowers.map((b: Borrower, index: number) => {
-                const fullName = getFullName(b);
-                const { statusClasses, statusLabel } = getStatusInfo(b);
-
-                return (
-                  <tr 
-                    key={b.id} 
-                    className="hover:bg-[#FFF8E6] transition-colors duration-150 cursor-pointer"
-                    onClick={() => router.visit(`/borrowers/${b.id}`)}
-                  >
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {(currentPage - 1) * borrowersPerPage + index + 1}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{fullName}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{b.occupation ?? 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{b.gender ?? 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{b.city ?? 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{b.email ?? 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{b.mobile ?? 'N/A'}</td>
+      <div className="mx-10 overflow-hidden bg-white rounded-xl border border-gray-200 shadow-md">
+        <div className="p-5 border-b border-gray-100">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-800">Releasing Fees</h2>
+            </div>
+            
+            <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-100">
+                <tr>
+                {['Fee', 'Description', 'Rate', 'Created at', 'Updated at', 'Is Active', 'Actions'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase">{h}</th>
+                ))}
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+                {paginatedFees.map((f) => (
+                <tr key={f.id} className="hover:bg-[#FFF8E6] transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{f.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-700">{f.description}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700 font-mono">{(f.rate * 100).toFixed(2)}%</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{f.created_at}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{f.updated_at || 'N/A'}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClasses}`}
-                      >
-                        {statusLabel}
-                      </span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(f.is_active ? 'active' : 'inactive')}`}>
+                        {f.is_active ? 'Active' : 'Inactive'}
+                    </span>
                     </td>
                     <td className="px-4 py-3 flex items-center gap-2">
-                      {/* VIEW — all roles */}
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="p-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.visit(`/borrowers/${b.id}`);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-
-                      {/* {user?.role && ['admin', 'cashier'].includes(String(user.role)) ? ( */}
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="p-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.visit(`/borrowers/${b.id}/edit`);
-                          }}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      {/* ) : null} */}
-
-                      {/* DELETE — admin only */}
-                      {/* {user?.role && String(user.role) === 'admin' && ( */}
-                        {/* <Button
-                          variant="default"
-                          size="sm"
-                          className="p-1 text-red-600 hover:text-red-800"
-                          onClick={(e) => handleDeleteClick(b.id, fullName, e)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button> */}
-                      {/* )} */}
+                    <Button variant="ghost" size="sm" onClick={(e) => handleEdit(e, f)}><Edit2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => handleDeleteClick(e, f)}><Trash2 className="h-4 w-4" /></Button>
                     </td>
-
-
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={8} className="text-center py-6 text-gray-500 text-sm italic">
-                  No borrowers found matching your criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                </tr>
+                ))}
+            </tbody>
+            </table>
+            </div>
       </div>
 
-      {/* Pagination */}
-      <div className="mx-10 flex justify-between items-center py-6">
-        <Button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((prev) => prev - 1)}
-          className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-40"
-        >
-          Previous
-        </Button>
+      {/* MODALS */}
+      <FeeFormModal 
+        open={isFormModalOpen} 
+        onClose={() => setIsFormModalOpen(false)} 
+        fee={selectedFee} 
+      />
 
-        <span className="text-gray-700 text-sm">
-          Page {currentPage} of {totalPages}
-        </span>
-
-        <Button
-          disabled={currentPage === totalPages || totalPages === 0}
-          onClick={() => setCurrentPage((prev) => prev + 1)}
-          className="bg-[#FABF24] text-gray-900 px-4 py-2 rounded-lg hover:bg-[#f8b80f] disabled:opacity-40"
-        >
-          Next
-        </Button>
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+      <ConfirmDialog
+        open={isDeleteModalOpen}
+        title="Delete Releasing Fee"
+        description={`Are you sure you want to delete "${selectedFee?.name}"? This action cannot be undone.`}
         onConfirm={confirmDelete}
-        borrowerName={selectedBorrowerName}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        confirmText="Delete"
       />
     </AppLayout>
   );
 }
+
+
