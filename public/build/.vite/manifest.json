@@ -9,7 +9,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-CNZLii3h.js",
+    "file": "assets/app-prfD5CzE.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -20,9 +20,7 @@
       "assets/hero-Bxiewug7.png",
       "assets/about-BhVYX1Os.png",
       "assets/personal-loan-BVKDqltR.png",
-      "assets/home-loan-Braipakd.png",
-      "assets/business-loan-BUNAx3-W.png",
-      "assets/emergency-loan-C2Imvzpm.png"
+      "assets/business-loan-BUNAx3-W.png"
     ]
   },
   "resources/js/assets/about/about.png": {
@@ -36,14 +34,6 @@
   "resources/js/assets/services/business-loan.png": {
     "file": "assets/business-loan-BUNAx3-W.png",
     "src": "resources/js/assets/services/business-loan.png"
-  },
-  "resources/js/assets/services/emergency-loan.png": {
-    "file": "assets/emergency-loan-C2Imvzpm.png",
-    "src": "resources/js/assets/services/emergency-loan.png"
-  },
-  "resources/js/assets/services/home-loan.png": {
-    "file": "assets/home-loan-Braipakd.png",
-    "src": "resources/js/assets/services/home-loan.png"
   },
   "resources/js/assets/services/personal-loan.png": {
     "file": "assets/personal-loan-BVKDqltR.png",

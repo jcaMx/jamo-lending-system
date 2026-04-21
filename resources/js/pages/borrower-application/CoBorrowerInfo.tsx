@@ -158,6 +158,7 @@ const CoBorrowerInfo = ({
             e.preventDefault();
             submit();
           }}
+          noValidate
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
           {stepError && (

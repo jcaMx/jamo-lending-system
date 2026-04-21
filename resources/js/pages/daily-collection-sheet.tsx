@@ -267,8 +267,14 @@ export default function DailyCollectionSheet({ due_loans, collections = [], coll
               {activeTab === 'due'
                 ? `Records: ${loansToDisplay.length} | Total Due: ${formatCurrency(totalDueAmount)}`
                 : `Records: ${collections.length} | Total Collected: ${formatCurrency(totalCollections)}`}
-            </div>
           </div>
+          <Button
+            onClick={printSelectedTab}
+            className="px-4 py-2 bg-[#D97706] text-sm text-white rounded shadow hover:bg-[#C49518]"
+          >
+            Print Sheet
+          </Button>
+        </div>
         </div>
 
         <div ref={printRef} className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -352,17 +358,10 @@ export default function DailyCollectionSheet({ due_loans, collections = [], coll
         </div>
 
         <div className="flex justify-end gap-2 mt-4 relative">
-          <Button
-            onClick={printSelectedTab}
-            className="px-4 py-2 bg-[#D97706] text-sm text-white rounded shadow hover:bg-[#C49518]"
-          >
-            Print Sheet
-          </Button>
-
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="px-4 py-2 bg-[#FABF24] text-sm text-white rounded shadow hover:bg-[#C49518]"
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-900 text-sm rounded shadow hover:bg-[#FABF24]"
             >
               Export
             </button>
