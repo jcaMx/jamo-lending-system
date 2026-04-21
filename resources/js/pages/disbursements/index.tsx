@@ -78,7 +78,7 @@ type Props = {
 
 type ActionModalState =
   | {
-      mode: 'approve' | 'complete' | 'fail';
+      mode: 'approve' | 'release' | 'fail';
       row: DisbursementRow;
     }
   | null;
@@ -96,7 +96,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
     : '';
 
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'processing' | 'completed' | 'failed'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed' | 'failed'>('all');
   const [bankAccountOptions, setBankAccountOptions] = useState<BankAccount[]>(bankAccounts);
   const [loanId, setLoanId] = useState<string>(() => {
     if (initialLoanId && eligibleLoans.some((loan) => loan.id === initialLoanId)) {
@@ -105,18 +105,15 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
 
     return eligibleLoans[0] ? String(eligibleLoans[0].id) : '';
   });
-  const [amount, setAmount] = useState<string>('');
   const [method, setMethod] = useState<string>('');
   const [referenceNo, setReferenceNo] = useState<string>('');
   const [remarks, setRemarks] = useState<string>('');
-  const [voucherNo, setVoucherNo] = useState<string>('');
   const [voucherDate, setVoucherDate] = useState<string>('');
   const [payeeName, setPayeeName] = useState<string>('');
   const [payeeAddress, setPayeeAddress] = useState<string>('');
   const [payeeTin, setPayeeTin] = useState<string>('');
   const [particulars, setParticulars] = useState<string>('');
   const [bankAccountId, setBankAccountId] = useState<string>('');
-  const [chequeNo, setChequeNo] = useState<string>('');
   const [chequeDate, setChequeDate] = useState<string>('');
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -166,7 +163,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     setBankAccountOptions(bankAccounts);
   }, [bankAccounts]);
 
-  const grossAmount = Number(amount || 0);
+  const grossAmount = selectedLoan ? Number(selectedLoan.principal_amount || 0) : 0;
   const processingFee = grossAmount * PROCESSING_FEE_RATE;
   const insuranceFee = grossAmount * INSURANCE_FEE_RATE;
   const notaryFee = grossAmount * NOTARY_FEE_RATE;
@@ -186,17 +183,15 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     const errors: Record<string, string> = {};
 
     if (!loanId) errors.loan_id = 'Loan is required.';
-    if (!amount || Number(amount) <= 0) errors.amount = 'Amount must be greater than 0.';
+    if (!selectedLoan || grossAmount <= 0) errors.amount = 'Selected loan amount must be greater than 0.';
     if (!method) errors.method = 'Disbursement method is required.';
     if (['Cash', 'Cheque Voucher'].includes(method)) {
-      if (!voucherNo.trim()) errors.voucher_no = 'Voucher number is required.';
       if (!voucherDate) errors.voucher_date = 'Voucher date is required.';
       if (!payeeName.trim()) errors.payee_name = 'Payee name is required.';
       if (!particulars.trim()) errors.particulars = 'Particulars are required.';
     }
     if (method === 'Cheque Voucher') {
       if (!bankAccountId) errors.bank_account_id = 'Bank account is required.';
-      if (!chequeNo.trim()) errors.cheque_no = 'Cheque number is required.';
       if (!chequeDate) errors.cheque_date = 'Cheque date is required.';
     }
 
@@ -207,37 +202,27 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
 
     router.post('/disbursements', {
       loan_id: Number(loanId),
-      amount: Number(amount),
       method,
       currency: 'PHP',
       reference_no: referenceNo || null,
       remarks: remarks || null,
-      voucher_no: voucherNo || null,
       voucher_date: voucherDate || null,
       payee_name: payeeName || null,
       payee_address: payeeAddress || null,
       payee_tin: payeeTin || null,
       particulars: particulars || null,
-      gross_amount: Number(amount),
       bank_account_id: bankAccountId ? Number(bankAccountId) : null,
-      cheque_no: chequeNo || null,
       cheque_date: chequeDate || null,
     }, {
       preserveScroll: true,
       onSuccess: () => {
         setFormErrors({});
-        setAmount('');
         setMethod('');
         setReferenceNo('');
         setRemarks('');
-        setVoucherNo('');
         setVoucherDate('');
-        setPayeeName('');
-        setPayeeAddress('');
         setPayeeTin('');
-        setParticulars('');
         setBankAccountId('');
-        setChequeNo('');
         setChequeDate('');
       },
       onError: (errors) => {
@@ -368,7 +353,21 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     if (!actionModal) return;
 
     if (actionModal.mode === 'approve') {
-      router.post(`/disbursements/${actionModal.row.id}/approve`, {}, {
+      const errors: Record<string, string> = {};
+      if ((actionModal.row.method === 'Cash' || actionModal.row.method === 'Cheque Voucher') && !modalReceivedBy.trim()) {
+        errors.received_by_name = 'Received by / signatory is required.';
+      }
+      setActionErrors(errors);
+      if (Object.keys(errors).length > 0) {
+        return;
+      }
+
+      router.post(`/disbursements/${actionModal.row.id}/approve`, {
+        reference_no: modalReferenceNo || null,
+        disbursed_at: modalReleaseDate || null,
+        received_by_name: modalReceivedBy || null,
+        received_at: modalReleaseDate || null,
+      }, {
         preserveScroll: true,
         onSuccess: () => closeActionModal(),
         onError: (errors) => {
@@ -386,7 +385,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
       return;
     }
 
-    if (actionModal.mode === 'complete') {
+    if (actionModal.mode === 'release') {
       router.post(
         `/disbursements/${actionModal.row.id}/complete`,
         {
@@ -513,15 +512,14 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 Amount <span className="text-red-600">*</span>
               </label>
               <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                type="text"
+                value={selectedLoan ? grossAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ''}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder={selectedLoan ? String(selectedLoan.principal_amount) : '0.00'}
+                placeholder="Select loan first"
+                readOnly
               />
               {formErrors.amount && <p className="mt-1 text-xs text-red-600">{formErrors.amount}</p>}
+              <p className="mt-1 text-xs text-gray-500">Auto-filled from the selected loan.</p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -553,16 +551,16 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
             {['Cash', 'Cheque Voucher'].includes(method) && (
               <>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Voucher No. <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    value={voucherNo}
-                    onChange={(e) => setVoucherNo(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    placeholder="e.g. 002205"
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Voucher No.
+                    </label>
+                    <input
+                    value={method === 'Cheque Voucher' ? 'Auto-generated as CHV-2026-000001' : method === 'Cash' ? 'Auto-generated as CV-2026-000001' : ''}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      placeholder="Select method first"
+                      readOnly
                   />
-                  {formErrors.voucher_no && <p className="mt-1 text-xs text-red-600">{formErrors.voucher_no}</p>}
+                  <p className="mt-1 text-xs text-gray-500">Generated by the system when the request is created.</p>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -651,17 +649,18 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   </select>
                   {formErrors.bank_account_id && <p className="mt-1 text-xs text-red-600">{formErrors.bank_account_id}</p>}
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Cheque No. <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    value={chequeNo}
-                    onChange={(e) => setChequeNo(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  />
-                  {formErrors.cheque_no && <p className="mt-1 text-xs text-red-600">{formErrors.cheque_no}</p>}
-                </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Cheque No.
+                    </label>
+                    <input
+                      value="Auto-generated as CHQ-2026-000001"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      placeholder="System-generated on request creation"
+                      readOnly
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Generated by the system when the cheque voucher request is created.</p>
+                  </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Cheque Date <span className="text-red-600">*</span>
@@ -731,7 +730,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
         </div>
 
         <div className="flex gap-2">
-          {(['all', 'pending', 'processing', 'completed', 'failed'] as const).map((tab) => (
+          {(['all', 'pending', 'completed', 'failed'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -794,7 +793,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                               onClick={() => openActionModal('approve', row)}
                               className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
                             >
-                              Approve
+                              Approve & Release
                             </button>
                             <button
                               type="button"
@@ -809,10 +808,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                           <>
                             <button
                               type="button"
-                              onClick={() => openActionModal('complete', row)}
+                              onClick={() => openActionModal('release', row)}
                               className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
                             >
-                              Complete
+                              Release
                             </button>
                             <button
                               type="button"
@@ -823,13 +822,25 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                             </button>
                           </>
                         )}
-                        {row.voucher && (
+                        {row.voucher && row.status === 'Completed' && (
                           <button
                             type="button"
-                            onClick={() => window.open(`/disbursements/${row.id}/voucher`, '_blank', 'noopener,noreferrer')}
-                            className="rounded border border-[#D9C895] bg-[#FFF4D6] px-3 py-1 text-xs font-medium text-gray-800 hover:bg-[#FBE7B0]"
+                            onClick={() =>
+                              window.open(
+                                row.method === 'Cheque Voucher' && row.voucher?.cheque
+                                  ? `/disbursements/${row.id}/package`
+                                  : `/disbursements/${row.id}/voucher`,
+                                '_blank',
+                                'noopener,noreferrer',
+                              )
+                            }
+                            className={`rounded px-3 py-1 text-xs font-medium text-gray-800 ${
+                              row.method === 'Cheque Voucher' && row.voucher?.cheque
+                                ? 'border border-[#C7E3CD] bg-[#F1FBF3] hover:bg-[#E2F7E6]'
+                                : 'border border-[#D9C895] bg-[#FFF4D6] hover:bg-[#FBE7B0]'
+                            }`}
                           >
-                            Print Voucher
+                            {row.method === 'Cheque Voucher' && row.voucher?.cheque ? 'Print Voucher + Cheque' : 'Print Voucher'}
                           </button>
                         )}
                         {isAdmin && row.status === 'Failed' && (
@@ -863,8 +874,8 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
         <DialogContent className="border-[#E8D7A3] bg-[#FFFBF0] shadow-2xl sm:max-w-xl">
           <DialogHeader className="rounded-lg border border-[#F1E3B8] bg-[#FFF4D6] p-4">
             <DialogTitle className="text-gray-900">
-              {actionModal?.mode === 'approve' && 'Approve Disbursement'}
-              {actionModal?.mode === 'complete' && 'Complete Disbursement'}
+              {actionModal?.mode === 'approve' && 'Approve & Release Disbursement'}
+              {actionModal?.mode === 'release' && 'Release Disbursement'}
               {actionModal?.mode === 'fail' && 'Fail Disbursement'}
             </DialogTitle>
             <DialogDescription className="text-gray-700">
@@ -877,12 +888,49 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
           </DialogHeader>
 
           {actionModal?.mode === 'approve' && (
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-              This will move the disbursement to processing and mark the linked voucher as approved.
+            <div className="grid grid-cols-1 gap-4 rounded-lg border border-[#D6E7FF] bg-[#F5F9FF] p-4 md:grid-cols-2">
+              {actionErrors.error && (
+                <div className="md:col-span-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {actionErrors.error}
+                </div>
+              )}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Reference No.</label>
+                <input
+                  value={modalReferenceNo}
+                  onChange={(e) => setModalReferenceNo(e.target.value)}
+                  className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
+                  placeholder="Optional external reference"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Release Date</label>
+                <input
+                  type="date"
+                  value={modalReleaseDate}
+                  onChange={(e) => setModalReleaseDate(e.target.value)}
+                  className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">Blank uses the current date and time.</p>
+                {actionErrors.disbursed_at && <p className="mt-1 text-xs text-red-600">{actionErrors.disbursed_at}</p>}
+              </div>
+              {(actionModal.row.method === 'Cash' || actionModal.row.method === 'Cheque Voucher') && (
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Received By / Signatory</label>
+                  <input
+                    value={modalReceivedBy}
+                    onChange={(e) => setModalReceivedBy(e.target.value)}
+                    className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
+                    placeholder="Borrower or authorized representative"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">This will finalize the release and set the voucher as released.</p>
+                  {actionErrors.received_by_name && <p className="mt-1 text-xs text-red-600">{actionErrors.received_by_name}</p>}
+                </div>
+              )}
             </div>
           )}
 
-          {actionModal?.mode === 'complete' && (
+          {actionModal?.mode === 'release' && (
             <div className="grid grid-cols-1 gap-4 rounded-lg border border-[#EFE2B6] bg-[#FFFCF4] p-4 md:grid-cols-2">
               {actionErrors.error && (
                 <div className="md:col-span-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -953,13 +1001,13 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               className={
                 actionModal?.mode === 'fail'
                   ? 'bg-red-600 text-white hover:bg-red-700'
-                  : actionModal?.mode === 'complete'
+                  : actionModal?.mode === 'release'
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
               }
             >
-              {actionModal?.mode === 'approve' && 'Confirm Approval'}
-              {actionModal?.mode === 'complete' && 'Confirm Completion'}
+              {actionModal?.mode === 'approve' && 'Confirm Approve & Release'}
+              {actionModal?.mode === 'release' && 'Confirm Release'}
               {actionModal?.mode === 'fail' && 'Confirm Failure'}
             </Button>
           </DialogFooter>
