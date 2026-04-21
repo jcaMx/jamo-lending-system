@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Search } from 'lucide-react';
+import {ConfirmDialog }from '@/components/ConfirmDialog';
 
 type Repayment = {
   id: number;
@@ -63,7 +64,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
   const renderStatus = (status: string) => {
     const normalizedStatus = status?.toLowerCase() ?? 'pending';
     const className =
-      normalizedStatus === 'verified'
+      normalizedStatus === 'confirmed'
         ? 'bg-green-100 text-green-700'
         : normalizedStatus === 'rejected'
           ? 'bg-red-100 text-red-700'
@@ -76,18 +77,31 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     );
   };
 
-  const handleVerify = (paymentId: number) => {
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ open:false, title: '', description: '', onConfirm: () => {} });
 
+
+  const handleVerify = (paymentId: number) => {
     if (!confirmCollectedBy) {
       alert('Please select a collector.');
       return;
     }
-    if (!confirm('Mark this payment as verified?')) return;
 
-    router.post(`/repayments/verify/${paymentId}`, {}, {
-      onSuccess: () => {
-        // router.reload({ only: ['repayments'] });
-        router.get('/repayments', {}, { preserveState: true, preserveScroll: true });
+    setConfirmDialog({
+      open: true,
+      title: 'Confirm Payment',
+      description: 'Mark this payment as confirmed?',
+      onConfirm: () => {
+        router.post(`/repayments/verify/${paymentId}`, {}, {
+          onSuccess: () => {
+            setConfirmDialog({ ...confirmDialog, open: false });
+            router.get('/repayments', {}, { preserveState: true, preserveScroll: true });
+          },
+        });
       },
     });
   };
@@ -350,6 +364,19 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
           </tbody>
         </table>
       </div>
+      {/* Confirm Dialog for verifying payment */}
+      <ConfirmDialog
+      open={confirmDialog.open}
+      title={confirmDialog.title}
+      description={confirmDialog.description}
+      onConfirm={confirmDialog.onConfirm}
+      onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      confirmText="Confirm"
+      cancelText="Cancel"
+    />
+
     </AppLayout>
   );
 }
+
+

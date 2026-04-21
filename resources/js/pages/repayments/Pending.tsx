@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 type Payment = {
   id: number;
@@ -21,16 +22,33 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Pending', href: '/repayments/pending' },
 ];
 
+
+
 export default function Pending({ pendingPayments }: Props) {
   const [successMessage, setSuccessMessage] = useState('');
-
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ open:false, title: '', description: '', onConfirm: () => {} });
   const handleVerify = (paymentId: number) => {
-    if (!confirm('Mark this payment as verified?')) return;
-
-    router.post(`/repayments/verify/${paymentId}`, {}, {
-      onSuccess: () => setSuccessMessage('Payment verified successfully!'),
-    });
+      setConfirmDialog({
+        open: true,
+        title: 'Confirm Verification',
+        description: 'Are you sure you want to mark this payment as verified?',
+        onConfirm: () => {
+          router.post(`/repayments/verify/${paymentId}`, {}, {
+            onSuccess: () => {
+              setSuccessMessage('Payment verified successfully!');
+              setConfirmDialog((prev) => ({ ...prev, open: false }));
+            },
+          });
+        },
+      });
   };
+
+
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -83,6 +101,15 @@ export default function Pending({ pendingPayments }: Props) {
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+            open={confirmDialog.open}
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            onConfirm={confirmDialog.onConfirm}
+            onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+            confirmText="Confirm"
+            cancelText="Cancel"
+      />
     </AppLayout>
   );
 }

@@ -6,18 +6,15 @@ use App\Models\BankAccount;
 use App\Models\ChequeDetail;
 use App\Models\Disbursement;
 use App\Models\Loan;
+use App\Models\LoanCharge;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Notifications\NotifyUser;
 
 class DisbursementService
 {
-    private const PROCESSING_FEE_RATE = 0.03;
-    private const INSURANCE_FEE_RATE = 0.02;
-    private const NOTARY_FEE_RATE = 0.01;
-    private const SAVINGS_CONTRIBUTION_RATE = 0.02;
-
     public function __construct(
         protected LoanService $loanService
     ) {}
@@ -44,12 +41,9 @@ class DisbursementService
                 throw new \RuntimeException('Loan already has released amount posted.');
             }
 
-            $processingFee = round($grossAmount * self::PROCESSING_FEE_RATE, 2);
-            $insuranceFee = round($grossAmount * self::INSURANCE_FEE_RATE, 2);
-            $notaryFee = round($grossAmount * self::NOTARY_FEE_RATE, 2);
-            $savingsContribution = round($grossAmount * self::SAVINGS_CONTRIBUTION_RATE, 2);
-            $totalFees = round($processingFee + $insuranceFee + $notaryFee + $savingsContribution, 2);
-            $netDisbursedAmount = round($grossAmount - $totalFees, 2);
+            $feeBreakdown = $this->getFeeBreakdown($grossAmount);
+            $totalFees = $feeBreakdown['total_fees'];
+            $netDisbursedAmount = $feeBreakdown['net_disbursed_amount'];
 
             if ($netDisbursedAmount <= 0) {
                 throw new \RuntimeException('Net disbursed amount must be greater than zero after fees.');
@@ -112,11 +106,8 @@ class DisbursementService
                 'method' => $disbursement->method,
                 'reference_no' => $disbursement->reference_no,
                 'gross_amount' => $grossAmount,
-                'processing_fee' => $processingFee,
-                'insurance_fee' => $insuranceFee,
-                'notary_fee' => $notaryFee,
-                'savings_contribution' => $savingsContribution,
-                'total_fees' => $totalFees,
+                'charges' => $feeBreakdown['charges'],
+                'total_fees' => $feeBreakdown['total_fees'],
                 'net_disbursed_amount' => $netDisbursedAmount,
             ]);
 
@@ -138,7 +129,7 @@ class DisbursementService
 
             if ($locked->status !== 'Pending') {
                 throw new \RuntimeException('Only pending disbursements can be approved.');
-            }
+            } 
 
             $oldStatus = $locked->status;
             $locked->status = 'Completed';
@@ -183,6 +174,68 @@ class DisbursementService
         });
     }
 
+    public function getFeeBreakdown(float $grossAmount): array
+    {
+        $grossAmount = round(max($grossAmount, 0), 2);
+        $charges = LoanCharge::getActive();
+        
+        $breakdown = [
+            'gross_amount' => $grossAmount,
+            'charges' => [],
+            'total_fees' => 0,
+        ];
+
+        foreach ($charges as $charge) {
+            $fee = round($grossAmount * $charge->rate, 2);
+            $breakdown['charges'][$charge->name] = [
+                'charge_id' => $charge->id,
+                'name' => $charge->name,
+                'rate' => (float) $charge->rate,
+                'amount' => $fee,
+            ];
+            $breakdown['total_fees'] += $fee;
+        }
+
+        $breakdown['total_fees'] = round($breakdown['total_fees'], 2);
+        $breakdown['net_disbursed_amount'] = round($grossAmount - $breakdown['total_fees'], 2);
+
+        return $breakdown;
+    }
+
+    public function getHistoricalOrCurrentFeeBreakdown(Loan $loan): array
+    {
+        $disbursement = $loan->disbursements()
+            ->where('status', 'Completed')
+            ->orderByDesc('disbursed_at')
+            ->orderByDesc('ID')
+            ->first();
+
+        if ($disbursement) {
+            $snapshotEvent = $disbursement->events()
+                ->whereNotNull('payload')
+                ->where(function ($query) {
+                    $query->where('event_type', 'Requested');
+                })
+                ->orderByDesc('created_at')
+                ->orderByDesc('ID')
+                ->get()
+                ->first(function ($event) {
+                    return isset($event->payload['charges']) && is_array($event->payload['charges']);
+                });
+
+            if ($snapshotEvent) {
+                return [
+                    'gross_amount' => $snapshotEvent->payload['gross_amount'] ?? (float) $loan->principal_amount,
+                    'charges' => $snapshotEvent->payload['charges'],
+                    'total_fees' => $snapshotEvent->payload['total_fees'] ?? 0,
+                    'net_disbursed_amount' => $snapshotEvent->payload['net_disbursed_amount'] ?? (float) $loan->principal_amount,
+                ];
+            }
+        }
+
+        return $this->getFeeBreakdown((float) $loan->principal_amount);
+    }
+
     public function complete(
         Disbursement $disbursement,
         int $actorId,
@@ -224,6 +277,16 @@ class DisbursementService
                 (float) $locked->amount,
                 optional($finalDisbursedAt)->toDateTimeString()
             );
+
+            $borrower = $loan->borrower;
+            
+            if ($borrower && $borrower->email) {
+                $borrower->notify(new NotifyUser(
+                    message: "Your loan has been successfully released. You may now claim your funds.",
+                    subject: "Loan Disbursed",
+                    email: $borrower->email,
+                ));
+            }
 
             if ($locked->voucher) {
                 $voucherReceivedAt = $receivedAt ? Carbon::parse($receivedAt) : $finalDisbursedAt;

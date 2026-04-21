@@ -109,7 +109,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     if (nextDueSchedule) {
       update("selectedSchedules", [nextDueSchedule]);
       update("amount", nextDueSchedule.total_due.toFixed(2));
-      if (nextDueSchedule.due_date) update("collectionDate", nextDueSchedule.due_date);
+      // if (nextDueSchedule.due_date) update("collectionDate", nextDueSchedule.due_date);
     } else {
       update("selectedSchedules", []);
       update("amount", "");
@@ -140,9 +140,9 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     update("selectedSchedules", sortedSelected);
     update("amount", nextAmount ? nextAmount.toFixed(2) : "");
 
-    if (sortedSelected.length > 0 && sortedSelected[0].due_date) {
-      update("collectionDate", sortedSelected[0].due_date);
-    }
+    // if (sortedSelected.length > 0 && sortedSelected[0].due_date) {
+    //   update("collectionDate", sortedSelected[0].due_date);
+    // }
   };
 
  const handleMethodChange = (method: string) => {
@@ -155,9 +155,9 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
   };
 
   // ONLINE PAYMENTS
-  if (["Bank", "GCash", "Cebuana"].includes(method)) {
-    referenceNumber = generateCode("REF");
-  }
+  // if (["Bank", "GCash", "Cebuana"].includes(method)) {
+  //   referenceNumber = generateCode("REF");
+  // }
 
   // CASH VOUCHER (NO REFERENCE ❗)
   if (method === "Cash Voucher") {
@@ -368,7 +368,9 @@ const handleSubmit = (e: React.FormEvent) => {
                                   type="button"
                                   onClick={() => handleToggleSchedule(schedule)}
                                   className={`px-3 py-1 rounded text-xs font-medium ${
-                                    form.selectedSchedules.some((s) => s.ID === schedule.ID)
+                                    schedule.status === 'Paid'
+                                      ? 'cursor-not-allowed bg-gray-300 text-gray-600'
+                                      : form.selectedSchedules.some((s) => s.ID === schedule.ID)
                                       ? 'bg-yellow-500 text-white'
                                       : 'bg-blue-500 text-white hover:bg-blue-600'
                                   }`}
@@ -417,8 +419,8 @@ const handleSubmit = (e: React.FormEvent) => {
                 >
                   <option value="">Select method</option>
                   <option value="Cash">Cash</option>
-                  <option value="Cash Voucher">Cash Voucher</option>
-                  <option value="Cheque Voucher">Cheque Voucher</option>
+                  {/* <option value="Cash Voucher">Cash Voucher</option>
+                  <option value="Cheque Voucher">Cheque Voucher</option> */}
                   <option value="Bank">Bank</option>
                   <option value="Cebuana">Cebuana</option>
                   <option value="GCash">GCash</option>
@@ -455,11 +457,11 @@ const handleSubmit = (e: React.FormEvent) => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Cheque Number *</label>
                     <input
-  type="text"
-  value={form.chequeNumber}
-  readOnly
-  className={inputClass + " bg-gray-100"}
-/>
+                        type="text"
+                        value={form.chequeNumber}
+                        readOnly
+                        className={inputClass + " bg-gray-100"}
+                      />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Bank Name *</label>
@@ -486,11 +488,12 @@ const handleSubmit = (e: React.FormEvent) => {
               {ONLINE_METHODS.includes(form.method) && (
                 <div>
                   <label className="block text-sm font-medium mb-1">Reference Number</label>
-                 <input
-  value={form.referenceNumber}
-  readOnly
-  className={inputClass + " bg-gray-100"}
-/>
+                 <input 
+                  type="text"
+                  value={form.referenceNumber}
+                  onChange={(e) => update("referenceNumber", e.target.value)}
+                  className={inputClass}
+                />
                 </div>
               )}
 
@@ -521,10 +524,10 @@ const handleSubmit = (e: React.FormEvent) => {
                 <label className="block text-sm font-medium mb-1">Collection Date</label>
                 <input
                   type="date"
-                  value={form.collectionDate || today}//on default today
+                  value={form.collectionDate}//on default today
                   onChange={(e) => update("collectionDate", e.target.value)}
                   className={inputClass}
-                  disabled={!isCashMethod}
+                  // disabled={!isCashMethod}
                 />
               </div>
             </div>

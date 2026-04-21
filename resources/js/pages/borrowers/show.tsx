@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { SquarePen } from "lucide-react";
 
 import BorrowerInfoCard from './BorrowerInfoCard';
 import RepaymentsTab from './components/Tabs/RepaymentsTab';
@@ -12,7 +11,7 @@ import LoanCollateralTab from './components/Tabs/LoanCollateralTab';
 import LoanFilesTab from './components/Tabs/LoanFilesTab';
 import CoBorrowerTab from './components/Tabs/CoBorrowerTab';
 import LoanCommentsTab from './components/Tabs/LoanCommentsTab';
-import loan from '@/routes/applications/loan';
+import TabSwitcher from '@/components/TabSwitcher';
 
 type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
 
@@ -32,6 +31,17 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  releasing_fees?: {
+    gross_amount: number;
+    charges: Record<string, {
+      charge_id?: number;
+      name?: string;
+      rate: number;
+      amount: number;
+    }>;
+    total_fees: number;
+    net_disbursed_amount: number;
+  };
 };
 
 type FileItem = {
@@ -127,6 +137,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       interest_type: '',
       interestType: '',
       loan_type: '',
+      releasing_fees: undefined,
       penalty: 0,
       due: 0,
       balance: 0,
@@ -150,7 +161,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       {
         key: 'loanTerms' as TabKey,
         label: 'Loan Terms',
-        content: <LoanTermsTab loan={safeLoan} />,
+        content: <LoanTermsTab loan={safeLoan} releasingFees={safeLoan?.releasing_fees} />,
       },
       {
         key: 'loanSchedule' as TabKey,
@@ -195,8 +206,6 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
 
     return tabs;
   }, [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower, borrower.comments]);
-
-  const currentTab = tabItems.find((tab) => tab.key === activeTab);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -243,25 +252,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       </div>
 
       {/* TABS */}
-      <div className="m-4 bg-white rounded-lg shadow space-y-2 mb-6 border border-gray-100">
-        <div className="flex gap-2 overflow-hidden">
-          {tabItems.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 font-medium whitespace-nowrap transition-colors duration-150 ${
-                activeTab === tab.key
-                  ? 'bg-[#D97706] text-white border-b-2 border-orange-500 shadow-sm'
-                  : 'bg-white text-gray-600 border-b-2 border-transparent hover:text-gray-800'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mx-2">{currentTab?.content}</div>
-      </div>
+      <TabSwitcher items={tabItems} activeKey={activeTab} onChange={setActiveTab} />
       
     </AppLayout>
   );

@@ -5,6 +5,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { LoanApplicationsPageProps } from '@/types/loan';
 import { route } from 'ziggy-js';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { LoanDetailsView, type LoanDetailsProps } from './components/LoanDetailsView';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -12,10 +14,98 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'View Loan Applications', href: '/Loans/VLA' },
 ];
 
+const pendingDetailsBreadcrumbs: BreadcrumbItem[] = [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Loans', href: '/Loans' },
+  { title: 'View Loan Applications', href: '/Loans/VLA' },
+  { title: 'Loan Details', href: '#' },
+];
+
 const formatCurrency = (value: number | null | undefined) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return 'N/A';
   return `P${Number(value).toLocaleString()}`;
 };
+
+export function PendingLoanDetails({ loan }: LoanDetailsProps) {
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ open: false, title: '', description: '', onConfirm: () => {} });
+
+  const handleApprove = () => {
+    setConfirmDialog({
+      open: true,
+      title: 'Approve Loan',
+      description:
+        'Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.',
+      onConfirm: () => {
+        router.post(route('loans.approve', loan.ID), {}, {
+          onSuccess: () => {
+            setConfirmDialog({ ...confirmDialog, open: false });
+            router.visit(route('loans.view-approved'));
+          },
+          onError: (errors) => {
+            console.error('Approval failed:', errors);
+            setConfirmDialog({ ...confirmDialog, open: false });
+          },
+        });
+      },
+    });
+  };
+
+  const handleReject = () => {
+    setConfirmDialog({
+      open: true,
+      title: 'Reject Loan',
+      description: 'Are you sure you want to reject this loan?',
+      onConfirm: () => {
+        router.post(route('loans.reject', loan.ID), {}, {
+          onSuccess: () => {
+            setConfirmDialog({ ...confirmDialog, open: false });
+            router.visit(route('loans.view-rejected'));
+          },
+          onError: (errors) => {
+            console.error('Rejection failed:', errors);
+            setConfirmDialog({ ...confirmDialog, open: false });
+          },
+        });
+      },
+    });
+  };
+
+  return (
+    <LoanDetailsView
+      loan={loan}
+      breadcrumbs={pendingDetailsBreadcrumbs}
+      headTitle="Loan Application Details"
+      pageTitle="Loan Application Details"
+      headerActions={
+        <>
+          <Button onClick={handleApprove} className="bg-green-600 text-white hover:bg-green-700">
+            Approve Loan
+          </Button>
+          <Button onClick={handleReject} className="bg-red-600 text-white hover:bg-red-700">
+            Reject
+          </Button>
+        </>
+      }
+      onBack={() => router.visit(route('loans.view'))}
+      extraDialogs={
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+          confirmText="Confirm"
+          cancelText="Cancel"
+        />
+      }
+    />
+  );
+}
 
 export default function ViewLoanApplications() {
   const { props } = usePage<LoanApplicationsPageProps>();
@@ -93,4 +183,3 @@ export default function ViewLoanApplications() {
     </AppLayout>
   );
 }
-

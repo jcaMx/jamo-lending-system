@@ -10,6 +10,7 @@ use App\Models\Files;
 use App\Models\Formula;
 use App\Models\Loan;
 use App\Models\LoanProduct;
+use App\Services\DisbursementService;
 use App\Services\LoanService;
 use App\Services\RuleEvaluatorService;
 use App\Models\LoanComment;
@@ -18,14 +19,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use App\Notifications\NotifyUser;
 
 
 class LoanController extends Controller
 {
     protected LoanService $loanService;
-    public function __construct(LoanService $loanService)
+    protected DisbursementService $disbursementService;
+
+    public function __construct(LoanService $loanService, DisbursementService $disbursementService)
     {
         $this->loanService = $loanService;
+        $this->disbursementService = $disbursementService;
     }
 
     public function index()
@@ -294,6 +299,10 @@ class LoanController extends Controller
         }
 
         $loanData = $loan->toArray();
+        $loanData['has_completed_disbursement'] = $loan->disbursements()
+            ->where('status', 'Completed')
+            ->exists();
+        $loanData['releasing_fees'] = $this->disbursementService->getHistoricalOrCurrentFeeBreakdown($loan);
 
         if ($loan->borrower) {
             $loanData['borrower'] = [

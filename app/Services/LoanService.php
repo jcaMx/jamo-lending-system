@@ -85,6 +85,7 @@ class LoanService
 
         $borrower = $loan->borrower;
         $borrower->notify(new NotifyUser(
+            subject: 'Your Loan Application is Approved',
             message: $message,
             email: $borrower->email,
             // sms: $borrower->$user->profile->phone ?? null
@@ -152,6 +153,7 @@ class LoanService
         $borrower = $loan->borrower;
         $borrower->notify(new NotifyUser(
             message: $message,
+            subject: 'Your Loan Application has been Rejected',
             email: $borrower->email,
             // sms: $borrower->$user->profile->phone ?? null
         ));
@@ -292,10 +294,12 @@ class LoanService
             ->each(function ($schedule) {
                 $borrower = $schedule->loan->borrower;
                 $borrower->notify(new NotifyUser(
-                    message: "Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
+                    subject: 'Upcoming Loan Payment Due',
+                    message: "Hi {$borrower->name}!, Your loan payment of ₱{$schedule->installment_amount} is due on {$schedule->due_date->format('M d, Y')}.",
                     email: $borrower->email
                 ));
             });
+
     }
 
 }

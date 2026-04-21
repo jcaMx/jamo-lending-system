@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BankAccount;
 use App\Models\Disbursement;
 use App\Models\Loan;
+use App\Notifications\NotifyUser;
 use App\Services\DisbursementService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -106,6 +107,7 @@ class DisbursementController extends Controller
             'eligibleLoans' => $eligibleLoans,
             'bankAccounts' => $bankAccounts,
             'initialLoanId' => $request->integer('loan_id') ?: null,
+            'feeConfig' => $this->service->getFeeBreakdown(0),
         ]);
     }
 
@@ -403,6 +405,16 @@ class DisbursementController extends Controller
                 $validated['failure_code'] ?? null,
                 $validated['failure_reason']
             );
+
+            // Notify borrower of failed disbursement
+            $borrower = $disbursement->loan?->borrower;
+            if ($borrower) {
+                $borrower->notify(new NotifyUser(
+                    message: "Your loan disbursement could not be completed. Reason: {$validated['failure_reason']}",
+                    subject: "Disbursement Failed",
+                    email: $borrower->email
+                ));
+            }
 
             return back()->with('success', 'Disbursement marked as failed.');
         } catch (\Throwable $e) {

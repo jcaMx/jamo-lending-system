@@ -92,7 +92,8 @@ class DefaultPenaltyService implements IPenaltyCalculator
 
                     $borrower = $loan->borrower;
                     $borrower->notify(new NotifyUser(
-                        message: "A penalty of ₱{$penaltyAmount} has been applied to your loan #{$loan->ID} for overdue payment.",
+                        subject: 'Penalty Applied',
+                        message: "Hi {$borrower->name}!, a penalty of ₱{$penaltyAmount} has been applied to your loan #{$loan->ID} for overdue payment. Please make sure to settle your dues to avoid further penalties. Thank you!",
                         email: $borrower->email
                     ));
                     // Update loan balance

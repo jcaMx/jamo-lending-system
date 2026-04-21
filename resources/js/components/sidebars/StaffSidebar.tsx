@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { Link, usePage } from '@inertiajs/react';
-import { Folder, LayoutGrid, ChevronDown, ChevronRight, Banknote, Coins, FileChartColumnIncreasing, HandCoins, User } from 'lucide-react';
+import { Folder, LayoutGrid, ChevronDown, ChevronRight, Banknote, Coins, FileChartColumnIncreasing, HandCoins, User, Settings } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { BorrowersIcon } from '@/components/icons/BorrowersIcon';
 import { useState, useEffect } from 'react';
@@ -108,6 +108,9 @@ const mainNavItems: NavItem[] = [
 
     ]
   },
+
+  { type: "link", title: "Loan Settings", icon: Settings, href: "/Loans/loan-settings/releasing-fees", roles: ["admin"] },
+
 ];
 
 

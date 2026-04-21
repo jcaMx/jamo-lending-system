@@ -25,6 +25,17 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  releasing_fees?: {
+    gross_amount: number;
+    charges: Record<string, {
+      charge_id?: number;
+      name?: string;
+      rate: number;
+      amount: number;
+    }>;
+    total_fees: number;
+    net_disbursed_amount: number;
+  };
 };
 
 type Collateral = {
@@ -100,6 +111,7 @@ export default function MyLoan({ authUser, collaterals = [], activeLoan = null, 
   const safeLoan: Loan = activeLoan ?? normalizedData.loans[0] ?? {
     loanNo: '-', released: '-', maturity: '-', repayment: '-', principal: 0,
     interest: '-', interestType: '-', loan_type: '-', penalty: 0, due: 0, balance: 0, status: 'N/A',
+    releasing_fees: undefined,
   };
 
   const breadcrumbs: BreadcrumbItem[] = [
@@ -121,7 +133,7 @@ export default function MyLoan({ authUser, collaterals = [], activeLoan = null, 
     {
       key: 'loanTerms' as TabKey,
       label: 'Loan Terms',
-      content: <LoanTermsTab loan={safeLoan} />,
+      content: <LoanTermsTab loan={safeLoan} releasingFees={safeLoan?.releasing_fees} />,
     },
     {
       key: 'loanCollateral' as TabKey,

@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\DB;
 class BorrowerService
 {
     public function __construct(
-        protected UserService $userService
+        protected UserService $userService,
+        protected DisbursementService $disbursementService
     ) {}
 
     public function getBorrowersForIndex(): Collection
@@ -61,6 +62,7 @@ class BorrowerService
                 'loans.collateral.atmDetails',
                 'loans.collateral.files',
                 'loans.amortizationSchedules',
+                'loans.disbursements.events',
             ])
             ->findOrFail($borrowerId);
 
@@ -188,6 +190,9 @@ class BorrowerService
             ? $loan->status->value
             : (string) ($loan->status ?? '');
 
+        // Check for historical fees from disbursement events for disbursed loans
+        $releasingFees = $this->getHistoricalOrCurrentFees($loan);
+
         return [
             'ID' => $loan->ID,
             'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
@@ -200,11 +205,17 @@ class BorrowerService
             'loan_type' => $loan->loan_type ?? '',
             'repayment_frequency' => self::stringOrEnumValue($loan->repayment_frequency),
             'interest_type' => self::stringOrEnumValue($loan->interest_type),
+            'releasing_fees' => $releasingFees,
             'penalty' => 0,
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,
             'status' => $status,
         ];
+    }
+
+    private function getHistoricalOrCurrentFees(Loan $loan): array
+    {
+        return $this->disbursementService->getHistoricalOrCurrentFeeBreakdown($loan);
     }
 
     /**
@@ -295,7 +306,22 @@ class BorrowerService
 
         return DB::transaction(function () use ($data, $clean) {
             $email = $clean($data['email'] ?? null);
+            $firstName = $clean($data['borrower_first_name'] ?? null);
+             $lastName = $clean($data['borrower_last_name'] ?? null);
 
+            // Guard: Check if borrower with same email and name already exists
+            if ($email && $firstName && $lastName) {
+                $existingBorrower = Borrower::query()
+                    ->where('email', $email)
+                    ->where('first_name', $firstName)
+                    ->where('last_name', $lastName)
+                    ->first();
+
+                if ($existingBorrower) {
+                    throw new \Exception("A borrower with email '{$email}' and name '{$firstName} {$lastName}' already exists.");
+                }
+            }
+            
             $userId = null;
             // 1) If admin explicitly provided a user_id, use it
             if (! empty($data['user_id'])) {
@@ -334,6 +360,8 @@ class BorrowerService
                 'membership_date' => now(),
                 'status' => 'Pending',
             ]);
+
+            
 
             // -------------------------------
             // Borrower Address

@@ -55,7 +55,7 @@ setStats([
 { label: 'To Be Reviewed Loan Applications', value: data.to_review_loans, color: 'bg-purple-500', icon: <CheckSquare className="w-6 h-6" /> },
 { label: 'Open Loans', value: data.open_loans, color: 'bg-sky-500', icon: <FileText className="w-6 h-6" /> },
 { label: 'Fully Paid Loans', value: data.fully_paid, color: 'bg-violet-500', icon: <Check className="w-6 h-6" /> },
-{ label: 'Restructured Loans', value: data.restructured, color: 'bg-green-600', icon: <Handshake className="w-6 h-6" /> },
+// { label: 'Restructured Loans', value: data.restructured, color: 'bg-green-600', icon: <Handshake className="w-6 h-6" /> },
 { label: 'Default Loans', value: data.defaulted, color: 'bg-gray-500', icon: <FileWarning className="w-6 h-6" /> },
 ]);
 })

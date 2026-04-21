@@ -22,6 +22,9 @@ use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use App\Http\Controllers\LoanSettingController;
+use App\Http\Controllers\Api\CoBorrowerController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -71,19 +74,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
+    //co-borrower   
+Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
     // Borrowers
     Route::prefix('borrowers')->middleware(['role:admin|cashier'])->group(function () {
         Route::get('/', [BorrowerController::class, 'index'])->name('borrowers.index');
         Route::get('/search', [BorrowerController::class, 'search'])->name('borrowers.search');
-        Route::get('/{id}/loans', [BorrowerController::class, 'checkLoans'])->name('borrowers.check-loans');
-        Route::get('/{id}/income', [BorrowerController::class, 'income'])->name('borrowers.income');
-        Route::delete('{id}', [BorrowerController::class, 'destroy'])->name('borrowers.destroy');
+        Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show')->whereNumber('id');
+        Route::get('/{id}/loans', [BorrowerController::class, 'checkLoans'])->name('borrowers.check-loans')->whereNumber('id');
+        Route::get('/{id}/income', [BorrowerController::class, 'income'])->name('borrowers.income')->whereNumber('id');
+        Route::delete('{id}', [BorrowerController::class, 'destroy'])->name('borrowers.destroy')->whereNumber('id');
     });
     Route::prefix('borrowers')->middleware(['role:admin'])->group(function () {
         Route::get('/add', [BorrowerController::class, 'add'])->name('borrowers.add');
         Route::post('/', [BorrowerController::class, 'store'])->name('borrowers.store');
-        Route::get('/{id}', [BorrowerController::class, 'show'])->name('borrowers.show');
-        Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit');
+       
+        Route::get('/{id}/edit', [BorrowerController::class, 'show'])->name('borrowers.edit')->whereNumber('id');
         // Route::put('/borrowers/{borrower}', [BorrowerController::class, 'update'])->name('borrowers.update');
         Route::put('/{borrower}', [BorrowerController::class, 'update'])->name('borrowers.update');
     });
@@ -111,6 +117,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
             Route::post('/close/{loan}', [LoanController::class, 'close'])->name('loans.close');
             Route::delete('/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
+            // Loan settings routes
+            Route::prefix('loan-settings')->group(function () {
+                Route::get('/releasing-fees', [LoanSettingController::class, 'index'])->name('loan-settings.releasing-fees.index');
+                Route::post('/releasing-fees', [LoanSettingController::class, 'store'])->name('loan-settings.releasing-fees.store');
+                Route::put('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'update'])->name('loan-settings.releasing-fees.update');
+                Route::delete('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'destroy'])->name('loan-settings.releasing-fees.destroy');
+            });
+
         });
     });
 
@@ -161,7 +175,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/monthly/print', [MCPRController::class, 'printPreview'])->name('reports.monthly.print');
     });
 
-    // Users
+    // Users 
     Route::middleware([RoleMiddleware::class.':admin'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/add', [UserController::class, 'add'])->name('users.add');
