@@ -247,14 +247,10 @@ export default function DCPR({ rows = [], reportDate }: Props) {
         </div>
 
         <div className="flex justify-end mt-4 gap-2 relative">
-          <button onClick={printPage} className="px-4 py-2 bg-[#D97706] text-white rounded shadow hover:bg-[#C49518]">
-            Print
-          </button>
-
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="px-4 py-2 bg-[#FABF24] text-white rounded shadow hover:bg-[#C49518]"
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-900 rounded shadow hover:bg-[#FABF24]"
             >
               Export
             </button>
@@ -266,6 +262,10 @@ export default function DCPR({ rows = [], reportDate }: Props) {
               </div>
             )}
           </div>
+
+          <button onClick={printPage} className="px-4 py-2 bg-[#D97706] text-white rounded shadow hover:bg-[#C49518]">
+            Print
+          </button>
         </div>
       </div>
     </AppLayout>

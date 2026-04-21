@@ -307,14 +307,10 @@ export default function MCPR({ rows = [] }: Props) {
         </div>
 
         <div className="flex items-center gap-3 justify-end">
-          <button className="px-4 py-2 bg-[#D97706] text-white rounded shadow hover:bg-[#C49518]" onClick={printPage}>
-            Print
-          </button>
-
           <div className="relative">
             <button
               onClick={() => setDropdownOpen((s) => !s)}
-              className="px-4 py-2 bg-[#FABF24] text-white rounded shadow hover:bg-[#C49518]"
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-900 rounded shadow hover:bg-[#FABF24]"
             >
               Export
             </button>
@@ -326,6 +322,10 @@ export default function MCPR({ rows = [] }: Props) {
               </div>
             )}
           </div>
+
+          <button className="px-4 py-2 bg-[#D97706] text-white rounded shadow hover:bg-[#C49518]" onClick={printPage}>
+            Print
+          </button>
         </div>
       </div>
     </AppLayout>
