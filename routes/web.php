@@ -139,6 +139,8 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             Route::middleware(['role:cashier|admin'])->group(function () {
             Route::get('/', [DisbursementController::class, 'index'])->name('disbursements.index');
             Route::get('/{disbursement}/voucher', [DisbursementController::class, 'printVoucher'])->name('disbursements.voucher.print');
+            Route::get('/{disbursement}/cheque', [DisbursementController::class, 'printCheque'])->name('disbursements.cheque.print');
+            Route::get('/{disbursement}/package', [DisbursementController::class, 'printChequePackage'])->name('disbursements.package.print');
             Route::post('/', [DisbursementController::class, 'store'])->name('disbursements.store');
             });
 

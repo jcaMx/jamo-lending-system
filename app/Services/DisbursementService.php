@@ -28,7 +28,7 @@ class DisbursementService
                 throw new \RuntimeException('Only approved/active loans can be disbursed.');
             }
 
-            $grossAmount = (float) $data['amount'];
+            $grossAmount = round((float) $loan->principal_amount, 2);
             if ($grossAmount <= 0) {
                 throw new \RuntimeException('Disbursement amount must be greater than zero.');
             }
@@ -77,14 +77,14 @@ class DisbursementService
                 $voucher = Voucher::create([
                     'disbursement_id' => $disbursement->ID,
                     'loan_id' => $loan->ID,
-                    'voucher_no' => $data['voucher_no'],
+                    'voucher_no' => $this->generateVoucherNumber($disbursement->method),
                     'voucher_type' => $disbursement->method === 'Cheque Voucher' ? 'cheque' : 'cash',
                     'voucher_date' => $data['voucher_date'],
                     'payee_name' => $data['payee_name'],
                     'payee_address' => $data['payee_address'] ?? null,
                     'payee_tin' => $data['payee_tin'] ?? null,
                     'particulars' => $data['particulars'],
-                    'gross_amount' => $data['gross_amount'] ?? $grossAmount,
+                    'gross_amount' => $grossAmount,
                     'prepared_by_user_id' => $actorId,
                     'status' => 'draft',
                 ]);
@@ -96,7 +96,7 @@ class DisbursementService
                         'voucher_id' => $voucher->ID,
                         'bank_account_id' => $bankAccount->ID,
                         'bank_name' => $bankAccount->bank_name,
-                        'cheque_no' => $data['cheque_no'],
+                        'cheque_no' => $this->generateChequeNumber(),
                         'cheque_date' => $data['cheque_date'],
                     ]);
                 }
@@ -115,9 +115,16 @@ class DisbursementService
         });
     }
 
-    public function approve(Disbursement $disbursement, int $actorId): Disbursement
+    public function approve(
+        Disbursement $disbursement,
+        int $actorId,
+        ?string $referenceNo = null,
+        ?string $disbursedAt = null,
+        ?string $receivedByName = null,
+        ?string $receivedAt = null
+    ): Disbursement
     {
-        return DB::transaction(function () use ($disbursement, $actorId) {
+        return DB::transaction(function () use ($disbursement, $actorId, $referenceNo, $disbursedAt, $receivedByName, $receivedAt) {
             $locked = Disbursement::query()->lockForUpdate()->findOrFail($disbursement->ID);
 
             if ($locked->status !== 'Pending') {
@@ -125,18 +132,43 @@ class DisbursementService
             } 
 
             $oldStatus = $locked->status;
-            $locked->status = 'Processing';
+            $locked->status = 'Completed';
             $locked->approved_by = $actorId;
             $locked->approved_at = now();
+            $locked->processed_by = $actorId;
+
+            $finalDisbursedAt = $disbursedAt ? Carbon::parse($disbursedAt) : Carbon::now();
+            if ($finalDisbursedAt->gt(Carbon::now()->addDay())) {
+                throw new \RuntimeException('Disbursed date cannot be set too far in the future.');
+            }
+
+            $locked->disbursed_at = $finalDisbursedAt;
+            if ($referenceNo !== null && $referenceNo !== '') {
+                $locked->reference_no = $referenceNo;
+            }
+
             $locked->save();
 
-            if ($locked->voucher && $locked->voucher->status === 'draft') {
+            $loan = Loan::query()->findOrFail($locked->loan_id);
+            $this->loanService->finalizeLoanDisbursement(
+                $loan,
+                (float) $locked->amount,
+                optional($finalDisbursedAt)->toDateTimeString()
+            );
+
+            if ($locked->voucher) {
+                $voucherReceivedAt = $receivedAt ? Carbon::parse($receivedAt) : $finalDisbursedAt;
                 $locked->voucher->approved_by_user_id = $actorId;
-                $locked->voucher->status = 'approved';
+                $locked->voucher->status = 'released';
+                $locked->voucher->received_by_name = $receivedByName;
+                $locked->voucher->received_at = $voucherReceivedAt;
                 $locked->voucher->save();
             }
 
-            $this->addEvent($locked, 'Approved', $oldStatus, $locked->status, $actorId);
+            $this->addEvent($locked, 'Approved & Released', $oldStatus, $locked->status, $actorId, [
+                'reference_no' => $locked->reference_no,
+                'merged_release' => true,
+            ]);
 
             return $locked->fresh();
         });
@@ -326,6 +358,52 @@ class DisbursementService
         } while (Disbursement::query()->where('disbursement_no', $value)->exists());
 
         return $value;
+    }
+
+    private function generateVoucherNumber(string $method): string
+    {
+        $prefix = $method === 'Cheque Voucher' ? 'CHV' : 'CV';
+        $year = now()->format('Y');
+
+        $latestForYear = Voucher::query()
+            ->where('voucher_no', 'like', $prefix . '-' . $year . '-%')
+            ->orderByDesc('voucher_no')
+            ->value('voucher_no');
+
+        $nextNumber = $this->nextSequenceNumber($latestForYear);
+
+        return sprintf('%s-%s-%06d', $prefix, $year, $nextNumber);
+    }
+
+    private function generateChequeNumber(): string
+    {
+        $prefix = 'CHQ';
+        $year = now()->format('Y');
+
+        $latestForYear = ChequeDetail::query()
+            ->where('cheque_no', 'like', $prefix . '-' . $year . '-%')
+            ->orderByDesc('cheque_no')
+            ->value('cheque_no');
+
+        $nextNumber = $this->nextSequenceNumber($latestForYear);
+
+        return sprintf('%s-%s-%06d', $prefix, $year, $nextNumber);
+    }
+
+    private function nextSequenceNumber(?string $latestValue): int
+    {
+        if (! $latestValue) {
+            return 1;
+        }
+
+        $parts = explode('-', $latestValue);
+        $lastPart = end($parts);
+
+        if (! is_string($lastPart) || ! ctype_digit($lastPart)) {
+            return 1;
+        }
+
+        return ((int) $lastPart) + 1;
     }
 
     private function generateIdempotencyKey(): string

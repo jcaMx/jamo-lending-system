@@ -119,34 +119,28 @@ class DisbursementController extends Controller
 
         $validated = $request->validate([
             'loan_id' => 'required|exists:loan,ID',
-            'amount' => 'required|numeric|min:0.01',
             'currency' => 'nullable|string|size:3',
             'method' => 'required|string|in:Cash,Cheque Voucher',
             'reference_no' => 'nullable|string|max:100',
             'remarks' => 'nullable|string|max:255',
-            'voucher_no' => 'nullable|string|max:30',
             'voucher_date' => 'nullable|date',
             'payee_name' => 'nullable|string|max:255',
             'payee_address' => 'nullable|string|max:255',
             'payee_tin' => 'nullable|string|max:50',
             'particulars' => 'nullable|string|max:1000',
-            'gross_amount' => 'nullable|numeric|min:0.01',
             'bank_account_id' => 'nullable|exists:bank_accounts,ID',
-            'cheque_no' => 'nullable|string|max:50',
             'cheque_date' => 'nullable|date',
         ]);
 
         if (in_array($validated['method'], ['Cash', 'Cheque Voucher'], true)) {
             $voucherErrors = [];
 
-            if (empty($validated['voucher_no'])) $voucherErrors['voucher_no'] = 'Voucher number is required.';
             if (empty($validated['voucher_date'])) $voucherErrors['voucher_date'] = 'Voucher date is required.';
             if (empty($validated['payee_name'])) $voucherErrors['payee_name'] = 'Payee name is required.';
             if (empty($validated['particulars'])) $voucherErrors['particulars'] = 'Particulars are required.';
 
             if ($validated['method'] === 'Cheque Voucher') {
                 if (empty($validated['bank_account_id'])) $voucherErrors['bank_account_id'] = 'Bank account is required.';
-                if (empty($validated['cheque_no'])) $voucherErrors['cheque_no'] = 'Cheque number is required.';
                 if (empty($validated['cheque_date'])) $voucherErrors['cheque_date'] = 'Cheque date is required.';
             }
 
@@ -203,11 +197,18 @@ class DisbursementController extends Controller
         ], 201);
     }
 
-    public function approve(Disbursement $disbursement)
+    public function approve(Request $request, Disbursement $disbursement)
     {
         if (! auth()->user()?->hasRole('admin')) {
             abort(403, 'Only admin can approve disbursements.');
         }
+
+        $validated = $request->validate([
+            'reference_no' => 'nullable|string|max:100',
+            'disbursed_at' => 'nullable|date',
+            'received_by_name' => 'nullable|string|max:255',
+            'received_at' => 'nullable|date',
+        ]);
 
         $actorId = auth()->id();
         if (! $actorId) {
@@ -215,9 +216,16 @@ class DisbursementController extends Controller
         }
 
         try {
-            $this->service->approve($disbursement, $actorId);
+            $this->service->approve(
+                $disbursement,
+                $actorId,
+                $validated['reference_no'] ?? null,
+                $validated['disbursed_at'] ?? null,
+                $validated['received_by_name'] ?? null,
+                $validated['received_at'] ?? null
+            );
 
-            return back()->with('success', 'Disbursement approved and moved to processing.');
+            return back()->with('success', 'Disbursement approved and released.');
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Failed to approve disbursement: ' . $e->getMessage()]);
         }
@@ -274,6 +282,11 @@ class DisbursementController extends Controller
                 ->withErrors(['error' => 'This disbursement does not have a voucher to print.']);
         }
 
+        if ($disbursement->status !== 'Completed') {
+            return redirect()->route('disbursements.index')
+                ->withErrors(['error' => 'Voucher printing is only available after disbursement completion.']);
+        }
+
         return Inertia::render('disbursements/voucher-print', [
             'voucher' => [
                 'id' => $disbursement->voucher->ID,
@@ -317,6 +330,56 @@ class DisbursementController extends Controller
                 'name' => trim(($disbursement->loan?->borrower?->first_name ?? '') . ' ' . ($disbursement->loan?->borrower?->last_name ?? '')),
             ],
         ]);
+    }
+
+    public function printCheque(Disbursement $disbursement)
+    {
+        $disbursement->load([
+            'loan.borrower',
+            'creator',
+            'approver',
+            'processor',
+            'voucher.chequeDetail.bankAccount',
+            'voucher.preparedBy',
+            'voucher.approvedBy',
+        ]);
+
+        if (! $disbursement->voucher || ! $disbursement->voucher->chequeDetail) {
+            return redirect()->route('disbursements.index')
+                ->withErrors(['error' => 'This disbursement does not have cheque details to print.']);
+        }
+
+        if ($disbursement->status !== 'Completed') {
+            return redirect()->route('disbursements.index')
+                ->withErrors(['error' => 'Cheque printing is only available after disbursement completion.']);
+        }
+
+        return Inertia::render('disbursements/cheque-print', $this->buildChequePrintPayload($disbursement));
+    }
+
+    public function printChequePackage(Disbursement $disbursement)
+    {
+        $disbursement->load([
+            'loan.borrower',
+            'creator',
+            'approver',
+            'processor',
+            'voucher.chequeDetail.bankAccount',
+            'voucher.preparedBy',
+            'voucher.approvedBy',
+        ]);
+
+        if (! $disbursement->voucher || ! $disbursement->voucher->chequeDetail) {
+            return redirect()->route('disbursements.index')
+                ->withErrors(['error' => 'This disbursement does not have cheque details to print.']);
+        }
+
+        if ($disbursement->status !== 'Completed') {
+            return redirect()->route('disbursements.index')
+                ->withErrors(['error' => 'Cheque package printing is only available after disbursement completion.']);
+        }
+
+        return Inertia::render('disbursements/cheque-package-print', $this->buildChequePrintPayload($disbursement));
     }
 
     public function fail(Request $request, Disbursement $disbursement)
@@ -392,5 +455,52 @@ class DisbursementController extends Controller
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Failed to delete disbursement: ' . $e->getMessage()]);
         }
+    }
+
+    private function buildChequePrintPayload(Disbursement $disbursement): array
+    {
+        return [
+            'voucher' => [
+                'id' => $disbursement->voucher->ID,
+                'voucher_no' => $disbursement->voucher->voucher_no,
+                'voucher_type' => $disbursement->voucher->voucher_type,
+                'voucher_date' => optional($disbursement->voucher->voucher_date)->toDateString(),
+                'payee_name' => $disbursement->voucher->payee_name,
+                'payee_address' => $disbursement->voucher->payee_address,
+                'payee_tin' => $disbursement->voucher->payee_tin,
+                'particulars' => $disbursement->voucher->particulars,
+                'gross_amount' => (float) $disbursement->voucher->gross_amount,
+                'status' => $disbursement->voucher->status,
+                'received_by_name' => $disbursement->voucher->received_by_name,
+                'received_at' => optional($disbursement->voucher->received_at)->toDateTimeString(),
+                'remarks' => $disbursement->remarks,
+                'prepared_by' => $disbursement->voucher->preparedBy?->name ?? $disbursement->creator?->name ?? '',
+                'approved_by' => $disbursement->voucher->approvedBy?->name ?? $disbursement->approver?->name ?? '',
+                'checked_by' => $disbursement->processor?->name ?? '',
+                'cheque' => [
+                    'bank_account_id' => $disbursement->voucher->chequeDetail->bank_account_id,
+                    'bank_name' => $disbursement->voucher->chequeDetail->bankAccount?->bank_name ?? $disbursement->voucher->chequeDetail->bank_name,
+                    'account_name' => $disbursement->voucher->chequeDetail->bankAccount?->account_name,
+                    'account_number' => $disbursement->voucher->chequeDetail->bankAccount?->account_number,
+                    'cheque_no' => $disbursement->voucher->chequeDetail->cheque_no,
+                    'cheque_date' => optional($disbursement->voucher->chequeDetail->cheque_date)->toDateString(),
+                ],
+            ],
+            'disbursement' => [
+                'id' => $disbursement->ID,
+                'disbursement_no' => $disbursement->disbursement_no,
+                'method' => $disbursement->method,
+                'reference_no' => $disbursement->reference_no,
+                'disbursed_at' => optional($disbursement->disbursed_at)->toDateTimeString(),
+                'remarks' => $disbursement->remarks,
+            ],
+            'loan' => [
+                'id' => $disbursement->loan?->ID,
+                'loan_type' => $disbursement->loan?->loan_type,
+            ],
+            'borrower' => [
+                'name' => trim(($disbursement->loan?->borrower?->first_name ?? '') . ' ' . ($disbursement->loan?->borrower?->last_name ?? '')),
+            ],
+        ];
     }
 }
