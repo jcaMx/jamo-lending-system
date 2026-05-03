@@ -111,7 +111,6 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
         Route::put('/{loan}/collateral', [LoanController::class, 'updateCollateral'])->name('loans.collateral.update');
         Route::post('/{loan}/collateral-files', [LoanController::class, 'storeCollateralFiles'])->name('loans.collateral-files.store');
         Route::delete('/{loan}/collateral-files/{file}', [LoanController::class, 'destroyCollateralFile'])->name('loans.collateral-files.destroy');
-        Route::get('/{loan}', [LoanController::class, 'show'])->name('loans.show');
         Route::middleware(['role:admin'])->group(function () {
             Route::post('/approve/{loan}', [LoanController::class, 'approve'])->name('loans.approve');
             Route::post('/reject/{loan}', [LoanController::class, 'reject'])->name('loans.reject');
@@ -119,13 +118,14 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             Route::delete('/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
             // Loan settings routes
             Route::prefix('loan-settings')->group(function () {
-                Route::get('/releasing-fees', [LoanSettingController::class, 'index'])->name('loan-settings.releasing-fees.index');
+                Route::get('/', [LoanSettingController::class, 'index'])->name('loan-settings.index');
                 Route::post('/releasing-fees', [LoanSettingController::class, 'store'])->name('loan-settings.releasing-fees.store');
                 Route::put('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'update'])->name('loan-settings.releasing-fees.update');
                 Route::delete('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'destroy'])->name('loan-settings.releasing-fees.destroy');
             });
 
         });
+        Route::get('/{loan}', [LoanController::class, 'show'])->name('loans.show');
     });
 
     // Daily Collection Sheets

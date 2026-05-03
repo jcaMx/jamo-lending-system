@@ -8,6 +8,21 @@ use Illuminate\Support\Collection;
 class LoanSettingService
 {
     /**
+     * Build the loan settings payload for the single settings page.
+     */
+    public function getSections(): array
+    {
+        return [
+            'releasingFees' => [
+                'key' => 'releasingFees',
+                'title' => 'Releasing Fees',
+                'description' => 'Manage charges applied during loan releasing.',
+                'items' => $this->getAllFees(),
+            ],
+        ];
+    }
+
+    /**
      * Get all releasing fees with basic sorting.
      */
     public function getAllFees(): Collection

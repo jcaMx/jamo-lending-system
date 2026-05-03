@@ -11,7 +11,7 @@ use Inertia\Response;
 
 class LoanSettingController extends Controller
 {
-    protected $loanSettingService;
+    protected LoanSettingService $loanSettingService;
 
     public function __construct(LoanSettingService $loanSettingService)
     {
@@ -24,7 +24,7 @@ class LoanSettingController extends Controller
     public function index(): Response
     {
         return Inertia::render('Loans/LoanSettings', [
-            'fees' => $this->loanSettingService->getAllFees()
+            'sections' => $this->loanSettingService->getSections(),
         ]);
     }
 
@@ -42,7 +42,7 @@ class LoanSettingController extends Controller
 
         $this->loanSettingService->createFee($validated);
 
-        return redirect()->route('loan-settings.releasing-fees.index')
+        return redirect()->route('loan-settings.index')
             ->with('success', 'Fee created successfully.');
     }
 
@@ -58,6 +58,9 @@ class LoanSettingController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
+        // Convert percentage → decimal (e.g. 5 → 0.05)
+        // $validated['rate'] = $validated['rate'] / 100;
+
         $this->loanSettingService->updateFee($releasingFee, $validated);
 
         return redirect()->back()->with('success', 'Fee updated successfully.');
@@ -70,7 +73,7 @@ class LoanSettingController extends Controller
     {
         $this->loanSettingService->deleteFee($releasingFee);
 
-        return redirect()->route('loan-settings.releasing-fees.index')
+        return redirect()->route('loan-settings.index')
             ->with('success', 'Fee deleted successfully.');
     }
 }

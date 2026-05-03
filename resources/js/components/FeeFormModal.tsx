@@ -33,33 +33,44 @@ const initialValues: LoanChargeFormData = {
 };
 
 export default function FeeFormModal({ open, onClose, fee }: FeeFormModalProps) {
-  const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
+  const { data, setData, post, put, processing, errors, reset, clearErrors, transform } = useForm({
     ...initialValues,
   });
 
   useEffect(() => {
     if (fee) {
-      setData({
+      setData(() => ({
         name: fee.name,
-        rate: String(fee.rate),
+        rate: String(Number(fee.rate) * 100),
         description: fee.description || '',
         is_active: !!fee.is_active,
-      });
+      }));
     } else {
-      reset(initialValues);
+      reset();
     }
+
     clearErrors();
-  }, [fee, open, setData, reset, clearErrors]);
+  }, [fee, open]);
+
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    transform((formData) => ({
+      ...formData,
+      rate: Number(formData.rate) / 100, // ✅ convert here
+    }));
+
     if (fee) {
-      put(route('loan-settings.releasing-fees.update', fee.id), { onSuccess: () => onClose() });
+      put(route('loan-settings.releasing-fees.update', fee.id), {
+        onSuccess: () => onClose(),
+      });
     } else {
-      post(route('loan-settings.releasing-fees.store'), { onSuccess: () => onClose() });
+      post(route('loan-settings.releasing-fees.store'), {
+        onSuccess: () => onClose(),
+      });
     }
   };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-white max-w-md">

@@ -1,13 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { route } from 'ziggy-js';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import FeeFormModal from '@/components/FeeFormModal';
-import { Description } from '@radix-ui/react-dialog';
+import ReleasingFeesCard from '@/components/ReleasingFeesCard';
 
 interface LoanCharge {
   id: number;
@@ -20,13 +20,30 @@ interface LoanCharge {
 }
 
 interface LoanSettingsProps {
-  fees?: LoanCharge[];
+  sections?: {
+    releasingFees?: {
+      key: string;
+      title: string;
+      description: string;
+      items: LoanCharge[];
+    };
+  };
 }
 
-export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
+type LoanSettingsSection = NonNullable<LoanSettingsProps['sections']>[keyof NonNullable<LoanSettingsProps['sections']>];
+
+const sectionLabels: Record<string, string> = {
+  releasingFees: 'Releasing Fees',
+};
+
+export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
+  const loanSettingsUrl = route('loan-settings.index');
+  const availableSections = Object.values(sections).filter(Boolean) as LoanSettingsSection[];
+  const [activeSection, setActiveSection] = useState<string>(availableSections[0]?.key ?? 'releasingFees');
+
   const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Loan Settings', href: '/Loans/loan-settings/releasing-fees' },
-    { title: 'Releasing Fees', href: '/Loans/loan-settings/releasing-fees' }
+    { title: 'Loan Settings', href: loanSettingsUrl },
+    { title: sectionLabels[activeSection] ?? 'Loan Settings', href: loanSettingsUrl }
   ];
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,17 +55,14 @@ export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<LoanCharge | null>(null);
 
-  const getStatusClasses = (status: string) => {
-    const s = status?.toLowerCase() || '';
-    return s === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-  };
+  const releasingFees = sections.releasingFees?.items ?? [];
 
   const filteredFees = useMemo(() => {
-    return fees.filter((f) => 
+    return releasingFees.filter((f) =>
       f.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      (f.description ?? '').toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [fees, searchTerm]);
+  }, [releasingFees, searchTerm]);
 
   const paginatedFees = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -56,6 +70,16 @@ export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
   }, [filteredFees, currentPage]);
 
   const totalPages = Math.ceil(filteredFees.length / itemsPerPage);
+
+  useEffect(() => {
+    if (availableSections.length > 0 && !availableSections.some((section) => section.key === activeSection)) {
+      setActiveSection(availableSections[0].key);
+    }
+  }, [activeSection, availableSections]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeSection]);
 
   // Handlers
   const handleAdd = () => {
@@ -84,7 +108,7 @@ export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Loan Settings - Releasing Fees" />
+      <Head title="Loan Settings" />
 
       <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">Loan Settings</h1>
@@ -96,59 +120,77 @@ export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search fees..."
+              placeholder={`Search ${sectionLabels[activeSection]?.toLowerCase() ?? 'settings'}...`}
               className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm focus:border-[#FABF24] focus:ring-2 focus:ring-[#FAE6A0] outline-none transition"
             />
           </div>
-          <Button onClick={handleAdd} className="bg-[#FABF24] text-black hover:bg-[#e2ac1f]">
-            <Plus className="mr-2 h-4 w-4" /> Add Fee
-          </Button>
         </div>
       </div>
 
-      <div className="mx-10 overflow-hidden bg-white rounded-xl border border-gray-200 shadow-md">
-        <div className="p-5 border-b border-gray-100">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-800">Releasing Fees</h2>
-            </div>
-            
-            <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-100">
-                <tr>
-                {['Fee', 'Description', 'Rate', 'Created at', 'Updated at', 'Is Active', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase">{h}</th>
-                ))}
-                </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-                {paginatedFees.map((f) => (
-                <tr key={f.id} className="hover:bg-[#FFF8E6] transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{f.name}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-700">{f.description}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 font-mono">{(f.rate * 100).toFixed(2)}%</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{f.created_at}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{f.updated_at || 'N/A'}</td>
-                    <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(f.is_active ? 'active' : 'inactive')}`}>
-                        {f.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                    </td>
-                    <td className="px-4 py-3 flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={(e) => handleEdit(e, f)}><Edit2 className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => handleDeleteClick(e, f)}><Trash2 className="h-4 w-4" /></Button>
-                    </td>
-                </tr>
-                ))}
-            </tbody>
-            </table>
-            </div>
-      </div>
+      {availableSections.length > 1 && (
+        <div className="mx-10 mb-6 flex flex-wrap gap-2">
+          {availableSections.map((section) => (
+            <Button
+              key={section.key}
+              type="button"
+              variant={activeSection === section.key ? 'default' : 'outline'}
+              className={activeSection === section.key ? 'bg-[#FABF24] text-black hover:bg-[#E5AE1F]' : ''}
+              onClick={() => setActiveSection(section.key)}
+            >
+              {section.title}
+            </Button>
+          ))}
+        </div>
+      )}
 
-      {/* MODALS */}
-      <FeeFormModal 
-        open={isFormModalOpen} 
-        onClose={() => setIsFormModalOpen(false)} 
-        fee={selectedFee} 
+      {activeSection === 'releasingFees' && (
+        <>
+          <ReleasingFeesCard
+            fees={paginatedFees}
+            totalFees={filteredFees.length}
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            onDelete={handleDeleteClick}
+          />
+
+          {totalPages > 1 && (
+            <div className="mx-10 mt-4 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {availableSections.length > 0 && activeSection !== 'releasingFees' && (
+        <div className="mx-10 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
+          This loan setting section is ready to plug into the shared page, but its UI component has not been added yet.
+        </div>
+      )}
+
+      <FeeFormModal
+        open={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        fee={selectedFee}
       />
 
       <ConfirmDialog
@@ -159,8 +201,7 @@ export default function LoanSettings({ fees = [] }: LoanSettingsProps) {
         onCancel={() => setIsDeleteModalOpen(false)}
         confirmText="Delete"
       />
+
     </AppLayout>
   );
 }
-
-

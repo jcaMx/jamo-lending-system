@@ -109,7 +109,7 @@ const mainNavItems: NavItem[] = [
     ]
   },
 
-  { type: "link", title: "Loan Settings", icon: Settings, href: "/Loans/loan-settings/releasing-fees", roles: ["admin"] },
+  { type: "link", title: "Loan Settings", icon: Settings, href: "/Loans/loan-settings", roles: ["admin"] },
 
 ];
 
