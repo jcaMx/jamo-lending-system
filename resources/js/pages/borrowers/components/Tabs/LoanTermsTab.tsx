@@ -72,7 +72,7 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
             <h3 className="font-medium text-yellow-800">Loan Releasing Fees</h3>
           </div>
 
-          <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2 mb-3">
             {Object.entries(releasingFees.charges).map(([chargeName, chargeData]) => (
               <DetailRow
                 key={chargeName}
@@ -80,11 +80,12 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
                 value={`₱${chargeData.amount.toLocaleString()}`}
               />
             ))}
-            <DetailRow
+
+          </div>
+          <DetailRow 
               label="Total Releasing Fees"
               value={`₱${releasingFees.total_fees.toLocaleString()}`}
-            />
-          </div>
+           />
         </section>
       )}
 

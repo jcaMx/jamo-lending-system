@@ -80,7 +80,9 @@ const mainNavItems: NavItem[] = [
     icon: Coins,
     roles: ["cashier", "admin"],
     subItems: [
+      { type: "link", title: "Undisbursed Loans", href: "/disbursements/undisbursed-loans" }, 
       { type: "link", title: "Manage Disbursements", href: "/disbursements" },
+
     ]
   },
 

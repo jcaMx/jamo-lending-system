@@ -41,7 +41,12 @@ class DisbursementService
                 throw new \RuntimeException('Loan already has released amount posted.');
             }
 
-            $feeBreakdown = $this->getFeeBreakdown($grossAmount);
+            $feeBreakdown = $this->getFeeBreakdown(
+                $grossAmount,
+                isset($data['selected_charge_ids']) && is_array($data['selected_charge_ids'])
+                    ? $data['selected_charge_ids']
+                    : null
+            );
             $totalFees = $feeBreakdown['total_fees'];
             $netDisbursedAmount = $feeBreakdown['net_disbursed_amount'];
 
@@ -174,10 +179,25 @@ class DisbursementService
         });
     }
 
-    public function getFeeBreakdown(float $grossAmount): array
+    public function getFeeBreakdown(float $grossAmount, ?array $selectedChargeIds = null): array
     {
         $grossAmount = round(max($grossAmount, 0), 2);
-        $charges = LoanCharge::getActive();
+        $chargesQuery = LoanCharge::query()->where('is_active', true);
+
+        if (is_array($selectedChargeIds)) {
+            $normalizedChargeIds = collect($selectedChargeIds)
+                ->map(fn ($chargeId) => (int) $chargeId)
+                ->filter(fn ($chargeId) => $chargeId > 0)
+                ->values();
+
+            if ($normalizedChargeIds->isEmpty()) {
+                $charges = collect();
+            } else {
+                $charges = $chargesQuery->whereIn('id', $normalizedChargeIds)->get();
+            }
+        } else {
+            $charges = $chargesQuery->get();
+        }
         
         $breakdown = [
             'gross_amount' => $grossAmount,

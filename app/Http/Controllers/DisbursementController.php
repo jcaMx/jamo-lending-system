@@ -18,12 +18,6 @@ class DisbursementController extends Controller
 
     public function index(Request $request)
     {
-        $completedLoanIds = Disbursement::query()
-            ->where('status', 'Completed')
-            ->pluck('loan_id')
-            ->unique()
-            ->values();
-
         $disbursements = Disbursement::query()
             ->with(['loan.borrower', 'creator', 'approver', 'processor', 'voucher.chequeDetail.bankAccount'])
             ->orderByDesc('created_at')
@@ -69,24 +63,7 @@ class DisbursementController extends Controller
             ])
             ->values();
 
-        $eligibleLoans = Loan::query()
-            ->with('borrower.borrowerAddress')
-            ->where('status', 'Active')
-            ->whereNotIn('ID', $completedLoanIds)
-            ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (Loan $loan) => [
-                'id' => $loan->ID,
-                'borrower_name' => trim(($loan->borrower?->first_name ?? '') . ' ' . ($loan->borrower?->last_name ?? '')),
-                'borrower_address' => trim(collect([
-                    $loan->borrower?->borrowerAddress?->address,
-                    $loan->borrower?->borrowerAddress?->city,
-                ])->filter()->implode(', ')),
-                'principal_amount' => (float) $loan->principal_amount,
-                'released_amount' => (float) ($loan->released_amount ?? 0),
-                'loan_type' => $loan->loan_type,
-            ])
-            ->values();
+        $eligibleLoans = $this->getEligibleLoans();
 
         $bankAccounts = BankAccount::query()
             ->where('is_active', true)
@@ -111,6 +88,13 @@ class DisbursementController extends Controller
         ]);
     }
 
+    public function undisbursedLoans()
+    {
+        return Inertia::render('disbursements/undisbursed-loans', [
+            'loans' => $this->getUndisbursedLoans(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         if (! auth()->user()?->hasRole(['cashier', 'admin'])) {
@@ -119,6 +103,8 @@ class DisbursementController extends Controller
 
         $validated = $request->validate([
             'loan_id' => 'required|exists:loan,ID',
+            'selected_charge_ids' => 'nullable|array',
+            'selected_charge_ids.*' => 'integer|exists:loan_charges,id',
             'currency' => 'nullable|string|size:3',
             'method' => 'required|string|in:Cash,Cheque Voucher',
             'reference_no' => 'nullable|string|max:100',
@@ -502,5 +488,77 @@ class DisbursementController extends Controller
                 'name' => trim(($disbursement->loan?->borrower?->first_name ?? '') . ' ' . ($disbursement->loan?->borrower?->last_name ?? '')),
             ],
         ];
+    }
+
+    private function getEligibleLoans()
+    {
+        $completedLoanIds = Disbursement::query()
+            ->where('status', 'Completed')
+            ->pluck('loan_id')
+            ->unique()
+            ->values();
+
+        return Loan::query()
+            ->with('borrower.borrowerAddress')
+            ->where('status', 'Active')
+            ->whereNotIn('ID', $completedLoanIds)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Loan $loan) => [
+                'id' => $loan->ID,
+                'borrower_name' => trim(($loan->borrower?->first_name ?? '') . ' ' . ($loan->borrower?->last_name ?? '')),
+                'borrower_address' => trim(collect([
+                    $loan->borrower?->borrowerAddress?->address,
+                    $loan->borrower?->borrowerAddress?->city,
+                ])->filter()->implode(', ')),
+                'principal_amount' => (float) $loan->principal_amount,
+                'released_amount' => (float) ($loan->released_amount ?? 0),
+                'loan_type' => $loan->loan_type,
+            ])
+            ->values();
+    }
+
+    private function getUndisbursedLoans()
+    {
+        $completedLoanIds = Disbursement::query()
+            ->where('status', 'Completed')
+            ->pluck('loan_id')
+            ->unique()
+            ->values();
+
+        return Loan::query()
+            ->with(['borrower.borrowerAddress', 'collateral'])
+            ->where('status', 'Active')
+            ->whereNotIn('ID', $completedLoanIds)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Loan $loan) => [
+                'ID' => $loan->ID,
+                'principal_amount' => (float) $loan->principal_amount,
+                'interest_rate' => (float) $loan->interest_rate,
+                'interest_type' => $loan->interest_type,
+                'loan_type' => $loan->loan_type,
+                'term_months' => (int) $loan->term_months,
+                'repayment_frequency' => $loan->repayment_frequency,
+                'status' => $loan->status,
+                'balance_remaining' => (float) $loan->balance_remaining,
+                'released_amount' => $loan->released_amount !== null ? (float) $loan->released_amount : null,
+                'start_date' => optional($loan->start_date)->toDateString(),
+                'end_date' => optional($loan->end_date)->toDateString(),
+                'borrower' => [
+                    'ID' => $loan->borrower?->ID,
+                    'first_name' => $loan->borrower?->first_name ?? '',
+                    'last_name' => $loan->borrower?->last_name ?? '',
+                    'contact_no' => $loan->borrower?->contact_no,
+                    'borrowerAddress' => [
+                        'address' => $loan->borrower?->borrowerAddress?->address,
+                        'city' => $loan->borrower?->borrowerAddress?->city,
+                    ],
+                ],
+                'collateral' => $loan->collateral ? [
+                    'type' => $loan->collateral->type,
+                ] : null,
+            ])
+            ->values();
     }
 }

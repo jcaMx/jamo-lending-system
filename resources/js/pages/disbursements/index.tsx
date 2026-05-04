@@ -69,18 +69,20 @@ type BankAccount = {
   branch?: string | null;
 };
 
+type FeeCharge = {
+  charge_id?: number;
+  name?: string;
+  rate: number;
+  amount: number;
+};
+
 type Props = {
   disbursements: DisbursementRow[];
   eligibleLoans: EligibleLoan[];
   bankAccounts: BankAccount[];
   initialLoanId?: number | null;
   feeConfig: {
-    charges: Record<string, {
-      charge_id?: number;
-      name?: string;
-      rate: number;
-      amount: number;
-    }>;
+    charges: Record<string, FeeCharge>;
     total_fees: number;
     gross_amount: number;
     net_disbursed_amount: number;
@@ -121,6 +123,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
   const [particulars, setParticulars] = useState<string>('');
   const [bankAccountId, setBankAccountId] = useState<string>('');
   const [chequeDate, setChequeDate] = useState<string>('');
+  const [selectedChargeIds, setSelectedChargeIds] = useState<number[]>([]);
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [actionModal, setActionModal] = useState<ActionModalState>(null);
@@ -169,10 +172,24 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     setBankAccountOptions(bankAccounts);
   }, [bankAccounts]);
 
+  useEffect(() => {
+    const allChargeIds = Object.values(feeConfig?.charges ?? {})
+      .map((charge) => Number(charge.charge_id))
+      .filter((chargeId) => Number.isFinite(chargeId) && chargeId > 0);
+
+    setSelectedChargeIds(allChargeIds);
+  }, [feeConfig]);
+
   const grossAmount = selectedLoan ? Number(selectedLoan.principal_amount || 0) : 0;
   const feeBreakdown = useMemo(() => {
     const charges = Object.fromEntries(
-      Object.entries(feeConfig?.charges ?? {}).map(([chargeName, charge]) => {
+      Object.entries(feeConfig?.charges ?? {})
+        .filter(([, charge]) => {
+          const chargeId = Number(charge.charge_id);
+
+          return Number.isFinite(chargeId) && selectedChargeIds.includes(chargeId);
+        })
+        .map(([chargeName, charge]) => {
         const chargeAmount = Number((grossAmount * Number(charge.rate || 0)).toFixed(2));
 
         return [chargeName, {
@@ -191,7 +208,21 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
       totalFees,
       netDisbursedAmount: Math.max(Number((grossAmount - totalFees).toFixed(2)), 0),
     };
-  }, [feeConfig, grossAmount]);
+  }, [feeConfig, grossAmount, selectedChargeIds]);
+
+  const toggleCharge = (chargeId?: number) => {
+    const normalizedChargeId = Number(chargeId);
+
+    if (!Number.isFinite(normalizedChargeId) || normalizedChargeId <= 0) {
+      return;
+    }
+
+    setSelectedChargeIds((prev) =>
+      prev.includes(normalizedChargeId)
+        ? prev.filter((id) => id !== normalizedChargeId)
+        : [...prev, normalizedChargeId]
+    );
+  };
 
   const formatDate = (value?: string | null) => {
     if (!value) return 'N/A';
@@ -224,6 +255,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
 
     router.post('/disbursements', {
       loan_id: Number(loanId),
+      selected_charge_ids: selectedChargeIds,
       method,
       currency: 'PHP',
       reference_no: referenceNo || null,
@@ -246,6 +278,11 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
         setPayeeTin('');
         setBankAccountId('');
         setChequeDate('');
+        setSelectedChargeIds(
+          Object.values(feeConfig?.charges ?? {})
+            .map((charge) => Number(charge.charge_id))
+            .filter((chargeId) => Number.isFinite(chargeId) && chargeId > 0)
+        );
       },
       onError: (errors) => {
         const normalizedErrors = Object.entries(errors).reduce<Record<string, string>>((carry, [key, value]) => {
@@ -727,13 +764,33 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               />
             </div>
             <div className="md:col-span-3 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+              <p>Gross Amount: <span className="font-semibold">{grossAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
               <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-                <p>Gross Amount: <span className="font-semibold">{grossAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
-                {Object.entries(feeBreakdown.charges).map(([chargeName, charge]) => (
-                  <p key={chargeName}>
-                    {charge.name ?? chargeName} ({(Number(charge.rate) * 100).toFixed(2)}%): <span className="font-semibold">{Number(charge.amount).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
-                  </p>
-                ))}
+                
+                {Object.entries(feeConfig?.charges ?? {}).map(([chargeName, charge]) => {
+                  const chargeId = Number(charge.charge_id);
+                  const isChecked = selectedChargeIds.includes(chargeId);
+                  const computedAmount = Number((grossAmount * Number(charge.rate || 0)).toFixed(2));
+
+                  return (
+                    <label key={chargeName} className="flex items-center justify-between gap-3 rounded px-2 py-1 hover:bg-gray-100">
+                      <span className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleCharge(charge.charge_id)}
+                          className="h-4 w-4 rounded border-gray-300 text-[#FABF24] focus:ring-[#FABF24]"
+                        />
+                        <span>
+                          {charge.name ?? chargeName} ({(Number(charge.rate) * 100).toFixed(2)}%)
+                        </span>
+                      </span>
+                      <span className="font-semibold">
+                        {computedAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+                      </span>
+                    </label>
+                  );
+                })}
                 <p>Total Fees: <span className="font-semibold">{feeBreakdown.totalFees.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span></p>
               </div>
               <p className="mt-2 border-t pt-2">

@@ -3,14 +3,14 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, Search, Edit2, Eye, Calendar} from 'lucide-react';
+import { Eye, HandCoins } from 'lucide-react';
 import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Loans', href: '/Loans' },
-  { title: 'View Loans', href: '/Loans/ViewLoans' },
-];  
+  { title: 'Disbursements', href: '/disbursements' },
+  { title: 'Undisbursed Loans', href: '/disbursements/undisbursed-loans' },
+];
 
 interface Loan {
   ID: number;
@@ -22,10 +22,9 @@ interface Loan {
   repayment_frequency: string;
   status: string;
   balance_remaining: number;
-  released_amount?: number;
-  can_delete?: boolean;
-  start_date?: string;
-  end_date?: string;
+  released_amount?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
   borrower: {
     ID: number;
     first_name: string;
@@ -39,64 +38,49 @@ interface Loan {
   collateral?: {
     type: string;
   };
-  amortizationSchedules?: Array<{
-    ID: number;
-    installment_no: number;
-    due_date: string;
-    installment_amount: number;
-    interest_amount: number;
-    penalty_amount: number;
-    amount_paid: number;
-    status: string;
-  }>;
 }
 
-interface ViewLoansProps {
+interface UndisbursedLoansProps {
   loans: Loan[];
 }
 
-export default function ViewLoans({ loans }: ViewLoansProps) {
+const isUndisbursedLoan = (loan: Loan) => {
+  const releasedAmount = Number(loan.released_amount ?? 0);
+
+  return loan.status === 'Active' && releasedAmount <= 0;
+};
+
+export default function UndisbursedLoans({ loans }: UndisbursedLoansProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredLoans = loans.filter((loan) =>
-    `${loan.borrower.first_name} ${loan.borrower.last_name}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
-
-  const deleteLoan = (loan: Loan) => {
-    const confirmed = window.confirm(
-      `Delete loan #${loan.ID} for ${loan.borrower.first_name} ${loan.borrower.last_name}? This cannot be undone.`
+  const filteredLoans = loans
+    .filter(isUndisbursedLoan)
+    .filter((loan) =>
+      `${loan.borrower.first_name} ${loan.borrower.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
     );
-
-    if (!confirmed) {
-      return;
-    }
-
-    router.delete(route('loans.destroy', loan.ID), {
-      preserveScroll: true,
-    });
-  };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="View Loans" />
+      <Head title="Undisbursed Loans" />
+
       <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Approved Loans</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Undisbursed Loans</h1>
         </div>
 
-        <div className="flex mb-4 gap-2">
+        <div className="mb-4 flex gap-2">
           <input
             type="text"
             placeholder="Search Borrower..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border rounded shadow-sm w-64"
+            className="w-64 rounded border px-4 py-2 shadow-sm"
           />
         </div>
 
-        <table className="min-w-full bg-white rounded shadow">
+        <table className="min-w-full rounded bg-white shadow">
           <thead>
             <tr className="bg-gray-100 text-left text-sm font-medium text-gray-700">
               <th className="px-4 py-2">Borrower</th>
@@ -117,7 +101,7 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
             {filteredLoans.length === 0 ? (
               <tr>
                 <td colSpan={12} className="px-4 py-8 text-center text-gray-500">
-                  No approved loans found
+                  No undisbursed loans found
                 </td>
               </tr>
             ) : (
@@ -128,15 +112,15 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
                   </td>
                   <td className="px-4 py-2">{loan.ID}</td>
                   <td className="px-4 py-2">{loan.loan_type}</td>
-                  <td className="px-4 py-2">₱{loan.principal_amount.toLocaleString()}</td>
+                  <td className="px-4 py-2">P{loan.principal_amount.toLocaleString()}</td>
                   <td className="px-4 py-2">{loan.interest_rate}%</td>
                   <td className="px-4 py-2">{loan.interest_type}</td>
                   <td className="px-4 py-2">{loan.term_months} months</td>
                   <td className="px-4 py-2">{loan.repayment_frequency}</td>
-                  <td className="px-4 py-2">₱{loan.balance_remaining.toLocaleString()}</td>
+                  <td className="px-4 py-2">P{loan.balance_remaining.toLocaleString()}</td>
                   <td className="px-4 py-2">
-                    <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
-                      {loan.status}
+                    <span className="rounded bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
+                      Undisbursed
                     </span>
                   </td>
                   <td className="px-4 py-2">{loan.collateral?.type || 'N/A'}</td>
@@ -144,27 +128,16 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
                     <div className="flex gap-2">
                       <Button
                         onClick={() => router.visit(route('loans.show', loan.ID))}
-                        className="text-black hover:bg-gray-100 hover:text-gray not-last:hover:border-gray-300"
+                        className="text-black hover:bg-gray-100 hover:text-gray"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
-                        onClick={() => router.visit(route('loans.schedule', loan.ID))}
-                        className=" text-black hover:bg-gray-100 hover:text-gray not-last:hover:border-gray-300"
+                        onClick={() => router.visit(`/disbursements?loan_id=${loan.ID}`)}
+                        className="text-black hover:bg-gray-100 hover:text-gray"
                       >
-                        <Calendar className="h-4 w-4" />
+                        <HandCoins className="h-4 w-4" />
                       </Button>
-                      {/* {loan.can_delete && (
-                        <button
-                          type="button"
-                          onClick={() => deleteLoan(loan)}
-                          className="rounded border border-red-200 bg-red-50 p-2 text-red-600 hover:bg-red-100"
-                          title="Delete loan"
-                          aria-label="Delete loan"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )} */}
                     </div>
                   </td>
                 </tr>
