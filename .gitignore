@@ -29,3 +29,4 @@ dist-ssr
 /public/hot
 
 package-lock.json
+.env
