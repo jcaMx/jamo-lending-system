@@ -244,14 +244,7 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
         ->name('customer.profile.update');
 
     Route::get('/applynow', function () {
-        $collateralDocumentCategories = [
-            'collateral_general',
-            'collateral_vehicle',
-            'collateral_land',
-        ];
-
         $documentTypesByCategory = DocumentType::query()
-            ->whereIn('category', $collateralDocumentCategories)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'category'])
@@ -259,11 +252,44 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
             ->map(fn ($items) => $items->values())
             ->toArray();
 
-        $borrower = Auth::user()?->borrower;
+        $borrower = Auth::user()?->borrower?->load('files', 'borrowerEmployment');
         $monthlyIncome = $borrower?->borrowerEmployment?->monthly_income;
+        $borrowerDocumentCounts = [
+            'borrower_identity' => 0,
+            'borrower_address' => 0,
+            'borrower_employment' => 0,
+        ];
+
+        if ($borrower) {
+            $documentTypeCategoryById = DocumentType::query()
+                ->where('is_active', true)
+                ->pluck('category', 'id');
+
+            foreach ($borrower->files ?? [] as $file) {
+                $category = null;
+                $documentTypeId = isset($file->document_type_id) ? (int) $file->document_type_id : null;
+
+                if ($documentTypeId && $documentTypeCategoryById->has($documentTypeId)) {
+                    $category = (string) $documentTypeCategoryById[$documentTypeId];
+                } else {
+                    $description = strtolower((string) ($file->description ?? ''));
+                    foreach (array_keys($borrowerDocumentCounts) as $candidate) {
+                        if (str_starts_with($description, $candidate)) {
+                            $category = $candidate;
+                            break;
+                        }
+                    }
+                }
+
+                if ($category && array_key_exists($category, $borrowerDocumentCounts)) {
+                    $borrowerDocumentCounts[$category] += 1;
+                }
+            }
+        }
 
         return Inertia::render('BorrowerApplication', [
             'documentTypesByCategory' => $documentTypesByCategory,
+            'borrowerDocumentCounts' => $borrowerDocumentCounts,
             'borrowerRuleContext' => [
                 'monthly_income' => $monthlyIncome !== null ? (float) $monthlyIncome : null,
                 'dti_ratio' => null, // can be hydrated from backend once available

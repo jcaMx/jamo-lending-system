@@ -21,19 +21,24 @@ class DatabaseSeeder extends Seeder
             // 3. Create holidays (optional, but good to have)
             HolidaySeeder::class,
 
-            // 4. Create users with roles and profiles (required for loan approvals)
+            // 4. Seed reusable lookup tables for documents and loan products.
+            DocumentTypesSeeder::class,
+            LoanProductsSeeder::class,
+            LoanProductDocumentRequirementsSeeder::class,
+
+            // 5. Create users with roles and profiles (required for loan approvals)
             UserSeeder::class,
 
-            // 5. Create borrowers with complete data (addresses, employment, IDs, co-borrowers, spouses)
+            // 6. Create borrowers with complete data (addresses, employment, IDs, co-borrowers, spouses)
             BorrowerSeeder::class,
 
-            // 6. Create loans with collateral and amortization schedules (depends on borrowers, formulas, users)
+            // 7. Create loans with collateral and amortization schedules (depends on borrowers, formulas, users)
             LoanSeeder::class,
 
-            // 7. Create payments and penalties (depends on loans and schedules)
+            // 8. Create payments and penalties (depends on loans and schedules)
             PaymentSeeder::class,
 
-            // 8. Create files for borrowers and collaterals (depends on borrowers and loans)
+            // 9. Create files for borrowers and collaterals (depends on borrowers and loans)
             FileSeeder::class,
         ]);
     }

@@ -63,7 +63,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <Link href="/dashboard">
-              <Button className="bg-white hover:bg-white/90 text-[#FABF24] px-6">
+              <Button className="bg-white hover:bg-white/90 text-[#D97706] px-6">
                 Dashboard
               </Button>
             </Link>

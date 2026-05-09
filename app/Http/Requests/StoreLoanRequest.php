@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\LoanProduct;
+use App\Models\DocumentType;
 use App\Services\RuleEvaluatorService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 
 class StoreLoanRequest extends FormRequest
 {
@@ -59,6 +61,13 @@ class StoreLoanRequest extends FormRequest
                 ? 'required|string|in:vehicle,land,atm'
                 : 'nullable|string|in:vehicle,land,atm',
             'ownership_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents.collateral' => $requiresCollateral ? 'required|array|min:1' : 'nullable|array',
+            'documents.collateral.*.document_type_id' => 'required_with:documents.collateral.*.file|integer|exists:document_types,id',
+            'documents.collateral.*.file' => 'required_with:documents.collateral.*.document_type_id|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'documents.loan_product' => 'nullable|array',
+            'documents.loan_product.*.document_type_id' => 'required_with:documents.loan_product.*.file|integer|exists:document_types,id',
+            'documents.loan_product.*.document_category' => 'nullable|string|max:100',
+            'documents.loan_product.*.file' => 'required_with:documents.loan_product.*.document_type_id|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
 
             // Co-Borrowers
             'coBorrowers' => $requiresCoBorrower ? 'required|array|min:1' : 'nullable|array',
@@ -102,6 +111,80 @@ class StoreLoanRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $loanProductId = $this->input('loan_product_id');
+            $loanProductId = is_numeric($loanProductId) ? (int) $loanProductId : null;
+            $loanType = $this->input('loan_type');
+            $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+
+            if (! $loanProduct) {
+              return;
+            }
+
+            $requiredRequirements = DB::table('loan_product_document_requirements')
+                ->where('loan_product_id', $loanProduct->id)
+                ->where('requirement_type', 'category')
+                ->whereIn('subject_type', ['borrower', 'business', 'employment'])
+                ->where('is_required', true)
+                ->where('is_active', true)
+                ->whereNotNull('document_category')
+                ->orderBy('sort_order')
+                ->get(['document_category', 'min_count']);
+
+            if ($requiredRequirements->isEmpty()) {
+                return;
+            }
+
+            $submittedRows = collect($this->input('documents.loan_product', []));
+            if ($submittedRows->isEmpty()) {
+                $validator->errors()->add('documents.loan_product', 'Required loan product documents are missing.');
+                return;
+            }
+
+            $requiredCategories = $requiredRequirements->pluck('document_category')->filter()->values();
+            $documentTypesById = DocumentType::query()
+                ->whereIn('category', $requiredCategories)
+                ->where('is_active', true)
+                ->get(['id', 'category'])
+                ->keyBy('id');
+
+            $invalidTypeIds = $submittedRows
+                ->pluck('document_type_id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->reject(fn ($id) => $documentTypesById->has($id))
+                ->values()
+                ->all();
+
+            if (! empty($invalidTypeIds)) {
+                $validator->errors()->add('documents.loan_product', 'Selected loan product document type(s) are not valid for the chosen loan product.');
+                return;
+            }
+
+            foreach ($requiredRequirements as $requirement) {
+                $category = (string) $requirement->document_category;
+                $count = $submittedRows
+                    ->map(function ($row, $index) use ($documentTypesById) {
+                        $documentTypeId = isset($row['document_type_id']) ? (int) $row['document_type_id'] : null;
+                        $documentType = $documentTypeId ? $documentTypesById->get($documentTypeId) : null;
+
+                        return [
+                            'category' => $documentType?->category,
+                            'has_file' => $this->hasFile("documents.loan_product.{$index}.file"),
+                        ];
+                    })
+                    ->filter(fn ($row) => $row['category'] === $category && $row['has_file'])
+                    ->count();
+
+                if ($count < (int) $requirement->min_count) {
+                    $validator->errors()->add('documents.loan_product', "Missing required loan product document(s) for {$category}.");
+                }
+            }
+        });
     }
 
     public function messages(): array

@@ -6,6 +6,7 @@ use App\Factories\CollateralFactory;
 use App\Http\Requests\StoreLoanRequest;
 use App\Models\Borrower;
 use App\Models\DocumentType;
+use App\Models\File;
 use App\Models\Files;
 use App\Models\Formula;
 use App\Models\Loan;
@@ -87,10 +88,7 @@ class LoanController extends Controller
             })
             ->values();
 
-        $categories = ['collateral_vehicle', 'collateral_land', 'collateral_general'];
-
         $documentTypesByCategory = DocumentType::query()
-            ->whereIn('category', $categories)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'category'])
@@ -130,6 +128,45 @@ class LoanController extends Controller
                 throw new \Exception('Borrower cannot reloan. An existing unpaid loan (ID: '.$existingUnpaidLoan->ID.') is still active.');
             }
 
+            $collateralTypeInput = strtolower((string) $request->input('collateral_type', ''));
+            $submittedCollateralRows = collect($request->input('documents.collateral', []));
+            $requiredCollateralDocumentTypeIds = $this->requiredCollateralDocumentTypeIds(
+                $request->integer('loan_product_id') ?: null,
+                $request->input('loan_type'),
+                $collateralTypeInput
+            );
+
+            if ($requiredCollateralDocumentTypeIds->isNotEmpty()) {
+                $requiredIds = $requiredCollateralDocumentTypeIds->all();
+                $submittedTypeIds = $submittedCollateralRows
+                    ->pluck('document_type_id')
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->values()
+                    ->all();
+
+                $invalidTypeIds = array_values(array_diff($submittedTypeIds, $requiredIds));
+                if (! empty($invalidTypeIds)) {
+                    throw new \Exception('Selected collateral document type(s) are not valid for the chosen loan product and collateral type.');
+                }
+
+                $submittedTypeIdsWithFiles = $submittedCollateralRows
+                    ->map(function ($row, $index) use ($request) {
+                        $documentTypeId = isset($row['document_type_id']) ? (int) $row['document_type_id'] : null;
+                        $hasFile = $request->hasFile("documents.collateral.{$index}.file");
+
+                        return $documentTypeId && $hasFile ? $documentTypeId : null;
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $missingRequiredIds = array_values(array_diff($requiredIds, $submittedTypeIdsWithFiles));
+                if (! empty($missingRequiredIds)) {
+                    throw new \Exception('Please upload all required collateral documents for the selected loan product.');
+                }
+            }
+
             // Get default formula (Compound Interest Loan)
             $formula = Formula::where('name', 'Compound Interest Loan')->first();
             if (! $formula) {
@@ -151,7 +188,6 @@ class LoanController extends Controller
             $loan = $this->loanService->createLoan($loanData);
 
             $collateral = null;
-            $collateralTypeInput = $request->input('collateral_type');
             if ($collateralTypeInput) {
                 // Create Collateral using CollateralFactory
                 $collateralType = match ($collateralTypeInput) {
@@ -189,6 +225,60 @@ class LoanController extends Controller
 
                 // Create Collateral first (needed for file relationship)
                 $collateral = CollateralFactory::createCollateral($collateralType, $collateralData);
+            }
+
+            if ($collateral && $submittedCollateralRows->isNotEmpty()) {
+                foreach ($submittedCollateralRows as $index => $documentRow) {
+                    $uploadedFile = $request->file("documents.collateral.{$index}.file");
+                    $documentTypeId = isset($documentRow['document_type_id']) ? (int) $documentRow['document_type_id'] : null;
+
+                    if (! $uploadedFile || ! $documentTypeId) {
+                        continue;
+                    }
+
+                    $storedPath = $uploadedFile->store("collateral/{$collateral->ID}", 'public');
+
+                    File::create([
+                        'documentable_id' => $collateral->ID,
+                        'documentable_type' => \App\Models\Collateral::class,
+                        'document_type_id' => $documentTypeId,
+                        'status' => 'pending',
+                        'file_name' => $uploadedFile->getClientOriginalName(),
+                        'file_path' => $storedPath,
+                        'uploaded_at' => now(),
+                        'description' => 'collateral_requirement_upload',
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => $collateral->ID,
+                    ]);
+                }
+            }
+
+            $submittedLoanProductRows = collect($request->input('documents.loan_product', []));
+            if ($submittedLoanProductRows->isNotEmpty()) {
+                foreach ($submittedLoanProductRows as $index => $documentRow) {
+                    $uploadedFile = $request->file("documents.loan_product.{$index}.file");
+                    $documentTypeId = isset($documentRow['document_type_id']) ? (int) $documentRow['document_type_id'] : null;
+                    $documentCategory = isset($documentRow['document_category']) ? (string) $documentRow['document_category'] : 'loan_product';
+
+                    if (! $uploadedFile || ! $documentTypeId) {
+                        continue;
+                    }
+
+                    $storedPath = $uploadedFile->store("borrowers/{$borrower->ID}/loan-product", 'public');
+
+                    File::create([
+                        'documentable_id' => $borrower->ID,
+                        'documentable_type' => \App\Models\Borrower::class,
+                        'document_type_id' => $documentTypeId,
+                        'status' => 'pending',
+                        'file_name' => $uploadedFile->getClientOriginalName(),
+                        'file_path' => $storedPath,
+                        'uploaded_at' => now(),
+                        'description' => 'loan_product_requirement:'.$documentCategory,
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => $collateral?->ID,
+                    ]);
+                }
             }
 
             // Handle ownership proof file upload
@@ -763,5 +853,27 @@ class LoanController extends Controller
         }
 
         return null;
+    }
+
+    private function requiredCollateralDocumentTypeIds(?int $loanProductId, ?string $loanType, ?string $collateralType)
+    {
+        $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+
+        if (! $loanProduct || empty($collateralType)) {
+            return collect();
+        }
+
+        return DB::table('loan_product_document_requirements')
+            ->where('loan_product_id', $loanProduct->id)
+            ->where('requirement_type', 'document_type')
+            ->where('subject_type', 'collateral')
+            ->where('collateral_type', strtolower((string) $collateralType))
+            ->where('is_required', true)
+            ->where('is_active', true)
+            ->whereNotNull('document_type_id')
+            ->orderBy('sort_order')
+            ->pluck('document_type_id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LoanProduct;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 
 class LoanProductController extends Controller
@@ -39,6 +40,60 @@ class LoanProductController extends Controller
 
         return response()->json([
             'data' => $products,
+        ]);
+    }
+
+    public function requirements(LoanProduct $loanProduct): JsonResponse
+    {
+        $requirements = DB::table('loan_product_document_requirements as lpdr')
+            ->leftJoin('document_types as dt', 'dt.id', '=', 'lpdr.document_type_id')
+            ->where('lpdr.loan_product_id', $loanProduct->id)
+            ->where('lpdr.is_active', true)
+            ->orderBy('lpdr.sort_order')
+            ->orderBy('lpdr.id')
+            ->get([
+                'lpdr.id',
+                'lpdr.requirement_type',
+                'lpdr.document_type_id',
+                'lpdr.document_category',
+                'lpdr.subject_type',
+                'lpdr.collateral_type',
+                'lpdr.is_required',
+                'lpdr.min_count',
+                'lpdr.max_count',
+                'lpdr.sort_order',
+                'lpdr.notes',
+                'dt.code as document_type_code',
+                'dt.name as document_type_name',
+                'dt.category as document_type_category',
+            ])
+            ->map(static function ($row) {
+                return [
+                    'id' => (int) $row->id,
+                    'requirement_type' => (string) $row->requirement_type,
+                    'document_type_id' => $row->document_type_id !== null ? (int) $row->document_type_id : null,
+                    'document_category' => $row->document_category,
+                    'subject_type' => (string) $row->subject_type,
+                    'collateral_type' => $row->collateral_type,
+                    'is_required' => (bool) $row->is_required,
+                    'min_count' => (int) $row->min_count,
+                    'max_count' => $row->max_count !== null ? (int) $row->max_count : null,
+                    'sort_order' => (int) $row->sort_order,
+                    'notes' => $row->notes,
+                    'document_type' => $row->document_type_id !== null
+                        ? [
+                            'id' => (int) $row->document_type_id,
+                            'code' => (string) $row->document_type_code,
+                            'name' => (string) $row->document_type_name,
+                            'category' => (string) $row->document_type_category,
+                        ]
+                        : null,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'data' => $requirements,
         ]);
     }
 }

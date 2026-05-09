@@ -26,6 +26,27 @@ export interface LoanProductRule {
 export interface DocumentUploadItem {
   document_type_id: string;
   file: File | null;
+  document_category?: string | null;
+}
+
+export interface LoanProductDocumentRequirement {
+  id: number;
+  requirement_type: "category" | "document_type";
+  document_type_id: number | null;
+  document_category: string | null;
+  subject_type: string;
+  collateral_type: string | null;
+  is_required: boolean;
+  min_count: number;
+  max_count: number | null;
+  sort_order: number;
+  notes: string | null;
+  document_type: {
+    id: number;
+    code: string;
+    name: string;
+    category: string;
+  } | null;
 }
 
 export interface SharedFormData {
@@ -88,10 +109,12 @@ export interface SharedFormData {
   ownership_proof?: File | null;
   documents?: {
     collateral: DocumentUploadItem[];
+    loan_product?: DocumentUploadItem[];
   };
 
   loan_product_id?: number | null;
   loan_product_rule?: LoanProductRule | null;
+  loan_product_requirements?: LoanProductDocumentRequirement[];
   loan_type?: string;
   loan_amount?: number | string;
   interest_type?: string;

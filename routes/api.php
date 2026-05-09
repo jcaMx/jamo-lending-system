@@ -8,6 +8,7 @@ Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
 Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
 Route::get('/all-loans', [DashboardController::class, 'allLoans']);
 Route::get('/loan-products', [LoanProductController::class, 'index']);
+Route::get('/loan-products/{loanProduct}/document-requirements', [LoanProductController::class, 'requirements']);
 
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;

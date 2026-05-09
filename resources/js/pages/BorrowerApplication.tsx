@@ -6,6 +6,7 @@ import Confirmation from "./borrower-application/Confirmation";
 import type { SharedFormData } from "./borrower-application/sharedFormData";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import type { BorrowerDocumentTypeOption } from "./borrowers/components/RenderDocumentUploader";
+import type { LoanProductDocumentRequirement } from "./borrower-application/sharedFormData";
 
 interface BorrowerApplicationProps {
   application?: {
@@ -47,6 +48,7 @@ const BorrowerApplication = ({
     collateral: false,
     coborrower: false,
   });
+  const [loanProductRequirements, setLoanProductRequirements] = useState<LoanProductDocumentRequirement[]>([]);
 
   const [formData, setFormData] = useState<SharedFormData>({
     coBorrowers: [],
@@ -73,9 +75,11 @@ const BorrowerApplication = ({
     ownership_proof: null,
     documents: {
       collateral: [{ document_type_id: "", file: null }],
+      loan_product: [],
     },
     loan_product_id: null,
     loan_product_rule: null,
+    loan_product_requirements: [],
     loan_type: "",
     loan_amount: "",
     interest_type: "",
@@ -193,6 +197,55 @@ const BorrowerApplication = ({
     dtiRatioValue,
   ]);
 
+  useEffect(() => {
+    const loanProductId = Number(formData.loan_product_id ?? 0);
+
+    if (loanProductId <= 0) {
+      setLoanProductRequirements([]);
+      setFormData((prev) => ({
+        ...prev,
+        loan_product_requirements: [],
+        documents: {
+          ...prev.documents,
+          collateral: prev.documents?.collateral ?? [],
+        },
+      }));
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        const response = await fetch(`/api/loan-products/${loanProductId}/document-requirements`, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Requirement fetch failed (${response.status})`);
+        }
+
+        const payload = (await response.json()) as { data?: LoanProductDocumentRequirement[] };
+        const requirements = Array.isArray(payload.data) ? payload.data : [];
+        setLoanProductRequirements(requirements);
+        setFormData((prev) => ({
+          ...prev,
+          loan_product_requirements: requirements,
+        }));
+      } catch (error) {
+        if ((error as { name?: string })?.name === "AbortError") {
+          return;
+        }
+        setLoanProductRequirements([]);
+      }
+    };
+
+    void run();
+
+    return () => controller.abort();
+  }, [formData.loan_product_id, setFormData]);
+
   const needsCollateral = ruleRequirements.collateral;
   const needsCoBorrower = ruleRequirements.coborrower;
 
@@ -208,6 +261,7 @@ const BorrowerApplication = ({
             onPrev={prevStep}
             formData={formData}
             setFormData={setFormData}
+            documentTypesByCategory={documentTypesByCategory}
             // Pass rule requirements for inline status indicators.
             ruleRequirements={ruleRequirements}
           />
@@ -241,6 +295,7 @@ const BorrowerApplication = ({
             formData={formData}
             setFormData={setFormData}
             documentTypesByCategory={documentTypesByCategory}
+            loanProductRequirements={loanProductRequirements}
             // Let the step enforce required vs optional behavior.
             required={needsCollateral}
           />

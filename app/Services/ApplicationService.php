@@ -174,6 +174,36 @@ class ApplicationService
                 }
             }
 
+            if (! empty($data['documents']['loan_product']) && ! empty($files['loan_product_documents'])) {
+                foreach ($data['documents']['loan_product'] as $index => $docMeta) {
+                    $uploaded = $files['loan_product_documents'][$index]['file'] ?? null;
+                    if (! $uploaded instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $documentTypeId = isset($docMeta['document_type_id']) ? (int) $docMeta['document_type_id'] : null;
+                    if (! $documentTypeId) {
+                        continue;
+                    }
+
+                    $documentCategory = isset($docMeta['document_category']) ? (string) $docMeta['document_category'] : 'loan_product';
+                    $path = $uploaded->store("borrowers/{$borrower->ID}/loan-product", 'public');
+
+                    File::create([
+                        'documentable_id' => $borrower->ID,
+                        'documentable_type' => Borrower::class,
+                        'document_type_id' => $documentTypeId,
+                        'status' => 'pending',
+                        'file_name' => $uploaded->getClientOriginalName(),
+                        'file_path' => $path,
+                        'description' => 'loan_product_requirement:'.$documentCategory,
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => $collateral?->ID,
+                        'uploaded_at' => now(),
+                    ]);
+                }
+            }
+
             if ($collateral && $ownershipProofFileId) {
                 $collateral->ownership_proof = $ownershipProofFileId;
                 $collateral->save();

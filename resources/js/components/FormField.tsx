@@ -16,7 +16,8 @@ export const FormField = ({
   maxLength,
   options,
   list,
-  disabled
+  disabled,
+  readOnly,
 }: {
   label: string;
   name: string;
@@ -30,7 +31,8 @@ export const FormField = ({
   maxLength?: number;
   options?: { value: string; label: string }[];
   list?: string;
-  disabled?: boolean;  // <-- Add this property
+  disabled?: boolean;
+  readOnly?: boolean;
 }) => (
   <div>
     <label className="block text-sm font-medium mb-2 flex items-center">{label}</label>
@@ -61,6 +63,7 @@ export const FormField = ({
         maxLength={maxLength}
         list={list}      
         disabled={disabled}
+        readOnly={readOnly}
       />
     )}
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

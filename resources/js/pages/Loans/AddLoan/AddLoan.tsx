@@ -5,7 +5,10 @@ import BorrowerStep from "./BorrowerStep";
 import CoBorrowerInfo from "@/pages/borrower-application/CoBorrowerInfo";
 import Collateral from "@/pages/borrower-application/Collateral";
 import LoanDetails from "@/pages/borrower-application/LoanDetails";
-import type { SharedFormData } from "@/pages/borrower-application/sharedFormData";
+import type {
+  LoanProductDocumentRequirement,
+  SharedFormData,
+} from "@/pages/borrower-application/sharedFormData";
 import type { BorrowerDocumentTypeOption } from "@/pages/borrowers/components/RenderDocumentUploader";
 import type { BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -244,9 +247,11 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
     ownership_proof: null,
     documents: {
       collateral: [],
+      loan_product: [],
     },
     loan_product_id: null,
     loan_product_rule: null,
+    loan_product_requirements: [],
     loan_type: "",
     loan_amount: "",
     interest_type: "",
@@ -287,10 +292,15 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
 
   useEffect(() => {
     if (!Number.isFinite(dtiRatioValue)) return;
-    setFormData((prev) => ({
-      ...prev,
-      dti_ratio: Number(dtiRatioValue.toFixed(2)),
-    }));
+    const nextDtiRatio = Number(dtiRatioValue.toFixed(2));
+    setFormData((prev) =>
+      Number(prev.dti_ratio ?? 0) === nextDtiRatio
+        ? prev
+        : {
+            ...prev,
+            dti_ratio: nextDtiRatio,
+          },
+    );
   }, [dtiRatioValue, setFormData]);
 
   useEffect(() => {
@@ -363,6 +373,86 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
     dtiRatioValue,
   ]);
 
+  useEffect(() => {
+    const loanProductId = Number(formData.loan_product_id ?? 0);
+
+    if (loanProductId <= 0) {
+      setFormData((prev) => ({
+        ...prev,
+        loan_product_requirements: [],
+        documents: {
+          ...(prev.documents ?? { collateral: [], loan_product: [] }),
+          loan_product: [],
+        },
+      }));
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadRequirements = async () => {
+      try {
+        const response = await fetch(`/api/loan-products/${loanProductId}/document-requirements`, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to load document requirements (${response.status})`);
+        }
+
+        const payload = (await response.json()) as { data?: LoanProductDocumentRequirement[] };
+        const requirements = Array.isArray(payload.data) ? payload.data : [];
+
+        setFormData((prev) => {
+          const isBusinessLoan = String(prev.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+          return {
+            ...prev,
+            loan_product_requirements: requirements,
+            documents: {
+              ...(prev.documents ?? { collateral: [], loan_product: [] }),
+              loan_product: isBusinessLoan ? prev.documents?.loan_product ?? [] : [],
+            },
+          };
+        });
+      } catch (error) {
+        if ((error as { name?: string })?.name === "AbortError") {
+          return;
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          loan_product_requirements: [],
+          documents: {
+            ...(prev.documents ?? { collateral: [], loan_product: [] }),
+            loan_product: [],
+          },
+        }));
+      }
+    };
+
+    void loadRequirements();
+
+    return () => controller.abort();
+  }, [formData.loan_product_id, setFormData]);
+
+  useEffect(() => {
+    const isBusinessLoan = String(formData.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+    if (isBusinessLoan || !(formData.documents?.loan_product?.length)) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...(prev.documents ?? { collateral: [], loan_product: [] }),
+        loan_product: [],
+      },
+    }));
+  }, [formData.documents?.loan_product?.length, formData.loan_type, setFormData]);
+
   const hasCollateralPayload = useMemo(() => {
     const hasDocs = Boolean(formData.documents?.collateral?.length);
     return Boolean(formData.collateral_type || formData.ownership_proof || hasDocs);
@@ -412,16 +502,17 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
       key: "loan",
       label: "Loan Details",
       stepIndex: loanStepIndex,
-      render: () => (
-        <LoanDetails
-          onNext={nextStep}
-          onPrev={prevStep}
-          formData={formData}
-          setFormData={setFormData}
-          stepLabels={stepLabels}
-          stepIndex={loanStepIndex}
-          // Pass rule requirements so LoanDetails can show required/optional status.
-          ruleRequirements={ruleRequirements}
+        render: () => (
+          <LoanDetails
+            onNext={nextStep}
+            onPrev={prevStep}
+            formData={formData}
+            setFormData={setFormData}
+            documentTypesByCategory={documentTypesByCategory}
+            stepLabels={stepLabels}
+            stepIndex={loanStepIndex}
+            // Pass rule requirements so LoanDetails can show required/optional status.
+            ruleRequirements={ruleRequirements}
         />
       ),
     });
@@ -439,6 +530,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
             formData={formData}
             setFormData={setFormData}
             documentTypesByCategory={documentTypesByCategory}
+            loanProductRequirements={formData.loan_product_requirements ?? []}
             stepLabels={stepLabels}
             stepIndex={collateralStepIndex}
             required={ruleRequirements.collateral}
@@ -536,6 +628,26 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
                 }
                 if (row.file) {
                   payload.append(`documents[collateral][${index}][file]`, row.file);
+                }
+              });
+            }
+
+            if (formData.documents?.loan_product?.length) {
+              formData.documents.loan_product.forEach((row, index) => {
+                if (row.document_type_id) {
+                  payload.append(
+                    `documents[loan_product][${index}][document_type_id]`,
+                    String(row.document_type_id),
+                  );
+                }
+                if (row.document_category) {
+                  payload.append(
+                    `documents[loan_product][${index}][document_category]`,
+                    String(row.document_category),
+                  );
+                }
+                if (row.file) {
+                  payload.append(`documents[loan_product][${index}][file]`, row.file);
                 }
               });
             }

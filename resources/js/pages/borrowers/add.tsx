@@ -71,7 +71,7 @@ const STEP_REQUIRED_FIELDS: Record<number, (keyof FormData)[]> = {
 const MIN_DOCUMENTS_PER_CATEGORY: Record<'borrower_identity' | 'borrower_address' | 'borrower_employment', number> = {
   borrower_identity: 2,
   borrower_address: 1,
-  borrower_employment: 2,
+  borrower_employment: 3,
 };
 
 export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProps) {

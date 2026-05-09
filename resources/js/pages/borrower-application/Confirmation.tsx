@@ -132,6 +132,20 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
       });
     }
 
+    if (formData.documents?.loan_product?.length) {
+      formData.documents.loan_product.forEach((row, index) => {
+        if (row.document_type_id) {
+          payload.append(`documents[loan_product][${index}][document_type_id]`, String(row.document_type_id));
+        }
+        if (row.document_category) {
+          payload.append(`documents[loan_product][${index}][document_category]`, String(row.document_category));
+        }
+        if (row.file) {
+          payload.append(`documents[loan_product][${index}][file]`, row.file);
+        }
+      });
+    }
+
     if (formData.ownership_proof) {
       payload.append("ownership_proof", formData.ownership_proof);
     }
