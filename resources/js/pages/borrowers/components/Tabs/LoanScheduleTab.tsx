@@ -5,6 +5,7 @@ type ScheduleRow = {
   penalty_amount?: number;
   installment_amount?: number;
   amount_paid?: number;
+  rebate_amount?: number;
   status: string;
 };
 
@@ -30,6 +31,7 @@ export default function LoanScheduleTab({ amortizationSchedule }: LoanScheduleTa
             <th className="px-3 py-2 text-left">Due Date</th>
             <th className="px-3 py-2 text-left">Interest</th>
             <th className="px-3 py-2 text-left">Penalty</th>
+            <th className="px-3 py-2 text-left">Rebate</th>
             <th className="px-3 py-2 text-left">Installment</th>
             <th className="px-3 py-2 text-left">Amount Paid</th>
             <th className="px-3 py-2 text-left">Status</th>
@@ -47,6 +49,9 @@ export default function LoanScheduleTab({ amortizationSchedule }: LoanScheduleTa
               </td>
               <td className="px-3 py-2">
                 ₱{Number(row.penalty_amount ?? 0).toLocaleString()}
+              </td>
+              <td className="px-3 py-2 text-green-600 font-medium">
+                {Number(row.rebate_amount ?? 0) > 0 ? `₱${Number(row.rebate_amount).toLocaleString()}` : '—'}
               </td>
               <td className="px-3 py-2">
                 ₱{Number(row.installment_amount ?? 0).toLocaleString()}

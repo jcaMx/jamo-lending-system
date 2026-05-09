@@ -83,7 +83,8 @@ const CoBorrowerInfo = ({
     try {
       setLoading(true);
 
-      const res = await fetch(`/co-borrowers?search=${query}`)
+      const borrowerParam = formData?.borrower_id ? `&borrower_id=${formData.borrower_id}` : '';
+      const res = await fetch(`/co-borrowers?search=${query}${borrowerParam}`)
       const data = await res.json();
 
       setResults(data);
@@ -230,7 +231,7 @@ const CoBorrowerInfo = ({
                     className="p-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => selectCoBorrower(item)}
                   >
-                    {item.first_name} {item.last_name}
+                    {item.first_name} {item.last_name} {item.type ? `(${item.type})` : ''}
                   </div>
                 ))}
               </div>

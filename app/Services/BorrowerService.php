@@ -281,6 +281,7 @@ class BorrowerService
                 'penalty_amount' => (float) $schedule->penalty_amount,
                 'installment_amount' => (float) ($schedule->installment_amount ?? 0),
                 'amount_paid' => (float) $schedule->amount_paid,
+                'rebate_amount' => (float) $schedule->rebate_amount,
                 'status' => $schedule->status?->value ?? $schedule->status ?? 'Unpaid',
             ])
             ->values()

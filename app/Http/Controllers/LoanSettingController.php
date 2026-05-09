@@ -76,4 +76,17 @@ class LoanSettingController extends Controller
         return redirect()->route('loan-settings.index')
             ->with('success', 'Fee deleted successfully.');
     }
+
+    public function updateGeneral(Request $request)
+    {
+        $validated = $request->validate([
+            'enable_rebates' => 'nullable|boolean',
+            'rebate_percentage' => 'nullable|numeric|min:0|max:100',
+            'rebate_basis' => 'nullable|string|in:interest,principal,total',
+        ]);
+
+        $this->loanSettingService->updateGeneralSettings($validated);
+
+        return redirect()->back()->with('success', 'General settings updated successfully.');
+    }
 }

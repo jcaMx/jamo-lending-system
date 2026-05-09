@@ -8,6 +8,7 @@ import { route } from 'ziggy-js';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import FeeFormModal from '@/components/FeeFormModal';
 import ReleasingFeesCard from '@/components/ReleasingFeesCard';
+import GeneralSettingsCard from '@/components/GeneralSettingsCard';
 
 interface LoanCharge {
   id: number;
@@ -21,6 +22,16 @@ interface LoanCharge {
 
 interface LoanSettingsProps {
   sections?: {
+    general?: {
+      key: string;
+      title: string;
+      description: string;
+      items: {
+        enable_rebates: boolean;
+        rebate_percentage: number;
+        rebate_basis: string;
+      };
+    };
     releasingFees?: {
       key: string;
       title: string;
@@ -33,13 +44,14 @@ interface LoanSettingsProps {
 type LoanSettingsSection = NonNullable<LoanSettingsProps['sections']>[keyof NonNullable<LoanSettingsProps['sections']>];
 
 const sectionLabels: Record<string, string> = {
+  general: 'General Settings',
   releasingFees: 'Releasing Fees',
 };
 
 export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
   const loanSettingsUrl = route('loan-settings.index');
   const availableSections = Object.values(sections).filter(Boolean) as LoanSettingsSection[];
-  const [activeSection, setActiveSection] = useState<string>(availableSections[0]?.key ?? 'releasingFees');
+  const [activeSection, setActiveSection] = useState<string>(availableSections[0]?.key ?? 'general');
 
   const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Loan Settings', href: loanSettingsUrl },
@@ -181,7 +193,11 @@ export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
         </>
       )}
 
-      {availableSections.length > 0 && activeSection !== 'releasingFees' && (
+      {activeSection === 'general' && sections.general && (
+        <GeneralSettingsCard settings={sections.general.items} />
+      )}
+
+      {availableSections.length > 0 && activeSection !== 'releasingFees' && activeSection !== 'general' && (
         <div className="mx-10 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
           This loan setting section is ready to plug into the shared page, but its UI component has not been added yet.
         </div>

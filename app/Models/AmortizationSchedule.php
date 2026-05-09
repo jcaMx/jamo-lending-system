@@ -27,6 +27,7 @@ class AmortizationSchedule extends Model
         'due_date',
         'penalty_amount',
         'amount_paid',
+        'rebate_amount',
         'status',
         'holiday_id',
         'loan_id',
@@ -41,6 +42,7 @@ class AmortizationSchedule extends Model
     protected $casts = [
 
         'amount_paid' => 'decimal:2',
+        'rebate_amount' => 'decimal:2',
         'installment_amount' => 'decimal:2',
         'interest_amount' => 'decimal:2',
         'penalty_amount' => 'decimal:2',
@@ -75,7 +77,8 @@ class AmortizationSchedule extends Model
             $this->installment_amount +
             $this->interest_amount +
             $this->penalty_amount -
-            $this->amount_paid
+            $this->amount_paid -
+            $this->rebate_amount
         ));
     }
 

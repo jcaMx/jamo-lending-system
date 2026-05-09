@@ -119,6 +119,7 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             // Loan settings routes
             Route::prefix('loan-settings')->group(function () {
                 Route::get('/', [LoanSettingController::class, 'index'])->name('loan-settings.index');
+                Route::post('/general', [LoanSettingController::class, 'updateGeneral'])->name('loan-settings.general.update');
                 Route::post('/releasing-fees', [LoanSettingController::class, 'store'])->name('loan-settings.releasing-fees.store');
                 Route::put('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'update'])->name('loan-settings.releasing-fees.update');
                 Route::delete('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'destroy'])->name('loan-settings.releasing-fees.destroy');

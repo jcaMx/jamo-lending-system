@@ -19,6 +19,7 @@ interface AmortizationSchedule {
   interest_amount: number;
   due_date: string;
   amount_paid: number;
+  rebate_amount: number;
   penalty_amount: number;
   status: string;
 }
@@ -110,6 +111,7 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
                     <TableHead className="text-right">Installment Amount</TableHead>
                     <TableHead className="text-right">Interest Amount</TableHead>
                     <TableHead className="text-right">Penalty Amount</TableHead>
+                    <TableHead className="text-right">Rebate</TableHead>
                     <TableHead className="text-right">Amount Paid</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -129,6 +131,9 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
                       </TableCell>
                       <TableCell className="text-right">
                         ₱{schedule.penalty_amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {schedule.rebate_amount > 0 ? `₱${schedule.rebate_amount.toLocaleString()}` : '-'}
                       </TableCell>
                       <TableCell className="text-right">
                         ₱{schedule.amount_paid.toLocaleString()}

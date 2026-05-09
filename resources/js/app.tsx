@@ -41,6 +41,7 @@ createInertiaApp({
   console.log('Available pages:', Object.keys(pages));
   throw new Error(`Inertia page not found: ${name}`);
   },
+  progress: false,
   setup({ el, App, props }) {
     createRoot(el).render(
       <StrictMode>
