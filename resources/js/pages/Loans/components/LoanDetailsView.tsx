@@ -194,6 +194,7 @@ export interface LoanDetailsProps {
       interest_amount: number;
       due_date: string;
       amount_paid: number;
+      rebate_amount: number;
       penalty_amount: number;
       status: string;
     }>;

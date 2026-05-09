@@ -44,12 +44,14 @@ class RepaymentController extends Controller
                             'interest_amount' => (float)$schedule->interest_amount,
                             'penalty_amount' => (float)$schedule->penalty_amount,
                             'amount_paid' => (float)$schedule->amount_paid,
+                            'rebate_amount' => (float)$schedule->rebate_amount,
                             'status' => $schedule->status?->value ?? 'Unpaid',
                             'total_due' => (float)(
                                 $schedule->installment_amount +
                                 $schedule->interest_amount +
                                 $schedule->penalty_amount -
-                                $schedule->amount_paid
+                                $schedule->amount_paid -
+                                $schedule->rebate_amount
                             ),
                         ];
                     })->values();

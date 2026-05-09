@@ -7,7 +7,9 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\VonageMessage;
 
-class NotifyUser extends Notification
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class NotifyUser extends Notification implements ShouldQueue
 {
     use Queueable;
 

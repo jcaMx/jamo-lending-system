@@ -12,6 +12,7 @@ type Schedule = {
   interest_amount: number;
   penalty_amount: number;
   amount_paid: number;
+  rebate_amount: number;
   status: string;
   total_due: number;
 };
@@ -331,6 +332,7 @@ const handleSubmit = (e: React.FormEvent) => {
                             <th className="px-4 py-3 text-left font-semibold">Installment</th>
                             <th className="px-4 py-3 text-left font-semibold">Interest</th>
                             <th className="px-4 py-3 text-left font-semibold">Penalty</th>
+                            <th className="px-4 py-3 text-left font-semibold">Rebate</th>
                             <th className="px-4 py-3 text-left font-semibold">Paid</th>
                             <th className="px-4 py-3 text-left font-semibold">Total Due</th>
                             <th className="px-4 py-3 text-left font-semibold">Status</th>
@@ -350,6 +352,9 @@ const handleSubmit = (e: React.FormEvent) => {
                               <td className="px-4 py-3">₱{schedule.installment_amount.toLocaleString()}</td>
                               <td className="px-4 py-3">₱{schedule.interest_amount.toLocaleString()}</td>
                               <td className="px-4 py-3">₱{schedule.penalty_amount.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-green-600 font-medium">
+                                 {schedule.rebate_amount > 0 ? `₱${schedule.rebate_amount.toLocaleString()}` : '-'}
+                               </td>
                               <td className="px-4 py-3">₱{schedule.amount_paid.toLocaleString()}</td>
                               <td className="px-4 py-3 font-semibold">₱{schedule.total_due.toLocaleString()}</td>
                               <td className="px-4 py-3">

@@ -1,5 +1,5 @@
-// resources/js/components/dashboard/NoLoansPlaceholder.tsx
 import { AlertTriangle } from "lucide-react";
+import { Link } from "@inertiajs/react";
 
 interface NoLoansPlaceholderProps {
   message?: string;
@@ -15,12 +15,11 @@ const NoLoansPlaceholder: React.FC<NoLoansPlaceholderProps> = ({
     <p className="text-sm text-gray-500">
       {message}
     </p>
-    <a href="/applynow" className="inline-block mt-6">
+    <Link href="/applynow" className="inline-block mt-6">
         <button className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">
         Apply for Loan
         </button>
-
-    </a>
+    </Link>
 
   </div>
   );

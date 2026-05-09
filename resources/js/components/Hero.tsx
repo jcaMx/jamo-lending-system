@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "@inertiajs/react";
 import { Check } from "lucide-react";
 import heroImg from "../assets/hero/hero.png";
 
@@ -47,11 +48,11 @@ const Hero = () => {
 
           <div className="flex gap-4">
             {/* ✅ Inertia navigation */}
-            <a href="/applynow">
+            <Link href="/applynow">
               <Button className="bg-[#FABF24] hover:bg-[#f8b80f] text-white px-8">
                 Apply Now
               </Button>
-            </a>
+            </Link>
             <Button 
               variant="link" 
               className="text-foreground border-2 border-[#FABF24] hover:bg-[#FABF24] hover:text-white px-4"

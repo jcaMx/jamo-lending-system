@@ -16,31 +16,20 @@ const queryClient = new QueryClient();
 
 createInertiaApp({
   resolve: name => {
-    console.log('🔍 Inertia resolving:', name);
     const pages = import.meta.glob<{ default: React.ComponentType<any> }>('./pages/**/*.tsx', { eager: true });
+    
+    const exactPath = `./pages/${name}.tsx`;
+    if (pages[exactPath]) return pages[exactPath].default;
 
-      // Try exact match first
-  const exactPath = `./pages/${name}.tsx`;
-  if (pages[exactPath]) {
-    console.log('✅ Page resolved (exact):', exactPath);
-    return pages[exactPath].default;
-  }
-  
-  // Try case-insensitive match
-  const normalizedName = name.toLowerCase();
-  const foundKey = Object.keys(pages).find(key => 
-    key.toLowerCase() === exactPath.toLowerCase()
-  );
-  
-  if (foundKey) {
-    console.log('✅ Page resolved (case-insensitive):', foundKey);
-    return pages[foundKey].default;
-  }
-  
-  console.error('❌ Page not found:', exactPath);
-  console.log('Available pages:', Object.keys(pages));
-  throw new Error(`Inertia page not found: ${name}`);
+    // Try case-insensitive match
+    const normalizedPath = exactPath.toLowerCase();
+    const foundKey = Object.keys(pages).find(key => key.toLowerCase() === normalizedPath);
+    
+    if (foundKey) return pages[foundKey].default;
+
+    throw new Error(`Inertia page not found: ${name}`);
   },
+  progress: false,
   setup({ el, App, props }) {
     createRoot(el).render(
       <StrictMode>

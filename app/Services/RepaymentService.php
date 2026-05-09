@@ -8,6 +8,7 @@ use App\Models\Loan;
 use App\Models\Payment;
 use App\Models\PaymentScheduleAllocation;
 use App\Models\ScheduleStatus;
+use App\Models\SystemSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 
@@ -45,7 +46,8 @@ class RepaymentService
                     $s->installment_amount +
                     $s->interest_amount +
                     $s->penalty_amount -
-                    $s->amount_paid
+                    $s->amount_paid -
+                    $s->rebate_amount
                 );
 
                 return [
@@ -56,6 +58,7 @@ class RepaymentService
                     'interest_amount' => (float) $s->interest_amount,
                     'penalty_amount' => (float) $s->penalty_amount,
                     'amount_paid' => (float) $s->amount_paid,
+                    'rebate_amount' => (float) $s->rebate_amount,
                     'status' => $s->status?->value ?? 'Unpaid',
                     'total_due' => (float) $totalDue,
                 ];
@@ -178,11 +181,48 @@ class RepaymentService
     ): float {
         $totalDue = round((float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount), 2);
         $currentPaid = round((float) $schedule->amount_paid, 2);
-        $outstanding = round(max(0, $totalDue - $currentPaid), 2);
+        $rebateApplied = round((float) $schedule->rebate_amount, 2);
+        $outstanding = round(max(0, $totalDue - $currentPaid - $rebateApplied), 2);
+
+        // Check for early payment rebate
+        $enableRebates = SystemSetting::getValue('enable_rebates', false);
+        // We only calculate rebate if the schedule will be fully paid after this payment
+        $willBeFullyPaid = $remainingAmount >= ($outstanding - self::MONEY_EPSILON);
+
+        if ($enableRebates && $willBeFullyPaid) {
+            $minDaysEarly = (int) SystemSetting::getValue('rebate_min_days_early', 0);
+            $requireGoodStanding = SystemSetting::getValue('rebate_require_good_standing', true);
+            $dueDate = Carbon::parse($schedule->due_date)->startOfDay();
+            
+            // Check if payment is early enough
+            if ($paymentDate->diffInDays($dueDate, false) >= $minDaysEarly) {
+                $canApply = true;
+
+                if ($requireGoodStanding) {
+                    // Check if there are any other overdue schedules (not including this one)
+                    $hasOtherOverdue = $loan->amortizationSchedules()
+                        ->where('status', ScheduleStatus::Overdue->value)
+                        ->where('ID', '!=', $schedule->ID)
+                        ->exists();
+                    if ($hasOtherOverdue) {
+                        $canApply = false;
+                    }
+                }
+
+                if ($canApply) {
+                    $this->applyRebate($loan, $schedule);
+                    $schedule->refresh(); // Refresh to get updated rebate_amount if applied to current
+                    
+                    // Recalculate outstanding after rebate is applied
+                    $rebateApplied = round((float) $schedule->rebate_amount, 2);
+                    $outstanding = round(max(0, $totalDue - $currentPaid - $rebateApplied), 2);
+                }
+            }
+        }
 
         if ($outstanding <= self::MONEY_EPSILON) {
             if ($schedule->status !== ScheduleStatus::Paid) {
-                $schedule->amount_paid = $totalDue;
+                // If it's already fully covered by rebate/previous payments
                 $schedule->status = ScheduleStatus::Paid;
                 $schedule->save();
             }
@@ -191,10 +231,12 @@ class RepaymentService
         }
 
         $applied = round(min($remainingAmount, $outstanding), 2);
-        if ($applied <= 0) {
-            return $remainingAmount;
-        }
+        $schedule->amount_paid = round($currentPaid + $applied, 2);
+        $remainingAmount = round($remainingAmount - $applied, 2);
 
+        if ($outstanding - $applied <= self::MONEY_EPSILON) {
+            $schedule->status = ScheduleStatus::Paid;
+        }
         $principalRatio = $totalDue > 0 ? ((float) $schedule->installment_amount / $totalDue) : 0;
         $interestRatio = $totalDue > 0 ? ((float) $schedule->interest_amount / $totalDue) : 0;
         $penaltyRatio = $totalDue > 0 ? ((float) $schedule->penalty_amount / $totalDue) : 0;
@@ -206,7 +248,7 @@ class RepaymentService
         $principalApplied = round($principalApplied + $delta, 2);
 
         $newAmountPaid = round($currentPaid + $applied, 2);
-        $remainingOutstanding = round(max(0, $totalDue - $newAmountPaid), 2);
+        $remainingOutstanding = round(max(0, $totalDue - $newAmountPaid - $rebateApplied), 2);
 
         if ($remainingOutstanding <= self::MONEY_EPSILON) {
             $schedule->amount_paid = $totalDue;
@@ -321,10 +363,47 @@ class RepaymentService
             ->sum('amount');
     }
 
-    
+    private function applyRebate(Loan $loan, AmortizationSchedule $currentSchedule): void
+    {
+        $rebatePercentage = (float) SystemSetting::getValue('rebate_percentage', 0);
+        $rebateBasis = SystemSetting::getValue('rebate_basis', 'interest');
 
+        if ($rebatePercentage <= 0) {
+            return;
+        }
 
+        $basisAmount = 0;
+        if ($rebateBasis === 'interest') {
+            $basisAmount = (float) $currentSchedule->interest_amount;
+        } elseif ($rebateBasis === 'principal') {
+            $basisAmount = (float) $currentSchedule->installment_amount;
+        } else {
+            $basisAmount = (float) ($currentSchedule->installment_amount + $currentSchedule->interest_amount);
+        }
 
+        $rebateAmount = round($basisAmount * ($rebatePercentage / 100), 2);
+
+        if ($rebateAmount <= 0) {
+            return;
+        }
+
+        // Find the next unpaid/overdue schedule
+        $nextSchedule = $loan->amortizationSchedules()
+            ->where('installment_no', '>', $currentSchedule->installment_no)
+            ->whereIn('status', [ScheduleStatus::Unpaid->value, ScheduleStatus::Overdue->value])
+            ->orderBy('installment_no', 'asc')
+            ->first();
+
+        if ($nextSchedule) {
+            $nextSchedule->rebate_amount = round($nextSchedule->rebate_amount + $rebateAmount, 2);
+            $nextSchedule->save();
+        } else {
+            // No next schedule (last one)
+            $applyToFullPayoff = SystemSetting::getValue('rebate_apply_to_full_payoff', true);
+            if ($applyToFullPayoff) {
+                $currentSchedule->rebate_amount = round($currentSchedule->rebate_amount + $rebateAmount, 2);
+                $currentSchedule->save();
+            }
+        }
+    }
 }
-
-

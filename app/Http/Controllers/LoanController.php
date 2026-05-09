@@ -568,6 +568,7 @@ class LoanController extends Controller
                     'interest_amount' => (float) $schedule->interest_amount,
                     'penalty_amount' => (float) $schedule->penalty_amount,
                     'amount_paid' => (float) $schedule->amount_paid,
+                    'rebate_amount' => (float) $schedule->rebate_amount,
                     'due_date' => $schedule->due_date?->toDateString(),
                     'status' => $schedule->status?->value ?? $schedule->status ?? 'Unpaid',
                 ];
