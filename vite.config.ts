@@ -31,6 +31,15 @@ export default defineConfig({
     outDir: 'public/build',
     manifest: true,
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-inertia': ['@inertiajs/react'],
+          'vendor-ui': ['lucide-react', '@tanstack/react-query'],
+        },
+      },
+    },
   },
 
   server: {

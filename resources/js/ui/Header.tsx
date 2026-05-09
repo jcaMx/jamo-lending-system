@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Link } from "@inertiajs/react";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 
@@ -8,30 +9,30 @@ const Header = () => {
 
   const NavLinks = () => (
     <>
-      <a href="/#home" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
+      <Link href="/#home" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
         Home
-      </a>
-      <a href="/#about" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
+      </Link>
+      <Link href="/#about" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
         About
-      </a>
-      <a href="/#services" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
+      </Link>
+      <Link href="/#services" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
         Services
-      </a>
-      <a href="/#contact" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
+      </Link>
+      <Link href="/#contact" className="text-navy font-medium hover:text-navy/80 transition-colors" onClick={() => setOpen(false)}>
         Contact
-      </a>
+      </Link>
     </>
   );
 
   return (
     <header className="bg-gradient-golden py-4 px-6 md:px-12">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <a href="/#home" className="flex items-center gap-2">
+        <Link href="/#home" className="flex items-center gap-2">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
             {/* Placeholder for logo - user will provide */}
             <span className="text-sm font-bold text-white">LOGO</span>
           </div>
-        </a>
+        </Link>
         
         <nav className="hidden md:flex items-center gap-8">
           <NavLinks />
