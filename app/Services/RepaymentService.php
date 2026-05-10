@@ -42,13 +42,13 @@ class RepaymentService
 
             // Transform schedules
             $schedules = $unpaid->map(function ($s) {
-                $totalDue = (
+                $totalDue = round(max(0, (
                     $s->installment_amount +
                     $s->interest_amount +
                     $s->penalty_amount -
                     $s->amount_paid -
                     $s->rebate_amount
-                );
+                )), 2);
 
                 return [
                     'ID' => $s->ID,
@@ -179,6 +179,7 @@ class RepaymentService
         float $remainingAmount,
         Carbon $paymentDate
     ): float {
+        $schedule->refresh();
         $totalDue = round((float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount), 2);
         $currentPaid = round((float) $schedule->amount_paid, 2);
         $rebateApplied = round((float) $schedule->rebate_amount, 2);
@@ -251,7 +252,8 @@ class RepaymentService
         $remainingOutstanding = round(max(0, $totalDue - $newAmountPaid - $rebateApplied), 2);
 
         if ($remainingOutstanding <= self::MONEY_EPSILON) {
-            $schedule->amount_paid = $totalDue;
+            // Amount paid should be the total due minus any rebates applied to this schedule
+            $schedule->amount_paid = round(max(0, $totalDue - $rebateApplied), 2);
             $schedule->status = ScheduleStatus::Paid;
         } else {
             $schedule->amount_paid = $newAmountPaid;
@@ -365,23 +367,24 @@ class RepaymentService
 
     private function applyRebate(Loan $loan, AmortizationSchedule $currentSchedule): void
     {
-        $rebatePercentage = (float) SystemSetting::getValue('rebate_percentage', 0);
-        $rebateBasis = SystemSetting::getValue('rebate_basis', 'interest');
-
-        if ($rebatePercentage <= 0) {
-            return;
-        }
-
-        $basisAmount = 0;
-        if ($rebateBasis === 'interest') {
-            $basisAmount = (float) $currentSchedule->interest_amount;
-        } elseif ($rebateBasis === 'principal') {
-            $basisAmount = (float) $currentSchedule->installment_amount;
-        } else {
-            $basisAmount = (float) ($currentSchedule->installment_amount + $currentSchedule->interest_amount);
-        }
-
-        $rebateAmount = round($basisAmount * ($rebatePercentage / 100), 2);
+        // R = P * r * t
+        // P = Principal being paid early
+        // r = Interest rate per period
+        // t = Remaining periods in the loan
+        
+        $principalAmount = round((float) $currentSchedule->installment_amount, 2);
+        
+        $ratePerPeriod = match ($loan->repayment_frequency) {
+            'Weekly' => ($loan->interest_rate / 100) / 52,
+            'Monthly' => ($loan->interest_rate / 100) / 12,
+            'Yearly' => ($loan->interest_rate / 100),
+            default => ($loan->interest_rate / 100) / 12,
+        };
+        
+        $totalInstallments = $loan->amortizationSchedules()->count();
+        $remainingPeriods = max(0, $totalInstallments - $currentSchedule->installment_no);
+        
+        $rebateAmount = round($principalAmount * $ratePerPeriod * $remainingPeriods, 2);
 
         if ($rebateAmount <= 0) {
             return;
