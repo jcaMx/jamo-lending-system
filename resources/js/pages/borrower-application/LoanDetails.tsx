@@ -159,10 +159,11 @@ const LoanDetails = ({
   ruleRequirements,
 }: LoanDetailsProps) => {
   const { props } = usePage();
-  const roles = ((props as { auth?: { roles?: string[] } })?.auth?.roles ?? []).map((role) =>
-    String(role).toLowerCase(),
+  const pageProps = props as any;
+  const roles = (pageProps?.auth?.roles || pageProps?.auth?.user?.roles || []).map((role: any) =>
+    String(role?.name || role).toLowerCase(),
   );
-  const canEditInterestRate = roles.includes("admin");
+  const canEditInterestRate = roles.includes("admin") || roles.includes("super-admin");
 
   const initial = formData ?? {};
   const { data, setData, errors } = useForm({
@@ -581,17 +582,6 @@ const LoanDetails = ({
             onChange={() => { }}
             placeholder="Auto-filled from borrower"
             disabled
-          />
-
-          <FormField
-            label="Interest Type"
-            name="interest_type"
-            type="select"
-            value={data.interest_type}
-            onChange={(value) => setData("interest_type", value)}
-            required
-            options={interestTypeOptions}
-            error={errors.interest_type}
           />
 
           <FormField

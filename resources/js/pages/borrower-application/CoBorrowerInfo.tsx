@@ -303,7 +303,8 @@ const CoBorrowerInfo = ({
                   name={`coBorrowers.${i}.first_name`}
                   value={co.first_name}
                   onChange={(v) => handleChange(i, "first_name", v)}
-                  required
+                  required={true}
+                  htmlRequired={required}
                   error={fieldErrors[`coBorrowers.${i}.first_name`]}
                 />
 
@@ -312,7 +313,8 @@ const CoBorrowerInfo = ({
                   name={`coBorrowers.${i}.last_name`}
                   value={co.last_name}
                   onChange={(v) => handleChange(i, "last_name", v)}
-                  required
+                  required={true}
+                  htmlRequired={required}
                   error={fieldErrors[`coBorrowers.${i}.last_name`]}
                 />
               </div>
@@ -323,7 +325,8 @@ const CoBorrowerInfo = ({
                 type="date"
                 value={co.birth_date}
                 onChange={(v) => handleChange(i, "birth_date", v)}
-                required
+                required={true}
+                htmlRequired={required}
                 error={fieldErrors[`coBorrowers.${i}.birth_date`]}
               />
 
@@ -334,7 +337,8 @@ const CoBorrowerInfo = ({
                 value={co.marital_status}
                 onChange={(v) => handleChange(i, "marital_status", v)}
                 options={maritalStatusOptions}
-                required
+                required={true}
+                htmlRequired={required}
                 error={fieldErrors[`coBorrowers.${i}.marital_status`]}
               />
 
@@ -344,7 +348,8 @@ const CoBorrowerInfo = ({
                 value={co.mobile}
                 onChange={(v) => handleChange(i, "mobile", v)}
                 maxLength={11}
-                required
+                required={true}
+                htmlRequired={required}
                 error={fieldErrors[`coBorrowers.${i}.mobile`] || fieldErrors[`coBorrowers.${i}.contact`]}
               />
 
@@ -354,7 +359,8 @@ const CoBorrowerInfo = ({
                 type="number"
                 value={co.dependents}
                 onChange={(v) => handleChange(i, "dependents", v)}
-                required
+                required={true}
+                htmlRequired={required}
                 error={fieldErrors[`coBorrowers.${i}.dependents`]}
               />
 
@@ -363,7 +369,8 @@ const CoBorrowerInfo = ({
                 name={`coBorrowers.${i}.address`}
                 value={co.address}
                 onChange={(v) => handleChange(i, "address", v)}
-                required
+                required={true}
+                htmlRequired={required}
                 error={fieldErrors[`coBorrowers.${i}.address`]}
               />
 
@@ -372,7 +379,8 @@ const CoBorrowerInfo = ({
                 name={`coBorrowers.${i}.occupation`}
                 value={co.occupation}
                 onChange={(v) => handleChange(i, "occupation", v)}
-                required
+                required={true}
+                htmlRequired={required}
                 error={fieldErrors[`coBorrowers.${i}.occupation`]}
               />
 

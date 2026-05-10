@@ -12,6 +12,7 @@ export const FormField = ({
   error,
   placeholder,
   required = false,
+  htmlRequired = required,
   pattern,
   maxLength,
   options,
@@ -27,6 +28,7 @@ export const FormField = ({
   error?: string;
   placeholder?: string;
   required?: boolean;
+  htmlRequired?: boolean;
   pattern?: string;
   maxLength?: number;
   options?: { value: string; label: string }[];
@@ -35,8 +37,10 @@ export const FormField = ({
   readOnly?: boolean;
 }) => (
   <div>
-    <label className="block text-sm font-medium mb-2 flex items-center">{label}</label>
-    {required && <span className="text-red-500 ml-1">*</span>}
+    <label className="block text-sm font-medium mb-2 flex items-center">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
     {type === "select" ? (
       <select
         name={name}
@@ -44,7 +48,7 @@ export const FormField = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={inputClass}
-        required={required}
+        required={htmlRequired}
       >
         <option value="">Select {label}</option>
         {options?.map((opt) => (
@@ -62,7 +66,7 @@ export const FormField = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={inputClass}
-        required={required}
+        required={htmlRequired}
         pattern={pattern}
         maxLength={maxLength}
         list={list}      

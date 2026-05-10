@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import BorrowerStep from "./BorrowerStep";
 import CoBorrowerInfo from "@/pages/borrower-application/CoBorrowerInfo";
@@ -276,6 +276,13 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
 };
 
 export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }: AddLoanProps) {
+  const { props } = usePage();
+  const pageProps = props as any;
+  const roles = (pageProps?.auth?.roles || pageProps?.auth?.user?.roles || []).map((role: any) =>
+    String(role?.name || role).toLowerCase(),
+  );
+  const canEditInterestRate = roles.includes("admin") || roles.includes("super-admin");
+
   const [currentStep, setCurrentStep] = useState(0);
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -332,12 +339,20 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
   const showCoBorrowerStep = true;
 
   const nextStep = useCallback(() => {
+    console.log("[AddLoan] Moving to next step:", currentStep + 1);
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
     setCurrentStep((prev) => prev + 1);
-  }, []);
+  }, [currentStep]);
 
   const prevStep = useCallback(() => {
+    console.log("[AddLoan] Moving to previous step:", currentStep - 1);
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
     setCurrentStep((prev) => Math.max(prev - 1, 0));
-  }, []);
+  }, [currentStep]);
 
   const focusField = useCallback((fieldName?: string) => {
     if (!fieldName || typeof document === "undefined") return;
@@ -458,13 +473,13 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
         }
 
         const payload = (await response.json()) as {
-          collateral?: boolean;
-          coborrower?: boolean;
+          requires_collateral?: boolean;
+          requires_coborrower?: boolean;
         };
 
         setRuleRequirements({
-          collateral: Boolean(payload?.collateral),
-          coborrower: Boolean(payload?.coborrower),
+          collateral: Boolean(payload?.requires_collateral),
+          coborrower: Boolean(payload?.requires_coborrower),
         });
       } catch {
         // Keep previous requirements if request fails.
@@ -627,6 +642,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           stepIndex={loanStepIndex}
           // Pass rule requirements so LoanDetails can show required/optional status.
           ruleRequirements={ruleRequirements}
+          documentTypesByCategory={documentTypesByCategory}
         />
       ),
     });
@@ -646,6 +662,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
             fieldErrors={fieldErrors}
             submitError={submitError}
             documentTypesByCategory={documentTypesByCategory}
+            loanProductRequirements={formData.loan_product_requirements ?? []}
             stepLabels={stepLabels}
             stepIndex={collateralStepIndex}
             required={ruleRequirements.collateral}

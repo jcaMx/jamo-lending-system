@@ -412,13 +412,13 @@ const Collateral = ({
       setStepError("Please complete all required vehicle collateral fields.");
       const firstMissingVehicleField =
         !data.make ? "make" :
-        !data.fuel ? "fuel" :
-        !data.vehicle_type ? "vehicle_type" :
-        !data.transmission_type ? "transmission_type" :
-        !data.plate_no ? "plate_no" :
-        !data.engine_no ? "engine_no" :
-        !data.year_model ? "year_model" :
-        "series";
+          !data.fuel ? "fuel" :
+            !data.vehicle_type ? "vehicle_type" :
+              !data.transmission_type ? "transmission_type" :
+                !data.plate_no ? "plate_no" :
+                  !data.engine_no ? "engine_no" :
+                    !data.year_model ? "year_model" :
+                      "series";
       focusField(firstMissingVehicleField);
       return;
     }
@@ -430,9 +430,9 @@ const Collateral = ({
       setStepError("Please complete all required land collateral fields.");
       const firstMissingLandField =
         !data.certificate_of_title_no ? "certificate_of_title_no" :
-        !data.location ? "location" :
-        !data.description ? "description" :
-        "area";
+          !data.location ? "location" :
+            !data.description ? "description" :
+              "area";
       focusField(firstMissingLandField);
       return;
     }
@@ -444,8 +444,8 @@ const Collateral = ({
       setStepError("Please complete all required ATM collateral fields.");
       const firstMissingAtmField =
         !data.bank_name ? "bank_name" :
-        !data.account_no ? "account_no" :
-        "cardno_4digits";
+          !data.account_no ? "account_no" :
+            "cardno_4digits";
       focusField(firstMissingAtmField);
       return;
     }
@@ -499,241 +499,256 @@ const Collateral = ({
           <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
             {required ? "Collateral required for this loan product." : "Optional — you may skip this step."}
           </p>
-           <FormField
-          label="Collateral Type"
-          name="collateral_type"
-          type="select"
-          value={data.collateral_type}
-          onChange={(v) => setData("collateral_type", v)}
-          options={collateralTypeOptions}
-          required
-          error={fieldErrors.collateral_type}
-        />
+          <FormField
+            label="Collateral Type"
+            name="collateral_type"
+            type="select"
+            value={data.collateral_type}
+            onChange={(v) => setData("collateral_type", v)}
+            options={collateralTypeOptions}
+            required={true}
+            htmlRequired={required}
+            error={fieldErrors.collateral_type}
+          />
 
-        {data.collateral_type === "vehicle" && (
-          <>
-            <FormField
-              label="Make"
-              name="make"
-              value={data.make}
-              onChange={(v) => setData("make", sanitize.trim(v))}
-              type="text"
-              list="vehicle-makes"
-              placeholder="Select or type vehicle make"
-              required
-              error={fieldErrors.make}
-            />
-            <datalist id="vehicle-makes">
-              {makeTypeOptions.map((opt) => (
-                <option key={opt.value} value={opt.label} />
-              ))}
-            </datalist>
+          {data.collateral_type === "vehicle" && (
+            <>
+              <FormField
+                label="Make"
+                name="make"
+                value={data.make}
+                onChange={(v) => setData("make", sanitize.trim(v))}
+                type="text"
+                list="vehicle-makes"
+                placeholder="Select or type vehicle make"
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.make}
+              />
+              <datalist id="vehicle-makes">
+                {makeTypeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.label} />
+                ))}
+              </datalist>
 
-            <FormField
-              label="Fuel Type"
-              name="fuel"
-              type="select"
-              value={data.fuel}
-              onChange={(v) => setData("fuel", v)}
-              options={fuelOptions}
-              required
-              error={fieldErrors.fuel}
-            />
-            <FormField
-              label="Vehicle Type"
-              name="vehicle_type"
-              type="select"
-              value={data.vehicle_type}
-              onChange={(v) => setData("vehicle_type", v)}
-              options={vehicleTypeOptions}
-              required
-              error={fieldErrors.vehicle_type}
-            />
-            <FormField
-              label="Transmission Type"
-              name="transmission_type"
-              type="select"
-              value={data.transmission_type}
-              onChange={(v) => setData("transmission_type", v)}
-              options={transmissionOptions}
-              required
-              error={fieldErrors.transmission_type}
-            />
-            <FormField
-              label="Plate Number"
-              name="plate_no"
-              value={data.plate_no}
-              onChange={(v) => setData("plate_no", sanitize.alphaNum(v))}
-              required
-              error={fieldErrors.plate_no}
-            />
-            <FormField
-              label="Engine Number"
-              name="engine_no"
-              value={data.engine_no}
-              onChange={(v) => setData("engine_no", sanitize.alphaNum(v))}
-              required
-              error={fieldErrors.engine_no}
-            />
-            <FormField
-              label="Year Model"
-              name="year_model"
-              value={data.year_model}
-              onChange={(v) => setData("year_model", sanitize.number(v))}
-              maxLength={4}
-              required
-              error={fieldErrors.year_model}
-            />
-            <FormField
-              label="Series"
-              name="series"
-              value={data.series}
-              onChange={(v) => setData("series", sanitize.trim(v))}
-              required
-              error={fieldErrors.series}
-            />
-          </>
-        )}
+              <FormField
+                label="Fuel Type"
+                name="fuel"
+                type="select"
+                value={data.fuel}
+                onChange={(v) => setData("fuel", v)}
+                options={fuelOptions}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.fuel}
+              />
+              <FormField
+                label="Vehicle Type"
+                name="vehicle_type"
+                type="select"
+                value={data.vehicle_type}
+                onChange={(v) => setData("vehicle_type", v)}
+                options={vehicleTypeOptions}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.vehicle_type}
+              />
+              <FormField
+                label="Transmission Type"
+                name="transmission_type"
+                type="select"
+                value={data.transmission_type}
+                onChange={(v) => setData("transmission_type", v)}
+                options={transmissionOptions}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.transmission_type}
+              />
+              <FormField
+                label="Plate Number"
+                name="plate_no"
+                value={data.plate_no}
+                onChange={(v) => setData("plate_no", sanitize.alphaNum(v))}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.plate_no}
+              />
+              <FormField
+                label="Engine Number"
+                name="engine_no"
+                value={data.engine_no}
+                onChange={(v) => setData("engine_no", sanitize.alphaNum(v))}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.engine_no}
+              />
+              <FormField
+                label="Year Model"
+                name="year_model"
+                value={data.year_model}
+                onChange={(v) => setData("year_model", sanitize.number(v))}
+                maxLength={4}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.year_model}
+              />
+              <FormField
+                label="Series"
+                name="series"
+                value={data.series}
+                onChange={(v) => setData("series", sanitize.trim(v))}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.series}
+              />
+            </>
+          )}
 
-        {data.collateral_type === "land" && (
-          <>
-            <FormField
-              label="Certificate of Title No."
-              name="certificate_of_title_no"
-              value={data.certificate_of_title_no}
-              onChange={(v) => setData("certificate_of_title_no", sanitize.alphaNum(v))}
-              error={fieldErrors.certificate_of_title_no}
-            />
-            <FormField
-              label="Lot No."
-              name="lot_no"
-              value={data.lot_no}
-              onChange={(v) => setData("lot_no", sanitize.alphaNum(v))}
-            />
-            <FormField
-              label="Location"
-              name="location"
-              value={data.location}
-              onChange={(v) => setData("location", v)}
-              required
-              error={fieldErrors.location}
-            />
-            <FormField
-              label="Description"
-              name="description"
-              value={data.description}
-              onChange={(v) => setData("description", v)}
-              required
-              error={fieldErrors.description}
-            />
-            <FormField
-              label="Area (sqm)"
-              name="area"
-              value={data.area}
-              onChange={(v) => setData("area", sanitize.number(v))}
-              required
-              error={fieldErrors.area}
-            />
-          </>
-        )}
+          {data.collateral_type === "land" && (
+            <>
+              <FormField
+                label="Certificate of Title No."
+                name="certificate_of_title_no"
+                value={data.certificate_of_title_no}
+                onChange={(v) => setData("certificate_of_title_no", sanitize.alphaNum(v))}
+                error={fieldErrors.certificate_of_title_no}
+              />
+              <FormField
+                label="Lot No."
+                name="lot_no"
+                value={data.lot_no}
+                onChange={(v) => setData("lot_no", sanitize.alphaNum(v))}
+              />
+              <FormField
+                label="Location"
+                name="location"
+                value={data.location}
+                onChange={(v) => setData("location", v)}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.location}
+              />
+              <FormField
+                label="Description"
+                name="description"
+                value={data.description}
+                onChange={(v) => setData("description", v)}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.description}
+              />
+              <FormField
+                label="Area (sqm)"
+                name="area"
+                value={data.area}
+                onChange={(v) => setData("area", sanitize.number(v))}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.area}
+              />
+            </>
+          )}
 
-        {data.collateral_type === "atm" && (
-          <>
-            <FormField
-              label="Bank Name"
-              name="bank_name"
-              value={data.bank_name}
-              onChange={(v) => setData("bank_name", sanitize.trim(v))}
-              list="bank-names"
-              placeholder="Select or type bank name"
-              required
-              error={fieldErrors.bank_name}
-            />
-            <datalist id="bank-names">
-              {bankOptions.map((opt) => (
-                <option key={opt.value} value={opt.label} />
-              ))}
-            </datalist>
+          {data.collateral_type === "atm" && (
+            <>
+              <FormField
+                label="Bank Name"
+                name="bank_name"
+                value={data.bank_name}
+                onChange={(v) => setData("bank_name", sanitize.trim(v))}
+                list="bank-names"
+                placeholder="Select or type bank name"
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.bank_name}
+              />
+              <datalist id="bank-names">
+                {bankOptions.map((opt) => (
+                  <option key={opt.value} value={opt.label} />
+                ))}
+              </datalist>
 
-            <FormField
-              label="Account Number"
-              name="account_no"
-              value={data.account_no}
-              onChange={(v) => setData("account_no", sanitize.number(v))}
-              required
-              error={fieldErrors.account_no}
-            />
-            <FormField
-              label="Card Last 4 Digits"
-              name="cardno_4digits"
-              value={data.cardno_4digits}
-              onChange={(v) => setData("cardno_4digits", sanitize.number(v).slice(0, 4))}
-              maxLength={4}
-              required
-              error={fieldErrors.cardno_4digits}
-            />
-          </>
-        )}
+              <FormField
+                label="Account Number"
+                name="account_no"
+                value={data.account_no}
+                onChange={(v) => setData("account_no", sanitize.number(v))}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.account_no}
+              />
+              <FormField
+                label="Card Last 4 Digits"
+                name="cardno_4digits"
+                value={data.cardno_4digits}
+                onChange={(v) => setData("cardno_4digits", sanitize.number(v).slice(0, 4))}
+                maxLength={4}
+                required={true}
+                htmlRequired={required}
+                error={fieldErrors.cardno_4digits}
+              />
+            </>
+          )}
 
-        {data.collateral_type && (
-          <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
-            <h3 className="font-semibold text-gray-700">Required Collateral Documents</h3>
+          {data.collateral_type && (
+            <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
+              <h3 className="font-semibold text-gray-700">Required Collateral Documents</h3>
 
-            {!requiredCollateralRequirements.length && (
-              <p className="text-sm text-amber-700">
-                No required document type is configured for this collateral type.
-              </p>
-            )}
+              {!requiredCollateralRequirements.length && (
+                <p className="text-sm text-amber-700">
+                  No required document type is configured for this collateral type.
+                </p>
+              )}
 
-            {requiredCollateralRequirements.map((requirement, index) => {
-              const documentType = requirement.document_type;
-              if (!documentType || requirement.document_type_id === null) {
-                return null;
-              }
+              {requiredCollateralRequirements.map((requirement, index) => {
+                const documentType = requirement.document_type;
+                if (!documentType || requirement.document_type_id === null) {
+                  return null;
+                }
 
-              const row = displayCollateralRows[index];
+                const row = displayCollateralRows[index];
 
-              return (
-                <div key={requirement.id} className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {documentType.name} <span className="text-red-600">*</span>
-                  </label>
-                  {requirement.notes && (
-                    <p className="text-xs text-gray-500">{requirement.notes}</p>
-                  )}
-                  <input
-                    type="file"
-                    name={`documents.collateral.${docType.id}`}
-                    data-field="ownership_proof"
-                    className={inputClass}
-                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                    required
-                    onChange={(e) =>
-                      updateRequiredDocument(
-                        String(requirement.document_type_id),
-                        row?.source_index ?? null,
-                        e.target.files?.[0] ?? null,
-                      )
-                    }
-                  />
-                  {row?.file && (
-                    <p className="text-xs text-gray-600">Selected: {row.file.name}</p>
-                  )}
-                  {(fieldErrors.ownership_proof || fieldErrors["documents.collateral"] || fieldErrors[`documents.collateral.${docType.id}`]) && (
-                    <p className="text-xs text-red-600">
-                      {fieldErrors[`documents.collateral.${docType.id}`] || fieldErrors["documents.collateral"] || fieldErrors.ownership_proof}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                return (
+                  <div key={requirement.id} className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {documentType.name} <span className="text-red-600">*</span>
+                    </label>
+                    {requirement.notes && (
+                      <p className="text-xs text-gray-500">{requirement.notes}</p>
+                    )}
+                    <input
+                      type="file"
+                      name={`documents.collateral.${documentType.id}`}
+                      data-field="ownership_proof"
+                      className={inputClass}
+                      accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                      required
+                      onChange={(e) =>
+                        updateRequiredDocument(
+                          String(requirement.document_type_id),
+                          row?.source_index ?? null,
+                          e.target.files?.[0] ?? null,
+                        )
+                      }
+                    />
+                    {row?.file && (
+                      <p className="text-xs text-gray-600">Selected: {row.file.name}</p>
+                    )}
+                    {(fieldErrors.ownership_proof || fieldErrors["documents.collateral"] || fieldErrors[`documents.collateral.${documentType.id}`]) && (
+                      <p className="text-xs text-red-600">
+                        {fieldErrors[`documents.collateral.${documentType.id}`] || fieldErrors["documents.collateral"] || fieldErrors.ownership_proof}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-          
+
         </form>
 
-       
+
 
         <div className="flex justify-between pt-6">
           <Button variant="outline" onClick={onPrev}>

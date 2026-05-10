@@ -235,16 +235,55 @@ const BorrowerStep = ({
 
 
   const handleSelectBorrower = async (borrower: Borrower) => {
-    const inferredEligibility = getEligibilityFromBorrower(borrower);
+    setIsCheckingEligibility(true);
+    setBorrowerError("");
+    try {
+      if (borrower.id === selectedBorrower?.id) {
+        return;
+      }
+      
+      const inferredEligibility = getEligibilityFromBorrower(borrower);
 
-    if (inferredEligibility === false) {
-      setBorrowerError("This borrower has an active or pending loan.");
-      setEligibilityById((prev) => ({ ...prev, [borrower.id]: false }));
-      return;
-    }
+      if (inferredEligibility === false) {
+        setBorrowerError("This borrower has an active or pending loan.");
+        setEligibilityById((prev) => ({ ...prev, [borrower.id]: false }));
+        return;
+      }
 
-    if (inferredEligibility === true) {
-      setEligibilityById((prev) => ({ ...prev, [borrower.id]: true }));
+      if (inferredEligibility === true) {
+        setEligibilityById((prev) => ({ ...prev, [borrower.id]: true }));
+        setSelectedBorrower(borrower);
+        setBorrowerSearch(borrower.name);
+        setFormData((prev) => ({
+          ...prev,
+          borrower_id: borrower.id,
+          borrower_name: borrower.name,
+        }));
+        await fetchBorrowerIncome(borrower.id);
+        setBorrowerError("");
+        return;
+      }
+
+      const knownEligibility = eligibilityById[borrower.id];
+
+      if (knownEligibility === false) {
+        setBorrowerError("This borrower has an active or pending loan.");
+        return;
+      }
+
+      if (knownEligibility === undefined) {
+        const eligible = await checkBorrowerEligibility(borrower.id);
+        if (eligible === false) {
+          setBorrowerError("This borrower has an active or pending loan.");
+          setEligibilityById((prev) => ({ ...prev, [borrower.id]: false }));
+          return;
+        }
+
+        if (eligible === true) {
+          setEligibilityById((prev) => ({ ...prev, [borrower.id]: true }));
+        }
+      }
+
       setSelectedBorrower(borrower);
       setBorrowerSearch(borrower.name);
       setFormData((prev) => ({
@@ -252,40 +291,11 @@ const BorrowerStep = ({
         borrower_id: borrower.id,
         borrower_name: borrower.name,
       }));
-      void fetchBorrowerIncome(borrower.id);
+      await fetchBorrowerIncome(borrower.id);
       setBorrowerError("");
-      return;
+    } finally {
+      setIsCheckingEligibility(false);
     }
-
-    const knownEligibility = eligibilityById[borrower.id];
-
-    if (knownEligibility === false) {
-      setBorrowerError("This borrower has an active or pending loan.");
-      return;
-    }
-
-    if (knownEligibility === undefined) {
-      const eligible = await checkBorrowerEligibility(borrower.id);
-      if (eligible === false) {
-        setBorrowerError("This borrower has an active or pending loan.");
-        setEligibilityById((prev) => ({ ...prev, [borrower.id]: false }));
-        return;
-      }
-
-      if (eligible === true) {
-        setEligibilityById((prev) => ({ ...prev, [borrower.id]: true }));
-      }
-    }
-
-    setSelectedBorrower(borrower);
-    setBorrowerSearch(borrower.name);
-    setFormData((prev) => ({
-      ...prev,
-      borrower_id: borrower.id,
-      borrower_name: borrower.name,
-    }));
-    void fetchBorrowerIncome(borrower.id);
-    setBorrowerError("");
   };
 
   const handleNext = async () => {
@@ -295,34 +305,39 @@ const BorrowerStep = ({
       return;
     }
 
-    const inferredEligibility = getEligibilityFromBorrower(selectedBorrower);
-    if (inferredEligibility === false) {
-      setBorrowerError("This borrower has an active or pending loan.");
-      setEligibilityById((prev) => ({ ...prev, [selectedBorrower.id]: false }));
-      return;
-    }
+    setIsCheckingEligibility(true);
+    try {
+      const inferredEligibility = getEligibilityFromBorrower(selectedBorrower);
+      if (inferredEligibility === false) {
+        setBorrowerError("This borrower has an active or pending loan.");
+        setEligibilityById((prev) => ({ ...prev, [selectedBorrower.id]: false }));
+        return;
+      }
 
-    if (inferredEligibility === true) {
-      setEligibilityById((prev) => ({ ...prev, [selectedBorrower.id]: true }));
-      onNext();
-      return;
-    }
+      if (inferredEligibility === true) {
+        setEligibilityById((prev) => ({ ...prev, [selectedBorrower.id]: true }));
+        onNext();
+        return;
+      }
 
-    const eligible = eligibilityById[selectedBorrower.id];
-    if (eligible === false) {
-      setBorrowerError("This borrower has an active or pending loan.");
-      return;
-    }
-
-    if (eligible === undefined) {
-      const verified = await checkBorrowerEligibility(selectedBorrower.id);
-      if (verified === false) {
+      const eligible = eligibilityById[selectedBorrower.id];
+      if (eligible === false) {
         setBorrowerError("This borrower has an active or pending loan.");
         return;
       }
-    }
 
-    onNext();
+      if (eligible === undefined) {
+        const verified = await checkBorrowerEligibility(selectedBorrower.id);
+        if (verified === false) {
+          setBorrowerError("This borrower has an active or pending loan.");
+          return;
+        }
+      }
+
+      onNext();
+    } finally {
+      setIsCheckingEligibility(false);
+    }
   };
 
   return (
@@ -418,8 +433,13 @@ const BorrowerStep = ({
           </div>
 
           <div className="flex justify-end">
-            <Button type="button" className="bg-golden text-black" onClick={handleNext}>
-              Next
+            <Button 
+              type="button" 
+              className="bg-golden text-black min-w-[120px]" 
+              onClick={handleNext}
+              disabled={isCheckingEligibility}
+            >
+              {isCheckingEligibility ? "Checking..." : "Next"}
             </Button>
           </div>
         </div>
