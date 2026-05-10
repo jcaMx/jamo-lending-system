@@ -11,6 +11,8 @@ interface LoanDetailsProps {
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  fieldErrors?: Record<string, string>;
+  submitError?: string;
   stepLabels?: string[];
   stepIndex?: number;
   ruleRequirements?: { collateral: boolean; coborrower: boolean };
@@ -93,6 +95,8 @@ const LoanDetails = ({
   onPrev,
   formData,
   setFormData,
+  fieldErrors = {},
+  submitError = "",
   stepLabels,
   stepIndex,
   ruleRequirements,
@@ -231,9 +235,40 @@ const LoanDetails = ({
     );
   };
 
+  const focusField = (fieldName: string) => {
+    if (typeof document === "undefined") return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if ("focus" in target) {
+        target.focus();
+      }
+    }, 100);
+  };
+
   const handleSubmit = () => {
+    const firstMissingField =
+      !String(data.loan_type ?? "").trim()
+        ? "loan_type"
+        : !String(data.loan_amount ?? "").trim()
+        ? "loan_amount"
+        : !String(data.interest_type ?? "").trim()
+        ? "interest_type"
+        : !String(data.interest_rate ?? "").trim()
+        ? "interest_rate"
+        : !String(data.repayment_frequency ?? "").trim()
+        ? "repayment_frequency"
+        : !String(data.term ?? "").trim()
+        ? "term"
+        : "";
+
     if (isMissingLoanDetails()) {
       setStepError("Please complete all required loan details before proceeding.");
+      if (firstMissingField) {
+        focusField(firstMissingField);
+      }
       return;
     }
     setStepError("");
@@ -266,12 +301,15 @@ const LoanDetails = ({
           onChange={handleLoanTypeChange}
           required
           options={loanTypeOptions}
-          error={errors.loan_type}
+          error={fieldErrors.loan_type || errors.loan_type}
           disabled={isLoadingLoanProducts || loanTypeOptions.length === 0}
         />
 
         {loanProductsError && (
           <p className="text-sm text-red-600">{loanProductsError}</p>
+        )}
+        {submitError && !stepError && (
+          <p className="text-sm text-red-600">{submitError}</p>
         )}
         {stepError && (
           <p className="text-sm text-red-600">{stepError}</p>
@@ -283,7 +321,7 @@ const LoanDetails = ({
           value={data.loan_amount}
           onChange={(v) => setData("loan_amount", sanitize.number(v))}
           required
-          error={errors.loan_amount}
+          error={fieldErrors.loan_amount || errors.loan_amount}
         />
 
         <FormField
@@ -304,7 +342,7 @@ const LoanDetails = ({
           onChange={(v) => setData("interest_type", v)}
           required
           options={interestTypeOptions}
-          error={errors.interest_type}
+          error={fieldErrors.interest_type || errors.interest_type}
         />
 
         <FormField
@@ -313,7 +351,7 @@ const LoanDetails = ({
           value={String(data.interest_rate)}
           onChange={(v) => setData("interest_rate", parseFloat(sanitize.decimal(v)) || 0)}
           required
-          error={errors.interest_rate}
+          error={fieldErrors.interest_rate || errors.interest_rate}
           disabled={true}
         />
 
@@ -325,7 +363,7 @@ const LoanDetails = ({
           onChange={(v) => setData("repayment_frequency", v)}
           required
           options={repaymentFrequencyOptions}
-          error={errors.repayment_frequency}
+          error={fieldErrors.repayment_frequency || errors.repayment_frequency}
         />
 
         <FormField
@@ -334,7 +372,7 @@ const LoanDetails = ({
           value={data.term}
           onChange={(v) => setData("term", sanitize.number(v))}
           required
-          error={errors.term}
+          error={fieldErrors.term || errors.term}
         />  
 
         {/* Rule requirement status (UX hint for next steps) */}

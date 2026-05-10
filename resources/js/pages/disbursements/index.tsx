@@ -64,7 +64,6 @@ type EligibleLoan = {
 type BankAccount = {
   id: number;
   bank_name: string;
-  account_name: string;
   account_number: string;
   branch?: string | null;
 };
@@ -96,6 +95,8 @@ type ActionModalState =
     }
   | null;
 
+const getTodayDateInputValue = () => new Date().toISOString().slice(0, 10);
+
 export default function DisbursementsIndex({ disbursements, eligibleLoans, bankAccounts, initialLoanId = null, feeConfig }: Props) {
   const page = usePage();
   const roles = (page.props as any)?.auth?.roles ?? [];
@@ -122,6 +123,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
   const [payeeTin, setPayeeTin] = useState<string>('');
   const [particulars, setParticulars] = useState<string>('');
   const [bankAccountId, setBankAccountId] = useState<string>('');
+  const [chequeNo, setChequeNo] = useState<string>('');
   const [chequeDate, setChequeDate] = useState<string>('');
   const [selectedChargeIds, setSelectedChargeIds] = useState<number[]>([]);
 
@@ -135,13 +137,25 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
   const [showBankAccountModal, setShowBankAccountModal] = useState(false);
   const [bankAccountForm, setBankAccountForm] = useState({
     bank_name: '',
-    account_name: '',
     account_number: '',
     branch: '',
   });
   const [bankAccountErrors, setBankAccountErrors] = useState<Record<string, string>>({});
   const [bankAccountGeneralError, setBankAccountGeneralError] = useState('');
   const [savingBankAccount, setSavingBankAccount] = useState(false);
+
+  const focusField = (fieldName: string) => {
+    if (typeof document === 'undefined') return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if ('focus' in target) {
+        target.focus();
+      }
+    }, 100);
+  };
 
   const filtered = useMemo(() => {
     if (activeTab === 'all') return disbursements;
@@ -171,6 +185,20 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
   useEffect(() => {
     setBankAccountOptions(bankAccounts);
   }, [bankAccounts]);
+
+  useEffect(() => {
+    if (!['Cash', 'Cheque Voucher'].includes(method)) {
+      return;
+    }
+
+    const today = getTodayDateInputValue();
+
+    setVoucherDate((current) => current || today);
+
+    if (method === 'Cheque Voucher') {
+      setChequeDate((current) => current || today);
+    }
+  }, [method]);
 
   useEffect(() => {
     const allChargeIds = Object.values(feeConfig?.charges ?? {})
@@ -245,11 +273,16 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     }
     if (method === 'Cheque Voucher') {
       if (!bankAccountId) errors.bank_account_id = 'Bank account is required.';
+      if (!chequeNo.trim()) errors.cheque_no = 'Cheque number is required.';
       if (!chequeDate) errors.cheque_date = 'Cheque date is required.';
     }
 
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        focusField(firstErrorField);
+      }
       return;
     }
 
@@ -266,6 +299,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
       payee_tin: payeeTin || null,
       particulars: particulars || null,
       bank_account_id: bankAccountId ? Number(bankAccountId) : null,
+      cheque_no: chequeNo || null,
       cheque_date: chequeDate || null,
     }, {
       preserveScroll: true,
@@ -274,10 +308,11 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
         setMethod('');
         setReferenceNo('');
         setRemarks('');
-        setVoucherDate('');
+        setVoucherDate(getTodayDateInputValue());
         setPayeeTin('');
         setBankAccountId('');
-        setChequeDate('');
+        setChequeNo('');
+        setChequeDate(getTodayDateInputValue());
         setSelectedChargeIds(
           Object.values(feeConfig?.charges ?? {})
             .map((charge) => Number(charge.charge_id))
@@ -297,6 +332,11 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
           ...prev,
           ...normalizedErrors,
         }));
+
+        const firstErrorField = Object.keys(normalizedErrors)[0];
+        if (firstErrorField) {
+          focusField(firstErrorField);
+        }
       },
     });
   };
@@ -305,7 +345,6 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     setShowBankAccountModal(false);
     setBankAccountForm({
       bank_name: '',
-      account_name: '',
       account_number: '',
       branch: '',
     });
@@ -319,13 +358,16 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
 
     const errors: Record<string, string> = {};
     if (!bankAccountForm.bank_name.trim()) errors.bank_name = 'Bank name is required.';
-    if (!bankAccountForm.account_name.trim()) errors.account_name = 'Account name is required.';
     if (!bankAccountForm.account_number.trim()) errors.account_number = 'Account number is required.';
 
     setBankAccountErrors(errors);
     setBankAccountGeneralError('');
 
     if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        focusField(`bank-account.${firstErrorField}`);
+      }
       return;
     }
 
@@ -341,7 +383,8 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
           ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
         },
         body: JSON.stringify({
-          ...bankAccountForm,
+          bank_name: bankAccountForm.bank_name,
+          account_number: bankAccountForm.account_number,
           branch: bankAccountForm.branch.trim() || null,
           is_active: true,
         }),
@@ -362,6 +405,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
           }, {});
 
           setBankAccountErrors(normalizedErrors);
+          const firstErrorField = Object.keys(normalizedErrors)[0];
+          if (firstErrorField) {
+            focusField(`bank-account.${firstErrorField}`);
+          }
         } else {
           setBankAccountGeneralError(payload.message || 'Failed to add bank account.');
         }
@@ -375,7 +422,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
           const next = [...prev, createdAccount];
           next.sort((a, b) => {
             const byBank = a.bank_name.localeCompare(b.bank_name);
-            return byBank !== 0 ? byBank : a.account_name.localeCompare(b.account_name);
+            return byBank !== 0 ? byBank : a.account_number.localeCompare(b.account_number);
           });
           return next;
         });
@@ -418,6 +465,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
       }
       setActionErrors(errors);
       if (Object.keys(errors).length > 0) {
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+          focusField(`action.${firstErrorField}`);
+        }
         return;
       }
 
@@ -439,6 +490,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
           }, {});
 
           setActionErrors(normalizedErrors);
+          const firstErrorField = Object.keys(normalizedErrors)[0];
+          if (firstErrorField) {
+            focusField(`action.${firstErrorField}`);
+          }
         },
       });
       return;
@@ -466,6 +521,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
             }, {});
 
             setActionErrors(normalizedErrors);
+            const firstErrorField = Object.keys(normalizedErrors)[0];
+            if (firstErrorField) {
+              focusField(`action.${firstErrorField}`);
+            }
           },
         },
       );
@@ -478,6 +537,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     }
     setActionErrors(errors);
     if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        focusField(`action.${firstErrorField}`);
+      }
       return;
     }
 
@@ -503,6 +566,10 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
             ...prev,
             ...normalizedErrors,
           }));
+          const firstErrorField = Object.keys(normalizedErrors)[0];
+          if (firstErrorField) {
+            focusField(`action.${firstErrorField}`);
+          }
         },
       },
     );
@@ -555,6 +622,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <select
                 value={loanId}
                 onChange={(e) => setLoanId(e.target.value)}
+                data-field="loan_id"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               >
                 <option value="">Select loan</option>
@@ -587,6 +655,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
+                data-field="method"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               >
                 <option value="">Select method</option>
@@ -602,6 +671,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <input
                 value={referenceNo}
                 onChange={(e) => setReferenceNo(e.target.value)}
+                data-field="reference_no"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 placeholder="Optional"
               />
@@ -629,6 +699,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                     type="date"
                     value={voucherDate}
                     onChange={(e) => setVoucherDate(e.target.value)}
+                    data-field="voucher_date"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                   {formErrors.voucher_date && <p className="mt-1 text-xs text-red-600">{formErrors.voucher_date}</p>}
@@ -640,6 +711,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   <input
                     value={payeeName}
                     onChange={(e) => setPayeeName(e.target.value)}
+                    data-field="payee_name"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                     placeholder="Borrower name"
                   />
@@ -668,6 +740,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   <textarea
                     value={particulars}
                     onChange={(e) => setParticulars(e.target.value)}
+                    data-field="particulars"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                     rows={2}
                     placeholder="Purpose / description"
@@ -697,12 +770,13 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   <select
                     value={bankAccountId}
                     onChange={(e) => setBankAccountId(e.target.value)}
+                    data-field="bank_account_id"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   >
                     <option value="">Select bank account</option>
                     {bankAccountOptions.map((account) => (
                       <option key={account.id} value={account.id}>
-                        {account.bank_name} - {account.account_name}
+                        {account.bank_name} - {account.account_number}
                       </option>
                     ))}
                   </select>
@@ -710,15 +784,17 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Cheque No.
+                      Cheque No. <span className="text-red-600">*</span>
                     </label>
                     <input
-                      value="Auto-generated as CHQ-2026-000001"
+                      value={chequeNo}
+                      onChange={(e) => setChequeNo(e.target.value)}
+                      data-field="cheque_no"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                      placeholder="System-generated on request creation"
-                      readOnly
+                      placeholder="Enter cheque number"
                     />
-                    <p className="mt-1 text-xs text-gray-500">Generated by the system when the cheque voucher request is created.</p>
+                    {formErrors.cheque_no && <p className="mt-1 text-xs text-red-600">{formErrors.cheque_no}</p>}
+                    <p className="mt-1 text-xs text-gray-500">Enter the cheque number to use for this voucher.</p>
                   </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -728,6 +804,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                     type="date"
                     value={chequeDate}
                     onChange={(e) => setChequeDate(e.target.value)}
+                    data-field="cheque_date"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                   {formErrors.cheque_date && <p className="mt-1 text-xs text-red-600">{formErrors.cheque_date}</p>}
@@ -737,9 +814,6 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                     <div className="grid grid-cols-1 gap-1 md:grid-cols-3">
                       <p>
                         Bank: <span className="font-semibold">{selectedBankAccount.bank_name}</span>
-                      </p>
-                      <p>
-                        Account Name: <span className="font-semibold">{selectedBankAccount.account_name}</span>
                       </p>
                       <p>
                         Account Number: <span className="font-semibold">{selectedBankAccount.account_number}</span>
@@ -979,6 +1053,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 <input
                   value={modalReferenceNo}
                   onChange={(e) => setModalReferenceNo(e.target.value)}
+                  data-field="action.reference_no"
                   className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
                   placeholder="Optional external reference"
                 />
@@ -989,6 +1064,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   type="date"
                   value={modalReleaseDate}
                   onChange={(e) => setModalReleaseDate(e.target.value)}
+                  data-field="action.disbursed_at"
                   className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
                 />
                 <p className="mt-1 text-xs text-gray-500">Blank uses the current date and time.</p>
@@ -1000,6 +1076,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   <input
                     value={modalReceivedBy}
                     onChange={(e) => setModalReceivedBy(e.target.value)}
+                    data-field="action.received_by_name"
                     className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
                     placeholder="Borrower or authorized representative"
                   />
@@ -1022,6 +1099,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                 <input
                   value={modalReferenceNo}
                   onChange={(e) => setModalReferenceNo(e.target.value)}
+                  data-field="action.reference_no"
                   className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
                   placeholder="Optional reference"
                 />
@@ -1032,6 +1110,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   type="date"
                   value={modalReleaseDate}
                   onChange={(e) => setModalReleaseDate(e.target.value)}
+                  data-field="action.disbursed_at"
                   className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
                 />
                 <p className="mt-1 text-xs text-gray-500">Blank uses the current date and time.</p>
@@ -1043,6 +1122,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   <input
                     value={modalReceivedBy}
                     onChange={(e) => setModalReceivedBy(e.target.value)}
+                    data-field="action.received_by_name"
                     className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
                     placeholder="Borrower or authorized representative"
                   />
@@ -1061,6 +1141,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <textarea
                 value={modalFailureReason}
                 onChange={(e) => setModalFailureReason(e.target.value)}
+                data-field="action.failure_reason"
                 className="w-full rounded-lg border border-[#E1B4B4] bg-white px-3 py-2 text-sm"
                 rows={3}
                 placeholder="State why this disbursement failed"
@@ -1117,23 +1198,11 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <input
                 value={bankAccountForm.bank_name}
                 onChange={(e) => setBankAccountForm((prev) => ({ ...prev, bank_name: e.target.value }))}
+                data-field="bank-account.bank_name"
                 className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
                 placeholder="e.g. BDO Unibank"
               />
               {bankAccountErrors.bank_name && <p className="mt-1 text-xs text-red-600">{bankAccountErrors.bank_name}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Account Name <span className="text-red-600">*</span>
-              </label>
-              <input
-                value={bankAccountForm.account_name}
-                onChange={(e) => setBankAccountForm((prev) => ({ ...prev, account_name: e.target.value }))}
-                className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
-                placeholder="e.g. JAMO LENDING CORP."
-              />
-              {bankAccountErrors.account_name && <p className="mt-1 text-xs text-red-600">{bankAccountErrors.account_name}</p>}
             </div>
 
             <div>
@@ -1143,6 +1212,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <input
                 value={bankAccountForm.account_number}
                 onChange={(e) => setBankAccountForm((prev) => ({ ...prev, account_number: e.target.value }))}
+                data-field="bank-account.account_number"
                 className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
               />
               {bankAccountErrors.account_number && <p className="mt-1 text-xs text-red-600">{bankAccountErrors.account_number}</p>}
@@ -1153,6 +1223,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               <input
                 value={bankAccountForm.branch}
                 onChange={(e) => setBankAccountForm((prev) => ({ ...prev, branch: e.target.value }))}
+                data-field="bank-account.branch"
                 className="w-full rounded-lg border border-[#D9C895] bg-white px-3 py-2 text-sm"
                 placeholder="Optional"
               />

@@ -22,7 +22,6 @@ type ChequePackagePrintProps = {
     cheque: {
       bank_account_id?: number | null;
       bank_name: string;
-      account_name?: string | null;
       account_number?: string | null;
       cheque_no: string;
       cheque_date?: string | null;
@@ -62,6 +61,29 @@ const formatDate = (value?: string | null) => {
   });
 };
 
+const amountToWords = (amount: number): string => {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const toWords = (n: number): string => {
+    if (n === 0) return '';
+    if (n < 20) return ones[n] + ' ';
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '') + ' ';
+    if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred ' + toWords(n % 100);
+    if (n < 1000000) return toWords(Math.floor(n / 1000)) + 'Thousand ' + toWords(n % 1000);
+    if (n < 1000000000) return toWords(Math.floor(n / 1000000)) + 'Million ' + toWords(n % 1000000);
+    return toWords(Math.floor(n / 1000000000)) + 'Billion ' + toWords(n % 1000000000);
+  };
+
+  const pesos = Math.floor(amount);
+  const centavos = Math.round((amount - pesos) * 100);
+  let result = toWords(pesos).trim() + ' Pesos';
+  if (centavos > 0) result += ' and ' + toWords(centavos).trim() + ' Centavos';
+  result += ' Only';
+  return result.toUpperCase();
+};
+
 const SignatureBlock = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="flex-1 text-center">
     <div className="mx-auto min-h-[18px] w-full border-b border-black text-sm font-medium">{value || ''}</div>
@@ -74,9 +96,16 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
     const timer = window.setTimeout(() => {
       window.print();
     }, 250);
-
     return () => window.clearTimeout(timer);
   }, []);
+
+  const raw = voucher.cheque.cheque_date;
+  const chequeDate = raw ? new Date(raw) : null;
+  const isValidDate = chequeDate && !isNaN(chequeDate.getTime());
+  const mm = isValidDate ? String(chequeDate!.getMonth() + 1).padStart(2, '0') : '';
+  const dd = isValidDate ? String(chequeDate!.getDate()).padStart(2, '0') : '';
+  const yyyy = isValidDate ? String(chequeDate!.getFullYear()) : '';
+  const amountWords = amountToWords(voucher.gross_amount);
 
   return (
     <>
@@ -89,8 +118,7 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
         }
 
         body {
-          background:
-            linear-gradient(180deg, #fbf7ea 0%, #f2f6fb 100%);
+          background: linear-gradient(180deg, #fbf7ea 0%, #f2f6fb 100%);
           color: #111827;
           font-family: "Times New Roman", serif;
         }
@@ -134,6 +162,7 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
           border-bottom: 1px solid #111827;
           width: 100%;
           vertical-align: bottom;
+          line-height: 1.25rem;
         }
 
         .amount-head {
@@ -154,13 +183,15 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
           border: 1px solid #2f2a22;
         }
 
+        /* ── Cheque face ── */
         .cheque-face {
-          border: 2px solid #0f172a;
-          border-radius: 24px;
-          padding: 22px 24px;
-          background:
-            linear-gradient(135deg, rgba(219, 234, 254, 0.55), rgba(255, 255, 255, 0.96)),
-            linear-gradient(180deg, rgba(236, 253, 245, 0.45), transparent);
+          border: 1px solid #b0a060;
+          padding: 20px 28px 0 28px;
+          background: linear-gradient(90deg,
+            rgba(255, 248, 196, 0.88) 0%,
+            rgba(255, 250, 217, 0.96) 18%,
+            rgba(252, 250, 221, 0.96) 84%,
+            rgba(255, 247, 192, 0.9) 100%);
           position: relative;
           overflow: hidden;
         }
@@ -168,40 +199,71 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
         .cheque-face::before {
           content: "";
           position: absolute;
-          inset: 10px;
-          border: 1px solid rgba(15, 23, 42, 0.16);
-          border-radius: 18px;
+          inset: 10px 10px 44px 10px;
+          border: 1px solid rgba(15, 23, 42, 0.14);
           pointer-events: none;
         }
 
         .micro-label {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           letter-spacing: 0.18em;
           text-transform: uppercase;
           color: #475569;
         }
 
-        .cheque-meta {
-          display: grid;
-          grid-template-columns: 140px 1fr 180px;
-          gap: 18px;
-          align-items: end;
+        .cheque-amount-box {
+          border: 1px solid #111827;
+          background: rgba(255, 255, 255, 0.92);
+          padding: 3px 10px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+          border-radius: 2px;
         }
 
-        .cheque-stamp {
-          border: 1px solid #0f172a;
-          border-radius: 14px;
-          background: rgba(255, 255, 255, 0.88);
-          padding: 12px 14px;
-          text-align: center;
+        .words-line {
+          display: flex;
+          align-items: flex-end;
+          gap: 4px;
+          border-bottom: 1px solid #111827;
+          min-height: 22px;
+          width: 100%;
+          padding-bottom: 2px;
         }
 
-        .field-line {
-          display: grid;
-          grid-template-columns: 140px 1fr;
-          gap: 12px;
-          align-items: end;
+        .words-fill {
+          flex: 1;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.03em;
+          color: #111827;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: clip;
+        }
+
+        .words-asterisks {
+          font-size: 10px;
+          color: #374151;
+          letter-spacing: 0.1em;
+          flex-shrink: 0;
+        }
+
+        .micr-text {
+          font-family: "Courier New", monospace;
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          color: #374151;
+        }
+
+        .micr-label {
+          font-family: "Courier New", monospace;
+          font-size: 7px;
+          letter-spacing: 0.1em;
+          color: #9ca3af;
+          text-transform: uppercase;
         }
 
         .no-print {
@@ -212,24 +274,10 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
         }
 
         @media print {
-          body {
-            background: #ffffff;
-          }
-
-          .print-shell {
-            max-width: none;
-            padding: 0;
-          }
-
-          .sheet {
-            border: none;
-            box-shadow: none;
-            padding: 0;
-          }
-
-          .no-print {
-            display: none;
-          }
+          body { background: #ffffff; }
+          .print-shell { max-width: none; padding: 0; }
+          .sheet { border: none; box-shadow: none; padding: 0; }
+          .no-print { display: none; }
         }
       `}</style>
 
@@ -251,6 +299,7 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
           </button>
         </div>
 
+        {/* ── VOUCHER SHEET ── */}
         <section className="sheet voucher-sheet space-y-5">
           <div className="flex items-end justify-between gap-6 rounded-xl border border-[#3f3422] bg-[#fff4d6] px-5 py-4">
             <div>
@@ -331,61 +380,117 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
           </div>
         </section>
 
-        <section className="sheet space-y-5">
-          <div className="cheque-face space-y-6">
-            <div className="cheque-meta">
+        {/* ── CHEQUE FACE SHEET ── */}
+        <section className="sheet space-y-4 mt-6">
+          <div className="cheque-face">
+
+            {/* Row 1: Bank name + logo placeholder | spacer | Cheque No. + Date */}
+            <div className="grid grid-cols-[1fr_260px] items-start gap-4 mb-3">
               <div>
-                <div className="micro-label">Bank</div>
-                <div className="mt-2 text-xl font-bold uppercase text-slate-900">{voucher.cheque.bank_name}</div>
-                {voucher.cheque.account_name && (
-                  <div className="mt-1 text-sm text-slate-700">{voucher.cheque.account_name}</div>
-                )}
+                <div className="text-[28px] font-black leading-none tracking-tight text-slate-800">
+                  {voucher.cheque.bank_name || 'Any Bank'}
+                </div>
+                <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Branch / Makati City
+                </div>
               </div>
-              <div className="text-center">
-                <div className="micro-label">Cheque Release Instrument</div>
-                <div className="mt-2 text-3xl font-bold uppercase tracking-[0.18em] text-slate-900">JAMO LENDING CORP.</div>
-              </div>
-              <div className="cheque-stamp">
-                <div className="micro-label">Cheque No.</div>
-                <div className="mt-2 text-2xl font-bold text-slate-900">{voucher.cheque.cheque_no}</div>
+              <div className="flex flex-col items-end gap-2">
+                {/* Cheque No. */}
+                <div className="flex items-center gap-2">
+                  <span className="micro-label">Cheque No.</span>
+                  <span
+                    className="border-b border-black text-center font-bold text-sm"
+                    style={{ minWidth: '120px' }}
+                  >
+                    {voucher.cheque.cheque_no}
+                  </span>
+                </div>
+                {/* Date MM / DD / YYYY */}
+                <div className="flex items-end gap-2">
+                  <span className="micro-label">Date</span>
+                  <div className="flex gap-1">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="border border-gray-400 bg-white/80 w-10 h-6 flex items-center justify-center text-sm font-semibold rounded-sm">
+                        {mm}
+                      </div>
+                      <span className="text-[7px] uppercase tracking-[0.18em] text-slate-500">MM</span>
+                    </div>
+                    <span className="text-slate-400 text-sm self-center pb-3">/</span>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="border border-gray-400 bg-white/80 w-10 h-6 flex items-center justify-center text-sm font-semibold rounded-sm">
+                        {dd}
+                      </div>
+                      <span className="text-[7px] uppercase tracking-[0.18em] text-slate-500">DD</span>
+                    </div>
+                    <span className="text-slate-400 text-sm self-center pb-3">/</span>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="border border-gray-400 bg-white/80 w-16 h-6 flex items-center justify-center text-sm font-semibold rounded-sm">
+                        {yyyy}
+                      </div>
+                      <span className="text-[7px] uppercase tracking-[0.18em] text-slate-500">YYYY</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-[1fr_220px] gap-5">
-              <div className="space-y-4">
-                <div className="field-line">
-                  <span className="text-sm font-semibold uppercase tracking-[0.12em] text-gray-700">Pay To The Order Of</span>
-                  <span className="min-h-5er-b border-black text-base">{voucher.payee_name || borrower.name}</span>
-                </div>
-                <div className="field-line">
-                  <span className="text-sm font-semibold uppercase tracking-[0.12em] text-gray-700">Account Name</span>
-                  <span className="min-h-5 border-b border-black text-base">{voucher.cheque.account_name || ''}</span>
-                </div>
+            {/* Divider */}
+            <div className="border-t border-black/10 mb-3" />
+
+            {/* Row 2: Pay To The Order Of | Payee Name */}
+            <div className="grid grid-cols-[140px_1fr] items-end gap-3 mb-1">
+              <div className="text-[12px] font-bold uppercase leading-[1.3] text-slate-700">
+                <div>Pay To The</div>
+                <div>Order Of</div>
               </div>
-              <div className="rounded-xl border border-slate-800 bg-white px-4 py-4 text-right">
-                <div className="micro-label">Amount</div>
-                <div className="mt-2 text-3xl font-bold text-slate-900">{formatMoney(voucher.gross_amount)}</div>
+              <span className="line-fill text-lg font-semibold">
+                {voucher.payee_name || borrower.name}
+              </span>
+            </div>
+
+            {/* Row 3: Amount in numbers — right-aligned box */}
+            <div className="flex justify-end mb-2">
+              <div className="cheque-amount-box" style={{ minWidth: '220px' }}>
+                <span className="text-xs font-bold text-slate-500">PHP</span>
+                <span className="text-base font-bold text-gray-900">
+                  {Number(voucher.gross_amount || 0).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-[1fr_220px] gap-5">
-              <div className="space-y-4">
-                <div className="field-line">
-                  <span className="text-sm font-semibold uppercase tracking-[0.12em] text-gray-700">Account Number</span>
-                  <span className="min-h-5 border-b border-black text-base">{voucher.cheque.account_number || ''}</span>
-                </div>
-                <div className="field-line">
-                  <span className="text-sm font-semibold uppercase tracking-[0.12em] text-gray-700">Cheque Date</span>
-                  <span className="min-h-5 border-b border-black text-base">{formatDate(voucher.cheque.cheque_date)}</span>
-                </div>
-              </div>
-              <div className="rounded-xl border border-dashed border-slate-500 bg-white/70 px-4 py-4 text-sm">
-                <div className="micro-label">Cheque Date</div>
-                <div className="mt-2 font-semibold text-slate-900">{formatDate(voucher.cheque.cheque_date)}</div>
-                <div className="mt-3 micro-label">Cheque Number</div>
-                <div className="mt-2 text-slate-900">{voucher.cheque.cheque_no}</div>
+            {/* Row 4: Amount in words */}
+            <div className="grid grid-cols-[60px_1fr] items-end gap-2 mb-1">
+              <div className="text-[11px] font-bold uppercase text-slate-700">Pesos</div>
+              <div className="words-line">
+                <span className="words-fill">{amountWords}</span>
+                <span className="words-asterisks">{'*'.repeat(10)}</span>
               </div>
             </div>
+
+            {/* Second words line (overflow / blank) */}
+            <div className="grid grid-cols-[60px_1fr] items-end gap-2 mb-3">
+              <div />
+              <div className="words-line" />
+            </div>
+
+            {/* Row 5: Account No. | spacer | Authorized Signature */}
+            <div className="grid grid-cols-[200px_1fr_200px] items-end gap-4 mb-4">
+              <div>
+                <div className="micro-label mb-1">Account No.</div>
+                <span className="line-fill text-sm">
+                  {voucher.cheque.account_number || ''}
+                </span>
+              </div>
+              <div />
+              <div>
+                <div className="micro-label mb-1 text-right">Authorized Signature</div>
+                <div className="line-fill" />
+              </div>
+            </div>
+
           </div>
         </section>
       </div>

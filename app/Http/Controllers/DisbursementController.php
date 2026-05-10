@@ -54,7 +54,6 @@ class DisbursementController extends Controller
                     'cheque' => $d->voucher->chequeDetail ? [
                         'bank_account_id' => $d->voucher->chequeDetail->bank_account_id,
                         'bank_name' => $d->voucher->chequeDetail->bankAccount?->bank_name ?? $d->voucher->chequeDetail->bank_name,
-                        'account_name' => $d->voucher->chequeDetail->bankAccount?->account_name,
                         'account_number' => $d->voucher->chequeDetail->bankAccount?->account_number,
                         'cheque_no' => $d->voucher->chequeDetail->cheque_no,
                         'cheque_date' => optional($d->voucher->chequeDetail->cheque_date)->toDateString(),
@@ -68,12 +67,11 @@ class DisbursementController extends Controller
         $bankAccounts = BankAccount::query()
             ->where('is_active', true)
             ->orderBy('bank_name')
-            ->orderBy('account_name')
+            ->orderBy('account_number')
             ->get()
             ->map(fn (BankAccount $bankAccount) => [
                 'id' => $bankAccount->ID,
                 'bank_name' => $bankAccount->bank_name,
-                'account_name' => $bankAccount->account_name,
                 'account_number' => $bankAccount->account_number,
                 'branch' => $bankAccount->branch,
             ])
@@ -115,6 +113,7 @@ class DisbursementController extends Controller
             'payee_tin' => 'nullable|string|max:50',
             'particulars' => 'nullable|string|max:1000',
             'bank_account_id' => 'nullable|exists:bank_accounts,ID',
+            'cheque_no' => 'nullable|string|max:100',
             'cheque_date' => 'nullable|date',
         ]);
 
@@ -127,6 +126,7 @@ class DisbursementController extends Controller
 
             if ($validated['method'] === 'Cheque Voucher') {
                 if (empty($validated['bank_account_id'])) $voucherErrors['bank_account_id'] = 'Bank account is required.';
+                if (empty($validated['cheque_no'])) $voucherErrors['cheque_no'] = 'Cheque number is required.';
                 if (empty($validated['cheque_date'])) $voucherErrors['cheque_date'] = 'Cheque date is required.';
             }
 
@@ -157,7 +157,6 @@ class DisbursementController extends Controller
 
         $validated = $request->validate([
             'bank_name' => 'required|string|max:150',
-            'account_name' => 'required|string|max:150',
             'account_number' => 'required|string|max:50|unique:bank_accounts,account_number',
             'branch' => 'nullable|string|max:150',
             'is_active' => 'nullable|boolean',
@@ -165,7 +164,6 @@ class DisbursementController extends Controller
 
         $bankAccount = BankAccount::create([
             'bank_name' => $validated['bank_name'],
-            'account_name' => $validated['account_name'],
             'account_number' => $validated['account_number'],
             'branch' => $validated['branch'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
@@ -176,7 +174,6 @@ class DisbursementController extends Controller
             'bankAccount' => [
                 'id' => $bankAccount->ID,
                 'bank_name' => $bankAccount->bank_name,
-                'account_name' => $bankAccount->account_name,
                 'account_number' => $bankAccount->account_number,
                 'branch' => $bankAccount->branch,
             ],
@@ -294,7 +291,6 @@ class DisbursementController extends Controller
                 'cheque' => $disbursement->voucher->chequeDetail ? [
                     'bank_account_id' => $disbursement->voucher->chequeDetail->bank_account_id,
                     'bank_name' => $disbursement->voucher->chequeDetail->bankAccount?->bank_name ?? $disbursement->voucher->chequeDetail->bank_name,
-                    'account_name' => $disbursement->voucher->chequeDetail->bankAccount?->account_name,
                     'account_number' => $disbursement->voucher->chequeDetail->bankAccount?->account_number,
                     'cheque_no' => $disbursement->voucher->chequeDetail->cheque_no,
                     'cheque_date' => optional($disbursement->voucher->chequeDetail->cheque_date)->toDateString(),
@@ -466,7 +462,6 @@ class DisbursementController extends Controller
                 'cheque' => [
                     'bank_account_id' => $disbursement->voucher->chequeDetail->bank_account_id,
                     'bank_name' => $disbursement->voucher->chequeDetail->bankAccount?->bank_name ?? $disbursement->voucher->chequeDetail->bank_name,
-                    'account_name' => $disbursement->voucher->chequeDetail->bankAccount?->account_name,
                     'account_number' => $disbursement->voucher->chequeDetail->bankAccount?->account_number,
                     'cheque_no' => $disbursement->voucher->chequeDetail->cheque_no,
                     'cheque_date' => optional($disbursement->voucher->chequeDetail->cheque_date)->toDateString(),

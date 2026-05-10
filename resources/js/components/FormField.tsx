@@ -37,6 +37,8 @@ export const FormField = ({
     {required && <span className="text-red-500 ml-1">*</span>}
     {type === "select" ? (
       <select
+        name={name}
+        data-field={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={inputClass}
@@ -51,6 +53,8 @@ export const FormField = ({
       </select>
     ) : (
       <input
+        name={name}
+        data-field={name}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

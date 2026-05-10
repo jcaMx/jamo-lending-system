@@ -18,6 +18,8 @@ interface CoBorrowerInfoProps {
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  fieldErrors?: Record<string, string>;
+  submitError?: string;
   stepLabels?: string[];
   stepIndex?: number;
   required?: boolean;
@@ -47,6 +49,8 @@ const CoBorrowerInfo = ({
   onPrev,
   formData,
   setFormData,
+  fieldErrors = {},
+  submitError = "",
   stepLabels,
   stepIndex,
   required = false,
@@ -70,6 +74,19 @@ const CoBorrowerInfo = ({
   const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
   const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
   const indicatorIndex = stepIndex ?? 2;
+
+  const focusField = (fieldName: string) => {
+    if (typeof document === "undefined") return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if ("focus" in target) {
+        target.focus();
+      }
+    }, 100);
+  };
 
   // 🔍 HANDLE SEARCH
   const handleSearch = async (query: string) => {
@@ -168,6 +185,7 @@ const CoBorrowerInfo = ({
     if (nonEmptyBorrowers.length === 0) {
       if (required) {
         setStepError("At least one co-borrower is required.");
+        focusField("coBorrowers.0.first_name");
         return;
       }
       setStepError("");
@@ -177,6 +195,31 @@ const CoBorrowerInfo = ({
 
     if (nonEmptyBorrowers.some(hasMissingRequired)) {
       setStepError("Complete all required fields or remove entry.");
+      const firstIncompleteIndex = data.coBorrowers.findIndex(
+        (co) => !isCoBorrowerEmpty(co) && hasMissingRequired(co),
+      );
+
+      if (firstIncompleteIndex >= 0) {
+        const targetCo = data.coBorrowers[firstIncompleteIndex];
+        const firstMissingField =
+          !String(targetCo.first_name ?? "").trim()
+            ? "first_name"
+            : !String(targetCo.last_name ?? "").trim()
+            ? "last_name"
+            : !String(targetCo.birth_date ?? "").trim()
+            ? "birth_date"
+            : !String(targetCo.marital_status ?? "").trim()
+            ? "marital_status"
+            : !String(targetCo.mobile ?? "").trim()
+            ? "mobile"
+            : !String(targetCo.dependents ?? "").trim()
+            ? "dependents"
+            : !String(targetCo.address ?? "").trim()
+            ? "address"
+            : "occupation";
+
+        focusField(`coBorrowers.${firstIncompleteIndex}.${firstMissingField}`);
+      }
       return;
     }
 
@@ -206,6 +249,7 @@ const CoBorrowerInfo = ({
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
           {stepError && <p className="text-red-600 text-sm">{stepError}</p>}
+          {submitError && !stepError && <p className="text-red-600 text-sm">{submitError}</p>}
 
           {/* 🔍 SEARCH UI */}
           <div className="space-y-2">
@@ -253,86 +297,96 @@ const CoBorrowerInfo = ({
               <div className="grid md:grid-cols-2 gap-4">
                 <FormField
                   label="First Name"
-                  name="first_name"
+                  name={`coBorrowers.${i}.first_name`}
                   value={co.first_name}
                   onChange={(v) => handleChange(i, "first_name", v)}
                   required
+                  error={fieldErrors[`coBorrowers.${i}.first_name`]}
                 />
 
                 <FormField
                   label="Last Name"
-                  name="last_name"
+                  name={`coBorrowers.${i}.last_name`}
                   value={co.last_name}
                   onChange={(v) => handleChange(i, "last_name", v)}
                   required
+                  error={fieldErrors[`coBorrowers.${i}.last_name`]}
                 />
               </div>
 
               <FormField
                 label="Birth Date"
-                name="birth_date"
+                name={`coBorrowers.${i}.birth_date`}
                 type="date"
                 value={co.birth_date}
                 onChange={(v) => handleChange(i, "birth_date", v)}
                 required
+                error={fieldErrors[`coBorrowers.${i}.birth_date`]}
               />
 
               <FormField
                 label="Marital Status"
-                name="marital_status"
+                name={`coBorrowers.${i}.marital_status`}
                 type="select"
                 value={co.marital_status}
                 onChange={(v) => handleChange(i, "marital_status", v)}
                 options={maritalStatusOptions}
                 required
+                error={fieldErrors[`coBorrowers.${i}.marital_status`]}
               />
 
               <FormField
                 label="Mobile Number"
-                name="mobile"
+                name={`coBorrowers.${i}.mobile`}
                 value={co.mobile}
                 onChange={(v) => handleChange(i, "mobile", v)}
                 maxLength={11}
                 required
+                error={fieldErrors[`coBorrowers.${i}.mobile`] || fieldErrors[`coBorrowers.${i}.contact`]}
               />
 
               <FormField
                 label="No. of Dependents"
-                name="dependents"
+                name={`coBorrowers.${i}.dependents`}
                 type="number"
                 value={co.dependents}
                 onChange={(v) => handleChange(i, "dependents", v)}
                 required
+                error={fieldErrors[`coBorrowers.${i}.dependents`]}
               />
 
               <FormField
                 label="Home Address"
-                name="address"
+                name={`coBorrowers.${i}.address`}
                 value={co.address}
                 onChange={(v) => handleChange(i, "address", v)}
                 required
+                error={fieldErrors[`coBorrowers.${i}.address`]}
               />
 
               <FormField
                 label="Occupation"
-                name="occupation"
+                name={`coBorrowers.${i}.occupation`}
                 value={co.occupation}
                 onChange={(v) => handleChange(i, "occupation", v)}
                 required
+                error={fieldErrors[`coBorrowers.${i}.occupation`]}
               />
 
               <FormField
                 label="Position"
-                name="position"
+                name={`coBorrowers.${i}.position`}
                 value={co.position}
                 onChange={(v) => handleChange(i, "position", v)}
+                error={fieldErrors[`coBorrowers.${i}.position`]}
               />
 
               <FormField
                 label="Employer Address"
-                name="employer_address"
+                name={`coBorrowers.${i}.employer_address`}
                 value={co.employer_address}
                 onChange={(v) => handleChange(i, "employer_address", v)}
+                error={fieldErrors[`coBorrowers.${i}.employer_address`]}
               />
             </div>
           ))}

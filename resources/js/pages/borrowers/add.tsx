@@ -68,15 +68,51 @@ const STEP_REQUIRED_FIELDS: Record<number, (keyof FormData)[]> = {
   4: ['valid_id_type'],
 };
 
+const FIELD_STEP_MAP: Partial<Record<keyof FormData, number>> = {
+  borrower_first_name: 1,
+  borrower_last_name: 1,
+  gender: 1,
+  date_of_birth: 1,
+  marital_status: 1,
+  contact_no: 1,
+  landline_number: 1,
+  email: 1,
+  dependent_child: 1,
+  spouse_first_name: 1,
+  spouse_last_name: 1,
+  spouse_agency_address: 1,
+  spouse_occupation: 1,
+  spouse_position: 1,
+  spouse_mobile_number: 1,
+  permanent_address: 2,
+  city: 2,
+  home_ownership: 2,
+  employment_status: 3,
+  occupation: 3,
+  position: 3,
+  monthly_income: 3,
+  income_source: 3,
+  agency_address: 3,
+  valid_id_type: 4,
+  valid_id_number: 4,
+};
+
 const MIN_DOCUMENTS_PER_CATEGORY: Record<'borrower_identity' | 'borrower_address' | 'borrower_employment', number> = {
   borrower_identity: 2,
   borrower_address: 1,
   borrower_employment: 2,
 };
 
+const DOCUMENT_CATEGORY_STEP_MAP: Record<BorrowerDocumentCategory, number> = {
+  borrower_identity: 1,
+  borrower_address: 2,
+  borrower_employment: 3,
+};
+
 export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProps) {
   const [step, setStep] = useState(1);
   const [submitError, setSubmitError] = useState<string>('');
+  const [localErrors, setLocalErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   const { data, setData, post, processing, errors } = useForm<FormData>({
     borrower_first_name: '',
@@ -270,12 +306,81 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
     return valid.length >= MIN_DOCUMENTS_PER_CATEGORY[category];
   };
 
+  const focusField = (field: keyof FormData) => {
+    if (typeof document === 'undefined') return;
+
+    window.setTimeout(() => {
+      const input = document.querySelector<HTMLElement>(`[data-field="${String(field)}"]`);
+      if (!input) return;
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if ('focus' in input) {
+        input.focus();
+      }
+    }, 80);
+  };
+
+  const focusDocumentCategory = (category: BorrowerDocumentCategory) => {
+    if (typeof document === 'undefined') return;
+
+    window.setTimeout(() => {
+      const section = document.querySelector<HTMLElement>(`[data-doc-category="${category}"]`);
+      if (!section) return;
+      section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = section.querySelector<HTMLElement>('select, input[type="file"], button');
+      if (input && 'focus' in input) {
+        input.focus();
+      }
+    }, 80);
+  };
+
+  const goToField = (field: keyof FormData, message: string) => {
+    const targetStep = FIELD_STEP_MAP[field] ?? step;
+    setLocalErrors({ [field]: message });
+    setSubmitError(message);
+    setStep(targetStep);
+    focusField(field);
+  };
+
+  const goToDocumentSection = (category: BorrowerDocumentCategory, message: string) => {
+    setSubmitError(message);
+    setStep(DOCUMENT_CATEGORY_STEP_MAP[category]);
+    focusDocumentCategory(category);
+  };
+
+  const getFrontendStepError = (targetStep: number): { field?: keyof FormData; message: string } | null => {
+    const currentRequired = STEP_REQUIRED_FIELDS[targetStep] || [];
+    const firstMissingField = currentRequired.find((field) => !String(data[field] ?? '').trim());
+
+    if (firstMissingField) {
+      return {
+        field: firstMissingField,
+        message: 'Please complete the required field before continuing.',
+      };
+    }
+
+    if (targetStep === 1 && data.marital_status === 'Married') {
+      if (!data.spouse_first_name.trim()) {
+        return { field: 'spouse_first_name', message: 'Spouse first name is required.' };
+      }
+      if (!data.spouse_last_name.trim()) {
+        return { field: 'spouse_last_name', message: 'Spouse last name is required.' };
+      }
+    }
+
+    return null;
+  };
+
   const prev = () => setStep((s) => s - 1);
 
   const next = () => {
     setSubmitError('');
-    const currentRequired = STEP_REQUIRED_FIELDS[step] || [];
-    const hasEmptyFields = currentRequired.some((field) => !String(data[field] ?? '').trim());
+    setLocalErrors({});
+    const stepError = getFrontendStepError(step);
+
+    if (stepError?.field) {
+      goToField(stepError.field, stepError.message);
+      return;
+    }
 
     if (step === 1 && data.marital_status === 'Married') {
       const spouseRequired = [data.spouse_first_name, data.spouse_last_name].some((v) => !v?.trim());
@@ -290,23 +395,23 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
       const secondary = data.documents.borrower_identity[1];
 
       if (!primary?.document_type_id || !primary?.file) {
-        setSubmitError('Primary ID type and file are required.');
+        goToDocumentSection('borrower_identity', 'Primary ID type and file are required.');
         return;
       }
 
       if (!secondary?.document_type_id || !secondary?.file) {
-        setSubmitError('Secondary ID type and file are required.');
+        goToDocumentSection('borrower_identity', 'Secondary ID type and file are required.');
         return;
       }
 
       if (String(primary.document_type_id) === String(secondary.document_type_id)) {
-        setSubmitError('Primary and secondary ID types must be different.');
+        goToDocumentSection('borrower_identity', 'Primary and secondary ID types must be different.');
         return;
       }
 
       if (data.marital_status === 'Married') {
         if (!marriageCertOption) {
-          setSubmitError('Marriage Certificate document type is not configured.');
+          goToDocumentSection('borrower_identity', 'Marriage Certificate document type is not configured.');
           return;
         }
 
@@ -314,13 +419,13 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
           (row) => String(row.document_type_id) === String(marriageCertOption.id),
         );
         if (!marriageRow?.file) {
-          setSubmitError('Marriage Contract file is required for married borrowers.');
+          goToDocumentSection('borrower_identity', 'Marriage Contract file is required for married borrowers.');
           return;
         }
       }
     }
 
-    if (!hasEmptyFields && step < addBorrowerSteps.length) {
+    if (step < addBorrowerSteps.length) {
       setStep((s) => s + 1);
     }
   };
@@ -328,10 +433,28 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
+    setLocalErrors({});
 
-    if (!hasMinDocuments('borrower_identity') || !hasMinDocuments('borrower_address') || !hasMinDocuments('borrower_employment')) {
-      setStep(4);
-      setSubmitError('Please complete the required documents: Identity (2), Address (1), Employment (2).');
+    for (const targetStep of [1, 2, 3] as const) {
+      const stepError = getFrontendStepError(targetStep);
+      if (stepError?.field) {
+        goToField(stepError.field, stepError.message);
+        return;
+      }
+    }
+
+    if (!hasMinDocuments('borrower_identity')) {
+      goToDocumentSection('borrower_identity', 'Please complete the required identity documents before submitting.');
+      return;
+    }
+
+    if (!hasMinDocuments('borrower_address')) {
+      goToDocumentSection('borrower_address', 'Please complete the required address documents before submitting.');
+      return;
+    }
+
+    if (!hasMinDocuments('borrower_employment')) {
+      goToDocumentSection('borrower_employment', 'Please complete the required employment documents before submitting.');
       return;
     }
 
@@ -343,8 +466,28 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
         const firstMessage = Object.values(fieldErrors)[0];
         setSubmitError(typeof firstMessage === 'string' ? firstMessage : 'Submission failed. Please check the highlighted fields.');
 
-        if (keys.some((k) => k.startsWith('documents.'))) {
-          setStep(4);
+        const firstMappedField = keys.find((key) => key in FIELD_STEP_MAP) as keyof FormData | undefined;
+        if (firstMappedField) {
+          setLocalErrors({
+            [firstMappedField]: typeof fieldErrors[firstMappedField] === 'string'
+              ? String(fieldErrors[firstMappedField])
+              : 'Please complete the required field.',
+          });
+          setStep(FIELD_STEP_MAP[firstMappedField] ?? 1);
+          focusField(firstMappedField);
+          return;
+        }
+
+        if (keys.some((k) => k.startsWith('documents.borrower_identity'))) {
+          goToDocumentSection('borrower_identity', 'Please complete the required identity documents.');
+          return;
+        }
+        if (keys.some((k) => k.startsWith('documents.borrower_address'))) {
+          goToDocumentSection('borrower_address', 'Please complete the required address documents.');
+          return;
+        }
+        if (keys.some((k) => k.startsWith('documents.borrower_employment'))) {
+          goToDocumentSection('borrower_employment', 'Please complete the required employment documents.');
           return;
         }
         if (keys.some((k) => k.startsWith('borrower_') || ['gender', 'date_of_birth', 'marital_status', 'contact_no', 'email'].includes(k))) {
@@ -360,7 +503,9 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
     });
   };
 
-  const getError = (field: string) => errors[field as keyof typeof errors] as string | undefined;
+  const getError = (field: string) =>
+    (localErrors[field as keyof FormData] as string | undefined) ||
+    (errors[field as keyof typeof errors] as string | undefined);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -385,26 +530,28 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
               <div>
                 <Label required>First Name</Label>
-                <input type="text" value={data.borrower_first_name} onChange={(e) => setData('borrower_first_name', e.target.value)} className={inputClass} required />
-                {errors.borrower_first_name && <p className="text-red-500 text-xs mt-1">{errors.borrower_first_name}</p>}
+                <input data-field="borrower_first_name" type="text" value={data.borrower_first_name} onChange={(e) => setData('borrower_first_name', e.target.value)} className={inputClass} required />
+                {getError('borrower_first_name') && <p className="text-red-500 text-xs mt-1">{getError('borrower_first_name')}</p>}
               </div>
               <div>
                 <Label required>Last Name</Label>
-                <input type="text" value={data.borrower_last_name} onChange={(e) => setData('borrower_last_name', e.target.value)} className={inputClass} required />
-                {errors.borrower_last_name && <p className="text-red-500 text-xs mt-1">{errors.borrower_last_name}</p>}
+                <input data-field="borrower_last_name" type="text" value={data.borrower_last_name} onChange={(e) => setData('borrower_last_name', e.target.value)} className={inputClass} required />
+                {getError('borrower_last_name') && <p className="text-red-500 text-xs mt-1">{getError('borrower_last_name')}</p>}
               </div>
               <div>
                 <Label required>Gender</Label>
-                <select value={data.gender} onChange={(e) => setData('gender', e.target.value)} className={inputClass} required>
+                <select data-field="gender" value={data.gender} onChange={(e) => setData('gender', e.target.value)} className={inputClass} required>
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
+                {getError('gender') && <p className="text-red-500 text-xs mt-1">{getError('gender')}</p>}
               </div>
               <div>
                 <Label required>Date of Birth</Label>
                 <input 
+                  data-field="date_of_birth"
                   type="date" 
                   value={data.date_of_birth} 
                   onChange={(e) => setData('date_of_birth', e.target.value)} 
@@ -412,10 +559,12 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
                   className={inputClass} 
                   required 
                 />
+                {getError('date_of_birth') && <p className="text-red-500 text-xs mt-1">{getError('date_of_birth')}</p>}
               </div>
               <div>
                 <Label required>Mobile Number</Label>
-                <input type="text" value={data.contact_no} onChange={(e) => setData('contact_no', e.target.value)} className={inputClass} required />
+                <input data-field="contact_no" type="text" value={data.contact_no} onChange={(e) => setData('contact_no', e.target.value)} className={inputClass} required />
+                {getError('contact_no') && <p className="text-red-500 text-xs mt-1">{getError('contact_no')}</p>}
               </div>
               <div>
                 <Label>Landline Number</Label>
@@ -423,8 +572,8 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
               </div>
               <div>
                 <Label required>Email</Label>
-                <input type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className={inputClass} required />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                <input data-field="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className={inputClass} required />
+                {getError('email') && <p className="text-red-500 text-xs mt-1">{getError('email')}</p>}
               </div>
                <div>
               <Label>Number of Dependents</Label>
@@ -439,24 +588,27 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
             </div>
               <div>
                 <Label required>Marital Status</Label>
-                <select value={data.marital_status} onChange={(e) => setData('marital_status', e.target.value)} className={inputClass} required>
+                <select data-field="marital_status" value={data.marital_status} onChange={(e) => setData('marital_status', e.target.value)} className={inputClass} required>
                   <option value="">Select Marital Status</option>
                   <option value="Single">Single</option>
                   <option value="Married">Married</option>
                   <option value="Separated">Separated</option>
                   <option value="Widowed">Widowed</option>
                 </select>
+                {getError('marital_status') && <p className="text-red-500 text-xs mt-1">{getError('marital_status')}</p>}
               </div>
 
               {data.marital_status === 'Married' && (
                 <>
                   <div>
                     <Label required>Spouse First Name</Label>
-                    <input type="text" value={data.spouse_first_name} onChange={(e) => setData('spouse_first_name', e.target.value)} className={inputClass} required />
+                    <input data-field="spouse_first_name" type="text" value={data.spouse_first_name} onChange={(e) => setData('spouse_first_name', e.target.value)} className={inputClass} required />
+                    {getError('spouse_first_name') && <p className="text-red-500 text-xs mt-1">{getError('spouse_first_name')}</p>}
                   </div>
                   <div>
                     <Label required>Spouse Last Name</Label>
-                    <input type="text" value={data.spouse_last_name} onChange={(e) => setData('spouse_last_name', e.target.value)} className={inputClass} required />
+                    <input data-field="spouse_last_name" type="text" value={data.spouse_last_name} onChange={(e) => setData('spouse_last_name', e.target.value)} className={inputClass} required />
+                    {getError('spouse_last_name') && <p className="text-red-500 text-xs mt-1">{getError('spouse_last_name')}</p>}
                   </div>
                   <div>
                     <Label required>Spouse Mobile Number</Label>
@@ -556,20 +708,23 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label required>Permanent Address</Label>
-                <input type="text" value={data.permanent_address} onChange={(e) => setData('permanent_address', e.target.value)} className={inputClass} required />
+                <input data-field="permanent_address" type="text" value={data.permanent_address} onChange={(e) => setData('permanent_address', e.target.value)} className={inputClass} required />
+                {getError('permanent_address') && <p className="text-red-500 text-xs mt-1">{getError('permanent_address')}</p>}
               </div>
               <div>
                 <Label required>City</Label>
-                <input type="text" value={data.city} onChange={(e) => setData('city', e.target.value)} className={inputClass} required />
+                <input data-field="city" type="text" value={data.city} onChange={(e) => setData('city', e.target.value)} className={inputClass} required />
+                {getError('city') && <p className="text-red-500 text-xs mt-1">{getError('city')}</p>}
               </div>
               <div>
                 <Label required>Home Ownership</Label>
-                <select value={data.home_ownership} onChange={(e) => setData('home_ownership', e.target.value)} className={inputClass} required>
+                <select data-field="home_ownership" value={data.home_ownership} onChange={(e) => setData('home_ownership', e.target.value)} className={inputClass} required>
                   <option value="">Select Home Ownership</option>
                   <option value="Owned">Owned</option>
                   <option value="Rented">Rented</option>
                   <option value="Mortgage">Mortgage</option>
                 </select>
+                {getError('home_ownership') && <p className="text-red-500 text-xs mt-1">{getError('home_ownership')}</p>}
               </div>
             </div>
             <SectionHeader title='Documents'></SectionHeader>
@@ -594,15 +749,17 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label required>Employment Status</Label>
-                <select value={data.employment_status} onChange={(e) => setData('employment_status', e.target.value)} className={inputClass} required>
+                <select data-field="employment_status" value={data.employment_status} onChange={(e) => setData('employment_status', e.target.value)} className={inputClass} required>
                   <option value="">Select Employment Status</option>
                   <option value="Employed">Employed</option>
                   <option value="Unemployed">Unemployed</option>
                 </select>
+                {getError('employment_status') && <p className="text-red-500 text-xs mt-1">{getError('employment_status')}</p>}
               </div>
               <div>
                 <Label required>Income Source</Label>
                 <select
+                data-field="income_source"
                 value={data.income_source}
                 onChange={(e) => setData('income_source', e.target.value)}
                 className={inputClass}
@@ -615,6 +772,7 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
                   </option>
                 ))}
               </select>
+              {getError('income_source') && <p className="text-red-500 text-xs mt-1">{getError('income_source')}</p>}
               </div>
               <div>
                 <Label required>Occupation</Label>

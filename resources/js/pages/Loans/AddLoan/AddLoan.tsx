@@ -36,6 +36,8 @@ interface StepConfig {
   render: () => JSX.Element;
 }
 
+type FieldErrors = Record<string, string>;
+
 interface ReviewStepProps {
   formData: SharedFormData;
   onPrev: () => void;
@@ -70,6 +72,38 @@ const normalizeRepaymentFrequency = (value: string) => {
 };
 const getCsrfToken = () =>
   document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
+
+const FIELD_STEP_MAP: Array<{ pattern: RegExp; step: StepKey; focus?: string }> = [
+  { pattern: /^borrower_(name|id)$/, step: "borrower", focus: "borrower_name" },
+  { pattern: /^loan_product_id$/, step: "loan", focus: "loan_type" },
+  { pattern: /^loan_type$/, step: "loan", focus: "loan_type" },
+  { pattern: /^loan_amount$/, step: "loan", focus: "loan_amount" },
+  { pattern: /^interest_type$/, step: "loan", focus: "interest_type" },
+  { pattern: /^interest_rate$/, step: "loan", focus: "interest_rate" },
+  { pattern: /^repayment_frequency$/, step: "loan", focus: "repayment_frequency" },
+  { pattern: /^term$/, step: "loan", focus: "term" },
+  { pattern: /^collateral_type$/, step: "collateral", focus: "collateral_type" },
+  { pattern: /^ownership_proof$/, step: "collateral", focus: "ownership_proof" },
+  { pattern: /^make$/, step: "collateral", focus: "make" },
+  { pattern: /^vehicle_type$/, step: "collateral", focus: "vehicle_type" },
+  { pattern: /^transmission_type$/, step: "collateral", focus: "transmission_type" },
+  { pattern: /^plate_no$/, step: "collateral", focus: "plate_no" },
+  { pattern: /^engine_no$/, step: "collateral", focus: "engine_no" },
+  { pattern: /^year_model$/, step: "collateral", focus: "year_model" },
+  { pattern: /^series$/, step: "collateral", focus: "series" },
+  { pattern: /^fuel$/, step: "collateral", focus: "fuel" },
+  { pattern: /^certificate_of_title_no$/, step: "collateral", focus: "certificate_of_title_no" },
+  { pattern: /^location$/, step: "collateral", focus: "location" },
+  { pattern: /^description$/, step: "collateral", focus: "description" },
+  { pattern: /^area$/, step: "collateral", focus: "area" },
+  { pattern: /^bank_name$/, step: "collateral", focus: "bank_name" },
+  { pattern: /^account_no$/, step: "collateral", focus: "account_no" },
+  { pattern: /^cardno_4digits$/, step: "collateral", focus: "cardno_4digits" },
+  { pattern: /^documents\.collateral/, step: "collateral", focus: "ownership_proof" },
+  { pattern: /^coBorrowers\.\d+\./, step: "coborrower", focus: "coBorrowers.0.first_name" },
+  { pattern: /^coBorrowers$/, step: "coborrower", focus: "coBorrowers.0.first_name" },
+  { pattern: /^error$/, step: "review" },
+];
 
 const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps) => {
   const coBorrowers = Array.isArray(formData.coBorrowers) ? formData.coBorrowers : [];
@@ -212,6 +246,8 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
 export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }: AddLoanProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [ruleRequirements, setRuleRequirements] = useState({
     collateral: false,
     coborrower: false,
@@ -258,6 +294,9 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
     payment_method: "",
   });
 
+  const showCollateralStep = true;
+  const showCoBorrowerStep = true;
+
   const nextStep = useCallback(() => {
     setCurrentStep((prev) => prev + 1);
   }, []);
@@ -265,6 +304,52 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
   const prevStep = useCallback(() => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   }, []);
+
+  const focusField = useCallback((fieldName?: string) => {
+    if (!fieldName || typeof document === "undefined") return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if ("focus" in target) {
+        target.focus();
+      }
+    }, 120);
+  }, []);
+
+  const getStepIndexByKey = useCallback((key: StepKey) => {
+    const orderedKeys: StepKey[] = ["borrower", "loan"];
+    if (showCollateralStep) orderedKeys.push("collateral");
+    if (showCoBorrowerStep) orderedKeys.push("coborrower");
+    orderedKeys.push("review");
+    return orderedKeys.findIndex((stepKey) => stepKey === key);
+  }, [showCollateralStep, showCoBorrowerStep]);
+
+  const moveToErrorStep = useCallback((errors: Record<string, unknown>) => {
+    const keys = Object.keys(errors);
+    const firstKey = keys[0];
+    const firstMessage = Object.values(errors)[0];
+
+    setSubmitError(
+      typeof firstMessage === "string" && firstMessage.trim()
+        ? firstMessage
+        : "Please review the required fields before continuing.",
+    );
+
+    const matched = FIELD_STEP_MAP.find(({ pattern }) => keys.some((key) => pattern.test(key)));
+    if (!matched) {
+      return;
+    }
+
+    const targetIndex = getStepIndexByKey(matched.step);
+    if (targetIndex >= 0) {
+      setCurrentStep(targetIndex);
+    }
+
+    const focusTarget = matched.focus ?? firstKey;
+    focusField(focusTarget);
+  }, [focusField, getStepIndexByKey]);
 
   const loanAmountValue = useMemo(() => toNumber(formData.loan_amount), [formData.loan_amount]);
   const termValue = useMemo(() => toNumber(formData.term), [formData.term]);
@@ -375,9 +460,6 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
     );
   }, [formData.coBorrowers]);
 
-  const showCollateralStep = true;
-  const showCoBorrowerStep = true;
-
   const stepLabels = useMemo(() => {
     const labels = ["Borrower", "Loan Details"];
     if (showCollateralStep) labels.push("Collateral");
@@ -401,6 +483,8 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           formData={formData}
           setFormData={setFormData}
           onNext={nextStep}
+          fieldErrors={fieldErrors}
+          submitError={submitError}
           stepLabels={stepLabels}
           stepIndex={borrowerStepIndex}
         />
@@ -418,6 +502,8 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           onPrev={prevStep}
           formData={formData}
           setFormData={setFormData}
+          fieldErrors={fieldErrors}
+          submitError={submitError}
           stepLabels={stepLabels}
           stepIndex={loanStepIndex}
           // Pass rule requirements so LoanDetails can show required/optional status.
@@ -433,13 +519,15 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
         label: "Collateral",
         stepIndex: collateralStepIndex,
         render: () => (
-          <Collateral
-            onNext={nextStep}
-            onPrev={prevStep}
-            formData={formData}
-            setFormData={setFormData}
-            documentTypesByCategory={documentTypesByCategory}
-            stepLabels={stepLabels}
+        <Collateral
+          onNext={nextStep}
+          onPrev={prevStep}
+          formData={formData}
+          setFormData={setFormData}
+          fieldErrors={fieldErrors}
+          submitError={submitError}
+          documentTypesByCategory={documentTypesByCategory}
+          stepLabels={stepLabels}
             stepIndex={collateralStepIndex}
             required={ruleRequirements.collateral}
           />
@@ -454,13 +542,15 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
         label: "Co-Borrowers",
         stepIndex: coBorrowerStepIndex,
         render: () => (
-          <CoBorrowerInfo
-            onNext={nextStep}
-            onPrev={prevStep}
-            formData={formData}
-            setFormData={setFormData}
-            stepLabels={stepLabels}
-            stepIndex={coBorrowerStepIndex}
+        <CoBorrowerInfo
+          onNext={nextStep}
+          onPrev={prevStep}
+          formData={formData}
+          setFormData={setFormData}
+          fieldErrors={fieldErrors}
+          submitError={submitError}
+          stepLabels={stepLabels}
+          stepIndex={coBorrowerStepIndex}
             required={ruleRequirements.coborrower}
           />
         ),
@@ -480,6 +570,8 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           onSubmit={() => {
             if (processing) return;
             setProcessing(true);
+            setSubmitError("");
+            setFieldErrors({});
 
             console.log("[AddLoan] Submit clicked");
             console.log("[AddLoan] Form data snapshot", formData);
@@ -571,6 +663,14 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
               onError: (errors) => {
                 console.error("[AddLoan] Submit errors", errors);
                 setProcessing(false);
+                const normalized = Object.entries(errors).reduce<FieldErrors>((carry, [key, value]) => {
+                  if (typeof value === "string" && value.trim()) {
+                    carry[key] = value;
+                  }
+                  return carry;
+                }, {});
+                setFieldErrors(normalized);
+                moveToErrorStep(normalized);
               },
               onSuccess: (page) => {
                 console.log("[AddLoan] Submit success", page);
@@ -593,7 +693,9 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
   }, [
     borrowers,
     documentTypesByCategory,
+    fieldErrors,
     formData,
+    moveToErrorStep,
     nextStep,
     prevStep,
     processing,
@@ -605,6 +707,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
     showCollateralStep,
     showCoBorrowerStep,
     stepLabels,
+    submitError,
   ]);
 
   useEffect(() => {
