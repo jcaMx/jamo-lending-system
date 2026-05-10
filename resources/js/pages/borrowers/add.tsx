@@ -121,18 +121,18 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
   });
 
   const incomeSources = [
-  "Salary",
-  "Business Income",
-  "Freelance / Contract Work",
-  "Self-Employed",
-  "Investments",
-  "Rental Income",
-  "Commission-Based",
-  "Pension / Retirement",
-  "Remittance",
-  "Government Assistance",
-  "Other"
-];
+    "Salary",
+    "Business Income",
+    "Freelance / Contract Work",
+    "Self-Employed",
+    "Investments",
+    "Rental Income",
+    "Commission-Based",
+    "Pension / Retirement",
+    "Remittance",
+    "Government Assistance",
+    "Other"
+  ];
 
   const documentTypeOptions = useMemo(
     () => ({
@@ -404,13 +404,13 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
               </div>
               <div>
                 <Label required>Date of Birth</Label>
-                <input 
-                  type="date" 
-                  value={data.date_of_birth} 
-                  onChange={(e) => setData('date_of_birth', e.target.value)} 
+                <input
+                  type="date"
+                  value={data.date_of_birth}
+                  onChange={(e) => setData('date_of_birth', e.target.value)}
                   max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                  className={inputClass} 
-                  required 
+                  className={inputClass}
+                  required
                 />
               </div>
               <div>
@@ -426,8 +426,8 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
                 <input type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className={inputClass} required />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
-               <div>
-              <Label>Number of Dependents</Label>
+              <div>
+                <Label>Number of Dependents</Label>
                 <input
                   type="number"
                   value={data.dependent_child}
@@ -435,8 +435,8 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
                   placeholder="0"
                   className={inputClass}
                 />
-              {errors.dependent_child && <p className="text-red-500 text-xs mt-1">{errors.dependent_child}</p>}
-            </div>
+                {errors.dependent_child && <p className="text-red-500 text-xs mt-1">{errors.dependent_child}</p>}
+              </div>
               <div>
                 <Label required>Marital Status</Label>
                 <select value={data.marital_status} onChange={(e) => setData('marital_status', e.target.value)} className={inputClass} required>
@@ -603,18 +603,18 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
               <div>
                 <Label required>Income Source</Label>
                 <select
-                value={data.income_source}
-                onChange={(e) => setData('income_source', e.target.value)}
-                className={inputClass}
-                required
-              >
-                <option value="">Select income source</option>
-                {incomeSources.map((source) => (
-                  <option key={source} value={source}>
-                    {source}
-                  </option>
-                ))}
-              </select>
+                  value={data.income_source}
+                  onChange={(e) => setData('income_source', e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select income source</option>
+                  {incomeSources.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label required>Occupation</Label>
@@ -648,7 +648,7 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
             />
           </div>
 
-          
+
         )}
 
 
@@ -666,7 +666,7 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
                 <li><strong>Date of Birth:</strong> {data.date_of_birth}</li>
                 <li><strong>Number of Dependents:</strong> {data.dependent_child}</li>
                 <li><strong>Marital Status:</strong> {data.marital_status}</li>
-                
+
                 {data.marital_status === 'Married' && (
                   <>
                     <li><strong>Spouse First Name:</strong> {data.spouse_first_name}</li>

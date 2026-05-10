@@ -281,6 +281,34 @@ class LoanController extends Controller
                 }
             }
 
+            $submittedLoanProductRows = collect($request->input('documents.loan_product', []));
+            if ($submittedLoanProductRows->isNotEmpty()) {
+                foreach ($submittedLoanProductRows as $index => $documentRow) {
+                    $uploadedFile = $request->file("documents.loan_product.{$index}.file");
+                    $documentTypeId = isset($documentRow['document_type_id']) ? (int) $documentRow['document_type_id'] : null;
+                    $documentCategory = isset($documentRow['document_category']) ? (string) $documentRow['document_category'] : null;
+
+                    if (! $uploadedFile || ! $documentTypeId) {
+                        continue;
+                    }
+
+                    $storedPath = $uploadedFile->store("borrowers/{$borrower->ID}/loan-product", 'public');
+
+                    File::create([
+                        'documentable_id' => $borrower->ID,
+                        'documentable_type' => \App\Models\Borrower::class,
+                        'document_type_id' => $documentTypeId,
+                        'status' => 'pending',
+                        'file_name' => $uploadedFile->getClientOriginalName(),
+                        'file_path' => $storedPath,
+                        'uploaded_at' => now(),
+                        'description' => $documentCategory ? "loan_product_requirement:{$documentCategory}" : 'loan_product_requirement',
+                        'borrower_id' => $borrower->ID,
+                        'collateral_id' => $collateral?->ID,
+                    ]);
+                }
+            }
+
             // Handle ownership proof file upload
             if ($collateral && $request->hasFile('ownership_proof')) {
                 $path = $request->file('ownership_proof')->store('collateral', 'public');

@@ -105,7 +105,7 @@ class BorrowerController extends Controller
             'marital_status' => 'required|string',
             'contact_no' => 'required|string|max:15',
             'landline_number' => 'nullable|string|max:15',
-            'email' => 'required|email|max:255',
+            'email' => 'required|email|max:255|unique:users,email|unique:borrower,email',
             'dependent_child' => 'nullable|integer',
             'permanent_address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',

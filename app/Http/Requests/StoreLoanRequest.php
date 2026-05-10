@@ -17,6 +17,9 @@ class StoreLoanRequest extends FormRequest
 
     public function rules(): array
     {
+        $collateralUploadFileRule = 'file|mimes:jpg,jpeg,jfif,png,pdf,doc,docx|max:5120';
+        $loanProductUploadFileRule = 'file|max:5120';
+
         $loanProductId = $this->input('loan_product_id');
         $loanProductId = is_numeric($loanProductId) ? (int) $loanProductId : null;
         $loanType = $this->input('loan_type');
@@ -60,14 +63,14 @@ class StoreLoanRequest extends FormRequest
             'collateral_type' => $requiresCollateral
                 ? 'required|string|in:vehicle,land,atm'
                 : 'nullable|string|in:vehicle,land,atm',
-            'ownership_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'ownership_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,jfif,png|max:10240',
             'documents.collateral' => $requiresCollateral ? 'required|array|min:1' : 'nullable|array',
             'documents.collateral.*.document_type_id' => 'required_with:documents.collateral.*.file|integer|exists:document_types,id',
-            'documents.collateral.*.file' => 'required_with:documents.collateral.*.document_type_id|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'documents.collateral.*.file' => 'required_with:documents.collateral.*.document_type_id|'.$collateralUploadFileRule,
             'documents.loan_product' => 'nullable|array',
             'documents.loan_product.*.document_type_id' => 'required_with:documents.loan_product.*.file|integer|exists:document_types,id',
             'documents.loan_product.*.document_category' => 'nullable|string|max:100',
-            'documents.loan_product.*.file' => 'required_with:documents.loan_product.*.document_type_id|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'documents.loan_product.*.file' => 'required_with:documents.loan_product.*.document_type_id|'.$loanProductUploadFileRule,
 
             // Co-Borrowers
             'coBorrowers' => $requiresCoBorrower ? 'required|array|min:1' : 'nullable|array',
@@ -116,6 +119,11 @@ class StoreLoanRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            $isBusinessLoan = mb_strtolower(trim((string) $this->input('loan_type', ''))) === 'business loan';
+            if (! $isBusinessLoan) {
+                return;
+            }
+
             $loanProductId = $this->input('loan_product_id');
             $loanProductId = is_numeric($loanProductId) ? (int) $loanProductId : null;
             $loanType = $this->input('loan_type');
@@ -128,7 +136,7 @@ class StoreLoanRequest extends FormRequest
             $requiredRequirements = DB::table('loan_product_document_requirements')
                 ->where('loan_product_id', $loanProduct->id)
                 ->where('requirement_type', 'category')
-                ->whereIn('subject_type', ['borrower', 'business', 'employment'])
+                ->where('subject_type', 'business')
                 ->where('is_required', true)
                 ->where('is_active', true)
                 ->whereNotNull('document_category')

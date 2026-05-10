@@ -207,7 +207,10 @@ const CoBorrowerInfo = ({
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
           {stepError && <p className="text-red-600 text-sm">{stepError}</p>}
-
+          {/* Requirement hint for optional vs required behavior */}
+          <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
+            {required ? "Co-borower required for this loan product." : "Optional — you may skip this step."}
+          </p>
           {/* 🔍 SEARCH UI */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
@@ -217,7 +220,7 @@ const CoBorrowerInfo = ({
               type="text"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2"
               placeholder="Search by name..."
             />
 

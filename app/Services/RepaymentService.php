@@ -279,7 +279,7 @@ class RepaymentService
             );
         }
 
-        return round($remainingAmount - $applied, 2);
+        return $remainingAmount;
     }
 
     /**

@@ -76,6 +76,9 @@ const getCsrfToken = () =>
 
 const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps) => {
   const coBorrowers = Array.isArray(formData.coBorrowers) ? formData.coBorrowers : [];
+  const loanProductDocuments = Array.isArray(formData.documents?.loan_product)
+    ? formData.documents.loan_product.filter((row) => row.document_type_id || row.file)
+    : [];
 
   return (
     <section className="py-8 md:py-16 px-6 md:px-12 bg-[#F7F5F3]">
@@ -125,6 +128,32 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
               </div>
             </div>
           </div>
+
+          {String(formData.loan_type ?? "").trim().toLowerCase() === "business loan" && (
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-gray-700">Business Requirement Documents</h2>
+              {loanProductDocuments.length === 0 ? (
+                <p className="text-sm text-gray-600">No business requirement documents selected.</p>
+              ) : (
+                <div className="space-y-2 text-sm text-gray-700">
+                  {loanProductDocuments.map((row, index) => (
+                    <div key={`${row.document_category ?? "loan-product"}-${row.document_type_id ?? "row"}-${index}`} className="rounded border p-3">
+                      <div>
+                        <span className="font-medium">Category:</span>{" "}
+                        {String(row.document_category ?? "-").replaceAll("_", " ")}
+                      </div>
+                      <div>
+                        <span className="font-medium">Document Type ID:</span> {row.document_type_id || "-"}
+                      </div>
+                      <div>
+                        <span className="font-medium">File:</span> {row.file?.name || "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-gray-700">Collateral</h2>

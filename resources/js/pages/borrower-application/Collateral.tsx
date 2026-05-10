@@ -174,7 +174,14 @@ const Collateral = ({
   const indicatorIndex = stepIndex ?? 3;
 
   useEffect(() => {
-    setFormData((prev) => ({ ...prev, ...data }));
+    setFormData((prev) => ({
+      ...prev,
+      ...data,
+      documents: {
+        ...(prev.documents ?? { collateral: [], loan_product: [] }),
+        ...(data.documents ?? { collateral: [] }),
+      },
+    }));
   }, [data, setFormData]);
 
   const areCollateralRowsEqual = (

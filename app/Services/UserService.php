@@ -85,6 +85,10 @@ class UserService
      */
     public function createUser(array $data, bool $sendNotification = true)
     {
+        if (User::where('email', $data['email'])->exists()) {
+            throw new \Exception('An account with this email already exists.');
+        }
+
         $username = $this->generateUsername($data['fName'], $data['lName']);
         $generatedPassword = $this->generatePassword();
 
@@ -135,6 +139,10 @@ class UserService
 
     public function createCustomerUser(array $data): array
     {
+        if (User::where('email', $data['email'])->exists()) {
+            throw new \Exception('An account with this email already exists.');
+        }
+
         $username = $this->generateUsername($data['fName'], $data['lName']);
         $generatedPassword = $this->generatePassword();
 

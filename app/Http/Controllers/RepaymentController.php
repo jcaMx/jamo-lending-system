@@ -180,7 +180,7 @@ class RepaymentController extends Controller
 
             // Process immediately ONLY if confirmed
             if ($status === 'confirmed') {
-                $this->repaymentService->processPayment($payment);
+                $this->repaymentService->processPayment($payment, $request->schedule_ids ?? []);
             }
 
             DB::commit();

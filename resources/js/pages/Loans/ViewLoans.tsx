@@ -57,12 +57,20 @@ interface ViewLoansProps {
 
 export default function ViewLoans({ loans }: ViewLoansProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'DueOrOverdue'>('All');
 
-  const filteredLoans = loans.filter((loan) =>
-    `${loan.borrower.first_name} ${loan.borrower.last_name}`
+  const filteredLoans = loans.filter((loan) => {
+    const matchesSearch = `${loan.borrower.first_name} ${loan.borrower.last_name}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+      .includes(searchTerm.toLowerCase());
+
+    const matchesStatus = 
+      statusFilter === 'All' 
+        ? true 
+        : loan.amortizationSchedules?.some(s => s.status === 'Overdue' || s.status === 'Unpaid');
+
+    return matchesSearch && matchesStatus;
+  });
 
   const deleteLoan = (loan: Loan) => {
     const confirmed = window.confirm(
@@ -94,6 +102,14 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 border rounded shadow-sm w-64"
           />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'All' | 'DueOrOverdue')}
+            className="px-4 py-2 border rounded shadow-sm"
+          >
+            <option value="All">All Loans</option>
+            <option value="DueOrOverdue">Due & Overdue</option>
+          </select>
         </div>
 
         <table className="min-w-full bg-white rounded shadow">
