@@ -17,6 +17,8 @@ interface BorrowerStepProps {
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
   onNext: () => void;
+  fieldErrors?: Record<string, string>;
+  submitError?: string;
   stepLabels?: string[];
   stepIndex?: number;
 }
@@ -26,6 +28,8 @@ const BorrowerStep = ({
   formData,
   setFormData,
   onNext,
+  fieldErrors = {},
+  submitError = "",
   stepLabels,
   stepIndex,
 }: BorrowerStepProps) => {
@@ -38,6 +42,20 @@ const BorrowerStep = ({
   const defaultStepLabels = ["Borrower", "Loan Details", "Collateral", "Co-Borrowers", "Review"];
   const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
   const indicatorIndex = stepIndex ?? 1;
+  const backendBorrowerError = fieldErrors.borrower_name || fieldErrors.borrower_id || "";
+
+  const focusField = useCallback((fieldName: string) => {
+    if (typeof document === "undefined") return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if ("focus" in target) {
+        target.focus();
+      }
+    }, 100);
+  }, []);
 
   const isActiveOrPendingStatus = useCallback((status?: string) => {
     if (!status) return false;
@@ -273,6 +291,7 @@ const BorrowerStep = ({
   const handleNext = async () => {
     if (!selectedBorrower) {
       setBorrowerError("Please select a borrower from the list.");
+      focusField("borrower_name");
       return;
     }
 
@@ -325,9 +344,13 @@ const BorrowerStep = ({
             <div className="relative">
               <input
                 type="text"
+                name="borrower_name"
+                data-field="borrower_name"
+                autoComplete="off"
                 value={borrowerSearch}
                 onChange={(e) => {
                   setBorrowerSearch(e.target.value);
+                  setBorrowerError("");
                   if (!e.target.value) {
                     setSelectedBorrower(null);
                     setFormData((prev) => ({
@@ -359,6 +382,12 @@ const BorrowerStep = ({
               <p className="text-green-500 text-sm mt-1">Borrower selected (ID: {selectedBorrower.id})</p>
             )}
             {borrowerError && <p className="text-red-500 text-sm mt-1">{borrowerError}</p>}
+            {!borrowerError && backendBorrowerError && (
+              <p className="text-red-500 text-sm mt-1">{backendBorrowerError}</p>
+            )}
+            {!borrowerError && !backendBorrowerError && submitError && (
+              <p className="text-red-500 text-sm mt-1">{submitError}</p>
+            )}
             {!borrowerError && borrowerSearch && filteredBorrowers.length === 0 && (
               <p className="text-sm text-gray-500 mt-1">No eligible borrowers found.</p>
             )}
@@ -378,11 +407,14 @@ const BorrowerStep = ({
             <input
               type="text"
               name="borrower_id"
+              data-field="borrower_id"
+              autoComplete="off"
               value={formData.borrower_id ?? ""}
               onChange={() => {}}
               className="bg-[#F7F5F3] border-gray-300 rounded-md w-full border p-2"
               readOnly
             />
+            {fieldErrors.borrower_id && <p className="text-red-500 text-sm mt-1">{fieldErrors.borrower_id}</p>}
           </div>
 
           <div className="flex justify-end">

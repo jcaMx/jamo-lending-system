@@ -101,7 +101,7 @@ class DisbursementService
                         'voucher_id' => $voucher->ID,
                         'bank_account_id' => $bankAccount->ID,
                         'bank_name' => $bankAccount->bank_name,
-                        'cheque_no' => $this->generateChequeNumber(),
+                        'cheque_no' => $data['cheque_no'],
                         'cheque_date' => $data['cheque_date'],
                     ]);
                 }
@@ -389,21 +389,6 @@ class DisbursementService
             ->where('voucher_no', 'like', $prefix . '-' . $year . '-%')
             ->orderByDesc('voucher_no')
             ->value('voucher_no');
-
-        $nextNumber = $this->nextSequenceNumber($latestForYear);
-
-        return sprintf('%s-%s-%06d', $prefix, $year, $nextNumber);
-    }
-
-    private function generateChequeNumber(): string
-    {
-        $prefix = 'CHQ';
-        $year = now()->format('Y');
-
-        $latestForYear = ChequeDetail::query()
-            ->where('cheque_no', 'like', $prefix . '-' . $year . '-%')
-            ->orderByDesc('cheque_no')
-            ->value('cheque_no');
 
         $nextNumber = $this->nextSequenceNumber($latestForYear);
 

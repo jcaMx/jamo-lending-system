@@ -33,6 +33,20 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
   const [confirmCollectionDate, setConfirmCollectionDate] = useState<string>(todayDatetime);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectRemarks, setRejectRemarks] = useState('');
+  const [confirmErrors, setConfirmErrors] = useState<Record<string, string>>({});
+
+  const focusField = (fieldName: string) => {
+    if (typeof document === 'undefined') return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if ('focus' in target) {
+        target.focus();
+      }
+    }, 100);
+  };
 
   const filteredRepayments = useMemo(() => {
     return repayments.filter((r) =>
@@ -94,9 +108,12 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
 
   const handleVerify = (paymentId: number) => {
     if (!confirmCollectedBy) {
-      alert('Please select a collector.');
+      setConfirmErrors({ collected_by: 'Please select a collector.' });
+      focusField('repayment.collected_by');
       return;
     }
+
+    setConfirmErrors({});
 
     setConfirmDialog({
       open: true,
@@ -281,7 +298,11 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                             <label className="mb-1 block text-xs font-semibold text-gray-700">Collected By</label>
                             <select
                               value={confirmCollectedBy}
-                              onChange={(e) => setConfirmCollectedBy(e.target.value)}
+                              onChange={(e) => {
+                                setConfirmCollectedBy(e.target.value);
+                                setConfirmErrors((prev) => ({ ...prev, collected_by: '' }));
+                              }}
+                              data-field="repayment.collected_by"
                               className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
                             >
                               <option value="">Select collector</option>
@@ -291,6 +312,9 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                                 </option>
                               ))}
                             </select>
+                            {confirmErrors.collected_by && (
+                              <p className="mt-1 text-xs text-red-600">{confirmErrors.collected_by}</p>
+                            )}
                           </div>
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-gray-700">Collection Date</label>
@@ -332,6 +356,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                               type="text"
                               value={rejectRemarks}
                               onChange={(e) => setRejectRemarks(e.target.value)}
+                              data-field="repayment.reject_remarks"
                               maxLength={100}
                               placeholder="Reason for rejection"
                               className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
@@ -386,5 +411,4 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     </AppLayout>
   );
 }
-
 

@@ -46,7 +46,7 @@ export default function RenderDocumentUploader<C extends string>({
   const options = optionsByCategory[category] ?? [];
 
   return (
-    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
+    <div data-doc-category={category} className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-gray-700">{title}</h3>
         <Button type="button" onClick={() => onAdd(category)} className="bg-[#FABF24] text-black hover:bg-yellow-600">
@@ -70,6 +70,9 @@ export default function RenderDocumentUploader<C extends string>({
                 </option>
               ))}
             </select>
+            {getFieldError(`documents.${category}.${index}.document_type_id`) && (
+              <p className="mt-1 text-xs text-red-500">{getFieldError(`documents.${category}.${index}.document_type_id`)}</p>
+            )}
           </div>
 
           <div className="md:col-span-5">

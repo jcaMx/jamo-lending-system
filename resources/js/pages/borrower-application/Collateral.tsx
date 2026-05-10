@@ -15,6 +15,8 @@ interface CollateralProps {
   onPrev: () => void;
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
+  fieldErrors?: Record<string, string>;
+  submitError?: string;
   documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
   loanProductRequirements?: LoanProductDocumentRequirement[];
   stepLabels?: string[];
@@ -132,6 +134,8 @@ const Collateral = ({
   onPrev,
   formData,
   setFormData,
+  fieldErrors = {},
+  submitError = "",
   documentTypesByCategory = {},
   loanProductRequirements = [],
   stepLabels,
@@ -172,6 +176,19 @@ const Collateral = ({
   const defaultStepLabels = ["Loan Details", "Co-Borrower", "Collateral", "Payment"];
   const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
   const indicatorIndex = stepIndex ?? 3;
+
+  const focusField = (fieldName: string) => {
+    if (typeof document === "undefined") return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if ("focus" in target) {
+        target.focus();
+      }
+    }, 100);
+  };
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -366,6 +383,7 @@ const Collateral = ({
     if (!data.collateral_type) {
       if (required) {
         setStepError("Collateral is required for this loan product.");
+        focusField("collateral_type");
         return;
       }
       setStepError("");
@@ -392,6 +410,16 @@ const Collateral = ({
         !data.series)
     ) {
       setStepError("Please complete all required vehicle collateral fields.");
+      const firstMissingVehicleField =
+        !data.make ? "make" :
+        !data.fuel ? "fuel" :
+        !data.vehicle_type ? "vehicle_type" :
+        !data.transmission_type ? "transmission_type" :
+        !data.plate_no ? "plate_no" :
+        !data.engine_no ? "engine_no" :
+        !data.year_model ? "year_model" :
+        "series";
+      focusField(firstMissingVehicleField);
       return;
     }
 
@@ -400,6 +428,12 @@ const Collateral = ({
       (!data.certificate_of_title_no || !data.location || !data.description || !data.area)
     ) {
       setStepError("Please complete all required land collateral fields.");
+      const firstMissingLandField =
+        !data.certificate_of_title_no ? "certificate_of_title_no" :
+        !data.location ? "location" :
+        !data.description ? "description" :
+        "area";
+      focusField(firstMissingLandField);
       return;
     }
 
@@ -408,6 +442,11 @@ const Collateral = ({
       (!data.bank_name || !data.account_no || !data.cardno_4digits)
     ) {
       setStepError("Please complete all required ATM collateral fields.");
+      const firstMissingAtmField =
+        !data.bank_name ? "bank_name" :
+        !data.account_no ? "account_no" :
+        "cardno_4digits";
+      focusField(firstMissingAtmField);
       return;
     }
 
@@ -424,6 +463,7 @@ const Collateral = ({
 
     if (missingRequiredFiles) {
       setStepError("Please upload all required collateral documents.");
+      focusField("ownership_proof");
       return;
     }
 
@@ -452,6 +492,9 @@ const Collateral = ({
           {stepError && (
             <p className="text-sm text-red-600">{stepError}</p>
           )}
+          {submitError && !stepError && (
+            <p className="text-sm text-red-600">{submitError}</p>
+          )}
           {/* Requirement hint for optional vs required behavior */}
           <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
             {required ? "Collateral required for this loan product." : "Optional — you may skip this step."}
@@ -464,6 +507,7 @@ const Collateral = ({
           onChange={(v) => setData("collateral_type", v)}
           options={collateralTypeOptions}
           required
+          error={fieldErrors.collateral_type}
         />
 
         {data.collateral_type === "vehicle" && (
@@ -477,6 +521,7 @@ const Collateral = ({
               list="vehicle-makes"
               placeholder="Select or type vehicle make"
               required
+              error={fieldErrors.make}
             />
             <datalist id="vehicle-makes">
               {makeTypeOptions.map((opt) => (
@@ -492,6 +537,7 @@ const Collateral = ({
               onChange={(v) => setData("fuel", v)}
               options={fuelOptions}
               required
+              error={fieldErrors.fuel}
             />
             <FormField
               label="Vehicle Type"
@@ -501,6 +547,7 @@ const Collateral = ({
               onChange={(v) => setData("vehicle_type", v)}
               options={vehicleTypeOptions}
               required
+              error={fieldErrors.vehicle_type}
             />
             <FormField
               label="Transmission Type"
@@ -510,6 +557,7 @@ const Collateral = ({
               onChange={(v) => setData("transmission_type", v)}
               options={transmissionOptions}
               required
+              error={fieldErrors.transmission_type}
             />
             <FormField
               label="Plate Number"
@@ -517,6 +565,7 @@ const Collateral = ({
               value={data.plate_no}
               onChange={(v) => setData("plate_no", sanitize.alphaNum(v))}
               required
+              error={fieldErrors.plate_no}
             />
             <FormField
               label="Engine Number"
@@ -524,6 +573,7 @@ const Collateral = ({
               value={data.engine_no}
               onChange={(v) => setData("engine_no", sanitize.alphaNum(v))}
               required
+              error={fieldErrors.engine_no}
             />
             <FormField
               label="Year Model"
@@ -532,6 +582,7 @@ const Collateral = ({
               onChange={(v) => setData("year_model", sanitize.number(v))}
               maxLength={4}
               required
+              error={fieldErrors.year_model}
             />
             <FormField
               label="Series"
@@ -539,6 +590,7 @@ const Collateral = ({
               value={data.series}
               onChange={(v) => setData("series", sanitize.trim(v))}
               required
+              error={fieldErrors.series}
             />
           </>
         )}
@@ -550,6 +602,7 @@ const Collateral = ({
               name="certificate_of_title_no"
               value={data.certificate_of_title_no}
               onChange={(v) => setData("certificate_of_title_no", sanitize.alphaNum(v))}
+              error={fieldErrors.certificate_of_title_no}
             />
             <FormField
               label="Lot No."
@@ -563,6 +616,7 @@ const Collateral = ({
               value={data.location}
               onChange={(v) => setData("location", v)}
               required
+              error={fieldErrors.location}
             />
             <FormField
               label="Description"
@@ -570,6 +624,7 @@ const Collateral = ({
               value={data.description}
               onChange={(v) => setData("description", v)}
               required
+              error={fieldErrors.description}
             />
             <FormField
               label="Area (sqm)"
@@ -577,6 +632,7 @@ const Collateral = ({
               value={data.area}
               onChange={(v) => setData("area", sanitize.number(v))}
               required
+              error={fieldErrors.area}
             />
           </>
         )}
@@ -591,6 +647,7 @@ const Collateral = ({
               list="bank-names"
               placeholder="Select or type bank name"
               required
+              error={fieldErrors.bank_name}
             />
             <datalist id="bank-names">
               {bankOptions.map((opt) => (
@@ -604,6 +661,7 @@ const Collateral = ({
               value={data.account_no}
               onChange={(v) => setData("account_no", sanitize.number(v))}
               required
+              error={fieldErrors.account_no}
             />
             <FormField
               label="Card Last 4 Digits"
@@ -612,6 +670,7 @@ const Collateral = ({
               onChange={(v) => setData("cardno_4digits", sanitize.number(v).slice(0, 4))}
               maxLength={4}
               required
+              error={fieldErrors.cardno_4digits}
             />
           </>
         )}
@@ -644,6 +703,8 @@ const Collateral = ({
                   )}
                   <input
                     type="file"
+                    name={`documents.collateral.${docType.id}`}
+                    data-field="ownership_proof"
                     className={inputClass}
                     accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                     required
@@ -657,6 +718,11 @@ const Collateral = ({
                   />
                   {row?.file && (
                     <p className="text-xs text-gray-600">Selected: {row.file.name}</p>
+                  )}
+                  {(fieldErrors.ownership_proof || fieldErrors["documents.collateral"] || fieldErrors[`documents.collateral.${docType.id}`]) && (
+                    <p className="text-xs text-red-600">
+                      {fieldErrors[`documents.collateral.${docType.id}`] || fieldErrors["documents.collateral"] || fieldErrors.ownership_proof}
+                    </p>
                   )}
                 </div>
               );

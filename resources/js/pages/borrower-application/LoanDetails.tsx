@@ -12,6 +12,8 @@ interface LoanDetailsProps {
   formData: SharedFormData;
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
   documentTypesByCategory?: Record<string, BorrowerDocumentTypeOption[]>;
+  fieldErrors?: Record<string, string>;
+  submitError?: string;
   stepLabels?: string[];
   stepIndex?: number;
   ruleRequirements?: { collateral: boolean; coborrower: boolean };
@@ -86,8 +88,8 @@ const normalizeLoanProduct = (value: unknown): LoanProductItem | null => {
 
   const collateralThreshold =
     rulesRaw.collateral_required_above === null ||
-    rulesRaw.collateral_required_above === undefined ||
-    rulesRaw.collateral_required_above === ""
+      rulesRaw.collateral_required_above === undefined ||
+      rulesRaw.collateral_required_above === ""
       ? null
       : Number(rulesRaw.collateral_required_above);
 
@@ -109,27 +111,27 @@ const normalizeLoanProduct = (value: unknown): LoanProductItem | null => {
           : collateralThreshold,
       dynamic_rules: Array.isArray(rulesRaw.dynamic_rules)
         ? rulesRaw.dynamic_rules
-            .map((raw) => {
-              if (!raw || typeof raw !== "object") return null;
-              const ruleRow = raw as Record<string, unknown>;
-              const ruleType = String(ruleRow.rule_type ?? "");
-              if (ruleType !== "collateral" && ruleType !== "coborrower") {
-                return null;
-              }
+          .map((raw) => {
+            if (!raw || typeof raw !== "object") return null;
+            const ruleRow = raw as Record<string, unknown>;
+            const ruleType = String(ruleRow.rule_type ?? "");
+            if (ruleType !== "collateral" && ruleType !== "coborrower") {
+              return null;
+            }
 
-              return {
-                rule_type: ruleType as "collateral" | "coborrower",
-                condition_key: String(ruleRow.condition_key ?? ""),
-                operator: String(ruleRow.operator ?? ""),
-                condition_value:
-                  ruleRow.condition_value === null ||
+            return {
+              rule_type: ruleType as "collateral" | "coborrower",
+              condition_key: String(ruleRow.condition_key ?? ""),
+              operator: String(ruleRow.operator ?? ""),
+              condition_value:
+                ruleRow.condition_value === null ||
                   ruleRow.condition_value === undefined ||
                   ruleRow.condition_value === ""
-                    ? null
-                    : Number(ruleRow.condition_value),
-              };
-            })
-            .filter((item): item is NonNullable<typeof item> => item !== null)
+                  ? null
+                  : Number(ruleRow.condition_value),
+            };
+          })
+          .filter((item): item is NonNullable<typeof item> => item !== null)
         : [],
     },
   };
@@ -150,6 +152,8 @@ const LoanDetails = ({
   formData,
   setFormData,
   documentTypesByCategory = {},
+  fieldErrors = {},
+  submitError = "",
   stepLabels,
   stepIndex,
   ruleRequirements,
@@ -343,21 +347,21 @@ const LoanDetails = ({
       !isBusinessLoan
         ? []
         : (formData.loan_product_requirements ?? [])
-            .filter(
-              (requirement) => {
-                if (
-                  requirement.requirement_type !== "category" ||
-                  !requirement.is_required ||
-                  !requirement.document_category
-                ) {
-                  return false;
-                }
+          .filter(
+            (requirement) => {
+              if (
+                requirement.requirement_type !== "category" ||
+                !requirement.is_required ||
+                !requirement.document_category
+              ) {
+                return false;
+              }
 
-                return String(requirement.subject_type).toLowerCase() === "business";
-              },
-            )
-            .slice()
-            .sort((left, right) => left.sort_order - right.sort_order),
+              return String(requirement.subject_type).toLowerCase() === "business";
+            },
+          )
+          .slice()
+          .sort((left, right) => left.sort_order - right.sort_order),
     [formData.loan_product_requirements, isBusinessLoan],
   );
 
@@ -481,9 +485,40 @@ const LoanDetails = ({
     return "";
   };
 
+  const focusField = (fieldName: string) => {
+    if (typeof document === "undefined") return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if ("focus" in target) {
+        target.focus();
+      }
+    }, 100);
+  };
+
   const handleSubmit = () => {
+    const firstMissingField =
+      !String(data.loan_type ?? "").trim()
+        ? "loan_type"
+        : !String(data.loan_amount ?? "").trim()
+          ? "loan_amount"
+          : !String(data.interest_type ?? "").trim()
+            ? "interest_type"
+            : !String(data.interest_rate ?? "").trim()
+              ? "interest_rate"
+              : !String(data.repayment_frequency ?? "").trim()
+                ? "repayment_frequency"
+                : !String(data.term ?? "").trim()
+                  ? "term"
+                  : "";
+
     if (isMissingLoanDetails()) {
       setStepError("Please complete all required loan details before proceeding.");
+      if (firstMissingField) {
+        focusField(firstMissingField);
+      }
       return;
     }
 
@@ -523,7 +558,7 @@ const LoanDetails = ({
             onChange={handleLoanTypeChange}
             required
             options={loanTypeOptions}
-            error={errors.loan_type}
+            error={fieldErrors.loan_type || errors.loan_type}
             disabled={isLoadingLoanProducts || loanTypeOptions.length === 0}
           />
 
@@ -536,14 +571,14 @@ const LoanDetails = ({
             value={data.loan_amount}
             onChange={(value) => setData("loan_amount", sanitize.number(value))}
             required
-            error={errors.loan_amount}
+            error={fieldErrors.loan_amount || errors.loan_amount}
           />
 
           <FormField
             label="Monthly Income (PHP)"
             name="monthly_income"
             value={String(formData.monthly_income ?? "")}
-            onChange={() => {}}
+            onChange={() => { }}
             placeholder="Auto-filled from borrower"
             disabled
           />
@@ -560,13 +595,24 @@ const LoanDetails = ({
           />
 
           <FormField
+            label="Interest Type"
+            name="interest_type"
+            type="select"
+            value={data.interest_type}
+            onChange={(v) => setData("interest_type", v)}
+            required
+            options={interestTypeOptions}
+            error={fieldErrors.interest_type || errors.interest_type}
+          />
+
+          <FormField
             label="Interest Rate (%)"
             name="interest_rate"
-            value={String(normalizeInterestRate(data.interest_rate))}
-            onChange={(value) => setData("interest_rate", parseFloat(sanitize.decimal(value)) || 0)}
+            value={String(data.interest_rate)}
+            onChange={(v) => setData("interest_rate", parseFloat(sanitize.decimal(v)) || 0)}
             required
-            error={errors.interest_rate}
-            readOnly={!canEditInterestRate}
+            error={fieldErrors.interest_rate || errors.interest_rate}
+            disabled={true}
           />
 
           <FormField
@@ -574,19 +620,19 @@ const LoanDetails = ({
             name="repayment_frequency"
             type="select"
             value={data.repayment_frequency}
-            onChange={(value) => setData("repayment_frequency", value)}
+            onChange={(v) => setData("repayment_frequency", v)}
             required
             options={repaymentFrequencyOptions}
-            error={errors.repayment_frequency}
+            error={fieldErrors.repayment_frequency || errors.repayment_frequency}
           />
 
           <FormField
             label="Term (months)"
             name="term"
             value={data.term}
-            onChange={(value) => setData("term", sanitize.number(value))}
+            onChange={(v) => setData("term", sanitize.number(v))}
             required
-            error={errors.term}
+            error={fieldErrors.term || errors.term}
           />
 
           <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
@@ -598,86 +644,88 @@ const LoanDetails = ({
             </p>
           </div>
 
-          {isBusinessLoan && (
-            <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-gray-700">Required Loan Product Documents</h3>
-              </div>
+          {
+            isBusinessLoan && (
+              <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-semibold text-gray-700">Required Loan Product Documents</h3>
+                </div>
 
-              {!requiredLoanProductRequirements.length && (
-                <p className="text-sm text-gray-600">
-                  No additional business documents are configured for this product.
-                </p>
-              )}
+                {!requiredLoanProductRequirements.length && (
+                  <p className="text-sm text-gray-600">
+                    No additional business documents are configured for this product.
+                  </p>
+                )}
 
-              {requiredLoanProductRequirements.map((requirement) => {
-                const category = String(requirement.document_category ?? "");
-                const options = documentTypesByCategory[category] ?? [];
-                const displayRows = displayRowsByCategory.get(category) ?? [];
+                {requiredLoanProductRequirements.map((requirement) => {
+                  const category = String(requirement.document_category ?? "");
+                  const options = documentTypesByCategory[category] ?? [];
+                  const displayRows = displayRowsByCategory.get(category) ?? [];
 
-                return (
-                  <div key={requirement.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">
-                        {toTitleCase(category)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Upload at least {requirement.min_count} document(s).
-                      </p>
-                      {requirement.notes && <p className="text-xs text-gray-500 mt-1">{requirement.notes}</p>}
-                    </div>
-
-                    {!options.length && (
-                      <p className="text-xs text-amber-700">
-                        No document types are available for this category yet.
-                      </p>
-                    )}
-
-                    {displayRows.map((row) => (
-                      <div key={row.slot_key} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                        <div className="md:col-span-5">
-                          <label className="block text-sm font-medium mb-1">Document Type</label>
-                          <select
-                            value={row.document_type_id}
-                            onChange={(event) =>
-                              updateLoanProductDocument(category, row.source_index, {
-                                document_type_id: event.target.value,
-                              })
-                            }
-                            className={inputClass}
-                          >
-                            <option value="">Select document type</option>
-                            {options.map((option) => (
-                              <option key={option.id} value={String(option.id)}>
-                                {option.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="md:col-span-7">
-                          <label className="block text-sm font-medium mb-1">File</label>
-                          <input
-                            type="file"
-                            className={inputClass}
-                            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                            onChange={(event) =>
-                              updateLoanProductDocument(category, row.source_index, {
-                                file: event.target.files?.[0] ?? null,
-                              })
-                            }
-                          />
-                          {row.file && (
-                            <p className="mt-1 text-xs text-gray-600">Selected: {row.file.name}</p>
-                          )}
-                        </div>
+                  return (
+                    <div key={requirement.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {toTitleCase(category)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Upload at least {requirement.min_count} document(s).
+                        </p>
+                        {requirement.notes && <p className="text-xs text-gray-500 mt-1">{requirement.notes}</p>}
                       </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+
+                      {!options.length && (
+                        <p className="text-xs text-amber-700">
+                          No document types are available for this category yet.
+                        </p>
+                      )}
+
+                      {displayRows.map((row) => (
+                        <div key={row.slot_key} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                          <div className="md:col-span-5">
+                            <label className="block text-sm font-medium mb-1">Document Type</label>
+                            <select
+                              value={row.document_type_id}
+                              onChange={(event) =>
+                                updateLoanProductDocument(category, row.source_index, {
+                                  document_type_id: event.target.value,
+                                })
+                              }
+                              className={inputClass}
+                            >
+                              <option value="">Select document type</option>
+                              {options.map((option) => (
+                                <option key={option.id} value={String(option.id)}>
+                                  {option.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="md:col-span-7">
+                            <label className="block text-sm font-medium mb-1">File</label>
+                            <input
+                              type="file"
+                              className={inputClass}
+                              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                              onChange={(event) =>
+                                updateLoanProductDocument(category, row.source_index, {
+                                  file: event.target.files?.[0] ?? null,
+                                })
+                              }
+                            />
+                            {row.file && (
+                              <p className="mt-1 text-xs text-gray-600">Selected: {row.file.name}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          }
 
           <div className="flex justify-between mt-6">
             <button
@@ -695,9 +743,9 @@ const LoanDetails = ({
               Next
             </button>
           </div>
-        </form>
-      </div>
-    </section>
+        </form >
+      </div >
+    </section >
   );
 };
 

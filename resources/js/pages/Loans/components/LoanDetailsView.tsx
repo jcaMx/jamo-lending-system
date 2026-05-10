@@ -254,26 +254,49 @@ export function LoanDetailsView({
     balance: loan.balance_remaining ?? 0,
     status: loan.status || '',
   };
-  const allFiles = [
-    ...borrowerFiles.map((file, index) => ({
-      ID: file.ID ?? file.id ?? index + 1,
-      file_name: file.file_name || `Borrower File ${index + 1}`,
-      file_type: inferFileType(file.file_name, file.file_path),
-      file_path: file.file_path || '',
-      uploaded_at: '',
-      description: file.description,
-      source: 'Borrower',
-    })),
-    ...collateralFiles.map((file, index) => ({
-      ID: file.ID ?? file.id ?? borrowerFiles.length + index + 1,
-      file_name: file.file_name || `Collateral File ${index + 1}`,
-      file_type: inferFileType(file.file_name, file.file_path),
-      file_path: file.file_path || '',
-      uploaded_at: '',
-      description: file.description,
-      source: 'Collateral',
-    })),
-  ];
+  const allFiles = (() => {
+    const fileMap = new Map<string, {
+      ID: number;
+      file_name: string;
+      file_type: string;
+      file_path: string;
+      uploaded_at: string;
+      description?: string;
+      source?: string;
+    }>();
+
+    const normalizedFiles = [
+      ...borrowerFiles.map((file, index) => ({
+        ID: file.ID ?? file.id ?? index + 1,
+        file_name: file.file_name || `Borrower File ${index + 1}`,
+        file_type: inferFileType(file.file_name, file.file_path),
+        file_path: file.file_path || '',
+        uploaded_at: '',
+        description: file.description,
+        source: 'Borrower',
+      })),
+      ...collateralFiles.map((file, index) => ({
+        ID: file.ID ?? file.id ?? borrowerFiles.length + index + 1,
+        file_name: file.file_name || `Collateral File ${index + 1}`,
+        file_type: inferFileType(file.file_name, file.file_path),
+        file_path: file.file_path || '',
+        uploaded_at: '',
+        description: file.description,
+        source: 'Collateral',
+      })),
+    ];
+
+    for (const file of normalizedFiles) {
+      const key = file.ID ? `id:${file.ID}` : `path:${file.file_path}`;
+      const existing = fileMap.get(key);
+
+      if (!existing || (existing.source === 'Borrower' && file.source === 'Collateral')) {
+        fileMap.set(key, file);
+      }
+    }
+
+    return Array.from(fileMap.values());
+  })();
   const collaterals = loan.collateral
     ? [
         {
@@ -346,6 +369,53 @@ export function LoanDetailsView({
   const borrowerErrorBag = borrowerForm.errors as Record<string, string | undefined>;
   const collateralErrorBag = collateralForm.errors as Record<string, string | undefined>;
 
+  const focusModalField = (fieldName: string) => {
+    if (typeof document === 'undefined') return;
+
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-field="${fieldName}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if ('focus' in target) {
+        target.focus();
+      }
+    }, 100);
+  };
+
+  const focusBorrowerErrorField = (errors: Record<string, unknown>) => {
+    const firstKey = Object.keys(errors)[0];
+    if (!firstKey) return;
+    focusModalField(`borrower.${firstKey}`);
+  };
+
+  const focusCollateralErrorField = (errors: Record<string, unknown>) => {
+    const firstKey = Object.keys(errors)[0];
+    if (!firstKey) return;
+
+    const fieldMap: Record<string, string> = {
+      estimated_value: 'collateral.estimated_value',
+      description: 'collateral.description',
+      remarks: 'collateral.remarks',
+      'land_details.titleNo': 'collateral.titleNo',
+      'land_details.location': 'collateral.location',
+      'land_details.areaSize': 'collateral.areaSize',
+      'vehicle_details.type': 'collateral.vehicle_type',
+      'vehicle_details.brand': 'collateral.brand',
+      'vehicle_details.model': 'collateral.model',
+      'vehicle_details.year_model': 'collateral.year_model',
+      'vehicle_details.plate_no': 'collateral.plate_no',
+      'vehicle_details.engine_no': 'collateral.engine_no',
+      'vehicle_details.transmission_type': 'collateral.transmission_type',
+      'vehicle_details.fuel_type': 'collateral.fuel_type',
+      'atm_details.bank_name': 'collateral.bank_name',
+      'atm_details.account_no': 'collateral.account_no',
+      'atm_details.cardno_4digits': 'collateral.cardno_4digits',
+      files: 'collateral.files',
+    };
+
+    focusModalField(fieldMap[firstKey] ?? `collateral.${firstKey}`);
+  };
+
   const resetBorrowerForm = () => {
     borrowerForm.setData({
       email: loan.borrower.email || '',
@@ -416,6 +486,7 @@ export function LoanDetailsView({
         resetBorrowerForm();
         setIsBorrowerModalOpen(false);
       },
+      onError: (errors) => focusBorrowerErrorField(errors),
       onFinish: () => borrowerForm.transform((data) => data),
     });
   };
@@ -459,6 +530,7 @@ export function LoanDetailsView({
         resetCollateralForm();
         setIsCollateralModalOpen(false);
       },
+      onError: (errors) => focusCollateralErrorField(errors),
       onFinish: () => collateralForm.transform((data) => data),
     });
   };
@@ -476,6 +548,7 @@ export function LoanDetailsView({
       onSuccess: () => {
         collateralForm.setData('files', []);
       },
+      onError: (errors) => focusCollateralErrorField(errors),
       onFinish: () => collateralForm.transform((data) => data),
     });
   };
@@ -700,37 +773,37 @@ export function LoanDetailsView({
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Email</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.email} onChange={(e) => borrowerForm.setData('email', e.target.value)} />
+                    <input data-field="borrower.email" className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.email} onChange={(e) => borrowerForm.setData('email', e.target.value)} />
                     {borrowerForm.errors.email && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.email}</p>}
                   </div>
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Contact Number</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.contact_no} onChange={(e) => borrowerForm.setData('contact_no', e.target.value)} />
+                    <input data-field="borrower.contact_no" className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.contact_no} onChange={(e) => borrowerForm.setData('contact_no', e.target.value)} />
                     {borrowerForm.errors.contact_no && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.contact_no}</p>}
                   </div>
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Landline</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.land_line} onChange={(e) => borrowerForm.setData('land_line', e.target.value)} />
+                    <input data-field="borrower.land_line" className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.land_line} onChange={(e) => borrowerForm.setData('land_line', e.target.value)} />
                     {borrowerForm.errors.land_line && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.land_line}</p>}
                   </div>
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Occupation</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.occupation} onChange={(e) => borrowerForm.setData('occupation', e.target.value)} />
+                    <input data-field="borrower.occupation" className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.occupation} onChange={(e) => borrowerForm.setData('occupation', e.target.value)} />
                     {borrowerForm.errors.occupation && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.occupation}</p>}
                   </div>
                   <div className="md:col-span-2">
                     <label className="mb-1 block text-sm text-gray-600">Address</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.address} onChange={(e) => borrowerForm.setData('address', e.target.value)} />
+                    <input data-field="borrower.address" className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.address} onChange={(e) => borrowerForm.setData('address', e.target.value)} />
                     {borrowerForm.errors.address && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.address}</p>}
                   </div>
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">City</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.city} onChange={(e) => borrowerForm.setData('city', e.target.value)} />
+                    <input data-field="borrower.city" className="w-full rounded-md border px-3 py-2" value={borrowerForm.data.city} onChange={(e) => borrowerForm.setData('city', e.target.value)} />
                     {borrowerForm.errors.city && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.city}</p>}
                   </div>
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Upload Borrower Files</label>
-                    <input type="file" multiple className="w-full rounded-md border px-3 py-2" onChange={(e) => borrowerForm.setData('files', Array.from(e.target.files || []))} />
+                    <input data-field="borrower.files" type="file" multiple className="w-full rounded-md border px-3 py-2" onChange={(e) => borrowerForm.setData('files', Array.from(e.target.files || []))} />
                     {borrowerForm.errors.files && <p className="mt-1 text-xs text-red-600">{borrowerForm.errors.files}</p>}
                   </div>
                 </div>
@@ -787,17 +860,17 @@ export function LoanDetailsView({
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Estimated Value</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.estimated_value} onChange={(e) => collateralForm.setData('estimated_value', e.target.value)} />
+                    <input data-field="collateral.estimated_value" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.estimated_value} onChange={(e) => collateralForm.setData('estimated_value', e.target.value)} />
                     {collateralForm.errors.estimated_value && <p className="mt-1 text-xs text-red-600">{collateralForm.errors.estimated_value}</p>}
                   </div>
                   <div>
                     <label className="mb-1 block text-sm text-gray-600">Description</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.description} onChange={(e) => collateralForm.setData('description', e.target.value)} />
+                    <input data-field="collateral.description" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.description} onChange={(e) => collateralForm.setData('description', e.target.value)} />
                     {collateralForm.errors.description && <p className="mt-1 text-xs text-red-600">{collateralForm.errors.description}</p>}
                   </div>
                   <div className="md:col-span-2">
                     <label className="mb-1 block text-sm text-gray-600">Remarks</label>
-                    <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.remarks} onChange={(e) => collateralForm.setData('remarks', e.target.value)} />
+                    <input data-field="collateral.remarks" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.remarks} onChange={(e) => collateralForm.setData('remarks', e.target.value)} />
                     {collateralForm.errors.remarks && <p className="mt-1 text-xs text-red-600">{collateralForm.errors.remarks}</p>}
                   </div>
 
@@ -805,17 +878,17 @@ export function LoanDetailsView({
                     <>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Title Number</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.titleNo} onChange={(e) => collateralForm.setData('titleNo', e.target.value)} />
+                        <input data-field="collateral.titleNo" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.titleNo} onChange={(e) => collateralForm.setData('titleNo', e.target.value)} />
                         {getFormError(collateralErrorBag, 'land_details.titleNo') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'land_details.titleNo')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Location</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.location} onChange={(e) => collateralForm.setData('location', e.target.value)} />
+                        <input data-field="collateral.location" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.location} onChange={(e) => collateralForm.setData('location', e.target.value)} />
                         {getFormError(collateralErrorBag, 'land_details.location') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'land_details.location')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Area Size</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.areaSize} onChange={(e) => collateralForm.setData('areaSize', e.target.value)} />
+                        <input data-field="collateral.areaSize" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.areaSize} onChange={(e) => collateralForm.setData('areaSize', e.target.value)} />
                         {getFormError(collateralErrorBag, 'land_details.areaSize') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'land_details.areaSize')}</p>}
                       </div>
                     </>
@@ -825,42 +898,42 @@ export function LoanDetailsView({
                     <>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Vehicle Type</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.vehicle_type} onChange={(e) => collateralForm.setData('vehicle_type', e.target.value)} />
+                        <input data-field="collateral.vehicle_type" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.vehicle_type} onChange={(e) => collateralForm.setData('vehicle_type', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.type') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.type')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Brand</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.brand} onChange={(e) => collateralForm.setData('brand', e.target.value)} />
+                        <input data-field="collateral.brand" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.brand} onChange={(e) => collateralForm.setData('brand', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.brand') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.brand')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Model</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.model} onChange={(e) => collateralForm.setData('model', e.target.value)} />
+                        <input data-field="collateral.model" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.model} onChange={(e) => collateralForm.setData('model', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.model') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.model')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Year Model</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.year_model} onChange={(e) => collateralForm.setData('year_model', e.target.value)} />
+                        <input data-field="collateral.year_model" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.year_model} onChange={(e) => collateralForm.setData('year_model', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.year_model') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.year_model')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Plate Number</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.plate_no} onChange={(e) => collateralForm.setData('plate_no', e.target.value)} />
+                        <input data-field="collateral.plate_no" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.plate_no} onChange={(e) => collateralForm.setData('plate_no', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.plate_no') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.plate_no')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Engine Number</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.engine_no} onChange={(e) => collateralForm.setData('engine_no', e.target.value)} />
+                        <input data-field="collateral.engine_no" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.engine_no} onChange={(e) => collateralForm.setData('engine_no', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.engine_no') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.engine_no')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Transmission Type</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.transmission_type} onChange={(e) => collateralForm.setData('transmission_type', e.target.value)} />
+                        <input data-field="collateral.transmission_type" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.transmission_type} onChange={(e) => collateralForm.setData('transmission_type', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.transmission_type') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.transmission_type')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Fuel Type</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.fuel_type} onChange={(e) => collateralForm.setData('fuel_type', e.target.value)} />
+                        <input data-field="collateral.fuel_type" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.fuel_type} onChange={(e) => collateralForm.setData('fuel_type', e.target.value)} />
                         {getFormError(collateralErrorBag, 'vehicle_details.fuel_type') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'vehicle_details.fuel_type')}</p>}
                       </div>
                     </>
@@ -870,17 +943,17 @@ export function LoanDetailsView({
                     <>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Bank Name</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.bank_name} onChange={(e) => collateralForm.setData('bank_name', e.target.value)} />
+                        <input data-field="collateral.bank_name" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.bank_name} onChange={(e) => collateralForm.setData('bank_name', e.target.value)} />
                         {getFormError(collateralErrorBag, 'atm_details.bank_name') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'atm_details.bank_name')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Account Number</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.account_no} onChange={(e) => collateralForm.setData('account_no', e.target.value)} />
+                        <input data-field="collateral.account_no" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.account_no} onChange={(e) => collateralForm.setData('account_no', e.target.value)} />
                         {getFormError(collateralErrorBag, 'atm_details.account_no') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'atm_details.account_no')}</p>}
                       </div>
                       <div>
                         <label className="mb-1 block text-sm text-gray-600">Card Last 4 Digits</label>
-                        <input className="w-full rounded-md border px-3 py-2" value={collateralForm.data.cardno_4digits} onChange={(e) => collateralForm.setData('cardno_4digits', e.target.value)} />
+                        <input data-field="collateral.cardno_4digits" className="w-full rounded-md border px-3 py-2" value={collateralForm.data.cardno_4digits} onChange={(e) => collateralForm.setData('cardno_4digits', e.target.value)} />
                         {getFormError(collateralErrorBag, 'atm_details.cardno_4digits') && <p className="mt-1 text-xs text-red-600">{getFormError(collateralErrorBag, 'atm_details.cardno_4digits')}</p>}
                       </div>
                     </>
@@ -892,6 +965,7 @@ export function LoanDetailsView({
                     <div>
                       <label className="mb-1 block text-sm text-gray-600">Upload Collateral Files</label>
                       <input
+                        data-field="collateral.files"
                         type="file"
                         multiple
                         className="w-full rounded-md border px-3 py-2"
