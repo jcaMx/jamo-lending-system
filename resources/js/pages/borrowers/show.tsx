@@ -13,6 +13,8 @@ import CoBorrowerTab from './components/Tabs/CoBorrowerTab';
 import LoanCommentsTab from './components/Tabs/LoanCommentsTab';
 import TabSwitcher from '@/components/TabSwitcher';
 
+import SpouseTab from './components/Tabs/SpouseTab';
+
 type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
 
 type Loan = {
@@ -99,7 +101,7 @@ const toArray = <T,>(value: T[] | T | Record<string, T> | null | undefined): T[]
 };
 
 export default function Show({ borrower, collaterals = [], activeLoan = null, repayments = [] }: { borrower: any; collaterals: Collateral[]; activeLoan: Loan | null; repayments: Repayment[] }) {
-  type TabKey = 'repayments' | 'loanTerms' | 'loanSchedule' | 'loanCollateral' | 'loanFiles' | 'coBorrower' | 'loanComments';
+  type TabKey = 'repayments' | 'loanTerms' | 'loanSchedule' | 'loanCollateral' | 'loanFiles' | 'coBorrower' | 'spouse' | 'loanComments';
   const [activeTab, setActiveTab] = useState<TabKey>('repayments');
 
   if (!borrower) {
@@ -178,12 +180,25 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         label: 'Loan Files',
         content: <LoanFilesTab files={allFiles} />,
       },
-      {
-        key: 'coBorrower' as TabKey,
-        label: 'Co-Borrower',
-        content: <CoBorrowerTab borrower={normalizedBorrower} />,
-      },
     ];
+
+    if (normalizedBorrower.marital_status === 'Married') {
+      tabs.push({
+        key: 'spouse' as TabKey,
+        label: 'Spouse Details',
+        content: <SpouseTab
+            spouse={normalizedBorrower.spouse}
+            files={allFiles as any}
+            maritalStatus={normalizedBorrower.marital_status}
+          />,
+      });
+    }
+
+    tabs.push({
+      key: 'coBorrower' as TabKey,
+      label: 'Co-Borrower',
+      content: <CoBorrowerTab borrower={normalizedBorrower} />,
+    });
 
     // Only add Loan Comments tab if there is a real active loan
     if (safeLoan.ID > 0) {
@@ -205,7 +220,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
     }
 
     return tabs;
-  }, [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower, borrower.comments]);
+  }, [safeRepayments, safeLoan, amortizationSchedule, safeCollaterals, normalizedBorrower, borrower.comments, allFiles]);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
