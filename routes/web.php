@@ -123,6 +123,13 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
                 Route::post('/releasing-fees', [LoanSettingController::class, 'store'])->name('loan-settings.releasing-fees.store');
                 Route::put('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'update'])->name('loan-settings.releasing-fees.update');
                 Route::delete('/releasing-fees/{releasingFee}', [LoanSettingController::class, 'destroy'])->name('loan-settings.releasing-fees.destroy');
+                Route::post('/product-requirements', [LoanSettingController::class, 'storeRequirement'])->name('loan-settings.product-requirements.store');
+                Route::put('/product-requirements/{requirement}', [LoanSettingController::class, 'updateRequirement'])->name('loan-settings.product-requirements.update');
+                Route::delete('/product-requirements/{requirement}', [LoanSettingController::class, 'destroyRequirement'])->name('loan-settings.product-requirements.destroy');
+                
+                Route::post('/document-types', [LoanSettingController::class, 'storeDocumentType'])->name('loan-settings.document-types.store');
+                Route::put('/document-types/{documentType}', [LoanSettingController::class, 'updateDocumentType'])->name('loan-settings.document-types.update');
+                Route::delete('/document-types/{documentType}', [LoanSettingController::class, 'destroyDocumentType'])->name('loan-settings.document-types.destroy');
             });
 
         });

@@ -8,7 +8,11 @@ import { route } from 'ziggy-js';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import FeeFormModal from '@/components/FeeFormModal';
 import ReleasingFeesCard from '@/components/ReleasingFeesCard';
-import GeneralSettingsCard from '@/components/GeneralSettingsCard';
+import RebatesSettingsCard from '@/components/RebatesSettingsCard';
+import ProductRequirementsCard from '@/components/ProductRequirementsCard';
+import RequirementFormModal from '@/components/RequirementFormModal';
+import DocumentTypesCard from '@/components/DocumentTypesCard';
+import DocumentTypeFormModal from '@/components/DocumentTypeFormModal';
 
 interface LoanCharge {
   id: number;
@@ -18,6 +22,24 @@ interface LoanCharge {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+interface Requirement {
+  id: number;
+  loan_product_id: number;
+  loan_product: { name: string };
+  requirement_type: string;
+  document_type_id?: number;
+  document_type?: { name: string };
+  document_category?: string;
+  subject_type: string;
+  collateral_type?: string;
+  is_required: boolean;
+  min_count: number;
+  max_count?: number;
+  sort_order: number;
+  notes?: string;
+  is_active: boolean;
 }
 
 interface LoanSettingsProps {
@@ -30,6 +52,22 @@ interface LoanSettingsProps {
         enable_rebates: boolean;
         rebate_percentage: number;
         rebate_basis: string;
+        rebate_min_days_early: number;
+        rebate_apply_to_full_payoff: boolean;
+        rebate_require_good_standing: boolean;
+      };
+    };
+    rebates?: {
+      key: string;
+      title: string;
+      description: string;
+      items: {
+        enable_rebates: boolean;
+        rebate_percentage: number;
+        rebate_basis: string;
+        rebate_min_days_early?: number;
+        rebate_apply_to_full_payoff?: boolean;
+        rebate_require_good_standing?: boolean;
       };
     };
     releasingFees?: {
@@ -38,20 +76,47 @@ interface LoanSettingsProps {
       description: string;
       items: LoanCharge[];
     };
+    productRequirements?: {
+      key: string;
+      title: string;
+      description: string;
+      items: {
+        requirements: Requirement[];
+        loanProducts: any[];
+        documentTypes: any[];
+        categories: string[];
+        subjectTypes: string[];
+        collateralTypes: string[];
+        requirementTypes: string[];
+      };
+    };
+    documentTypes?: {
+      key: string;
+      title: string;
+      description: string;
+      items: {
+        documentTypes: any[];
+        categories: string[];
+      };
+    };
   };
 }
 
 type LoanSettingsSection = NonNullable<LoanSettingsProps['sections']>[keyof NonNullable<LoanSettingsProps['sections']>];
 
 const sectionLabels: Record<string, string> = {
-  general: 'General Settings',
+  general: 'Rebates Settings',
+  rebates: 'Rebates Settings',
   releasingFees: 'Releasing Fees',
+  productRequirements: 'Product Requirements',
+  documentTypes: 'Document Types',
 };
 
 export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
   const loanSettingsUrl = route('loan-settings.index');
   const availableSections = Object.values(sections).filter(Boolean) as LoanSettingsSection[];
   const [activeSection, setActiveSection] = useState<string>(availableSections[0]?.key ?? 'general');
+  const rebateSection = sections.rebates ?? sections.general;
 
   const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Loan Settings', href: loanSettingsUrl },
@@ -66,6 +131,14 @@ export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<LoanCharge | null>(null);
+
+  const [isReqFormModalOpen, setIsReqFormModalOpen] = useState(false);
+  const [isReqDeleteModalOpen, setIsReqDeleteModalOpen] = useState(false);
+  const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null);
+
+  const [isDocTypeFormModalOpen, setIsDocTypeFormModalOpen] = useState(false);
+  const [isDocTypeDeleteModalOpen, setIsDocTypeDeleteModalOpen] = useState(false);
+  const [selectedDocType, setSelectedDocType] = useState<any | null>(null);
 
   const releasingFees = sections.releasingFees?.items ?? [];
 
@@ -115,6 +188,54 @@ export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
     if (!selectedFee) return;
     router.delete(route('loan-settings.releasing-fees.destroy', selectedFee.id), {
       onSuccess: () => setIsDeleteModalOpen(false),
+    });
+  };
+
+  const handleAddRequirement = () => {
+    setSelectedRequirement(null);
+    setIsReqFormModalOpen(true);
+  };
+
+  const handleEditRequirement = (e: React.MouseEvent, req: Requirement) => {
+    e.stopPropagation();
+    setSelectedRequirement(req);
+    setIsReqFormModalOpen(true);
+  };
+
+  const handleDeleteReqClick = (e: React.MouseEvent, req: Requirement) => {
+    e.stopPropagation();
+    setSelectedRequirement(req);
+    setIsReqDeleteModalOpen(true);
+  };
+
+  const confirmDeleteRequirement = () => {
+    if (!selectedRequirement) return;
+    router.delete(route('loan-settings.product-requirements.destroy', selectedRequirement.id), {
+      onSuccess: () => setIsReqDeleteModalOpen(false),
+    });
+  };
+
+  const handleAddDocType = () => {
+    setSelectedDocType(null);
+    setIsDocTypeFormModalOpen(true);
+  };
+
+  const handleEditDocType = (e: React.MouseEvent, dt: any) => {
+    e.stopPropagation();
+    setSelectedDocType(dt);
+    setIsDocTypeFormModalOpen(true);
+  };
+
+  const handleDeleteDocTypeClick = (e: React.MouseEvent, dt: any) => {
+    e.stopPropagation();
+    setSelectedDocType(dt);
+    setIsDocTypeDeleteModalOpen(true);
+  };
+
+  const confirmDeleteDocType = () => {
+    if (!selectedDocType) return;
+    router.delete(route('loan-settings.document-types.destroy', selectedDocType.id), {
+      onSuccess: () => setIsDocTypeDeleteModalOpen(false),
     });
   };
 
@@ -193,11 +314,38 @@ export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
         </>
       )}
 
-      {activeSection === 'general' && sections.general && (
-        <GeneralSettingsCard settings={sections.general.items} />
+      {(activeSection === 'rebates' || activeSection === 'general') && rebateSection && (
+        <RebatesSettingsCard settings={rebateSection.items} />
       )}
 
-      {availableSections.length > 0 && activeSection !== 'releasingFees' && activeSection !== 'general' && (
+      {activeSection === 'productRequirements' && sections.productRequirements && (
+        <ProductRequirementsCard
+          requirements={sections.productRequirements.items.requirements}
+          documentTypes={sections.productRequirements.items.documentTypes}
+          totalRequirements={sections.productRequirements.items.requirements.length}
+          onAdd={handleAddRequirement}
+          onEdit={handleEditRequirement}
+          onDelete={handleDeleteReqClick}
+        />
+      )}
+
+      {activeSection === 'documentTypes' && sections.documentTypes && (
+        <DocumentTypesCard
+          documentTypes={sections.documentTypes.items.documentTypes}
+          categories={sections.documentTypes.items.categories}
+          totalCount={sections.documentTypes.items.documentTypes.length}
+          onAdd={handleAddDocType}
+          onEdit={handleEditDocType}
+          onDelete={handleDeleteDocTypeClick}
+        />
+      )}
+
+      {availableSections.length > 0 &&
+        activeSection !== 'releasingFees' &&
+        activeSection !== 'rebates' &&
+        activeSection !== 'general' &&
+        activeSection !== 'productRequirements' &&
+        activeSection !== 'documentTypes' && (
         <div className="mx-10 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
           This loan setting section is ready to plug into the shared page, but its UI component has not been added yet.
         </div>
@@ -215,6 +363,47 @@ export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
         description={`Are you sure you want to delete "${selectedFee?.name}"? This action cannot be undone.`}
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
+        confirmText="Delete"
+      />
+
+      {sections.productRequirements && (
+        <RequirementFormModal
+          open={isReqFormModalOpen}
+          onClose={() => setIsReqFormModalOpen(false)}
+          requirement={selectedRequirement}
+          loanProducts={sections.productRequirements.items.loanProducts}
+          documentTypes={sections.productRequirements.items.documentTypes}
+          categories={sections.productRequirements.items.categories}
+          subjectTypes={sections.productRequirements.items.subjectTypes}
+          collateralTypes={sections.productRequirements.items.collateralTypes}
+          requirementTypes={sections.productRequirements.items.requirementTypes}
+        />
+      )}
+
+      <ConfirmDialog
+        open={isReqDeleteModalOpen}
+        title="Delete Requirement"
+        description="Are you sure you want to delete this requirement? This action cannot be undone."
+        onConfirm={confirmDeleteRequirement}
+        onCancel={() => setIsReqDeleteModalOpen(false)}
+        confirmText="Delete"
+      />
+
+      {sections.documentTypes && (
+        <DocumentTypeFormModal
+          open={isDocTypeFormModalOpen}
+          onClose={() => setIsDocTypeFormModalOpen(false)}
+          documentType={selectedDocType}
+          categories={sections.documentTypes.items.categories}
+        />
+      )}
+
+      <ConfirmDialog
+        open={isDocTypeDeleteModalOpen}
+        title="Delete Document Type"
+        description={`Are you sure you want to delete "${selectedDocType?.name}"? This action cannot be undone.`}
+        onConfirm={confirmDeleteDocType}
+        onCancel={() => setIsDocTypeDeleteModalOpen(false)}
         confirmText="Delete"
       />
 

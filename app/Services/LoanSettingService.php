@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\LoanCharge;
 use App\Models\SystemSetting;
+use App\Models\LoanProduct;
+use App\Models\DocumentType;
+use App\Models\LoanProductDocumentRequirement;
 use Illuminate\Support\Collection;
 
 class LoanSettingService
@@ -16,8 +19,8 @@ class LoanSettingService
         return [
             'general' => [
                 'key' => 'general',
-                'title' => 'General Settings',
-                'description' => 'Manage global system configurations like rebates.',
+                'title' => 'Rebates Settings',
+                'description' => 'Manage rebate configuration and early payment reward rules.',
                 'items' => $this->getGeneralSettings(),
             ],
             'releasingFees' => [
@@ -25,6 +28,18 @@ class LoanSettingService
                 'title' => 'Releasing Fees',
                 'description' => 'Manage charges applied during loan releasing.',
                 'items' => $this->getAllFees(),
+            ],
+            'productRequirements' => [
+                'key' => 'productRequirements',
+                'title' => 'Product Requirements',
+                'description' => 'Manage document requirements for loan products.',
+                'items' => $this->getProductRequirements(),
+            ],
+            'documentTypes' => [
+                'key' => 'documentTypes',
+                'title' => 'Document Types',
+                'description' => 'Manage the catalog of specific document types available for requirements.',
+                'items' => $this->getDocumentTypesSection(),
             ],
         ];
     }
@@ -93,5 +108,56 @@ class LoanSettingService
     public function deleteFee(LoanCharge $fee): bool
     {
         return $fee->delete();
+    }
+
+    public function getProductRequirements(): array
+    {
+        return [
+            'requirements' => LoanProductDocumentRequirement::with(['loanProduct', 'documentType'])->get(),
+            'loanProducts' => LoanProduct::all(),
+            'documentTypes' => DocumentType::where('is_active', true)->get(),
+            'categories' => DocumentType::distinct()->pluck('category'),
+            'subjectTypes' => ['borrower', 'coborrower', 'business', 'employment', 'collateral'],
+            'collateralTypes' => ['vehicle', 'land', 'equipment', 'other'],
+            'requirementTypes' => ['category', 'document_type'],
+        ];
+    }
+
+    public function createRequirement(array $data): LoanProductDocumentRequirement
+    {
+        return LoanProductDocumentRequirement::create($data);
+    }
+
+    public function updateRequirement(LoanProductDocumentRequirement $requirement, array $data): bool
+    {
+        return $requirement->update($data);
+    }
+
+    public function deleteRequirement(LoanProductDocumentRequirement $requirement): bool
+    {
+        return $requirement->delete();
+    }
+
+    public function getDocumentTypesSection(): array
+    {
+        return [
+            'documentTypes' => DocumentType::orderBy('category')->orderBy('name')->get(),
+            'categories' => DocumentType::distinct()->pluck('category')->filter()->values()->toArray(),
+        ];
+    }
+
+    public function createDocumentType(array $data): DocumentType
+    {
+        return DocumentType::create($data);
+    }
+
+    public function updateDocumentType(DocumentType $documentType, array $data): bool
+    {
+        return $documentType->update($data);
+    }
+
+    public function deleteDocumentType(DocumentType $documentType): bool
+    {
+        return $documentType->delete();
     }
 }

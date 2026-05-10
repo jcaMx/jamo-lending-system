@@ -190,10 +190,10 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       tabs.push({
         key: 'loanComments' as TabKey,
         label: 'Loan Comments',
-        content: <LoanCommentsTab 
+        content: <LoanCommentsTab
           comments={borrower.comments ?? []}
           loanId={safeLoan.ID}
-          canDelete={true} 
+          canDelete={true}
         />,
       });
     } else {
@@ -253,7 +253,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
 
       {/* TABS */}
       <TabSwitcher items={tabItems} activeKey={activeTab} onChange={setActiveTab} />
-      
+
     </AppLayout>
   );
 }

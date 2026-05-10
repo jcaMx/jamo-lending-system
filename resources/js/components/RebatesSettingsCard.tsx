@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Percent, Settings2, Info, CheckCircle2 } from 'lucide-react';
 
-interface GeneralSettingsProps {
+interface RebatesSettingsProps {
   settings: {
     enable_rebates: boolean;
     rebate_percentage: number;
@@ -19,7 +19,7 @@ interface GeneralSettingsProps {
   };
 }
 
-export default function GeneralSettingsCard({ settings }: GeneralSettingsProps) {
+export default function RebatesSettingsCard({ settings }: RebatesSettingsProps) {
   const { data, setData, post, processing, errors } = useForm({
     enable_rebates: settings.enable_rebates,
     rebate_percentage: settings.rebate_percentage,
@@ -191,7 +191,7 @@ export default function GeneralSettingsCard({ settings }: GeneralSettingsProps) 
               className="bg-[#FABF24] text-black hover:bg-[#E5AE1F] font-bold px-8 shadow-sm transition-all active:scale-95" 
               disabled={processing}
             >
-              {processing ? 'Saving...' : 'Save General Settings'}
+              {processing ? 'Saving...' : 'Save Rebates Settings'}
             </Button>
           </div>
         </div>
@@ -199,4 +199,3 @@ export default function GeneralSettingsCard({ settings }: GeneralSettingsProps) 
     </div>
   );
 }
-

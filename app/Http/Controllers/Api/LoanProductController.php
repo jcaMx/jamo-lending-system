@@ -45,6 +45,10 @@ class LoanProductController extends Controller
 
     public function requirements(LoanProduct $loanProduct): JsonResponse
     {
+        $documentTypes = DB::table('document_types')
+            ->where('is_active', true)
+            ->get(['id', 'code', 'name', 'category']);
+
         $requirements = DB::table('loan_product_document_requirements as lpdr')
             ->leftJoin('document_types as dt', 'dt.id', '=', 'lpdr.document_type_id')
             ->where('lpdr.loan_product_id', $loanProduct->id)
@@ -67,12 +71,24 @@ class LoanProductController extends Controller
                 'dt.name as document_type_name',
                 'dt.category as document_type_category',
             ])
-            ->map(static function ($row) {
+            ->map(function ($row) use ($documentTypes) {
+                $acceptableDocuments = [];
+                if ($row->requirement_type === 'category' && $row->document_category) {
+                    $acceptableDocuments = $documentTypes->where('category', $row->document_category)->values()->map(function ($dt) {
+                        return [
+                            'id' => (int) $dt->id,
+                            'code' => $dt->code,
+                            'name' => $dt->name,
+                        ];
+                    })->toArray();
+                }
+
                 return [
                     'id' => (int) $row->id,
                     'requirement_type' => (string) $row->requirement_type,
                     'document_type_id' => $row->document_type_id !== null ? (int) $row->document_type_id : null,
                     'document_category' => $row->document_category,
+                    'document_category_label' => $row->document_category ? ucwords(str_replace('_', ' ', $row->document_category)) : null,
                     'subject_type' => (string) $row->subject_type,
                     'collateral_type' => $row->collateral_type,
                     'is_required' => (bool) $row->is_required,
@@ -88,6 +104,7 @@ class LoanProductController extends Controller
                             'category' => (string) $row->document_type_category,
                         ]
                         : null,
+                    'acceptable_documents' => $acceptableDocuments,
                 ];
             })
             ->values();

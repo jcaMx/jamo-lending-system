@@ -35,8 +35,8 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: "Repayments", href: "/repayments/add" }
 ];
 
-const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
-
+const now = new Date();
+const todayDatetime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
 const inputClass =
   "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FABF24] focus:border-transparent";
@@ -44,7 +44,7 @@ const inputClass =
 const ONLINE_METHODS = ["Bank", "GCash", "Cebuana"];
 
 export default function Add({ borrowers: initialBorrowers = [], collectors: initialCollectors = [] }: Props) {
-  const today = new Date().toISOString().split('T')[0];
+  const defaultCollectionDate = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
   const normalizedBorrowers = useMemo(() => {
     let data = initialBorrowers;
@@ -64,7 +64,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     amount: "",
     method: "",
     collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
-    collectionDate: today,
+    collectionDate: defaultCollectionDate,
     referenceNumber: "",
     voucherNumber: "",
     voucherDate: "",
@@ -247,7 +247,7 @@ const handleSubmit = (e: React.FormEvent) => {
         amount: "",
         method: "",
         collectedBy: initialCollectors.length > 0 ? String(initialCollectors[0].id) : "",
-        collectionDate: today,
+        collectionDate: defaultCollectionDate,
         referenceNumber: "",
         voucherNumber: "",
         voucherDate: "",
@@ -526,10 +526,10 @@ const handleSubmit = (e: React.FormEvent) => {
               {/* Collection Date */}
               
               <div>
-                <label className="block text-sm font-medium mb-1">Collection Date</label>
+                <label className="block text-sm font-medium mb-1">Collection Date & Time</label>
                 <input
-                  type="date"
-                  value={form.collectionDate}//on default today
+                  type="datetime-local"
+                  value={form.collectionDate}
                   onChange={(e) => update("collectionDate", e.target.value)}
                   className={inputClass}
                   // disabled={!isCashMethod}

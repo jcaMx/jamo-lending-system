@@ -281,8 +281,8 @@ class RepaymentController extends Controller
                     'collectedBy' => $p->jamoUser?->first_name
                         ? $p->jamoUser->first_name.' '.$p->jamoUser->last_name
                         : 'N/A',
-                    'collectionDate' => $p->payment_date?->toDateString(),
-                    'submittedDate' => $p->created_at?->toDateString() ?? $p->payment_date?->toDateString(),
+                    'collectionDate' => $p->payment_date?->toDateTimeString(),
+                    'submittedDate' => $p->payment_date?->toDateTimeString(),
                     'amount' => (float)$p->amount,
                 ];
             });

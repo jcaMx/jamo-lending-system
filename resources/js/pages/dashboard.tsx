@@ -36,14 +36,13 @@ interface UpcomingSchedule {
 }
 
 export default function Dashboard() {
-  console.log('Rendering Staff Dashboard');
 const [stats, setStats] = useState<StatCard[]>([]);
 const [loanData, setLoanData] = useState<ChartData[]>([]);
 const [collectionData, setCollectionData] = useState<ChartData[]>([]);
-const [totalBorrowers, setTotalBorrowers] = useState<number>(0);
 const [upcomingSchedules, setUpcomingSchedules] = useState<UpcomingSchedule[]>([]);
 
 useEffect(() => {
+console.log('Staff Dashboard mounted');
 // Fetch stats from API
 axios.get('/dashboard-stats')
 .then(res => {
@@ -70,11 +69,6 @@ axios.get('/dashboard-loans')
 axios.get('/dashboard-collections')  
   .then(res => setCollectionData(res.data))  
   .catch(() => console.log('Failed to fetch collection chart'));  
-
-// Fetch total borrowers
-axios.get('/dashboard-stats')
-      .then(res => setTotalBorrowers(res.data.totalBorrowers))
-      .catch((err) => console.error(err));
 
 // Fetch upcoming due schedules (within 3 days)
 axios.get('/dashboard-upcoming-schedules')

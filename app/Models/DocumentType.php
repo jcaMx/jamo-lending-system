@@ -12,6 +12,7 @@ class DocumentType extends Model
     protected $table = 'document_types';
 
     protected $fillable = [
+        'code',
         'name',
         'category',
         'description',

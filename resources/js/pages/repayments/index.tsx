@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Search } from 'lucide-react';
-import {ConfirmDialog }from '@/components/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 type Repayment = {
   id: number;
@@ -24,12 +24,13 @@ type Props = {
 };
 
 export default function RepaymentsIndex({ repayments, collectors }: Props) {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayDatetime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'history'>('all');
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [confirmCollectedBy, setConfirmCollectedBy] = useState<string>(collectors[0] ? String(collectors[0].id) : '');
-  const [confirmCollectionDate, setConfirmCollectionDate] = useState<string>(today);
+  const [confirmCollectionDate, setConfirmCollectionDate] = useState<string>(todayDatetime);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectRemarks, setRejectRemarks] = useState('');
 
@@ -61,6 +62,12 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleDateString('en-PH');
   };
 
+  const formatTime = (value: string | null) => {
+    if (!value) return 'N/A';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
   const renderStatus = (status: string) => {
     const normalizedStatus = status?.toLowerCase() ?? 'pending';
     const className =
@@ -82,7 +89,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     title: string;
     description: string;
     onConfirm: () => void;
-  }>({ open:false, title: '', description: '', onConfirm: () => {} });
+  }>({ open: false, title: '', description: '', onConfirm: () => { } });
 
 
   const handleVerify = (paymentId: number) => {
@@ -110,7 +117,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
 
   const setConfirmRemarksDefaults = () => {
     setConfirmCollectedBy(collectors[0] ? String(collectors[0].id) : '');
-    setConfirmCollectionDate(today);
+    setConfirmCollectionDate(todayDatetime);
     setRejectRemarks('');
     setRejectingId(null);
   };
@@ -137,7 +144,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
   return (
     <AppLayout>
       <Head title="Repayments" />
-      
+
       {/* Header & Search */}
       <div className="m-10 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <h1 className="text-4xl font-semibold text-gray-800 tracking-tight">View Repayments</h1>
@@ -158,27 +165,24 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab('all')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-            activeTab === 'all' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${activeTab === 'all' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
         >
           All ({filteredRepayments.length})
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('pending')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-            activeTab === 'pending' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${activeTab === 'pending' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
         >
           Pending ({pendingRepayments.length})
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('history')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-            activeTab === 'history' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${activeTab === 'history' ? 'bg-[#FABF24] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
         >
           History ({historyRepayments.length})
         </button>
@@ -201,6 +205,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                 {activeTab === 'pending' ? 'Submitted Date' : 'Collection Date'}
               </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Time</th>
               {activeTab !== 'pending' && (
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Collected By</th>
               )}
@@ -231,6 +236,9 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                     <td className="px-4 py-3 text-sm text-gray-700">{r.referenceNo ?? 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {formatDate(activeTab === 'pending' ? r.submittedDate : r.collectionDate)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                      {formatTime(activeTab === 'pending' ? r.submittedDate : r.collectionDate)}
                     </td>
                     {activeTab !== 'pending' && <td className="px-4 py-3 text-sm text-gray-700">{r.collectedBy}</td>}
                     {activeTab !== 'pending' && <td className="px-4 py-3 text-sm text-gray-700">{renderStatus(r.status)}</td>}
@@ -287,7 +295,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-gray-700">Collection Date</label>
                             <input
-                              type="date"
+                              type="datetime-local"
                               value={confirmCollectionDate}
                               onChange={(e) => setConfirmCollectionDate(e.target.value)}
                               className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
@@ -366,14 +374,14 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
       </div>
       {/* Confirm Dialog for verifying payment */}
       <ConfirmDialog
-      open={confirmDialog.open}
-      title={confirmDialog.title}
-      description={confirmDialog.description}
-      onConfirm={confirmDialog.onConfirm}
-      onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
-      confirmText="Confirm"
-      cancelText="Cancel"
-    />
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
 
     </AppLayout>
   );
