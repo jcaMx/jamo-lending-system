@@ -125,4 +125,54 @@ class UserController extends Controller
             ]
         ]);
     }
+
+    public function destroy(Request $request, $id)
+    {
+        $success = $this->service->deleteUser($id);
+        
+        if (!$success) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User could not be deactivated.',
+                ], 422);
+            }
+
+            return back()->with('error', 'User could not be deactivated.');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User deactivated successfully.',
+            ]);
+        }
+
+        return redirect()->route('users.index')->with('success', 'User deactivated successfully.');
+    }
+
+    public function restore(Request $request, $id)
+    {
+        $success = $this->service->restoreUser($id);
+        
+        if (!$success) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User could not be restored.',
+                ], 422);
+            }
+
+            return back()->with('error', 'User could not be restored.');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User restored successfully.',
+            ]);
+        }
+
+        return redirect()->route('users.index')->with('success', 'User restored successfully.');
+    }
 }

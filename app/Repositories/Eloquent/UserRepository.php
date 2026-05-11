@@ -14,11 +14,12 @@ class UserRepository implements IUserRepository
 
     public function findById(int $id): ?User
     {
-        return User::with([
-            'profile',
-            'roles.permissions', // each role's permissions
-            'permissions',       // direct user permissions (if any)
-        ])->find($id);
+        return User::withTrashed()
+            ->with([
+                'profile',
+                'roles.permissions', // each role's permissions
+                'permissions',       // direct user permissions (if any)
+            ])->find($id);
     }
 
     public function findAll(array $filters = []): array

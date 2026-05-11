@@ -1,12 +1,11 @@
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -30,23 +29,37 @@ export function ConfirmDialog({
   isLoading = false,
 }: ConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onCancel}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onCancel();
+        }
+      }}
+    >
       <AlertDialogContent className = "bg-[#F7F5F3]">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg font-semibold text-gray-800">{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex justify-end gap-3">
-          <AlertDialogCancel className="bg-gray-300 text-gray-800 hover:bg-gray-400">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="bg-gray-300 text-gray-800 hover:bg-gray-400"
+          >
             {cancelText}
-          </AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm} 
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
             disabled={isLoading}
             className="bg-yellow-500  hover:bg-yellow-600 disabled:bg-gray-400"
           >
             {isLoading ? 'Processing...' : confirmText}
-          </AlertDialogAction>
+          </Button>
         </div>
       </AlertDialogContent>
     </AlertDialog>

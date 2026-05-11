@@ -57,7 +57,7 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
           </div>
           <Button
             onClick={() => router.visit(route('loans.view-approved'))}
-            className="bg-gray-600 text-white hover:bg-gray-700"
+            className="bg-yellow-500 hover:bg-yellow-600"
           >
             Back to Loans
           </Button>
@@ -139,13 +139,12 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
                         ₱{schedule.amount_paid.toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          schedule.status === 'Paid' 
-                            ? 'bg-green-100 text-green-800' 
-                            : schedule.status === 'Overdue'
+                        <span className={`px-2 py-1 rounded text-xs ${schedule.status === 'Paid'
+                          ? 'bg-green-100 text-green-800'
+                          : schedule.status === 'Overdue'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                          }`}>
                           {schedule.status}
                         </span>
                       </TableCell>

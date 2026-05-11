@@ -346,10 +346,10 @@ export default function LoanSettings({ sections = {} }: LoanSettingsProps) {
         activeSection !== 'general' &&
         activeSection !== 'productRequirements' &&
         activeSection !== 'documentTypes' && (
-        <div className="mx-10 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
-          This loan setting section is ready to plug into the shared page, but its UI component has not been added yet.
-        </div>
-      )}
+          <div className="mx-10 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
+            This loan setting section is ready to plug into the shared page, but its UI component has not been added yet.
+          </div>
+        )}
 
       <FeeFormModal
         open={isFormModalOpen}

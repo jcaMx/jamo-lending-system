@@ -3,14 +3,14 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, Search, Edit2, Eye, Calendar} from 'lucide-react';
+import { Trash2, Search, Edit2, Eye, Calendar } from 'lucide-react';
 import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Loans', href: '/Loans' },
   { title: 'View Loans', href: '/Loans/ViewLoans' },
-];  
+];
 
 interface Loan {
   ID: number;
@@ -64,9 +64,9 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
-    const matchesStatus = 
-      statusFilter === 'All' 
-        ? true 
+    const matchesStatus =
+      statusFilter === 'All'
+        ? true
         : loan.amortizationSchedules?.some(s => s.status === 'Overdue' || s.status === 'Unpaid');
 
     return matchesSearch && matchesStatus;
@@ -158,15 +158,13 @@ export default function ViewLoans({ loans }: ViewLoansProps) {
                   <td className="px-4 py-2">{loan.collateral?.type || 'N/A'}</td>
                   <td className="px-4 py-2">
                     <div className="flex gap-2">
-                      <Button
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-[#A47B06] border-amber-200 hover:bg-amber-50"
                         onClick={() => router.visit(route('loans.show', loan.ID))}
-                        className="text-black hover:bg-gray-100 hover:text-gray not-last:hover:border-gray-300"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-amber-600 border-amber-200 hover:bg-amber-50"
                         onClick={() => router.visit(route('loans.schedule', loan.ID))}
-                        className=" text-black hover:bg-gray-100 hover:text-gray not-last:hover:border-gray-300"
                       >
                         <Calendar className="h-4 w-4" />
                       </Button>

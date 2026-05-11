@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Search, Edit2, Trash2, Eye } from 'lucide-react';
+import { Search, Edit2, Trash2, Eye, Link } from 'lucide-react';
 import { route } from 'ziggy-js';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import { usePage } from '@inertiajs/react';
@@ -15,7 +15,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
   const breadcrumbs: BreadcrumbItem[] = [{ title: 'Borrowers', href: '/borrowers' }];
 
   const user = usePage().props.auth.user as { role?: string } | undefined;
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,20 +39,20 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
     // Ensure status is a lowercase string
     const statusRaw = b.activeLoan?.status?.trim() || '';
     const status = statusRaw.toLowerCase();
-  
+
     const statusClasses =
       status === 'active'
         ? 'bg-green-100 text-green-800'
         : status === 'closed'
-        ? 'bg-gray-100 text-gray-800'
-        : status === 'blacklisted'
-        ? 'bg-red-100 text-red-800'
-        : 'bg-yellow-100 text-yellow-800';
-  
+          ? 'bg-gray-100 text-gray-800'
+          : status === 'blacklisted'
+            ? 'bg-red-100 text-red-800'
+            : 'bg-yellow-100 text-yellow-800';
+
     const statusLabel = statusRaw || 'N/A';
     return { statusClasses, statusLabel };
   };
-  
+
 
   const filteredBorrowers = useMemo(() => {
     return borrowers.filter((b: Borrower) => {
@@ -103,7 +103,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
     });
   };
 
-  
+
 
 
   return (
@@ -161,6 +161,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
             </Button>
           )}
         </div>
+        
       </div>
 
       {/* Borrowers Table */}
@@ -188,8 +189,8 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                 const { statusClasses, statusLabel } = getStatusInfo(b);
 
                 return (
-                  <tr 
-                    key={b.id} 
+                  <tr
+                    key={b.id}
                     className="hover:bg-[#FFF8E6] transition-colors duration-150 cursor-pointer"
                     onClick={() => router.visit(`/borrowers/${b.id}`)}
                   >
@@ -212,34 +213,34 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
                     <td className="px-4 py-3 flex items-center gap-2">
                       {/* VIEW — all roles */}
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="sm"
-                        className="p-1"
+                        className="h-8 w-8 p-0 text-[#A47B06] border-amber-200 hover:bg-amber-50"
                         onClick={(e) => {
                           e.stopPropagation();
                           router.visit(`/borrowers/${b.id}`);
                         }}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 " />
                       </Button>
 
                       {/* {user?.role && ['admin', 'cashier'].includes(String(user.role)) ? ( */}
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="p-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.visit(`/borrowers/${b.id}/edit`);
-                          }}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-amber-600 border-amber-200 hover:bg-amber-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.visit(`/borrowers/${b.id}/edit`);
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                       {/* ) : null} */}
 
                       {/* DELETE — admin only */}
                       {/* {user?.role && String(user.role) === 'admin' && ( */}
-                        {/* <Button
+                      {/* <Button
                           variant="default"
                           size="sm"
                           className="p-1 text-red-600 hover:text-red-800"

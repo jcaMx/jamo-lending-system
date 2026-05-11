@@ -11,8 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Models\Borrower;
 
 // if not already imported
-// if not already imported
-// if not already imported
+
 
 class User extends Authenticatable
 {

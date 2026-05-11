@@ -277,4 +277,13 @@ class UserService
         $user = $this->users->findById($id);
         return $user ? $this->users->delete($user) : false;
     }
+
+    /**
+     * Restore a deleted user by ID.
+     */
+    public function restoreUser(int $id): bool
+    {
+        $user = $this->users->findById($id);
+        return $user ? $user->restore() : false;
+    }
 }

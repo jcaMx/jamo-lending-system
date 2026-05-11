@@ -194,6 +194,8 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
 
         Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     });
 
     // Applications
