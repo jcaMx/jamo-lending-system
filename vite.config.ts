@@ -10,7 +10,6 @@ export default defineConfig({
       input: [
         'resources/css/index.css',
         'resources/js/app.tsx',
-        'resources/js/pages/**/*.tsx',
       ],
       buildDirectory: 'build/vite',
       refresh: true,
