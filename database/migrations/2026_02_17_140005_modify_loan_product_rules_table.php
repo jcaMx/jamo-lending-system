@@ -9,15 +9,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Step 1 & 2: Drop old columns and foreign key safely
-        Schema::table('loan_product_rules', function (Blueprint $table) {
-            if (Schema::hasColumn('loan_product_rules', 'loan_product_id')) {
-                // Wrap in try-catch to ignore if foreign key doesn't exist
-                try {
+        // Step 1: Drop foreign key safely
+        if (Schema::hasTable('loan_product_rules')) {
+            try {
+                Schema::table('loan_product_rules', function (Blueprint $table) {
                     $table->dropForeign(['loan_product_id']);
-                } catch (\Exception $e) {}
+                });
+            } catch (\Exception $e) {
+                // Ignore if foreign key doesn't exist
             }
+        }
 
+        // Step 2: Drop old columns safely
+        Schema::table('loan_product_rules', function (Blueprint $table) {
             $columnsToDrop = [];
             if (Schema::hasColumn('loan_product_rules', 'requires_collateral')) $columnsToDrop[] = 'requires_collateral';
             if (Schema::hasColumn('loan_product_rules', 'requires_coborrower')) $columnsToDrop[] = 'requires_coborrower';
@@ -46,12 +50,16 @@ return new class extends Migration
             if (!Schema::hasColumn('loan_product_rules', 'condition_value')) {
                 $table->decimal('condition_value', 15, 4)->nullable()->after('operator');
             }
-
-            // Recreate foreign key safely
-            try {
-                $table->foreign('loan_product_id')->references('id')->on('loan_products')->cascadeOnDelete();
-            } catch (\Exception $e) {}
         });
+
+        // Recreate foreign key safely
+        try {
+            Schema::table('loan_product_rules', function (Blueprint $table) {
+                $table->foreign('loan_product_id')->references('id')->on('loan_products')->cascadeOnDelete();
+            });
+        } catch (\Exception $e) {
+            // Ignore if already exists
+        }
     }
 
     public function down(): void
