@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('spouse', function (Blueprint $table) {
-            $table->timestamps();
-        });
+        if (!Schema::hasColumn('spouse', 'created_at')) {
+            Schema::table('spouse', function (Blueprint $table) {
+                $table->timestamps();
+            });
+        }
     }
 
     /**
