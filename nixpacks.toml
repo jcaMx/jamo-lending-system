@@ -7,7 +7,7 @@ cmds = ["composer install --optimize-autoloader --no-dev", "npm install"]
 
 [phases.build]
 dependsOn = ["install"]
-cmds = ["npm run build"]
+cmds = ["npm install", "npm run build", "composer install", "php artisan migrate --force", "php artisan db:seed --force", "php artisan route:cache", "php artisan config:cache", "ls -R public/build"]
 
 [phases.deploy]
 dependsOn = ["build"]
