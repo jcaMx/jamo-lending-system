@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('loancomments', function (Blueprint $table) {
             $table->id();
             $table->string('comment_text', 100);
-            $table->unsignedBigInteger('commented_by');
+            $table->unsignedBigInteger('commented_by')->nullable();
             $table->dateTime('comment_date')->useCurrent()->useCurrentOnUpdate();
             $table->foreignId('loan_id')->constrained('loan')->cascadeOnDelete();
 

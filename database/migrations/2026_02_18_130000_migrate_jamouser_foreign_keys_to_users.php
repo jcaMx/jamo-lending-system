@@ -38,6 +38,8 @@ return new class extends Migration
 
         if (! $this->foreignKeyExistsOnColumn($table, $column)) {
             Schema::table($table, function (Blueprint $table) use ($column) {
+                // Ensure column is nullable for nullOnDelete()
+                $table->unsignedBigInteger($column)->nullable()->change();
                 $table->foreign($column)->references('id')->on('users')->nullOnDelete();
             });
         }
