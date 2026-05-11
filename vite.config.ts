@@ -11,6 +11,7 @@ export default defineConfig({
         'resources/css/index.css',
         'resources/js/app.tsx',
       ],
+      buildDirectory: 'build/vite',
       refresh: true,
     }),
     reactSwc(),
