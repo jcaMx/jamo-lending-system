@@ -490,28 +490,31 @@ class BorrowerService
 
     public function updateBorrower(Borrower $borrower, array $data): Borrower
     {
-        // Update borrower basic info
         $borrower->update([
             'email' => $data['email'] ?? $borrower->email,
-            'contact_no' => $data['mobile'] ?? $borrower->contact_no,
-            'landline' => $data['landline'] ?? $borrower->landline,
-            'occupation' => $data['occupation'] ?? $borrower->occupation,
+            'contact_no' => $data['contact_no'] ?? $borrower->contact_no,
+            'land_line' => $data['land_line'] ?? $borrower->land_line,
             'gender' => $data['gender'] ?? $borrower->gender,
-
+            'age' => $data['age'] ?? $borrower->age,
         ]);
 
-        // Update or create borrower address if provided
-        if (! empty($data['address']) || ! empty($data['city']) || ! empty($data['zipcode'])) {
+        if (!empty($data['occupation'])) {
+            $borrower->borrowerEmployment()->updateOrCreate(
+                ['borrower_id' => $borrower->ID],
+                ['occupation' => $data['occupation']]
+            );
+        }
+
+        if (!empty($data['address']) || !empty($data['city'])) {
             $borrower->borrowerAddress()->updateOrCreate(
-                ['borrower_id' => $borrower->id],
+                ['borrower_id' => $borrower->ID],
                 [
                     'address' => $data['address'] ?? $borrower->borrowerAddress?->address,
                     'city' => $data['city'] ?? $borrower->borrowerAddress?->city,
-                    'postal_code' => $data['zipcode'] ?? $borrower->borrowerAddress?->postal_code,
                 ]
             );
         }
 
-        return $borrower->fresh(['borrowerAddress', 'borrowerEmployment', 'spouse', 'coBorrowers', 'loans']);
+        return $borrower->fresh(['borrowerAddress', 'borrowerEmployment']);
     }
 }

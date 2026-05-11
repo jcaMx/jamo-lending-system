@@ -185,23 +185,8 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
 
         /* ── Cheque face ── */
         .cheque-face {
-          border: 1px solid #b0a060;
-          padding: 20px 28px 0 28px;
-          background: linear-gradient(90deg,
-            rgba(255, 248, 196, 0.88) 0%,
-            rgba(255, 250, 217, 0.96) 18%,
-            rgba(252, 250, 221, 0.96) 84%,
-            rgba(255, 247, 192, 0.9) 100%);
           position: relative;
           overflow: hidden;
-        }
-
-        .cheque-face::before {
-          content: "";
-          position: absolute;
-          inset: 10px 10px 44px 10px;
-          border: 1px solid rgba(15, 23, 42, 0.14);
-          pointer-events: none;
         }
 
         .micro-label {
@@ -382,113 +367,51 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
 
         {/* ── CHEQUE FACE SHEET ── */}
         <section className="sheet space-y-4 mt-6">
-          <div className="cheque-face">
+          <div className="cheque-face" style={{ background: '#ffffff', border: 'none', padding: '40px 28px' }}>
 
-            {/* Row 1: Bank name + logo placeholder | spacer | Cheque No. + Date */}
-            <div className="grid grid-cols-[1fr_260px] items-start gap-4 mb-3">
-              <div>
-                <div className="text-[28px] font-black leading-none tracking-tight text-slate-800">
-                  {voucher.cheque.bank_name || 'Any Bank'}
-                </div>
-                <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Branch / Makati City
-                </div>
+            {/* Row 1: Cheque No. + Date (Top Right) */}
+            <div className="flex justify-end gap-16 mb-20">
+              {/* Cheque No. */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold">{voucher.cheque.cheque_no}</span>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                {/* Cheque No. */}
-                <div className="flex items-center gap-2">
-                  <span className="micro-label">Cheque No.</span>
-                  <span
-                    className="border-b border-black text-center font-bold text-sm"
-                    style={{ minWidth: '120px' }}
-                  >
-                    {voucher.cheque.cheque_no}
-                  </span>
-                </div>
-                {/* Date MM / DD / YYYY */}
-                <div className="flex items-end gap-2">
-                  <span className="micro-label">Date</span>
-                  <div className="flex gap-1">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="border border-gray-400 bg-white/80 w-10 h-6 flex items-center justify-center text-sm font-semibold rounded-sm">
-                        {mm}
-                      </div>
-                      <span className="text-[7px] uppercase tracking-[0.18em] text-slate-500">MM</span>
-                    </div>
-                    <span className="text-slate-400 text-sm self-center pb-3">/</span>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="border border-gray-400 bg-white/80 w-10 h-6 flex items-center justify-center text-sm font-semibold rounded-sm">
-                        {dd}
-                      </div>
-                      <span className="text-[7px] uppercase tracking-[0.18em] text-slate-500">DD</span>
-                    </div>
-                    <span className="text-slate-400 text-sm self-center pb-3">/</span>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="border border-gray-400 bg-white/80 w-16 h-6 flex items-center justify-center text-sm font-semibold rounded-sm">
-                        {yyyy}
-                      </div>
-                      <span className="text-[7px] uppercase tracking-[0.18em] text-slate-500">YYYY</span>
-                    </div>
-                  </div>
-                </div>
+              {/* Date MM / DD / YYYY */}
+              <div className="flex items-end gap-1">
+                <div className="text-sm font-bold w-6 text-center">{mm}</div>
+                <span className="text-sm">/</span>
+                <div className="text-sm font-bold w-6 text-center">{dd}</div>
+                <span className="text-sm">/</span>
+                <div className="text-sm font-bold w-12 text-center">{yyyy}</div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-black/10 mb-3" />
-
             {/* Row 2: Pay To The Order Of | Payee Name */}
-            <div className="grid grid-cols-[140px_1fr] items-end gap-3 mb-1">
-              <div className="text-[12px] font-bold uppercase leading-[1.3] text-slate-700">
-                <div>Pay To The</div>
-                <div>Order Of</div>
+            <div className="mb-16">
+              <div className="text-center">
+                <span className="text-lg font-bold underline">
+                  {voucher.payee_name || borrower.name}
+                </span>
               </div>
-              <span className="line-fill text-lg font-semibold">
-                {voucher.payee_name || borrower.name}
+            </div>
+
+            {/* Row 3: Amount in numbers (Right aligned) */}
+            <div className="flex justify-end mb-3">
+              <span className="text-lg font-bold">
+                {Number(voucher.gross_amount || 0).toLocaleString('en-PH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </span>
             </div>
 
-            {/* Row 3: Amount in numbers — right-aligned box */}
-            <div className="flex justify-end mb-2">
-              <div className="cheque-amount-box" style={{ minWidth: '220px' }}>
-                <span className="text-xs font-bold text-slate-500">PHP</span>
-                <span className="text-base font-bold text-gray-900">
-                  {Number(voucher.gross_amount || 0).toLocaleString('en-PH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-            </div>
-
             {/* Row 4: Amount in words */}
-            <div className="grid grid-cols-[60px_1fr] items-end gap-2 mb-1">
-              <div className="text-[11px] font-bold uppercase text-slate-700">Pesos</div>
-              <div className="words-line">
-                <span className="words-fill">{amountWords}</span>
-                <span className="words-asterisks">{'*'.repeat(10)}</span>
-              </div>
+            <div className="mb-16">
+              <span className="text-sm font-bold">{amountWords}</span>
             </div>
 
-            {/* Second words line (overflow / blank) */}
-            <div className="grid grid-cols-[60px_1fr] items-end gap-2 mb-3">
-              <div />
-              <div className="words-line" />
-            </div>
-
-            {/* Row 5: Account No. | spacer | Authorized Signature */}
-            <div className="grid grid-cols-[200px_1fr_200px] items-end gap-4 mb-4">
-              <div>
-                <div className="micro-label mb-1">Account No.</div>
-                <span className="line-fill text-sm">
-                  {voucher.cheque.account_number || ''}
-                </span>
-              </div>
-              <div />
-              <div>
-                <div className="micro-label mb-1 text-right">Authorized Signature</div>
-                <div className="line-fill" />
-              </div>
+            {/* Row 5: Account No. (Bottom Left) */}
+            <div>
+              <span className="text-sm font-bold">{voucher.cheque.account_number || ''}</span>
             </div>
 
           </div>

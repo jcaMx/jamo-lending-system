@@ -1,19 +1,17 @@
 import React from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { SquarePen } from 'lucide-react';
+import { route } from 'ziggy-js';
 
 interface BorrowerFormData {
-  address: string;
-  city: string;
-  zipcode: string;
   email: string;
-  mobile: string;
-  landline: string;
+  contact_no: string;
+  land_line: string;
   occupation: string;
   gender: string;
   age: string;
-  monthly_income: string;
-  [key: string]: string;
+  address: string;
+  city: string;
 }
 
 interface BorrowerInfoCardProps {
@@ -24,17 +22,14 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const { data, setData, put, processing, errors } = useForm<BorrowerFormData>({
-    address: borrower.address ?? '',
-    city: borrower.city ?? '',
-    zipcode: borrower.zipcode ?? '',
     email: borrower.email ?? '',
-    mobile: borrower.mobile ?? borrower.contact_no ?? '',
-    landline: borrower.landline ?? '',
+    contact_no: borrower.contact_no ?? borrower.mobile ?? '',
+    land_line: borrower.land_line ?? borrower.landline ?? '',
     occupation: borrower.occupation ?? '',
     gender: borrower.gender ?? '',
     age: borrower.age ?? '',
-    monthly_income: borrower.monthly_income ?? '',
-
+    address: borrower.borrowerAddress?.address ?? borrower.address ?? '',
+    city: borrower.borrowerAddress?.city ?? borrower.city ?? '',
   });
 
   const openEditModal = () => {
@@ -43,22 +38,20 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
 
   const closeEditModal = () => {
     setIsModalOpen(false);
-    // Reset form data to original borrower values
     setData({
-      address: borrower.address ?? '',
-      city: borrower.city ?? '',
-      zipcode: borrower.zipcode ?? '',
       email: borrower.email ?? '',
-      mobile: borrower.mobile ?? borrower.contact_no ?? '',
-      landline: borrower.landline ?? '',
+      contact_no: borrower.contact_no ?? borrower.mobile ?? '',
+      land_line: borrower.land_line ?? borrower.landline ?? '',
       occupation: borrower.occupation ?? '',
       gender: borrower.gender ?? '',
       age: borrower.age ?? '',
+      address: borrower.borrowerAddress?.address ?? borrower.address ?? '',
+      city: borrower.borrowerAddress?.city ?? borrower.city ?? '',
     });
   };
 
   const saveBorrowerInfo = () => {
-    put(`/borrowers/${borrower.id}`, {
+    put(route('borrowers.update', borrower.id), {
       onSuccess: () => {
         setIsModalOpen(false);
       },
@@ -82,16 +75,10 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
       {/* Fields Display */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
         <div className="flex flex-col gap-2">
-          {/* <div className="font-semibold text-lg">{borrower.name || `${borrower.first_name || ''} ${borrower.last_name || ''}`.trim() || 'N/A'}</div> */}
           <div className="flex items-center gap-2">
             <span className="font-medium">Occupation:</span>
             <span className="text-gray-800">{borrower.occupation || data.occupation || 'N/A'}</span>
           </div>
-         <div className="flex items-center gap-2">
-            <span className="font-medium">Monthly Income:</span>
-            <span className="text-gray-800">{borrower.monthly_income || data.monthly_income || 'N/A'}</span>
-          </div>
-
           <div className="flex items-center gap-2">
             <span className="font-medium">Gender:</span>
             <span className="text-gray-800">{borrower.gender || data.gender || 'N/A'}</span>
@@ -105,16 +92,12 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className="font-medium">Address:</span>
-            <span className="text-gray-800">{borrower.address || data.address || 'N/A'}</span>
+            <span className="text-gray-800">{borrower.borrowerAddress?.address || borrower.address || data.address || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">City:</span>
-            <span className="text-gray-800">{borrower.city || data.city || 'N/A'}</span>
+            <span className="text-gray-800">{borrower.borrowerAddress?.city || borrower.city || data.city || 'N/A'}</span>
           </div>
-          {/* <div className="flex items-center gap-2">
-            <span className="font-medium">Zipcode:</span>
-            <span className="text-gray-800">{borrower.zipcode || data.zipcode || 'N/A'}</span>
-          </div> */}
         </div>
 
         <div className="flex flex-col gap-2">
@@ -123,12 +106,12 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
             <span className="text-gray-800">{borrower.email || data.email || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-medium">Mobile:</span>
-            <span className="text-gray-800">{borrower.mobile || borrower.contact_no || data.mobile || 'N/A'}</span>
+            <span className="font-medium">Contact Number:</span>
+            <span className="text-gray-800">{borrower.contact_no || borrower.mobile || data.contact_no || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">Landline:</span>
-            <span className="text-gray-800">{borrower.landline || borrower.land_line || data.landline || 'N/A'}</span>
+            <span className="text-gray-800">{borrower.land_line || borrower.landline || data.land_line || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -192,10 +175,7 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
                     />
                     {errors.age && <p className="text-red-500 text-xs mt-1">{errors.age}</p>}
                   </div>
-                </div>
 
-                {/* Right Column */}
-                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                     <input
@@ -206,7 +186,10 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
                     />
                     {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                   </div>
+                </div>
 
+                {/* Right Column */}
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                     <input
@@ -219,20 +202,6 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Zipcode</label>
-                    <input
-                      type="text"
-                      value={data.zipcode}
-                      onChange={(e) => setData('zipcode', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FABF24]"
-                    />
-                    {errors.zipcode && <p className="text-red-500 text-xs mt-1">{errors.zipcode}</p>}
-                  </div>
-                </div>
-
-                {/* Bottom Column */}
-                <div className="space-y-4">
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input
                       type="email"
@@ -244,25 +213,25 @@ export default function BorrowerInfoCard({ borrower }: BorrowerInfoCardProps) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
                     <input
                       type="text"
-                      value={data.mobile}
-                      onChange={(e) => setData('mobile', e.target.value)}
+                      value={data.contact_no}
+                      onChange={(e) => setData('contact_no', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FABF24]"
                     />
-                    {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile}</p>}
+                    {errors.contact_no && <p className="text-red-500 text-xs mt-1">{errors.contact_no}</p>}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Landline</label>
                     <input
                       type="text"
-                      value={data.landline}
-                      onChange={(e) => setData('landline', e.target.value)}
+                      value={data.land_line}
+                      onChange={(e) => setData('land_line', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FABF24]"
                     />
-                    {errors.landline && <p className="text-red-500 text-xs mt-1">{errors.landline}</p>}
+                    {errors.land_line && <p className="text-red-500 text-xs mt-1">{errors.land_line}</p>}
                   </div>
                 </div>
               </div>

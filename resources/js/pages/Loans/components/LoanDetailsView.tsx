@@ -289,7 +289,7 @@ export function LoanDetailsView({
       const key = file.ID ? `id:${file.ID}` : `path:${file.file_path}`;
       const existing = fileMap.get(key);
 
-      if (!existing || (existing.source === 'Borrower' && file.source === 'Collateral')) {
+      if (!existing || (existing.ssource === 'Borrower' && file.source === 'Collateral')) {
         fileMap.set(key, file);
       }
     }
