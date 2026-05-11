@@ -192,15 +192,14 @@ class BorrowerController extends Controller
     public function update(Request $request, Borrower $borrower)
     {
         $validated = $request->validate([
-            'address' => 'nullable|string|max:50',
-            'city' => 'nullable|string|max:50',
-            'zipcode' => 'nullable|string|max:10',
-            'email' => 'nullable|email|max:100',
-            'mobile' => 'nullable|string|max:20',
-            'landline' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'contact_no' => 'nullable|string|max:20',
+            'land_line' => 'nullable|string|max:20',
             'occupation' => 'nullable|string|max:50',
             'gender' => 'nullable|string|in:Male,Female',
             'age' => 'nullable|integer|min:0',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
         ]);
 
         $this->borrowerService->updateBorrower($borrower, $validated);
