@@ -58,6 +58,7 @@ class BorrowerService
                 'coBorrowers',
                 'spouse',
                 'loans.borrower',
+                'loans.loanComments.user',
                 'loans.collateral.landDetails',
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
@@ -76,7 +77,8 @@ class BorrowerService
                     : (string) ($loan->status ?? '');
 
                 return [
-                    'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
+                    'ID' => $loan->ID,
+                    'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->ID),
                     'released' => optional($loan->start_date)?->toDateString() ?? '',
                     'maturity' => optional($loan->end_date)?->toDateString() ?? '',
                     'repayment' => self::stringOrEnumValue($loan->repayment_frequency),
@@ -90,6 +92,16 @@ class BorrowerService
                     'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
                     'balance' => (float) $loan->balance_remaining,
                     'status' => $status,
+                    'loanComments' => $loan->loanComments
+                        ->sortByDesc('comment_date')
+                        ->values()
+                        ->map(fn (LoanComment $comment) => [
+                            'ID' => $comment->ID,
+                            'comment_text' => $comment->comment_text,
+                            'commented_by' => $comment->user?->name ?? 'Unknown',
+                            'comment_date' => optional($comment->comment_date)?->toISOString(),
+                        ])
+                        ->all(),
                     'collateral' => $loan->collateral ? [
                         'id' => $loan->collateral->id,
                         'type' => $loan->collateral->type,
@@ -111,15 +123,21 @@ class BorrowerService
 
         // Ensure schedules are loaded for the active loan
         if ($activeLoanModel) {
-            $activeLoanModel->load('amortizationSchedules');
+            $activeLoanModel->load(['amortizationSchedules', 'loanComments.user']);
         }
 
         $activeLoan = $this->formatLoan($activeLoanModel);      // formatted array for frontend
 
         $comments = $activeLoanModel
-            ? LoanComment::where('loan_id', $activeLoanModel->id)
-                ->orderByDesc('comment_date')
-                ->get()
+            ? $activeLoanModel->loanComments
+                ->sortByDesc('comment_date')
+                ->values()
+                ->map(fn (LoanComment $comment) => [
+                    'ID' => $comment->ID,
+                    'comment_text' => $comment->comment_text,
+                    'commented_by' => $comment->user?->name ?? 'Unknown',
+                    'comment_date' => optional($comment->comment_date)?->toISOString(),
+                ])
             : collect();
 
         return [
@@ -157,10 +175,20 @@ class BorrowerService
 
     private function resolveActiveLoan(Borrower $borrower): ?Loan
     {
-        // Pick first active loan or first loan
-        return $borrower->loans
-            ->first(fn (Loan $loan) => $loan->status === 'Active')
-            ?? $borrower->loans->first();
+        $statusPrioritySql = "CASE
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'pending' THEN 0
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'active' THEN 1
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'approved' THEN 2
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'released' THEN 3
+            ELSE 4
+        END";
+
+        return Loan::query()
+            ->where('borrower_id', $borrower->ID)
+            ->orderByRaw($statusPrioritySql)
+            ->orderByDesc('created_at')
+            ->orderByDesc('ID')
+            ->first();
     }
 
     private function formatCollaterals(Collection $collaterals): array
@@ -198,7 +226,7 @@ class BorrowerService
 
         return [
             'ID' => $loan->ID,
-            'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
+            'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->ID),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
             'repayment' => self::stringOrEnumValue($loan->repayment_frequency),
@@ -213,6 +241,18 @@ class BorrowerService
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,
             'status' => $status,
+            'loanComments' => $loan->relationLoaded('loanComments')
+                ? $loan->loanComments
+                    ->sortByDesc('comment_date')
+                    ->values()
+                    ->map(fn (LoanComment $comment) => [
+                        'ID' => $comment->ID,
+                        'comment_text' => $comment->comment_text,
+                        'commented_by' => $comment->user?->name ?? 'Unknown',
+                        'comment_date' => optional($comment->comment_date)?->toISOString(),
+                    ])
+                    ->all()
+                : [],
         ];
     }
 

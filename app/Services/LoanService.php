@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\LoanApproved;
+use App\Events\LoanRejected;
 use App\Models\Loan;
 use App\Models\ScheduleStatus;
 use App\Models\AmortizationSchedule;
@@ -13,7 +15,6 @@ use App\Services\Amortization\CompoundAmortizationCalculator;
 use App\Services\Amortization\DiminishingAmortizationCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\NotifyUser;
 
 
 class LoanService
@@ -58,40 +59,23 @@ class LoanService
 
     public function approveLoan(Loan $loan, int $approvedByUser): Loan
     {
-        DB::transaction(function () use ($loan, $approvedByUser) {
+        $updatedLoan = DB::transaction(function () use ($loan, $approvedByUser) {
             if ($loan->term_months < 1 || $loan->term_months > 840) {
                 throw new \InvalidArgumentException('Loan term is invalid. Allowed range is 1 to 840 months.');
             }
 
             $loan->approved_by = $approvedByUser;
             $loan->status = 'Active';
-
-            // Set borrower status to Active
-            $loan->borrower->status = 'Active';
-            $loan->borrower->save();
             $loan->save();
+
+            $loan->borrower()->update(['status' => 'Active']);
+
+            return $loan->fresh();
         });
 
-        $loan->refresh();
-        $loan->load('borrower');
-        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
-                    Your loan application has been approved.\n\n
-                    Loan Details:\n
-                    - Loan Number: {$loan->ID}\n
-                    - Borrower: {$loan->borrower->first_name} {$loan->borrower->last_name}\n
-                    -Loan Amount: PHP {$loan->principal_amount}\n
-                    
-                    For more information, please log in your account in JAMO Lending System";
+        LoanApproved::dispatch($updatedLoan);
 
-        $borrower = $loan->borrower;
-        $borrower->notify(new NotifyUser(
-            subject: 'Your Loan Application is Approved',
-            message: $message,
-            email: $borrower->email,
-            // sms: $borrower->$user->profile->phone ?? null
-        ));
-
-        return $loan->fresh();
+        return $updatedLoan;
     }
 
     public function finalizeLoanDisbursement(Loan $loan, float $releasedAmount, ?string $releasedDate = null): Loan
@@ -139,26 +123,16 @@ class LoanService
 
     public function rejectLoan(Loan $loan): Loan
     {
-        $loan->status = 'Rejected';
-        $loan->save();
+        $updatedLoan = DB::transaction(function () use ($loan) {
+            $loan->status = 'Rejected';
+            $loan->save();
 
-        $loan->load('borrower');
+            return $loan->fresh();
+        });
 
-        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
-                    We regrettably inform you that your loan application has been rejected.\n\n
-                    
-                    Please log in your account in JAMO Lending System and try again. Or contact us for further assistance.
-                    \n Thank you!";
+        LoanRejected::dispatch($updatedLoan);
 
-        $borrower = $loan->borrower;
-        $borrower->notify(new NotifyUser(
-            message: $message,
-            subject: 'Your Loan Application has been Rejected',
-            email: $borrower->email,
-            // sms: $borrower->$user->profile->phone ?? null
-        ));
-
-        return $loan->fresh();
+        return $updatedLoan;
     }
 
     public function editLoan(Loan $loan, array $data): Loan

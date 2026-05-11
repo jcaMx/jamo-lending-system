@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
-use App\Notifications\NotifyUser;
 
 
 class LoanController extends Controller
@@ -417,6 +416,9 @@ class LoanController extends Controller
         }
 
         $loanData = $loan->toArray();
+        $loanData['loanComments'] = $loan->relationLoaded('loanComments')
+            ? $loan->loanComments->values()->all()
+            : [];
         $loanData['has_completed_disbursement'] = $loan->disbursements()
             ->where('status', 'Completed')
             ->exists();
@@ -617,23 +619,6 @@ class LoanController extends Controller
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Failed to close loan: '.$e->getMessage()]);
         }
-    }
-
-    public function addComment(Loan $loan, Request $request)
-    {
-        // Validation
-        $request->validate([
-            'comment_text' => 'required|string|max:1000',
-        ]);
-
-        // Use the relationship to create comment
-        $comment = $loan->loanComments()->create([
-            'comment_text' => $request->input('comment_text'),
-            'commented_by' => Auth::id(),
-            'comment_date' => now(),
-        ]);
-
-        return back()->with('success', 'Comment added successfully.');
     }
 
     public function updateBorrowerDetails(Loan $loan, Request $request)
@@ -855,19 +840,6 @@ class LoanController extends Controller
             return back()->withErrors(['error' => 'Failed to delete collateral file: '.$e->getMessage()]);
         }
     }
-
-
-    public function deleteComment(LoanComment $comment)
-    {
-        try {
-            $comment->delete();
-
-            return back()->with('success', 'Comment deleted successfully!');
-        } catch (\Throwable $e) {
-            return back()->withErrors(['error' => 'Failed to delete comment: '.$e->getMessage()]);
-        }
-    }
-
     private function resolveLoanProduct(?int $loanProductId, ?string $loanType): ?LoanProduct
     {
         if ($loanProductId) {

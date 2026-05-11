@@ -33,6 +33,12 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  loanComments?: Array<{
+    ID: number;
+    comment_text: string;
+    commented_by: string;
+    comment_date: string;
+  }>;
   releasing_fees?: {
     gross_amount: number;
     charges: Record<string, {
@@ -206,7 +212,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         key: 'loanComments' as TabKey,
         label: 'Loan Comments',
         content: <LoanCommentsTab
-          comments={borrower.comments ?? []}
+          comments={safeLoan.loanComments ?? borrower.comments ?? []}
           loanId={safeLoan.ID}
           canDelete={true}
         />,
