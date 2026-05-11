@@ -61,6 +61,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::useBuildDirectory('build/vite');
+
+        // Force HTTPS in production (Railway uses a proxy that terminates SSL)
+        if (config('app.env') === 'production') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
         Inertia::share([
         'auth' => fn () => auth()->check()
             ? [
