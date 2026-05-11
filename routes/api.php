@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
 
 Route::prefix('v1')->group(function () {
-    Route::apiResource('users', UserController::class)->parameters(['users' => 'id']);
+    Route::apiResource('users', UserController::class)->names('api.users')->parameters(['users' => 'id']);
     Route::get('roles', [RoleController::class,'index']);
     Route::post('roles', [RoleController::class,'store']);
 
