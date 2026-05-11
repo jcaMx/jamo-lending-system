@@ -11,21 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('loan_product_rules', function (Blueprint $table) {
-            $table->id();
+        if (!Schema::hasTable('loan_product_rules')) {
+            Schema::create('loan_product_rules', function (Blueprint $table) {
+                $table->id();
 
-            $table->foreignId('loan_product_id')
-                ->constrained()
-                ->cascadeOnDelete();
+                $table->foreignId('loan_product_id')
+                    ->constrained()
+                    ->cascadeOnDelete();
 
-            $table->boolean('requires_collateral')->default(false);
-            $table->boolean('requires_coborrower')->default(false);
+                $table->boolean('requires_collateral')->default(false);
+                $table->boolean('requires_coborrower')->default(false);
 
-            $table->decimal('collateral_required_above', 15, 2)
-                ->nullable(); // optional dynamic rule
+                $table->decimal('collateral_required_above', 15, 2)
+                    ->nullable(); // optional dynamic rule
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
 
     }
 
