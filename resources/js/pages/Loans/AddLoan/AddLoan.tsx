@@ -638,11 +638,12 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           setFormData={setFormData}
           fieldErrors={fieldErrors}
           submitError={submitError}
+          documentTypesByCategory={documentTypesByCategory}
           stepLabels={stepLabels}
           stepIndex={loanStepIndex}
           // Pass rule requirements so LoanDetails can show required/optional status.
           ruleRequirements={ruleRequirements}
-          documentTypesByCategory={documentTypesByCategory}
+          isEvaluatingRules={isEvaluatingRules}
         />
       ),
     });
@@ -873,19 +874,9 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
   const activeStep = steps[currentStep];
 
   return (
-    <div className="bg-[#F7F5F3] min-h-screen">
-      <AppLayout breadcrumbs={breadcrumbs}>
-
-        <Head title="Add Loan Application" />
-        {isEvaluatingRules && (
-          <div className="max-w-4xl mx-auto px-6 pt-4 text-xs text-gray-500">
-            Checking loan product rules...
-          </div>
-        )}
-        <div className="bg-[#F7F5F3]">{activeStep?.render()}</div>
-      </AppLayout>
-
-    </div>
-
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="Add Loan Application" />
+      <div className="bg-[#F7F5F3] min-h-full">{activeStep?.render()}</div>
+    </AppLayout>
   );
 }

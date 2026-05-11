@@ -17,6 +17,7 @@ interface LoanDetailsProps {
   stepLabels?: string[];
   stepIndex?: number;
   ruleRequirements?: { collateral: boolean; coborrower: boolean };
+  isEvaluatingRules?: boolean;
 }
 
 interface LoanProductItem {
@@ -157,6 +158,7 @@ const LoanDetails = ({
   stepLabels,
   stepIndex,
   ruleRequirements,
+  isEvaluatingRules,
 }: LoanDetailsProps) => {
   const { props } = usePage();
   const pageProps = props as any;
@@ -562,6 +564,12 @@ const LoanDetails = ({
             error={fieldErrors.loan_type || errors.loan_type}
             disabled={isLoadingLoanProducts || loanTypeOptions.length === 0}
           />
+          
+          {isEvaluatingRules && (
+            <p className="text-[10px] text-gray-500 italic mt-1">
+              Checking loan product rules...
+            </p>
+          )}
 
           {loanProductsError && <p className="text-sm text-red-600">{loanProductsError}</p>}
           {stepError && <p className="text-sm text-red-600">{stepError}</p>}

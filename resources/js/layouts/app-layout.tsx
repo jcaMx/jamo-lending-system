@@ -27,8 +27,8 @@ export default function AppLayout({ children, breadcrumbs }: AppLayoutProps) {
     : CustomerSidebar;
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-screen bg-gray-50">
+    <SidebarProvider className="h-screen w-screen overflow-hidden">
+      <div className="flex h-full w-full bg-gray-50 overflow-hidden">
         {/* Sidebar */}
         <SidebarComponent />
 
