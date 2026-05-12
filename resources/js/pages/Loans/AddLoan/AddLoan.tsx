@@ -9,6 +9,10 @@ import type {
   LoanProductDocumentRequirement,
   SharedFormData,
 } from "@/pages/borrower-application/sharedFormData";
+import {
+  emptyRuleRequirements,
+  parseRuleRequirements,
+} from "@/pages/borrower-application/ruleRequirements";
 import type { BorrowerDocumentTypeOption } from "@/pages/borrowers/components/RenderDocumentUploader";
 import type { BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -287,10 +291,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [ruleRequirements, setRuleRequirements] = useState({
-    collateral: false,
-    coborrower: false,
-  });
+  const [ruleRequirements, setRuleRequirements] = useState(emptyRuleRequirements);
   const [isEvaluatingRules, setIsEvaluatingRules] = useState(false);
 
   const [formData, setFormData] = useState<SharedFormData>({
@@ -437,7 +438,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
       Boolean(formData.loan_product_id) || Boolean(String(formData.loan_type ?? "").trim());
 
     if (!hasProduct) {
-      setRuleRequirements({ collateral: false, coborrower: false });
+      setRuleRequirements(emptyRuleRequirements());
       return;
     }
 
@@ -472,15 +473,16 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
           return;
         }
 
-        const payload = (await response.json()) as {
-          requires_collateral?: boolean;
-          requires_coborrower?: boolean;
-        };
+        const payload = (await response.json()) as
+          | {
+              collateral?: boolean;
+              coborrower?: boolean;
+              requires_collateral?: boolean;
+              requires_coborrower?: boolean;
+            }
+          | null;
 
-        setRuleRequirements({
-          collateral: Boolean(payload?.requires_collateral),
-          coborrower: Boolean(payload?.requires_coborrower),
-        });
+        setRuleRequirements(parseRuleRequirements(payload));
       } catch {
         // Keep previous requirements if request fails.
       } finally {

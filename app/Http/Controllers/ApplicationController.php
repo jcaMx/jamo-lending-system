@@ -40,7 +40,7 @@ class ApplicationController extends Controller
                 'loan_amount' => $loanAmount,
                 'term' => $request->input('term'),
                 'monthly_income' => $request->input('monthly_income'),
-                // 'dti_ratio' => $request->input('dti_ratio'),
+                'dti_ratio' => $request->input('dti_ratio'),
             ])
             : ['collateral' => false, 'coborrower' => false];
 
@@ -303,7 +303,7 @@ class ApplicationController extends Controller
             'loan_amount' => $loanAmount,
             'term' => $request->input('term'),
             'monthly_income' => $request->input('monthly_income'),
-            // 'dti_ratio' => $request->input('dti_ratio'),
+            'dti_ratio' => $request->input('dti_ratio'),
         ]);
         Log::info('Term received', ['term' => $request->input('term'), 'type' => gettype($request->input('term'))]);
 
