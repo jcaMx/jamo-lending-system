@@ -61,6 +61,11 @@ class AmortizationSchedule extends Model
         return $this->hasMany(Penalty::class, 'schedule_id', 'ID');
     }
 
+    public function penalties()
+    {
+        return $this->hasMany(Penalty::class, 'schedule_id', 'ID');
+    }
+
     public function holidays()
     {
         return $this->belongsTo(Holidays::class, 'holiday_id', 'ID');

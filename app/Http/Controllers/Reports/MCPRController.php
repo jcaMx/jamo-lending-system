@@ -42,42 +42,41 @@ class MCPRController extends Controller
             $rowsByKey[$key]['advanceTenPercentDeduction'] += $interestType === '10%' ? $released * 0.10 : 0;
         }
 
-        $allocations = collect();
-        if (Schema::hasTable('payment_schedule_allocations')) {
+        $hasAllocationsTable = Schema::hasTable('payment_schedule_allocations');
+
+        if ($hasAllocationsTable) {
             $allocations = PaymentScheduleAllocation::with(['loan', 'payment'])
-                ->orderBy('due_date')
+                ->whereHas('payment', function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['confirmed']);
+                })
+                ->orderBy('payment_date')
                 ->get();
-        }
 
-        foreach ($allocations as $allocation) {
-            $month = optional($allocation->due_date)->format('Y-m')
-                ?? optional($allocation->payment_date)->format('Y-m');
-            if (! $month) {
-                continue;
+            foreach ($allocations as $allocation) {
+                $month = optional($allocation->payment_date)->format('Y-m')
+                    ?? optional($allocation->payment?->payment_date)->format('Y-m');
+                if (! $month) {
+                    continue;
+                }
+
+                $interestType = $this->normalizeInterestType($allocation->loan?->interest_rate);
+                $key = $month.'|'.$interestType;
+
+                if (! isset($rowsByKey[$key])) {
+                    $rowsByKey[$key] = $this->emptyMonthlyRow($month, $interestType);
+                }
+
+                $rowsByKey[$key]['LPP'] += (float) ($allocation->principal_applied ?? 0);
+                $rowsByKey[$key]['LIP'] += (float) ($allocation->interest_applied ?? 0);
             }
-
-            $interestType = $this->normalizeInterestType($allocation->loan?->interest_rate);
-            $key = $month.'|'.$interestType;
-
-            if (! isset($rowsByKey[$key])) {
-                $rowsByKey[$key] = $this->emptyMonthlyRow($month, $interestType);
-            }
-
-            $principalPaid = (float) ($allocation->principal_applied ?? 0);
-            $interestPaid = (float) ($allocation->interest_applied ?? 0);
-
-            $rowsByKey[$key]['LPP'] += $principalPaid;
-            $rowsByKey[$key]['LIP'] += $interestPaid;
-        }
-
-        if ($allocations->isEmpty()) {
+        } else {
             $payments = Payment::with(['loan', 'amortizationSchedule'])
+                ->whereRaw('LOWER(status) = ?', ['confirmed'])
                 ->orderBy('payment_date')
                 ->get();
 
             foreach ($payments as $payment) {
-                $month = optional($payment->amortizationSchedule?->due_date)->format('Y-m')
-                    ?? optional($payment->payment_date)->format('Y-m');
+                $month = optional($payment->payment_date)->format('Y-m');
                 if (! $month) {
                     continue;
                 }
@@ -89,8 +88,16 @@ class MCPRController extends Controller
                     $rowsByKey[$key] = $this->emptyMonthlyRow($month, $interestType);
                 }
 
-                $principalPaid = (float) ($payment->amortizationSchedule?->installment_amount ?? $payment->amount);
-                $interestPaid = (float) ($payment->amortizationSchedule?->interest_amount ?? 0);
+                $principalPaid = (float) min(
+                    (float) ($payment->amortizationSchedule?->installment_amount ?? 0),
+                    (float) $payment->amount
+                );
+
+                $remainingAfterPrincipal = max(0, (float) $payment->amount - $principalPaid);
+                $interestPaid = (float) min(
+                    (float) ($payment->amortizationSchedule?->interest_amount ?? 0),
+                    $remainingAfterPrincipal
+                );
 
                 $rowsByKey[$key]['LPP'] += $principalPaid;
                 $rowsByKey[$key]['LIP'] += $interestPaid;

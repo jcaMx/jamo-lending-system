@@ -170,6 +170,8 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
             Route::post('/store', [RepaymentController::class, 'store'])->name('repayments.store');
             Route::get('/pending', [RepaymentController::class, 'pending'])->name('repayments.pending');
+            Route::post('/{payment}/confirm', [RepaymentController::class, 'confirm'])->name('repayments.confirm');
+            Route::post('/{payment}/reject', [RepaymentController::class, 'reject'])->name('repayments.reject');
             Route::post('/verify/{payment}', [RepaymentController::class, 'verify'])->name('repayments.verify');
         });
 

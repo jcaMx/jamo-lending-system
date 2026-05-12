@@ -248,7 +248,7 @@ class MyLoanController extends Controller
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
                 'loans.collateral.files.documentType',
-                'loans.amortizationSchedules',
+                'loans.amortizationSchedules.penalties',
             ])
             ->findOrFail($borrowerId);
 
@@ -259,7 +259,7 @@ class MyLoanController extends Controller
 
         if ($activeLoanModel) {
             $activeLoanModel->load([
-                'amortizationSchedules',
+                'amortizationSchedules.penalties',
                 'collateral.landDetails',
                 'collateral.vehicleDetails',
                 'collateral.atmDetails',
@@ -403,6 +403,8 @@ class MyLoanController extends Controller
         if (! $loan) {
             return [];
         }
+
+        $loan->loadMissing('amortizationSchedules.penalties');
 
         return $loan->amortizationSchedules
             ->map(fn ($schedule) => [

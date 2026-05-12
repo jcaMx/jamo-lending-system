@@ -7,11 +7,11 @@ use App\Models\Penalty;
 use App\Models\PenaltyStatus;
 use App\Models\PenaltyType;
 use App\Models\ScheduleStatus;
+use App\Notifications\NotifyUser;
 use App\Repositories\Interfaces\IHolidayService;
 use App\Repositories\Interfaces\IPenaltyCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\NotifyUser;
 
 class DefaultPenaltyService implements IPenaltyCalculator
 {
@@ -30,75 +30,94 @@ class DefaultPenaltyService implements IPenaltyCalculator
     }
 
     /**
-     * Calculate penalties for overdue loan schedules
-     * Business Rules:
-     * - 6% penalty on overdue amounts
-     * - If both capital and interest are unpaid → penalty applies to total balance
-     * - If interest has already been paid → penalty applies only to the capital of the current term
-     * - Penalties are applied in the next billing cycle (following month)
+     * Calculate penalties for overdue loan schedules.
+     *
+     * Business rules:
+     * - 6% penalty on overdue amounts.
+     * - If both capital and interest are unpaid, penalty applies to total balance.
+     * - If interest has already been paid, penalty applies only to the capital of the current term.
+     * - Penalty is charged to the next unpaid installment.
+     * - The penalty record stays linked to the overdue schedule that caused it.
      */
     public function calculate(Loan $loan): void
     {
         DB::transaction(function () use ($loan) {
-            // Get all overdue schedules ordered by due date
             $overdueSchedules = $loan->amortizationSchedules()
                 ->where('status', ScheduleStatus::Overdue->value)
                 ->orderBy('due_date')
                 ->get();
 
             foreach ($overdueSchedules as $overdue) {
-                // Determine penalty base amount
-                // If interest has been paid, penalty only on capital (installment - interest)
-                // If interest not paid, penalty on total balance (full installment amount)
+                $existingPenaltyAmount = (float) Penalty::query()
+                    ->where('type', PenaltyType::LatePayment->value)
+                    ->where('schedule_id', $overdue->ID)
+                    ->where('loan_id', $loan->ID)
+                    ->sum('amount');
+
                 $penaltyBase = $overdue->installment_amount;
 
                 if ($overdue->amount_paid >= $overdue->interest_amount) {
-                    // Interest has been paid, penalty applies only to capital
                     $penaltyBase = $overdue->installment_amount - $overdue->interest_amount;
                 }
-                // Otherwise, penalty applies to total balance (full installment_amount)
 
-                // Calculate 6% penalty
                 $penaltyAmount = round($penaltyBase * Penalty::PENALTY_RATE, 2);
 
                 if ($penaltyAmount <= 0) {
-                    continue; // Skip if no penalty amount
+                    continue;
                 }
 
-                // Find the next unpaid installment (next billing cycle)
                 $nextInstallment = $loan->amortizationSchedules()
-                    ->where('status', ScheduleStatus::Unpaid->value)
+                    ->whereIn('status', [
+                        ScheduleStatus::Unpaid->value,
+                        ScheduleStatus::Overdue->value,
+                    ])
                     ->where('installment_no', '>', $overdue->installment_no)
                     ->orderBy('installment_no')
                     ->first();
 
-                if ($nextInstallment) {
-                    // Adjust due date for holidays if needed
-                    $nextInstallment->due_date = $this->holidayService->adjustDate($nextInstallment->due_date);
-
-                    // Add penalty to next installment
-                    $nextInstallment->installment_amount += $penaltyAmount;
-                    $nextInstallment->penalty_amount += $penaltyAmount;
-                    $nextInstallment->save();
-
-                    // Create penalty record
-                    Penalty::create([
-                        'type' => PenaltyType::LatePayment->value,
-                        'amount' => $penaltyAmount,
-                        'date_applied' => Carbon::now(),
-                        'status' => PenaltyStatus::Pending->value,
-                        'schedule_id' => $nextInstallment->ID,
-                    ]);
-
-                    $borrower = $loan->borrower;
-                    $borrower->notify(new NotifyUser(
-                        subject: 'Penalty Applied',
-                        message: "Hi {$borrower->name}!, a penalty of ₱{$penaltyAmount} has been applied to your loan #{$loan->ID} for overdue payment. Please make sure to settle your dues to avoid further penalties. Thank you!",
-                        email: $borrower->email
-                    ));
-                    // Update loan balance
-                    $loan->balance_remaining += $penaltyAmount;
+                if (! $nextInstallment) {
+                    continue;
                 }
+
+                if ($existingPenaltyAmount > 0) {
+                    $overduePenaltyAmount = (float) $overdue->penalty_amount;
+
+                    if ($overduePenaltyAmount > 0) {
+                        $overdue->penalty_amount = max(0, $overduePenaltyAmount - $existingPenaltyAmount);
+                        $overdue->save();
+                    }
+
+                    $missingPenaltyAmount = round($existingPenaltyAmount - (float) $nextInstallment->penalty_amount, 2);
+
+                    if ($missingPenaltyAmount > 0) {
+                        $nextInstallment->penalty_amount += $missingPenaltyAmount;
+                        $nextInstallment->save();
+                    }
+
+                    continue;
+                }
+
+                $nextInstallment->due_date = $this->holidayService->adjustDate($nextInstallment->due_date);
+                $nextInstallment->penalty_amount += $penaltyAmount;
+                $nextInstallment->save();
+
+                Penalty::create([
+                    'type' => PenaltyType::LatePayment->value,
+                    'amount' => $penaltyAmount,
+                    'date_applied' => Carbon::now(),
+                    'status' => PenaltyStatus::Pending->value,
+                    'schedule_id' => $overdue->ID,
+                    'loan_id' => $loan->ID,
+                ]);
+
+                $borrower = $loan->borrower;
+                $borrower->notify(new NotifyUser(
+                    subject: 'Penalty Applied',
+                    message: "Hi {$borrower->name}!, a penalty of PHP {$penaltyAmount} has been applied to your loan #{$loan->ID} for overdue payment. Please make sure to settle your dues to avoid further penalties. Thank you!",
+                    email: $borrower->email
+                ));
+
+                $loan->balance_remaining += $penaltyAmount;
             }
 
             $loan->save();

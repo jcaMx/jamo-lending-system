@@ -235,7 +235,7 @@ const handleSubmit = (e: React.FormEvent) => {
     onSuccess: () => {
       // ✅ ONLY pending methods redirect
       if (ONLINE_METHODS.includes(method) || method === "Cheque Voucher") {
-        router.visit(`/repayments/pending?ref=${form.referenceNumber}`);
+        router.visit("/repayments?tab=pending");
       } else {
         setSuccessMessage("Payment verified successfully!");
       }

@@ -127,6 +127,11 @@ class Loan extends Model
     {
         return $this->hasMany(Payment::class, 'loan_id', 'ID');
     }
+
+    public function penalties()
+    {
+        return $this->hasMany(Penalty::class, 'loan_id', 'ID');
+    }
     
     /**
      * Loan applications that are still in progress (pending approval or actively paying).

@@ -159,4 +159,3 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
     </AppLayout>
   );
 }
-

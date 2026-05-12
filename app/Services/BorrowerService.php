@@ -124,7 +124,7 @@ class BorrowerService
 
         // Ensure schedules are loaded for the active loan
         if ($activeLoanModel) {
-            $activeLoanModel->load(['amortizationSchedules', 'loanComments.user']);
+            $activeLoanModel->load(['amortizationSchedules.penalties', 'loanComments.user']);
         }
 
         $activeLoan = $this->formatLoan($activeLoanModel);      // formatted array for frontend
@@ -316,6 +316,8 @@ class BorrowerService
         if (! $loan) {
             return [];
         }
+
+        $loan->loadMissing('amortizationSchedules.penalties');
 
         return $loan->amortizationSchedules
             ->map(fn ($schedule) => [
