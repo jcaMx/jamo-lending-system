@@ -384,7 +384,7 @@ class LoanController extends Controller
     {
         $loan->load([
             'borrower',
-            'borrower.files',
+            'borrower.files.documentType',
             'borrower.coBorrowers',
             'borrower.spouse',
             'borrower.borrowerEmployment',
@@ -393,7 +393,7 @@ class LoanController extends Controller
             'collateral.landDetails',
             'collateral.vehicleDetails',
             'collateral.atmDetails',
-            'collateral.files',
+            'collateral.files.documentType',
             'amortizationSchedules',
             'formula',
             'loanComments' => function ($query) {
@@ -444,8 +444,12 @@ class LoanController extends Controller
                 'spouse' => $loan->borrower->spouse?->toArray(),
                 'borrowerEmployment' => $loan->borrower->borrowerEmployment?->toArray(),
                 'borrowerAddress' => $loan->borrower->borrowerAddress?->toArray(),
-                'files' => $loan->borrower->files?->values()->all() ?? [],
+                'files' => $this->formatDocumentFiles($loan->borrower->files),
             ];
+        }
+
+        if ($loan->collateral) {
+            $loanData['collateral']['files'] = $this->formatDocumentFiles($loan->collateral->files);
         }
 
         return Inertia::render('Loans/ShowLoan', [
@@ -876,5 +880,74 @@ class LoanController extends Controller
             ->pluck('document_type_id')
             ->map(fn ($id) => (int) $id)
             ->values();
+    }
+
+    private function formatDocumentFiles($files): array
+    {
+        $files = collect($files);
+
+        $fallbackDocumentTypeNames = DocumentType::query()
+            ->whereIn(
+                'id',
+                $files
+                    ->map(fn ($file) => $this->extractDocumentTypeIdFromDescription($file->description))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->pluck('name', 'id');
+
+        return $files
+            ->map(fn ($file) => [
+                'ID' => $file->ID ?? $file->id ?? null,
+                'id' => $file->ID ?? $file->id ?? null,
+                'file_name' => $file->file_name,
+                'file_path' => $file->file_path,
+                'description' => $this->normalizeFileDescription($file->description),
+                'document_type_name' => $file->documentType?->name
+                    ?? $fallbackDocumentTypeNames->get($this->extractDocumentTypeIdFromDescription($file->description)),
+                'uploaded_at' => $file->uploaded_at
+                    ? (is_object($file->uploaded_at) && method_exists($file->uploaded_at, 'toISOString')
+                        ? $file->uploaded_at->toISOString()
+                        : (string) $file->uploaded_at)
+                    : null,
+            ])
+            ->filter(fn ($file) => ! empty($file['file_path']))
+            ->values()
+            ->all();
+    }
+
+    private function extractDocumentTypeIdFromDescription(?string $description): ?int
+    {
+        if (! $description) {
+            return null;
+        }
+
+        if (preg_match('/type_id\s*:\s*(\d+)/i', $description, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function normalizeFileDescription(?string $description): ?string
+    {
+        if (! $description) {
+            return null;
+        }
+
+        $cleaned = preg_replace('/\s*\(type_id\s*:\s*\d+\)\s*/i', '', $description) ?? $description;
+        $cleaned = trim($cleaned);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        return str($cleaned)
+            ->replace(['_', ':'], ' ')
+            ->squish()
+            ->title()
+            ->toString();
     }
 }

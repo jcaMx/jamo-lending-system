@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Borrower;
 use App\Models\BorrowerId;
 use App\Models\Collateral;
+use App\Models\DocumentType;
 use App\Models\Files;
 use App\Models\Loan;
 use App\Models\LoanComment;
@@ -54,7 +55,7 @@ class BorrowerService
             ->with([
                 'borrowerEmployment',
                 'borrowerAddress',
-                'files',
+                'files.documentType',
                 'coBorrowers',
                 'spouse',
                 'loans.borrower',
@@ -62,7 +63,7 @@ class BorrowerService
                 'loans.collateral.landDetails',
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
-                'loans.collateral.files',
+                'loans.collateral.files.documentType',
                 'loans.amortizationSchedules',
                 'loans.disbursements.events',
             ])
@@ -157,7 +158,7 @@ class BorrowerService
                 'email' => $borrower->email,
                 'mobile' => $borrower->contact_no,
                 'landline' => $borrower->land_line,
-                'files' => $borrower->files->values()->all(),
+                'files' => $this->formatFiles($borrower->files),
                 'spouse' => $borrower->spouse,
                 'coBorrowers' => $borrower->coBorrowers->values()->all(),
                 'comments' => $comments->values()->all(),
@@ -204,7 +205,7 @@ class BorrowerService
             'land_details' => $collateral->landDetails,
             'vehicle_details' => $collateral->vehicleDetails,
             'atm_details' => $collateral->atmDetails,
-            'files' => $collateral->files ? [$collateral->files] : [],
+            'files' => $this->formatFiles($collateral->files),
         ])
             ->values()
             ->all();
@@ -333,15 +334,73 @@ class BorrowerService
 
     private function formatFiles($files)
     {
-        return $files->map(function ($f) {
-            return [
-                'id' => $f->ID,
-                'fileName' => $f->file_name,
-                'filePath' => asset($f->file_path),
-                'description' => $f->description,
-                'uploadedAt' => $f->uploaded_at,
-            ];
-        })->toArray();
+        $files = collect($files);
+
+        $fallbackDocumentTypeNames = DocumentType::query()
+            ->whereIn(
+                'id',
+                $files
+                    ->map(fn ($file) => $this->extractDocumentTypeIdFromDescription($file->description))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->pluck('name', 'id');
+
+        return $files
+            ->map(function ($f) use ($fallbackDocumentTypeNames) {
+                return [
+                    'ID' => $f->ID ?? null,
+                    'id' => $f->ID ?? null,
+                    'file_name' => $f->file_name,
+                    'file_type' => $f->file_type,
+                    'file_path' => $f->file_path,
+                    'description' => $this->normalizeFileDescription($f->description),
+                    'document_type_name' => $f->documentType?->name
+                        ?? $fallbackDocumentTypeNames->get($this->extractDocumentTypeIdFromDescription($f->description)),
+                    'uploaded_at' => $f->uploaded_at
+                        ? (is_object($f->uploaded_at) && method_exists($f->uploaded_at, 'toISOString')
+                            ? $f->uploaded_at->toISOString()
+                            : (string) $f->uploaded_at)
+                        : null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function extractDocumentTypeIdFromDescription(?string $description): ?int
+    {
+        if (! $description) {
+            return null;
+        }
+
+        if (preg_match('/type_id\s*:\s*(\d+)/i', $description, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function normalizeFileDescription(?string $description): ?string
+    {
+        if (! $description) {
+            return null;
+        }
+
+        $cleaned = preg_replace('/\s*\(type_id\s*:\s*\d+\)\s*/i', '', $description) ?? $description;
+        $cleaned = trim($cleaned);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        return str($cleaned)
+            ->replace(['_', ':'], ' ')
+            ->squish()
+            ->title()
+            ->toString();
     }
 
     public function createBorrower(array $data): Borrower

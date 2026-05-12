@@ -21,6 +21,29 @@ type LoanProductOption = {
   name: string;
 };
 
+type UploadedFile = {
+  id?: number | null;
+  file_name?: string | null;
+  file_path?: string | null;
+  description?: string | null;
+  document_type_name?: string | null;
+  uploaded_at?: string | null;
+};
+
+type CoBorrower = {
+  id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  mobile?: string | null;
+  birth_date?: string | null;
+  marital_status?: string | null;
+  occupation?: string | null;
+  position?: string | null;
+  employer_address?: string | null;
+  address?: string | null;
+};
+
 type Collateral = {
   id: number;
   type: "Land" | "Vehicle" | "ATM";
@@ -29,6 +52,7 @@ type Collateral = {
   status: "Pledged" | "Released" | "Forfeited" | "Pending";
   description?: string;
   remarks?: string;
+  files?: UploadedFile[];
   land_details?: {
     titleNo?: number | null;
     lotNo?: number | null;
@@ -91,6 +115,61 @@ function ReadOnlyField({ label, value }: { label: string; value?: React.ReactNod
     <div>
       <p className="text-gray-500">{label}</p>
       <p className="font-medium text-gray-900">{value || "-"}</p>
+    </div>
+  );
+}
+
+function toStorageUrl(filePath?: string | null) {
+  if (!filePath) return "#";
+  if (filePath.startsWith("http://") || filePath.startsWith("https://")) return filePath;
+
+  return `/storage/${filePath.replace(/^\/+/, "").replace(/^public\//, "")}`;
+}
+
+function formatDateValue(value?: string | null) {
+  if (!value) return "-";
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
+}
+
+function FileList({
+  title,
+  files,
+  emptyMessage,
+}: {
+  title: string;
+  files: UploadedFile[];
+  emptyMessage: string;
+}) {
+  return (
+    <div className="rounded-md border p-4">
+      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      {files.length === 0 ? (
+        <p className="mt-3 text-sm text-gray-600">{emptyMessage}</p>
+      ) : (
+        <ul className="mt-3 space-y-3">
+          {files.map((file, index) => (
+            <li key={file.id ?? `${file.file_path ?? "file"}-${index}`} className="rounded-md border border-gray-100 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Document Type: {file.document_type_name || "Unspecified document"}
+              </p>
+              <a
+                href={toStorageUrl(file.file_path)}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 block break-all text-sm font-medium text-blue-600 hover:underline"
+              >
+                {file.file_name || `File ${index + 1}`}
+              </a>
+              <p className="mt-1 text-xs text-gray-500">
+                Uploaded: {formatDateValue(file.uploaded_at)}
+              </p>
+              {file.description ? <p className="mt-1 text-xs text-gray-500">Notes: {file.description}</p> : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -164,6 +243,8 @@ export default function MyLoanApplicationSummary({
     email?: string | null;
     mobile?: string | null;
     address?: string | null;
+    coBorrowers?: CoBorrower[];
+    files?: UploadedFile[];
   } | null;
   pendingLoan: Loan | null;
   collaterals: Collateral[];
@@ -171,6 +252,9 @@ export default function MyLoanApplicationSummary({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const collateral = collaterals[0] ?? null;
+  const coBorrowers = authUser?.coBorrowers ?? [];
+  const borrowerFiles = authUser?.files ?? [];
+  const collateralFiles = collateral?.files ?? [];
   const { flash } = usePage().props as { flash?: { success?: string } };
   const loanTypeOptions = useMemo(
     () => loanProducts.map((product) => ({ value: product.name, label: product.name })),
@@ -329,7 +413,7 @@ export default function MyLoanApplicationSummary({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="inline-flex rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+              className="inline-flex rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium transition hover:bg-amber-600"
             >
               Edit Application
             </button>
@@ -577,6 +661,59 @@ export default function MyLoanApplicationSummary({
               </div>
             </div>
           )}
+        </div>
+
+        <div className="m-4 rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-gray-800">Co-Borrowers</h2>
+          {coBorrowers.length === 0 ? (
+            <p className="text-sm text-gray-600">No co-borrower details provided for this application.</p>
+          ) : (
+            <div className="space-y-4">
+              {coBorrowers.map((coBorrower, index) => {
+                const fullName = `${coBorrower.first_name ?? ""} ${coBorrower.last_name ?? ""}`.trim();
+
+                return (
+                  <div key={coBorrower.id ?? index} className="rounded-md border p-4">
+                    <p className="mb-4 font-medium text-gray-900">
+                      {fullName || `Co-Borrower ${index + 1}`}
+                    </p>
+                    <div className="grid gap-4 text-sm md:grid-cols-2">
+                      <ReadOnlyField label="Name" value={fullName} />
+                      <ReadOnlyField label="Mobile" value={coBorrower.mobile} />
+                      <ReadOnlyField label="Email" value={coBorrower.email} />
+                      <ReadOnlyField label="Birth Date" value={formatDateValue(coBorrower.birth_date)} />
+                      <ReadOnlyField label="Marital Status" value={coBorrower.marital_status} />
+                      <ReadOnlyField label="Occupation" value={coBorrower.occupation} />
+                      <ReadOnlyField label="Position" value={coBorrower.position} />
+                      <ReadOnlyField label="Employer Address" value={coBorrower.employer_address} />
+                      <div className="md:col-span-2">
+                        <ReadOnlyField label="Address" value={coBorrower.address} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="m-4 rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-gray-800">Uploaded Files</h2>
+          <p className="mb-4 text-sm text-gray-600">
+            Application documents are currently stored under the borrower and collateral records.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <FileList
+              title="Borrower Files"
+              files={borrowerFiles}
+              emptyMessage="No borrower files uploaded."
+            />
+            <FileList
+              title="Collateral Files"
+              files={collateralFiles}
+              emptyMessage="No collateral files uploaded."
+            />
+          </div>
         </div>
       </form>
     </DashboardLayout>

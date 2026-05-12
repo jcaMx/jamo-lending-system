@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Borrower;
+use App\Models\DocumentType;
 use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Services\DisbursementService;
@@ -241,9 +242,12 @@ class MyLoanController extends Controller
             ->with([
                 'borrowerEmployment',
                 'borrowerAddress',
+                'coBorrowers',
+                'files.documentType',
                 'loans.collateral.landDetails',
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
+                'loans.collateral.files.documentType',
                 'loans.amortizationSchedules',
             ])
             ->findOrFail($borrowerId);
@@ -254,7 +258,13 @@ class MyLoanController extends Controller
             ->first();
 
         if ($activeLoanModel) {
-            $activeLoanModel->load(['amortizationSchedules','collateral']);
+            $activeLoanModel->load([
+                'amortizationSchedules',
+                'collateral.landDetails',
+                'collateral.vehicleDetails',
+                'collateral.atmDetails',
+                'collateral.files.documentType',
+            ]);
         }
 
         $pendingLoanModel = $borrower->loans()
@@ -263,7 +273,13 @@ class MyLoanController extends Controller
             ->first();
 
         if ($pendingLoanModel) {
-            $pendingLoanModel->load(['collateral', 'loanComments.user']);
+            $pendingLoanModel->load([
+                'collateral.landDetails',
+                'collateral.vehicleDetails',
+                'collateral.atmDetails',
+                'collateral.files.documentType',
+                'loanComments.user',
+            ]);
         }
 
         return [
@@ -275,6 +291,23 @@ class MyLoanController extends Controller
                 'email' => $borrower->email,
                 'mobile' => $borrower->contact_no,
                 'address' => $borrower->borrowerAddress?->address,
+                'coBorrowers' => $borrower->coBorrowers
+                    ->map(fn ($coBorrower) => [
+                        'id' => $coBorrower->ID,
+                        'first_name' => $coBorrower->first_name,
+                        'last_name' => $coBorrower->last_name,
+                        'email' => $coBorrower->email,
+                        'mobile' => $coBorrower->contact_no,
+                        'birth_date' => optional($coBorrower->birth_date)?->toDateString() ?? $coBorrower->birth_date,
+                        'marital_status' => $coBorrower->marital_status,
+                        'occupation' => $coBorrower->occupation,
+                        'position' => $coBorrower->position,
+                        'employer_address' => $coBorrower->agency_address,
+                        'address' => $coBorrower->address,
+                    ])
+                    ->values()
+                    ->all(),
+                'files' => $this->formatFiles($borrower->files),
                 'amortizationSchedule' => $this->formatAmortizationSchedule($activeLoanModel),
             ],
             'activeLoan' => $activeLoanModel ? $this->formatLoan($activeLoanModel) : null,
@@ -398,8 +431,77 @@ class MyLoanController extends Controller
             'land_details' => $collateral->landDetails,
             'vehicle_details' => $collateral->vehicleDetails,
             'atm_details' => $collateral->atmDetails,
+            'files' => $this->formatFiles($collateral->files),
         ])
             ->values()
             ->all();
+    }
+
+    private function formatFiles($files): array
+    {
+        $files = collect($files);
+
+        $fallbackDocumentTypeNames = DocumentType::query()
+            ->whereIn(
+                'id',
+                $files
+                    ->map(fn ($file) => $this->extractDocumentTypeIdFromDescription($file->description))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->pluck('name', 'id');
+
+        return $files
+            ->map(fn ($file) => [
+                'id' => $file->ID ?? $file->id ?? null,
+                'file_name' => $file->file_name,
+                'file_path' => $file->file_path,
+                'description' => $this->normalizeFileDescription($file->description),
+                'document_type_name' => $file->documentType?->name
+                    ?? $fallbackDocumentTypeNames->get($this->extractDocumentTypeIdFromDescription($file->description)),
+                'uploaded_at' => $file->uploaded_at
+                    ? (is_object($file->uploaded_at) && method_exists($file->uploaded_at, 'toISOString')
+                        ? $file->uploaded_at->toISOString()
+                        : (string) $file->uploaded_at)
+                    : null,
+            ])
+            ->filter(fn ($file) => ! empty($file['file_path']))
+            ->values()
+            ->all();
+    }
+
+    private function extractDocumentTypeIdFromDescription(?string $description): ?int
+    {
+        if (! $description) {
+            return null;
+        }
+
+        if (preg_match('/type_id\s*:\s*(\d+)/i', $description, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function normalizeFileDescription(?string $description): ?string
+    {
+        if (! $description) {
+            return null;
+        }
+
+        $cleaned = preg_replace('/\s*\(type_id\s*:\s*\d+\)\s*/i', '', $description) ?? $description;
+        $cleaned = trim($cleaned);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        return str($cleaned)
+            ->replace(['_', ':'], ' ')
+            ->squish()
+            ->title()
+            ->toString();
     }
 }

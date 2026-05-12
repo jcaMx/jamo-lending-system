@@ -60,6 +60,7 @@ type FileItem = {
   file_path?: string;
   uploaded_at?: string;
   description?: string;
+  document_type_name?: string;
   source?: string;
 };
 
