@@ -1,18 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import StepIndicator from "./StepIndicator";
-import { CreditCard,DollarSign, Users, Home } from "lucide-react";
+import { CreditCard, DollarSign, Home, Users } from "lucide-react";
 import { router, useForm } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import type { SharedFormData } from "./sharedFormData";
-
 
 interface ConfirmationProps {
   onPrev: () => void;
@@ -29,13 +21,68 @@ interface ConfirmationProps {
   setFormData: React.Dispatch<React.SetStateAction<SharedFormData>>;
 }
 
-const Confirmation = ({ onPrev, application, formData, setFormData }: ConfirmationProps) => {
+const toDisplayValue = (value: unknown) => {
+  if (value === undefined || value === null) return "-";
+
+  const normalized = String(value).trim();
+  return normalized === "" ? "-" : normalized;
+};
+
+const formatCurrency = (value: unknown) => {
+  const normalized = toDisplayValue(value);
+  return normalized === "-" ? "-" : `PHP ${normalized}`;
+};
+
+const Confirmation = ({ onPrev, application, formData }: ConfirmationProps) => {
   const initialPayment = formData?.payment_method ?? application?.payment_method ?? "";
-  const { data, setData, errors } = useForm({
+  const { data, errors } = useForm({
     payment_method: initialPayment,
   });
 
   const errorEntries = Object.entries(errors);
+  const collateralType = String(
+    formData.collateral_type ?? application?.collateral?.collateral_type ?? "",
+  ).toLowerCase();
+
+  const collateralFields = [
+    { label: "Type", value: toDisplayValue(formData.collateral_type ?? application?.collateral?.collateral_type) },
+    { label: "Estimated Value", value: formatCurrency(formData.estimated_value) },
+    { label: "Appraisal Date", value: toDisplayValue(formData.appraisal_date) },
+    { label: "Appraised By", value: toDisplayValue(formData.appraised_by) },
+    ...(collateralType === "vehicle"
+      ? [
+          { label: "Make", value: toDisplayValue(formData.make) },
+          { label: "Vehicle Type", value: toDisplayValue(formData.vehicle_type) },
+          { label: "Transmission Type", value: toDisplayValue(formData.transmission_type) },
+          { label: "Plate Number", value: toDisplayValue(formData.plate_no) },
+          { label: "Engine Number", value: toDisplayValue(formData.engine_no) },
+          { label: "Year Model", value: toDisplayValue(formData.year_model) },
+          { label: "Series", value: toDisplayValue(formData.series) },
+          { label: "Fuel Type", value: toDisplayValue(formData.fuel) },
+        ]
+      : []),
+    ...(collateralType === "land"
+      ? [
+          { label: "Certificate of Title No.", value: toDisplayValue(formData.certificate_of_title_no) },
+          { label: "Lot No.", value: toDisplayValue(formData.lot_no) },
+          { label: "Location", value: toDisplayValue(formData.location) },
+          { label: "Description", value: toDisplayValue(formData.description) },
+          { label: "Area (sqm)", value: toDisplayValue(formData.area) },
+        ]
+      : []),
+    ...(collateralType === "atm"
+      ? [
+          { label: "Bank Name", value: toDisplayValue(formData.bank_name) },
+          { label: "Account Number", value: toDisplayValue(formData.account_no) },
+          { label: "Card Last 4 Digits", value: toDisplayValue(formData.cardno_4digits) },
+        ]
+      : []),
+  ].filter((field) => field.value !== "-");
+
+  const collateralDocuments = (formData.documents?.collateral ?? [])
+    .filter((row) => row.file)
+    .map((row) => row.file?.name ?? "")
+    .filter((name) => name !== "");
 
   const appendIfPresent = (payload: FormData, key: string, value: any) => {
     if (value === undefined || value === null || value === "") return;
@@ -89,7 +136,7 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     if (!formData.coBorrowers || !formData.coBorrowers.length) return;
 
     const filtered = formData.coBorrowers.filter((co) =>
-      Object.values(co).some((value) => value !== undefined && value !== null && String(value).trim() !== "")
+      Object.values(co).some((value) => value !== undefined && value !== null && String(value).trim() !== ""),
     );
 
     filtered.forEach((co, index) => {
@@ -111,6 +158,7 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     appendIfPresent(payload, "series", formData.series);
     appendIfPresent(payload, "fuel", formData.fuel);
     appendIfPresent(payload, "certificate_of_title_no", formData.certificate_of_title_no);
+    appendIfPresent(payload, "lot_no", formData.lot_no);
     appendIfPresent(payload, "location", formData.location);
     appendIfPresent(payload, "description", formData.description);
     appendIfPresent(payload, "area", formData.area);
@@ -164,6 +212,7 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
   const appendPayment = (payload: FormData) => {
     appendIfPresent(payload, "payment_method", data.payment_method);
   };
+
   const logFormData = (fd: FormData) => {
     for (const [key, value] of fd as any) {
       console.log(key, value);
@@ -171,8 +220,8 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
   };
 
   const handleSubmit = () => {
-    console.log('Submit button clicked');
-    console.log('Form data:', formData);
+    console.log("Submit button clicked");
+    console.log("Form data:", formData);
 
     const payload = new FormData();
 
@@ -185,26 +234,23 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
     appendLoan(payload);
     appendPayment(payload);
 
-    // Log payload contents (FormData compatible way)
     logFormData(payload);
-  
 
-    console.log('Sending POST request to:', route("applications.confirm"));
-
+    console.log("Sending POST request to:", route("applications.confirm"));
 
     router.post(route("applications.confirm"), payload, {
       forceFormData: true,
       onStart: () => {
-        console.log('Request started');
+        console.log("Request started");
       },
       onSuccess: (response) => {
-        console.log('Success:', response);
+        console.log("Success:", response);
       },
       onError: (errors) => {
-        console.error('Validation errors:', errors);
+        console.error("Validation errors:", errors);
       },
       onFinish: () => {
-        console.log('Request finished');
+        console.log("Request finished");
       },
     });
   };
@@ -251,11 +297,10 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
               </ul>
             </div>
           )}
-          {/* Application Summary */}
+
           <div className="border-2 border-golden rounded-lg p-6 space-y-6 bg-golden/5">
             <h3 className="text-xl font-bold mb-4">Application Summary</h3>
 
-            {/* Loan Details Section - Always shown */}
             <div className="space-y-4">
               <h4 className="font-semibold text-lg flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-golden" />
@@ -265,7 +310,7 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
                 <div>
                   <Label className="text-sm font-semibold">Loan Amount</Label>
                   <div className="bg-white p-3 rounded border">
-                    ₱{formData?.loan_amount ?? application?.loan?.loan_amount ?? "-"}
+                    {formatCurrency(formData.loan_amount ?? application?.loan?.loan_amount)}
                   </div>
                 </div>
                 <div>
@@ -277,7 +322,7 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
                 <div>
                   <Label className="text-sm font-semibold">Loan Type</Label>
                   <div className="bg-white p-3 rounded border">
-                    {formData?.loan_type ?? "-"}
+                    {toDisplayValue(formData.loan_type)}
                   </div>
                 </div>
                 <div>
@@ -289,7 +334,6 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
               </div>
             </div>
 
-            {/* Co-Borrower Section - Only if exists */}
             {((formData?.coBorrowers?.length ?? 0) > 0 || application?.co_borrower) && (
               <div className="space-y-4 pt-4 border-t">
                 <h4 className="font-semibold text-lg flex items-center gap-2">
@@ -317,7 +361,6 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
               </div>
             )}
 
-            {/* Collateral Section - Only if exists */}
             {(formData?.collateral_type || application?.collateral) && (
               <div className="space-y-4 pt-4 border-t">
                 <h4 className="font-semibold text-lg flex items-center gap-2">
@@ -325,26 +368,36 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
                   Collateral
                 </h4>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-semibold">Type</Label>
-                    <div className="bg-white p-3 rounded border capitalize">
-                      {formData?.collateral_type ?? application?.collateral?.collateral_type ?? "-"}
-                    </div>
-                  </div>
-                  {formData?.estimated_value && (
-                    <div>
-                      <Label className="text-sm font-semibold">Estimated Value</Label>
+                  {collateralFields.map((field) => (
+                    <div key={field.label}>
+                      <Label className="text-sm font-semibold">{field.label}</Label>
                       <div className="bg-white p-3 rounded border">
-                        ₱{formData.estimated_value}
+                        {field.value}
                       </div>
                     </div>
-                  )}
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Uploaded Collateral Documents</Label>
+                  <div className="rounded border bg-white p-3">
+                    {collateralDocuments.length > 0 ? (
+                      <div className="space-y-2">
+                        {collateralDocuments.map((documentName, index) => (
+                          <p key={`${documentName}-${index}`} className="text-sm text-gray-700">
+                            {documentName}
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No collateral documents selected.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Navigation buttons */}
           <div className="flex justify-between gap-4">
             <Button type="button" onClick={onPrev} variant="outline" className="px-8">
               Previous
@@ -356,7 +409,6 @@ const Confirmation = ({ onPrev, application, formData, setFormData }: Confirmati
             >
               Submit Application
             </Button>
-
           </div>
         </form>
       </div>

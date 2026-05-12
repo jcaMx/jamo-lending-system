@@ -17,7 +17,7 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        $principal = $principalAmount ?? $loan->principal_amount;
+        $principal = $loan->principal_amount;
 
         return $this->calculateSchedules($loan, $formula, $principal);
     }
@@ -26,7 +26,7 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loann, $formula, $loan->principal_amount, false);
+        return $this->calculateSchedules($loan, $formula, $loan->principal_amount, false);
     }
 
     protected function calculateSchedules(Loan $loan, Formula $formula, float $principal, bool $isNewLoan = true)

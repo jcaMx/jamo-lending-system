@@ -46,9 +46,14 @@ class ApplicationController extends Controller
 
         $requiresCollateral = (bool) ($ruleEvaluation['collateral'] ?? false);
         $requiresCoBorrower = (bool) ($ruleEvaluation['coborrower'] ?? false);
+        $hasCollateralDocumentFiles = collect($request->file('documents.collateral', []))
+            ->flatten()
+            ->filter(fn ($value) => $value instanceof \Illuminate\Http\UploadedFile)
+            ->isNotEmpty();
+
         $hasCollateralPayload = $request->filled('collateral_type')
             || $request->hasFile('ownership_proof')
-            || $request->hasFile('documents.collateral.0.file');
+            || $hasCollateralDocumentFiles;
 
         $rules = [
             // 'borrower_first_name' => 'required|string|max:255',
@@ -115,6 +120,7 @@ class ApplicationController extends Controller
             'series' => 'nullable|string|max:50',
             'fuel' => 'nullable|string|max:20',
             'certificate_of_title_no' => 'nullable|string|max:50',
+            'lot_no' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
             'area' => 'nullable|string|max:50',
             'bank_name' => 'nullable|string|max:100',
@@ -148,6 +154,7 @@ class ApplicationController extends Controller
                 $rules['transmission_type'] = 'required|string|max:20';
             } elseif ($collateralType === 'land') {
                 $rules['certificate_of_title_no'] = 'required|string|max:50';
+                $rules['lot_no'] = 'required|string|max:50';
                 $rules['location'] = 'required|string|max:255';
             } elseif ($collateralType === 'atm') {
                 $rules['bank_name'] = 'required|string|max:100';
@@ -157,7 +164,10 @@ class ApplicationController extends Controller
         }
 
         $requiredLoanProductCategories = $loanProduct
-            ? $this->requiredLoanProductCategoryRequirements($loanProduct->id)
+            ? $this->requiredLoanProductCategoryRequirements(
+                $loanProduct->id,
+                mb_strtolower(trim((string) $loanType)) === 'business loan'
+            )
             : collect();
 
         if ($requiredLoanProductCategories->isNotEmpty()) {
@@ -168,7 +178,11 @@ class ApplicationController extends Controller
 
         if ($requiresCollateral || $hasCollateralPayload) {
             $collateralType = strtolower((string) $request->input('collateral_type'));
-            $requiredTypes = $this->requiredCollateralDocumentTypes($collateralType);
+            $requiredTypes = $this->requiredCollateralDocumentTypes(
+                $loanProductId,
+                $loanType,
+                $collateralType
+            );
 
             if ($requiredTypes->isNotEmpty()) {
                 $requiredTypeIds = $requiredTypes->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -322,8 +336,33 @@ class ApplicationController extends Controller
         };
     }
 
-    private function requiredCollateralDocumentTypes(string $collateralType)
+    private function requiredCollateralDocumentTypes(?int $loanProductId, ?string $loanType, string $collateralType)
     {
+        $loanProduct = $this->resolveLoanProduct($loanProductId, $loanType);
+
+        if ($loanProduct) {
+            $configuredTypes = DB::table('loan_product_document_requirements')
+                ->join('document_types', 'document_types.id', '=', 'loan_product_document_requirements.document_type_id')
+                ->where('loan_product_document_requirements.loan_product_id', $loanProduct->id)
+                ->where('loan_product_document_requirements.requirement_type', 'document_type')
+                ->where('loan_product_document_requirements.subject_type', 'collateral')
+                ->where('loan_product_document_requirements.collateral_type', strtolower($collateralType))
+                ->where('loan_product_document_requirements.is_required', true)
+                ->where('loan_product_document_requirements.is_active', true)
+                ->whereNotNull('loan_product_document_requirements.document_type_id')
+                ->where('document_types.is_active', true)
+                ->orderBy('loan_product_document_requirements.sort_order')
+                ->get([
+                    'document_types.id',
+                    'document_types.code',
+                    'document_types.category',
+                ]);
+
+            if ($configuredTypes->isNotEmpty()) {
+                return $configuredTypes;
+            }
+        }
+
         $categories = $this->collateralCategoriesByType($collateralType);
 
         if (empty($categories)) {
@@ -352,16 +391,22 @@ class ApplicationController extends Controller
         return null;
     }
 
-    private function requiredLoanProductCategoryRequirements(int $loanProductId)
+    private function requiredLoanProductCategoryRequirements(int $loanProductId, bool $businessOnly = false)
     {
-        return DB::table('loan_product_document_requirements')
+        $query = DB::table('loan_product_document_requirements')
             ->where('loan_product_id', $loanProductId)
             ->where('requirement_type', 'category')
-            ->whereIn('subject_type', ['borrower', 'business', 'employment'])
             ->where('is_required', true)
             ->where('is_active', true)
             ->whereNotNull('document_category')
-            ->orderBy('sort_order')
-            ->get(['document_category', 'min_count']);
+            ->orderBy('sort_order');
+
+        if ($businessOnly) {
+            $query->where('subject_type', 'business');
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query->get(['document_category', 'min_count']);
     }
 }

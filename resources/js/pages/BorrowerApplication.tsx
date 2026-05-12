@@ -234,10 +234,18 @@ const BorrowerApplication = ({
         const payload = (await response.json()) as { data?: LoanProductDocumentRequirement[] };
         const requirements = Array.isArray(payload.data) ? payload.data : [];
         setLoanProductRequirements(requirements);
-        setFormData((prev) => ({
-          ...prev,
-          loan_product_requirements: requirements,
-        }));
+        setFormData((prev) => {
+          const isBusinessLoan = String(prev.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+          return {
+            ...prev,
+            loan_product_requirements: requirements,
+            documents: {
+              ...(prev.documents ?? { collateral: [], loan_product: [] }),
+              loan_product: isBusinessLoan ? prev.documents?.loan_product ?? [] : [],
+            },
+          };
+        });
       } catch (error) {
         if ((error as { name?: string })?.name === "AbortError") {
           return;
@@ -250,6 +258,22 @@ const BorrowerApplication = ({
 
     return () => controller.abort();
   }, [formData.loan_product_id, setFormData]);
+
+  useEffect(() => {
+    const isBusinessLoan = String(formData.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+    if (isBusinessLoan || !(formData.documents?.loan_product?.length)) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...(prev.documents ?? { collateral: [], loan_product: [] }),
+        loan_product: [],
+      },
+    }));
+  }, [formData.documents?.loan_product?.length, formData.loan_type, setFormData]);
 
   const needsCollateral = ruleRequirements.collateral;
   const needsCoBorrower = ruleRequirements.coborrower;
