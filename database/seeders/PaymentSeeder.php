@@ -70,6 +70,7 @@ class PaymentSeeder extends Seeder
                             'amount' => $schedule->penalty_amount ?: ($schedule->installment_amount * 0.06),
                             'date_applied' => $schedule->due_date->copy()->addDays(7),
                             'schedule_id' => $schedule->ID,
+                            'loan_id' => $loan->ID,
                             'status' => 'Pending',
                         ]);
                     }

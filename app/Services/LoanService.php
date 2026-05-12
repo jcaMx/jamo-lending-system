@@ -14,6 +14,7 @@ use App\Repositories\Interfaces\IPenaltyCalculator;
 use App\Services\Amortization\CompoundAmortizationCalculator;
 use App\Services\Amortization\DiminishingAmortizationCalculator;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 
@@ -202,11 +203,35 @@ class LoanService
 
     public function calculatePenalties(Loan $loan): void
     {
+        $this->markOverdueSchedules($loan);
+
         $this->penaltyCalculator->calculate($loan);
+    }
+
+    public function markOverdueSchedules(?Loan $loan = null, ?CarbonInterface $asOf = null): int
+    {
+        $asOf ??= Carbon::now();
+
+        return DB::transaction(function () use ($loan, $asOf) {
+            $query = AmortizationSchedule::query()
+                ->where('status', ScheduleStatus::Unpaid->value)
+                ->whereDate('due_date', '<', $asOf->toDateString())
+                ->whereHas('loan', function ($query) use ($loan) {
+                    $query->where('status', 'Active');
+
+                    if ($loan) {
+                        $query->whereKey($loan->getKey());
+                    }
+                });
+
+            return $query->update(['status' => ScheduleStatus::Overdue->value]);
+        });
     }
 
     public function getThreeMonthLateLoans()
     {
+        $this->markOverdueSchedules();
+
         $cutoff = Carbon::now()->subDays(90);
 
         return Loan::with(['borrower', 'collateral.landDetails', 'collateral.vehicleDetails', 'collateral.atmDetails', 'amortizationSchedules'])
@@ -219,11 +244,14 @@ class LoanService
             })
             ->orWhere('status', 'Bad_Debt')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(fn (Loan $loan) => $this->appendLateRuleMetadata($loan, '3MLL'));
     }
 
     public function getOneMonthLateLoans()
     {
+        $this->markOverdueSchedules();
+
         $cutoff = Carbon::now()->subDays(30);
 
         return Loan::with(['borrower', 'collateral.landDetails', 'collateral.vehicleDetails', 'collateral.atmDetails', 'amortizationSchedules'])
@@ -234,7 +262,8 @@ class LoanService
                     ->where('due_date', '>', Carbon::now()->subDays(90));
             })
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(fn (Loan $loan) => $this->appendLateRuleMetadata($loan, '1MLL'));
     }
 
     public function getPastMaturityDateLoans()
@@ -247,7 +276,8 @@ class LoanService
             ->where('end_date', '<', $today)
             ->where('balance_remaining', '>', 0)
             ->orderBy('end_date', 'asc')
-            ->get();
+            ->get()
+            ->map(fn (Loan $loan) => $this->appendLateRuleMetadata($loan, 'PMD'));
     }
 
     public function getApprovedLoans()
@@ -274,6 +304,28 @@ class LoanService
                 ));
             });
 
+    }
+
+    private function appendLateRuleMetadata(Loan $loan, string $bucket): Loan
+    {
+        $overdueSchedule = $loan->amortizationSchedules
+            ->filter(fn ($schedule) => $schedule->status === ScheduleStatus::Overdue)
+            ->sortBy('due_date')
+            ->first();
+
+        $loan->setAttribute('past_due_date', match ($bucket) {
+            'PMD' => optional($loan->end_date)?->toDateString(),
+            default => optional($overdueSchedule?->due_date)?->toDateString(),
+        });
+
+        $loan->setAttribute('past_due_rule', match ($bucket) {
+            'PMD' => 'End date is earlier than today and the loan still has remaining balance.',
+            '1MLL' => 'Has an overdue amortization schedule that is at least 30 days late but less than 90 days late.',
+            '3MLL' => 'Has an overdue amortization schedule that is at least 90 days late, or the loan is already marked as Bad Debt.',
+            default => null,
+        });
+
+        return $loan;
     }
 
 }

@@ -394,7 +394,7 @@ class LoanController extends Controller
             'collateral.vehicleDetails',
             'collateral.atmDetails',
             'collateral.files.documentType',
-            'amortizationSchedules',
+            'amortizationSchedules.penalties',
             'formula',
             'loanComments' => function ($query) {
                 $query->orderBy('comment_date', 'desc');
@@ -416,6 +416,22 @@ class LoanController extends Controller
         }
 
         $loanData = $loan->toArray();
+        $loanData['amortizationSchedules'] = $loan->amortizationSchedules
+            ->sortBy('installment_no')
+            ->map(fn ($schedule) => [
+                'ID' => $schedule->ID,
+                'installment_no' => $schedule->installment_no,
+                'installment_amount' => (float) $schedule->installment_amount,
+                'interest_amount' => (float) $schedule->interest_amount,
+                'penalty_amount' => (float) $schedule->penalty_amount,
+                'amount_paid' => (float) $schedule->amount_paid,
+                'rebate_amount' => (float) $schedule->rebate_amount,
+                'due_date' => $schedule->due_date?->toDateString(),
+                'status' => $schedule->status?->value ?? $schedule->status ?? 'Unpaid',
+            ])
+            ->values()
+            ->all();
+        unset($loanData['amortization_schedules']);
         $loanData['loanComments'] = $loan->relationLoaded('loanComments')
             ? $loan->loanComments->values()->all()
             : [];
@@ -579,7 +595,12 @@ class LoanController extends Controller
 
     public function showSchedule(Loan $loan)
     {
-        $loan->load(['amortizationSchedules', 'borrower.borrowerAddress']);
+        if ($loan->status === 'Active') {
+            $this->loanService->calculatePenalties($loan);
+            $loan->refresh();
+        }
+
+        $loan->load(['amortizationSchedules.penalties', 'borrower.borrowerAddress']);
 
         // Format the loan data to ensure schedules are properly serialized
         $loanData = [
