@@ -39,18 +39,19 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Check if password uses Bcrypt algorithm
-            if (str_starts_with($user->password, '$2y$')) {
+            try {
+                // Try standard Bcrypt check
                 if (\Hash::check($request->password, $user->password)) {
                     return $user;
                 }
-            } 
-            // Fallback for legacy plain-text passwords
-            else if ($request->password === $user->password) {
-                // Auto-hash for future security
-                $user->password = \Hash::make($request->password);
-                $user->save();
-                return $user;
+            } catch (\RuntimeException $e) {
+                // If it crashes because the database value isn't a valid Bcrypt hash,
+                // check if it's a plain-text match (legacy import)
+                if ($request->password === $user->password) {
+                    $user->password = \Hash::make($request->password);
+                    $user->save();
+                    return $user;
+                }
             }
 
             return null;
