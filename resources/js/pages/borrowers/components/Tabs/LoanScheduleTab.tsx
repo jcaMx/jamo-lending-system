@@ -109,7 +109,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
   const totalAmountDue = rows.reduce((sum, row) => sum + row.amountDue, 0);
   const scheduledPayment = rows[0]?.scheduledPayment ?? 0;
   const normalizedInterestType = (interestType ?? '').trim().toLowerCase();
-  const fixedPaymentLabel = 'Monthly payment';
+  const fixedPaymentLabel = 'Periodical payment';
   const fixedPaymentValue = scheduledPayment;
   const showPenalty = rows.some((row) => toNumber(row.penalty_amount) > 0);
   const showRebate = rows.some((row) => toNumber(row.rebate_amount) > 0);
@@ -137,7 +137,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
               <th className="px-3 py-3">Term</th>
               <th className="px-3 py-3">Date</th>
               <th className="px-3 py-3 text-right">Beginning Balance</th>
-              <th className="px-3 py-3 text-right">Scheduled Payment</th>
+              {/* <th className="px-3 py-3 text-right">Scheduled Payment</th> */}
               <th className="px-3 py-3 text-right">
                 <span className="rounded-full bg-[#FFF4D6] px-2.5 py-1 text-[#A47B06]">Principal</span>
               </th>
@@ -157,7 +157,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
                 <td className="px-3 py-3 text-gray-700">{row.installment_no}</td>
                 <td className="px-3 py-3 font-semibold text-gray-950">{dateLabel(row.due_date)}</td>
                 <td className="px-3 py-3 text-right text-gray-950">{money(row.beginningBalance)}</td>
-                <td className="px-3 py-3 text-right font-semibold text-gray-950">{money(row.scheduledPayment)}</td>
+                {/* <td className="px-3 py-3 text-right font-semibold text-gray-950">{money(row.scheduledPayment)}</td> */}
                 <td className="px-3 py-3 text-right font-semibold text-[#A47B06]">{money(row.principalAmount)}</td>
                 <td className="px-3 py-3 text-right font-medium text-amber-800">{money(row.interest_amount)}</td>
                 {showPenalty && (
