@@ -309,13 +309,11 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
         ]);
     })->name('apply');
 
-    // Redirects for legacy/shorthand paths
-    Route::get('/my-loan', fn () => redirect()->route('customer.MyLoan'));
-    Route::get('/my-repayments', fn () => redirect()->route('customer.repayments'));
-    Route::get('/my-loan-details', fn () => redirect()->route('customer.MyLoan'))->name('customer.loan.details');
-
+    // Helper API routes
     Route::post('/api/evaluate-loan-rules', [ApplicationController::class, 'evaluateRules'])
         ->name('api.evaluate-rules');
+
+    Route::get('/my-loan-details', fn () => redirect()->route('customer.MyLoan'))->name('customer.loan.details');
 
     Route::get('/test-rule-evaluator', function () {
         $service = app(\App\Services\RuleEvaluatorService::class);
