@@ -21,3 +21,17 @@ export const parseRuleRequirements = (
   collateral: Boolean(payload?.collateral ?? payload?.requires_collateral),
   coborrower: Boolean(payload?.coborrower ?? payload?.requires_coborrower),
 });
+
+export const buildRuleEvaluationHeaders = (): Record<string, string> => {
+  const csrfToken =
+    typeof document !== "undefined"
+      ? document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? ""
+      : "";
+
+  return {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+  };
+};

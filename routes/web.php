@@ -214,7 +214,7 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
         Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
         Route::get('/all-loans', [DashboardController::class, 'allLoans']);
         Route::post('/staff/evaluate-loan-rules', [LoanController::class, 'evaluateRules'])
-            ->middleware(['role:admin'])
+            ->middleware(['role:admin|cashier|customer'])
             ->name('api.staff.evaluate-rules');
     });
 
