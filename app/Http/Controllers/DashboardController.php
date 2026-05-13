@@ -38,26 +38,34 @@ class DashboardController extends Controller
 
     public function loans()
     {
-        $loans = Loan::selectRaw('MONTHNAME(released_date) as month, COALESCE(SUM(released_amount), 0) as value')
+        $loans = Loan::selectRaw('MONTHNAME(released_date) as month, SUM(released_amount) as value')
             ->whereNotNull('released_date')
             ->whereNotNull('released_amount')
             ->where('released_amount', '>', 0)
             ->groupBy('month')
             ->orderByRaw('MIN(released_date)')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->value = (float) $item->value;
+                return $item;
+            });
 
         return response()->json($loans);
     }
 
     public function collections()
-{
-        $collections = Payment::selectRaw('MONTHNAME(payment_date) as month, COALESCE(SUM(amount), 0) as value')
-        ->groupBy('month')
+    {
+        $collections = Payment::selectRaw('MONTHNAME(payment_date) as month, SUM(amount) as value')
+            ->groupBy('month')
             ->orderByRaw('MIN(payment_date)')
-        ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->value = (float) $item->value;
+                return $item;
+            });
 
-    return response()->json($collections);
-}
+        return response()->json($collections);
+    }
 
     public function upcomingDueSchedules()
     {

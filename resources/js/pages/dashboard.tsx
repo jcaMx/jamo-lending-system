@@ -90,9 +90,9 @@ const formatCompactCurrency = (value: number) => {
 };
 
 const buildChartSummary = (data: ChartData[]) => {
-    const latest = data[data.length - 1]?.value ?? 0;
-    const previous = data[data.length - 2]?.value ?? 0;
-    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const latest = Number(data[data.length - 1]?.value ?? 0);
+    const previous = Number(data[data.length - 2]?.value ?? 0);
+    const total = data.reduce((sum, item) => sum + Number(item.value), 0);
     const delta = latest - previous;
     const deltaPercent =
         previous > 0 ? (delta / previous) * 100 : latest > 0 ? 100 : 0;
