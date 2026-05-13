@@ -109,9 +109,8 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
   const totalAmountDue = rows.reduce((sum, row) => sum + row.amountDue, 0);
   const scheduledPayment = rows[0]?.scheduledPayment ?? 0;
   const normalizedInterestType = (interestType ?? '').trim().toLowerCase();
-  const isDiminishing = normalizedInterestType === 'diminishing';
-  const fixedPaymentLabel = isDiminishing ? 'Fixed principal/mo' : 'Monthly payment';
-  const fixedPaymentValue = isDiminishing ? rows[0]?.principalAmount ?? 0 : scheduledPayment;
+  const fixedPaymentLabel = 'Monthly payment';
+  const fixedPaymentValue = scheduledPayment;
   const showPenalty = rows.some((row) => toNumber(row.penalty_amount) > 0);
   const showRebate = rows.some((row) => toNumber(row.rebate_amount) > 0);
 
