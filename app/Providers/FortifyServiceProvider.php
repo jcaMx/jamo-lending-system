@@ -39,31 +39,34 @@ class FortifyServiceProvider extends ServiceProvider
                 ->first();
 
             if (!$user) {
-                \Log::info('[AUTH DEBUG] User not found for input: ' . $request->email);
                 return null;
             }
 
+            // 1. Try standard Bcrypt check
             try {
-                // Try standard Bcrypt check
                 if (\Hash::check($request->password, $user->password)) {
-                    \Log::info('[AUTH DEBUG] Password matched via Hash::check for: ' . $user->email);
                     return $user;
                 }
             } catch (\RuntimeException $e) {
-                // Log the exception for debugging
-                \Log::info('[AUTH DEBUG] Hash::check threw exception for: ' . $user->email . ' - ' . $e->getMessage());
+                // Not a Bcrypt hash, continue to fallbacks
             }
 
-            // Fallback for legacy plain-text passwords
+            // 2. Fallback for legacy plain-text passwords
             if ($request->password === trim($user->password)) {
-                \Log::info('[AUTH DEBUG] Password matched via Plain-text for: ' . $user->email);
                 // Auto-hash for future security
                 $user->password = \Hash::make($request->password);
                 $user->save();
                 return $user;
             }
 
-            \Log::info('[AUTH DEBUG] Authentication failed (no match) for: ' . $user->email);
+            // 3. Fallback for legacy MD5 passwords (common in older systems)
+            if (md5($request->password) === trim($user->password)) {
+                // Auto-hash for future security
+                $user->password = \Hash::make($request->password);
+                $user->save();
+                return $user;
+            }
+
             return null;
         });
 
