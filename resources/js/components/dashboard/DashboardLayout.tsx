@@ -9,12 +9,13 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gray-50">
-        <CustomerSidebar />
+      <CustomerSidebar />
+      <SidebarInset>
+        <TopBar />
         <main className="flex-1 p-4 lg:p-8 transition-all duration-300">
           {children}
         </main>
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   )
 }

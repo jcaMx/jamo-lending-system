@@ -153,7 +153,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="none" variant="floating" className="bg-[#192132] text-white w-64 h-full flex flex-col">
+    <Sidebar collapsible="icon" variant="floating" className="bg-[#192132] text-white w-64 h-full flex flex-col">
       
       <SidebarHeader className="bg-[#192132] text-white">
         <Link href={dashboard()}>
