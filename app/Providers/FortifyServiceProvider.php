@@ -35,11 +35,21 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::authenticateUsing(function (Request $request) {
             $user = \App\Models\User::where('email', $request->email)->first();
 
-            if (
-                $user &&
-                \Hash::check($request->password, $user->password)
-            ) {
-                // Return user - Fortify will handle the login automatically
+            if (!$user) {
+                return null;
+            }
+
+            // Check if password uses Bcrypt algorithm
+            if (str_starts_with($user->password, '$2y$')) {
+                if (\Hash::check($request->password, $user->password)) {
+                    return $user;
+                }
+            } 
+            // Fallback for legacy plain-text passwords
+            else if ($request->password === $user->password) {
+                // Auto-hash for future security
+                $user->password = \Hash::make($request->password);
+                $user->save();
                 return $user;
             }
 
