@@ -60,9 +60,7 @@ export default function CustomerProfile() {
       name: fullName,
       email: borrower?.email ?? "-",
       contact: borrower?.mobile ?? "-",
-      address: borrower?.address
-        ? [borrower?.address, borrower?.city, borrower?.zipcode].filter(Boolean).join(", ")
-        : "-",
+      address: borrower?.address ?? "-",
       joinDate: borrower?.membership_date ?? "",
       age: borrower?.age ?? null,
       occupation: borrower?.occupation ?? "-",
@@ -206,7 +204,11 @@ export default function CustomerProfile() {
                   <MapPin className="w-4 h-4 text-[#D97706] mt-1" />
                   <div>
                     <p className="text-gray-500">Address</p>
-                    <p className="font-medium text-gray-900">{displayProfile.address}</p>
+                    <p className="font-medium text-gray-900">
+                      {[displayProfile.address, displayProfile.city, displayProfile.zipcode]
+                        .filter(val => val && val !== "-")
+                        .join(", ") || "-"}
+                    </p>
                   </div>
                 </div>
 
