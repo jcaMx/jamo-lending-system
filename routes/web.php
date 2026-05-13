@@ -14,6 +14,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RepaymentController;
 use App\Http\Controllers\Reports\DCPRController;
 use App\Http\Controllers\Reports\MCPRController;
+use App\Http\Controllers\StaffNotificationController;
 use App\Http\Controllers\UserController;
 use App\Models\DocumentType;
 use Illuminate\Support\Facades\Auth;
@@ -213,6 +214,12 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
         Route::get('/dashboard-loans', [DashboardController::class, 'loans']);
         Route::get('/dashboard-collections', [DashboardController::class, 'collections']);
         Route::get('/all-loans', [DashboardController::class, 'allLoans']);
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/staff/notifications', [StaffNotificationController::class, 'index'])
+                ->name('api.staff.notifications.index');
+            Route::post('/staff/notifications/{notification}/read', [StaffNotificationController::class, 'read'])
+                ->name('api.staff.notifications.read');
+        });
         Route::post('/staff/evaluate-loan-rules', [LoanController::class, 'evaluateRules'])
             ->middleware(['role:admin|cashier|customer'])
             ->name('api.staff.evaluate-rules');
