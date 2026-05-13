@@ -31,11 +31,10 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
 
     protected function calculateSchedules(Loan $loan, Formula $formula, float $principal, bool $isNewLoan = true)
     {
-        $remaining = $principal;
+        $remaining = round($principal, 2);
         $frequency = $loan->repayment_frequency;
         $rate = $loan->interest_rate / 100;
 
-        // Determine total installments
         $totalInstallments = match ($frequency) {
             'Weekly' => (int) ceil($loan->term_months * 4.345),
             'Monthly' => $loan->term_months,
@@ -58,17 +57,19 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
             'rate' => $periodRate,
             'term' => $totalInstallments,
         ]);
+        $roundedInstallmentAmount = round($installmentAmount, 2);
 
         for ($i = 1; $i <= $totalInstallments; $i++) {
-            $interest = $remaining * $periodRate;
+            $interest = round($remaining * $periodRate, 2);
             $principalPayment = $i === $totalInstallments
                 ? $remaining
-                : $installmentAmount - $interest;
+                : round($roundedInstallmentAmount - $interest, 2);
 
-            $currentInstallmentAmount = $principalPayment + $interest;
+            $currentInstallmentAmount = $i === $totalInstallments
+                ? round($principalPayment + $interest, 2)
+                : $roundedInstallmentAmount;
 
-            $remaining -= $principalPayment;
-            $remaining = max(0, $remaining);
+            $remaining = round(max(0, $remaining - $principalPayment), 2);
 
             if ($i === $totalInstallments && $endDate) {
                 $dueDate = $endDate->copy();
@@ -81,8 +82,8 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
 
             $results[] = [
                 'installment_no' => $i,
-                'installment_amount' => round($currentInstallmentAmount, 2),
-                'interest_amount' => round($interest, 2),
+                'installment_amount' => $currentInstallmentAmount,
+                'interest_amount' => $interest,
                 'due_date' => $adjustedDueDate,
                 'holiday_id' => $holiday?->ID,
             ];
