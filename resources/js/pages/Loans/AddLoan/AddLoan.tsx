@@ -10,6 +10,7 @@ import type {
   SharedFormData,
 } from "@/pages/borrower-application/sharedFormData";
 import {
+  buildRuleEvaluationHeaders,
   emptyRuleRequirements,
   parseRuleRequirements,
 } from "@/pages/borrower-application/ruleRequirements";
@@ -77,9 +78,6 @@ const normalizeRepaymentFrequency = (value: string) => {
   if (normalized === "yearly") return "Yearly";
   return value.trim();
 };
-const getCsrfToken = () =>
-  document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
-
 const FIELD_STEP_MAP: Array<{ pattern: RegExp; step: StepKey; focus?: string }> = [
   { pattern: /^borrower_(name|id)$/, step: "borrower", focus: "borrower_name" },
   { pattern: /^loan_product_id$/, step: "loan", focus: "loan_type" },
@@ -449,12 +447,7 @@ export default function AddLoan({ borrowers = [], documentTypesByCategory = {} }
       try {
         const response = await fetch("/api/staff/evaluate-loan-rules", {
           method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": getCsrfToken(),
-            "X-Requested-With": "XMLHttpRequest",
-          },
+          headers: buildRuleEvaluationHeaders(),
           credentials: "same-origin",
           signal: controller.signal,
           body: JSON.stringify({

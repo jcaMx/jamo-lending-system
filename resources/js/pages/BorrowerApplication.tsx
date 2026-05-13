@@ -5,6 +5,7 @@ import LoanDetails from "./borrower-application/LoanDetails";
 import Confirmation from "./borrower-application/Confirmation";
 import type { SharedFormData } from "./borrower-application/sharedFormData";
 import {
+  buildRuleEvaluationHeaders,
   emptyRuleRequirements,
   parseRuleRequirements,
 } from "./borrower-application/ruleRequirements";
@@ -141,18 +142,13 @@ const BorrowerApplication = ({
     }
 
     const controller = new AbortController();
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
 
     const run = async () => {
       try {
         const response = await fetch("/api/evaluate-loan-rules", {
           method: "POST",
           credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Requested-With": "XMLHttpRequest",
-            ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-          },
+          headers: buildRuleEvaluationHeaders(),
           body: JSON.stringify({
             loan_product_id: loanProductId > 0 ? loanProductId : null,
             loan_type: loanType || null,
