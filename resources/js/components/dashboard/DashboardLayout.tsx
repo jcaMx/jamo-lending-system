@@ -8,13 +8,11 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-screen bg-gray-50 overflow-x-hidden">
+      <div className="flex min-h-screen w-full bg-gray-50">
         <CustomerSidebar />
-        <div className="ml-64 min-h-screen w-[calc(100vw-16rem)]">
-          <main className="p-4 lg:p-6 w-full max-w-none">
-            {children}
-          </main>
-        </div>
+        <main className="flex-1 p-4 lg:p-8 transition-all duration-300">
+          {children}
+        </main>
       </div>
     </SidebarProvider>
   );
