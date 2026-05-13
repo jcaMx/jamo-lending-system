@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentType;
 use App\Models\LoanProduct;
+use App\Models\User;
+use App\Notifications\LoanApplicationSubmitted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Services\ApplicationService;
@@ -292,6 +295,13 @@ class ApplicationController extends Controller
             ],
             Auth::user()
         );
+
+        $loan->loadMissing('borrower');
+        $admins = User::role('admin')->get();
+
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new LoanApplicationSubmitted($loan));
+        }
 
         return redirect()->route('customer.MyLoan')
                          ->with('success', 'Application submitted successfully.');
