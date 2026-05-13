@@ -42,6 +42,14 @@ class RepaymentController extends Controller
                 $activeLoan->refresh()->load('amortizationSchedules.penalties');
 
                 $schedules = $activeLoan->amortizationSchedules
+                    ->filter(function ($schedule) {
+                        $status = $schedule->status?->value ?? (string) $schedule->status;
+
+                        return in_array($status, [
+                            ScheduleStatus::Unpaid->value,
+                            ScheduleStatus::Overdue->value,
+                        ], true);
+                    })
                     ->sortBy('due_date')
                     ->map(function ($schedule) {
                         return [

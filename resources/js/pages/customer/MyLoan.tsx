@@ -143,7 +143,13 @@ export default function MyLoan({
       {
         key: 'loanSchedule' as TabKey,
         label: 'Payment Schedule',
-        content: <LoanScheduleTab amortizationSchedule={normalizedData.amortizationSchedule} />,
+        content: (
+          <LoanScheduleTab
+            amortizationSchedule={normalizedData.amortizationSchedule}
+            loanAmount={safeLoan.principal}
+            interestType={safeLoan.interestType}
+          />
+        ),
       },
       {
         key: 'loanTerms' as TabKey,

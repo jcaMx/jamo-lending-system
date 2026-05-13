@@ -175,6 +175,8 @@ class DisbursementService
                 'merged_release' => true,
             ]);
 
+            $this->deleteOtherDisbursementsForLoan((int) $locked->loan_id, (int) $locked->ID);
+
             return $locked->fresh();
         });
     }
@@ -320,6 +322,8 @@ class DisbursementService
                 'reference_no' => $locked->reference_no,
             ]);
 
+            $this->deleteOtherDisbursementsForLoan((int) $locked->loan_id, (int) $locked->ID);
+
             return $locked->fresh();
         });
     }
@@ -351,8 +355,35 @@ class DisbursementService
                 'failure_reason' => $failureReason,
             ]);
 
+            $this->deleteOtherDisbursementsForLoan((int) $locked->loan_id, (int) $locked->ID);
+
             return $locked->fresh();
         });
+    }
+
+    private function deleteOtherDisbursementsForLoan(int $loanId, int $keepDisbursementId): void
+    {
+        Disbursement::query()
+            ->where('loan_id', $loanId)
+            ->where('ID', '<>', $keepDisbursementId)
+            ->whereIn('status', ['Pending', 'Processing', 'Failed'])
+            ->with(['voucher.chequeDetail', 'events'])
+            ->get()
+            ->each(function (Disbursement $disbursement) {
+                if ($disbursement->voucher?->chequeDetail) {
+                    $disbursement->voucher->chequeDetail->delete();
+                }
+
+                if ($disbursement->voucher) {
+                    $disbursement->voucher->delete();
+                }
+
+                if ($disbursement->events()->exists()) {
+                    $disbursement->events()->delete();
+                }
+
+                $disbursement->delete();
+            });
     }
 
     private function addEvent(Disbursement $disbursement, string $eventType, ?string $oldStatus, ?string $newStatus, ?int $actorId, array $payload = []): void

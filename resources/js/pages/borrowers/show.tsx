@@ -175,7 +175,13 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       {
         key: 'loanSchedule' as TabKey,
         label: 'Loan Schedule',
-        content: <LoanScheduleTab amortizationSchedule={amortizationSchedule} />,
+        content: (
+          <LoanScheduleTab
+            amortizationSchedule={amortizationSchedule}
+            loanAmount={safeLoan.principal}
+            interestType={safeLoan.interest_type || safeLoan.interestType}
+          />
+        ),
       },
       {
         key: 'loanCollateral' as TabKey,

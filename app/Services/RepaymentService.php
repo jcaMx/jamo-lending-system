@@ -16,6 +16,16 @@ class RepaymentService
 {
     private const MONEY_EPSILON = 0.01;
 
+    private function scheduleOutstandingAmount(AmortizationSchedule $schedule): float
+    {
+        return round(max(0, (float) (
+            $schedule->installment_amount
+            + $schedule->penalty_amount
+            - $schedule->amount_paid
+            - $schedule->rebate_amount
+        )), 2);
+    }
+
     public function fetchBorrowersForRepayment()
     {
         $borrowers = Borrower::with(['loans.amortizationSchedules'])->get();
@@ -293,9 +303,7 @@ class RepaymentService
             ->get();
 
         foreach ($unpaidSchedules as $schedule) {
-            $totalDue = round((float) ($schedule->installment_amount + $schedule->penalty_amount), 2);
-            $amountPaid = round((float) $schedule->amount_paid, 2);
-            if (($totalDue - $amountPaid) > self::MONEY_EPSILON) {
+            if ($this->scheduleOutstandingAmount($schedule) > self::MONEY_EPSILON) {
                 return false;
             }
         }
@@ -316,8 +324,7 @@ class RepaymentService
 
         foreach ($unpaidSchedules as $schedule) {
             // Only void interest if schedule hasn't been fully paid yet
-            $totalDue = $schedule->installment_amount + $schedule->penalty_amount;
-            if ($schedule->amount_paid < $totalDue) {
+            if ($this->scheduleOutstandingAmount($schedule) > self::MONEY_EPSILON) {
                 // Void the interest - reduce total due by interest amount
                 $schedule->interest_amount = 0;
                 $schedule->save();
@@ -333,15 +340,12 @@ class RepaymentService
      */
     private function updateLoanBalance(Loan $loan): void
     {
-        $totalPaid = $loan->amortizationSchedules()->sum('amount_paid');
-        
-        // Calculate total due across all schedules
-        $totalDue = 0;
+        $balanceRemaining = 0;
         foreach ($loan->amortizationSchedules()->get() as $schedule) {
-            $totalDue += $schedule->installment_amount + $schedule->penalty_amount;
+            $balanceRemaining += $this->scheduleOutstandingAmount($schedule);
         }
 
-        $loan->balance_remaining = max(0, $totalDue - $totalPaid);
+        $loan->balance_remaining = round(max(0, $balanceRemaining), 2);
         $loan->save();
     }
 
@@ -350,9 +354,10 @@ class RepaymentService
         return $loan->amortizationSchedules
             ->whereIn('status', ['Unpaid', 'Overdue'])
             ->sum(function ($s) {
-                return ($s->installment_amount ?? 0)
+                return max(0, ($s->installment_amount ?? 0)
                     + ($s->penalty_amount ?? 0)
-                    - ($s->amount_paid ?? 0);
+                    - ($s->amount_paid ?? 0)
+                    - ($s->rebate_amount ?? 0));
             });
     }
 
