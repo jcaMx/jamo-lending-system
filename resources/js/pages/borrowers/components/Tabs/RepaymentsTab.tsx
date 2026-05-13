@@ -43,7 +43,6 @@ export default function RepaymentsTab({ repayments = [] }: RepaymentsTabProps) {
               <th className="px-3 py-2 text-left">Method</th>
               <th className="px-3 py-2 text-left">Collection Date</th>
               <th className="px-3 py-2 text-left">Paid Amount</th>
-              <th className="px-3 py-2 text-left">Action</th>
             </tr>
           </thead>
 
@@ -59,16 +58,12 @@ export default function RepaymentsTab({ repayments = [] }: RepaymentsTabProps) {
                   <td className="px-3 py-2 font-semibold">
                     ₱{Number(r.paidAmount ?? 0).toLocaleString("en-PH")}
                   </td>
-
-                  <td className="px-3 py-2 text-orange-500 cursor-pointer">
-                    Edit
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={5}
                   className="px-3 py-3 text-center text-gray-500"
                 >
                   No repayments yet.
