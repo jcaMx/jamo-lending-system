@@ -1,5 +1,6 @@
 import CustomerSidebar from '@/components/sidebars/CustomerSidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
+import { TopBar } from '@/components/dashboard/TopBar'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -11,6 +12,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex h-full w-full bg-gray-50 overflow-hidden">
         <CustomerSidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
+          <TopBar />
           <div className="flex-1 overflow-auto p-4 lg:p-8">
             {children}
           </div>

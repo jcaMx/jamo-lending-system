@@ -56,7 +56,7 @@ export default function CustomerSidebar() {
 
   return (
     <Sidebar
-      collapsible="none"
+      collapsible="offcanvas"
       variant="floating"
       className="bg-[#192132] text-white w-64 h-full flex flex-col"
     >
