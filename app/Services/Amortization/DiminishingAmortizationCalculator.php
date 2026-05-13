@@ -39,7 +39,7 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
         bool $isNewLoan = true
     ): array
     {
-        $remaining = $principal;
+        $remaining = round($principal, 2);
         $frequency = $loan->repayment_frequency;
         $rate = $loan->interest_rate / 100;
 
@@ -66,21 +66,23 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
             'rate' => $periodRate,
             'term' => $totalInstallments,
         ]);
+        $roundedInstallmentAmount = round($installmentAmount, 2);
 
         for ($i = 1; $i <= $totalInstallments; $i++) {
-            $interest = $this->formulaService->evaluate($interestFormula, [
+            $interest = round($this->formulaService->evaluate($interestFormula, [
                 'remaining_principal' => $remaining,
                 'rate' => $periodRate,
-            ]);
+            ]), 2);
 
             $principalPayment = $i === $totalInstallments
                 ? $remaining
-                : $installmentAmount - $interest;
+                : round($roundedInstallmentAmount - $interest, 2);
 
-            $currentInstallmentAmount = $principalPayment + $interest;
+            $currentInstallmentAmount = $i === $totalInstallments
+                ? round($principalPayment + $interest, 2)
+                : $roundedInstallmentAmount;
 
-            $remaining -= $principalPayment;
-            $remaining = max(0, $remaining);
+            $remaining = round(max(0, $remaining - $principalPayment), 2);
 
             if ($i === $totalInstallments && $endDate) {
                 $dueDate = $endDate->copy();
@@ -93,8 +95,8 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
 
             $results[] = [
                 'installment_no' => $i,
-                'installment_amount' => round($currentInstallmentAmount, 2),
-                'interest_amount' => round($interest, 2),
+                'installment_amount' => $currentInstallmentAmount,
+                'interest_amount' => $interest,
                 'due_date' => $adjustedDueDate,
                 'holiday_id' => $holiday?->ID,
             ];
