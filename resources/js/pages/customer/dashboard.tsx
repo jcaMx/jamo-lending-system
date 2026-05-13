@@ -134,7 +134,7 @@ const CustomerDashboard = () => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   };
- 
+
   const normalizedLoans: Loan[] = loans.map((loan) => ({
     id: String(loan.id ?? loan.ID ?? loan.loanNo ?? loan.loan_no ?? ""),
     loanNo: String(loan.loanNo ?? loan.loan_no ?? loan.ID ?? loan.id ?? ""),
@@ -225,17 +225,20 @@ const CustomerDashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: stat.color ? `${stat.color}15` : '#f3f4f6' }}>
-                  <stat.icon className="w-5 h-5" style={{ color: stat.color || '#6B7280' }} />
+            <div key={index} className="bg-white p-6 rounded-3xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] hover:shadow-lg transition-all duration-300 group">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.title}</p>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ backgroundColor: stat.color ? `${stat.color}15` : '#f3f4f6' }}>
+                  <stat.icon className="w-6 h-6" style={{ color: stat.color || '#6B7280' }} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
+              <p className="text-3xl font-bold text-gray-900 tracking-tight">{stat.value}</p>
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                {stat.description}
+              </p>
             </div>
           ))}
         </div>
@@ -255,112 +258,118 @@ const CustomerDashboard = () => {
                     loanStatusConfig[loan.status as keyof typeof loanStatusConfig] ??
                     defaultLoanConfig;
 
-      return (
-        <div
-          key={loan.id}
-          className={[
-            "rounded-2xl border bg-white shadow-sm ring-1 ring-gray-200/70",
-            config.border,
-          ].join(" ")}
-        >
-          <div
-            className={[
-              "flex items-center justify-between rounded-t-2xl px-5 py-4 text-white",
-              config.bg,
-            ].join(" ")}
-          >
-            <div>
-              <p className="text-xs text-white/70">Loan No.</p>
-              <p className="text-lg font-semibold">#{loan.loanNo}</p>
-            </div>
-            <span
-              className={[
-                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
-                config.pillBg,
-                config.pillText,
-              ].join(" ")}
-            >
-              {loan.status}
-            </span>
-          </div>
+                  return (
+                    <div
+                      key={loan.id}
+                      className={[
+                        "rounded-2xl border bg-white shadow-sm ring-1 ring-gray-200/70",
+                        config.border,
+                      ].join(" ")}
+                    >
+                      <div
+                        className={[
+                          "flex items-center justify-between rounded-t-2xl px-5 py-4 text-white",
+                          config.bg,
+                        ].join(" ")}
+                      >
+                        <div>
+                          <p className="text-xs text-white/70">Loan No.</p>
+                          <p className="text-lg font-semibold">#{loan.loanNo}</p>
+                        </div>
+                        <span
+                          className={[
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
+                            config.pillBg,
+                            config.pillText,
+                          ].join(" ")}
+                        >
+                          {loan.status}
+                        </span>
+                      </div>
 
-          <div className="p-5 space-y-4">
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Principal</p>
-                  <p className="text-base font-semibold text-gray-900">
-                    {formatCurrency(loan.principal)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Released Amount</p>
-                  <p className="text-base font-semibold text-gray-900">
-                    {formatCurrency(loan.releasedAmount)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Balance</p>
-                  <p className="text-base font-semibold text-gray-900">
-                    {formatCurrency(loan.balance)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Amount Due</p>
-                  <p className="text-base font-semibold text-amber-600">
-                    {formatCurrency(loan.due)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Penalty</p>
-                  <p className="text-base font-semibold text-rose-600">
-                    {formatCurrency(loan.penalty)}
-                  </p>
-                </div>
-              </div>
+                      <div className="p-6 space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Principal</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {formatCurrency(loan.principal)}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Released Amount</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {formatCurrency(loan.releasedAmount)}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {formatCurrency(loan.balance)}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Amount Due</p>
+                            <p className="text-lg font-bold text-amber-600">
+                              {formatCurrency(loan.due)}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Penalty</p>
+                            <p className="text-lg font-bold text-rose-600">
+                              {formatCurrency(loan.penalty)}
+                            </p>
+                          </div>
+                        </div>
 
-              <div className="border-t pt-4 grid grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Next Payment</p>
-                    <p className="font-medium text-gray-900">
-                      {formatDate(loan.nextPaymentDate)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Maturity</p>
-                    <p className="font-medium text-gray-900">
-                      {formatDate(loan.maturityDate)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Release Date</p>
-                    <p className="font-medium text-gray-900">
-                      {formatDate(loan.releasedDate)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                        <div className="border-t border-gray-100 pt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+                              <Calendar className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Next Payment</p>
+                              <p className="font-semibold text-gray-900">
+                                {formatDate(loan.nextPaymentDate)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+                              <Calendar className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Maturity</p>
+                              <p className="font-semibold text-gray-900">
+                                {formatDate(loan.maturityDate)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+                              <Calendar className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Release Date</p>
+                              <p className="font-semibold text-gray-900">
+                                {formatDate(loan.releasedDate)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-              <div className="flex flex-wrap gap-2 border-t pt-4 text-xs">
-                <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
-                  {loan.repaymentType}
-                </span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
-                  {loan.interestType}
-                </span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
-                  {loan.interestRate}% Interest
-                </span>
-              </div>
-            </div>
-          </div>
+                        <div className="flex flex-wrap gap-2 border-t pt-4 text-xs">
+                          <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
+                            {loan.repaymentType}
+                          </span>
+                          <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
+                            {loan.interestType}
+                          </span>
+                          <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
+                            {loan.interestRate}% Interest
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   );
                 })
               ) : (
@@ -375,30 +384,30 @@ const CustomerDashboard = () => {
                 <div className="flex items-center justify-between pt-4">
                   <h2 className="text-lg font-bold text-gray-900">Loan History</h2>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   {normalizedLoans.filter((l) => l.status === "Paid").map((loan) => {
                     const config = loanStatusConfig[loan.status as keyof typeof loanStatusConfig] ?? defaultLoanConfig;
                     return (
-                      <div key={loan.id} className="opacity-80">
-                        <div className={["rounded-2xl border bg-white shadow-sm ring-1 ring-gray-200/70", config.border].join(" ")}>
-                          <div className={["flex items-center justify-between rounded-t-2xl px-5 py-4 text-white", config.bg].join(" ")}>
+                      <div key={loan.id} className="opacity-80 hover:opacity-100 transition-opacity">
+                        <div className={["rounded-3xl border bg-white shadow-sm ring-1 ring-gray-200/70 overflow-hidden", config.border].join(" ")}>
+                          <div className={["flex items-center justify-between px-5 py-4 text-white", config.bg].join(" ")}>
                             <div>
-                              <p className="text-xs text-white/70">Loan No.</p>
-                              <p className="text-lg font-semibold">#{loan.loanNo}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-white/70">Loan No.</p>
+                              <p className="text-base font-bold">#{loan.loanNo}</p>
                             </div>
-                            <span className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold", config.pillBg, config.pillText].join(" ")}>
+                            <span className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider", config.pillBg, config.pillText].join(" ")}>
                               {loan.status}
                             </span>
                           </div>
-                          <div className="p-5 space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="p-5">
+                            <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <p className="text-xs font-medium text-gray-500">Principal</p>
-                                <p className="text-base font-semibold text-gray-900">{formatCurrency(loan.principal)}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Principal</p>
+                                <p className="text-base font-bold text-gray-900">{formatCurrency(loan.principal)}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-gray-500">Balance</p>
-                                <p className="text-base font-semibold text-gray-900">{formatCurrency(loan.balance)}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Balance</p>
+                                <p className="text-base font-bold text-gray-900">{formatCurrency(loan.balance)}</p>
                               </div>
                             </div>
                           </div>

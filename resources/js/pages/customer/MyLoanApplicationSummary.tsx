@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Head, useForm, usePage } from "@inertiajs/react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { Edit2 } from "lucide-react";
 
 type Loan = {
   id: number;
@@ -112,9 +113,9 @@ type FormData = {
 
 function ReadOnlyField({ label, value }: { label: string; value?: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-gray-500">{label}</p>
-      <p className="font-medium text-gray-900">{value || "-"}</p>
+    <div className="space-y-1">
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</p>
+      <p className="text-base font-bold text-gray-900">{value || "-"}</p>
     </div>
   );
 }
@@ -399,76 +400,87 @@ export default function MyLoanApplicationSummary({
       <Head title="Loan Application Summary" />
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="m-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-1.5">
-            <p className="text-xl font-semibold text-gray-900 md:text-2xl">Loan Application Summary</p>
-            <p className="max-w-xl text-sm text-gray-600">
-              Your application is currently pending review. You can edit your submission before it is reviewed.
+        <div className="mx-4 my-6 flex flex-col gap-6 md:flex-row md:items-start md:justify-between bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Application Summary</h1>
+            <p className="max-w-xl text-sm font-medium text-gray-400 leading-relaxed">
+              Your application is currently pending review. You can edit your submission before it is officially reviewed.
             </p>
-            {flash?.success ? <p className="text-sm text-emerald-600">{flash.success}</p> : null}
-            {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+            {flash?.success ? <p className="text-sm font-bold text-emerald-600 animate-fade-in">{flash.success}</p> : null}
+            {formError ? <p className="text-sm font-bold text-red-600 animate-fade-in">{formError}</p> : null}
           </div>
 
-          {!isEditing ? (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="inline-flex rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium transition hover:bg-amber-600"
-            >
-              Edit Application
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={processing}
-                className="inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {processing ? "Saving..." : "Save Changes"}
-              </button>
+          <div className="flex shrink-0">
+            {!isEditing ? (
               <button
                 type="button"
-                onClick={handleCancel}
-                disabled={processing}
-                className="inline-flex rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={() => setIsEditing(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-amber-500 px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:bg-amber-600 shadow-md hover:shadow-amber-100 uppercase tracking-wider"
               >
-                Cancel
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit Application
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <button
+                  type="submit"
+                  disabled={processing}
+                  className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70 shadow-md hover:shadow-emerald-100 uppercase tracking-wider"
+                >
+                  {processing ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={processing}
+                  className="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-600 transition-all duration-300 hover:bg-gray-50 uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="m-4 rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-800">Applicant</h2>
-          <div className="grid gap-4 text-sm md:grid-cols-2">
+        <div className="mx-4 my-6 rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+          <h2 className="mb-8 text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <span className="w-1 h-6 bg-orange-500 rounded-full"></span>
+            Personal Information
+          </h2>
+          <div className="grid gap-8 text-sm grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {isEditing ? (
               <>
                 <Field label="First Name" value={data.first_name} onChange={(value) => setData("first_name", value)} />
                 <Field label="Last Name" value={data.last_name} onChange={(value) => setData("last_name", value)} />
                 <Field label="Email" value={data.email} onChange={(value) => setData("email", value)} type="email" />
                 <Field label="Mobile" value={data.mobile} onChange={(value) => setData("mobile", value)} />
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2 lg:col-span-3">
                   <Field label="Address" value={data.address} onChange={(value) => setData("address", value)} />
                 </div>
               </>
             ) : (
               <>
                 <ReadOnlyField label="Name" value={authUser.name ?? `${data.first_name} ${data.last_name}`.trim()} />
-                <ReadOnlyField label="Email" value={authUser.email} />
-                <ReadOnlyField label="Mobile" value={authUser.mobile} />
-                <ReadOnlyField label="Address" value={authUser.address} />
+                <ReadOnlyField label="Email Address" value={authUser.email} />
+                <ReadOnlyField label="Mobile Number" value={authUser.mobile} />
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <ReadOnlyField label="Residential Address" value={authUser.address} />
+                </div>
               </>
             )}
           </div>
         </div>
 
-        <div className="m-4 rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-800">Loan Details</h2>
-          <div className="grid gap-4 text-sm md:grid-cols-2">
-            <ReadOnlyField label="Loan No." value={pendingLoan.loanNo} />
+        <div className="mx-4 my-6 rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+          <h2 className="mb-8 text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <span className="w-1 h-6 bg-orange-500 rounded-full"></span>
+            Loan Details
+          </h2>
+          <div className="grid gap-8 text-sm grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <ReadOnlyField label="Loan Number" value={pendingLoan.loanNo} />
             <div>
-              <p className="text-gray-500">Status</p>
-              <span className="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold uppercase text-yellow-700">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+              <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-200">
                 {pendingLoan.status}
               </span>
             </div>

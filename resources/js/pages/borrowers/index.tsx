@@ -271,7 +271,7 @@ export default function Index({ borrowers }: { borrowers: Borrower[] }) {
         <Button
           disabled={currentPage === 1}
           onClick={() => setCurrentPage((prev) => prev - 1)}
-          className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-40"
+          className="bg-amber-400 text-gray-800 px-4 py-2 rounded-lg hover:bg-amber-500 disabled:opacity-40"
         >
           Previous
         </Button>

@@ -123,121 +123,159 @@ export default function CustomerProfile() {
       <Head title="My Profile" />
 
       <div className="space-y-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1.5">
-            <p className="text-xl md:text-2xl font-semibold text-gray-900">My Profile</p>
-            <p className="text-sm text-gray-600 max-w-xl">
-              Manage your personal details and keep your account information up to date.
-            </p>
-          </div>
-          {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(true)}
-              disabled={!borrower}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-900 rounded-full border border-gray-200 hover:bg-gray-50 transition"
-            >
-              <Edit2 className="w-4 h-4" />
-              Edit Profile
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition"
-              >
-                <Save className="w-4 h-4" />
-                Save
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex items-center gap-2 px-4 py-2 text-white rounded-full transition"
-                style={{ backgroundColor: "#D97706" }}
-              >
-                <X className="w-4 h-4" />
-                Cancel
-              </button>
+        <div className="bg-white rounded-3xl p-8 shadow-sm ring-1 ring-gray-200/60 border-l-4 border-[#D97706]">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+              <div className="h-20 w-20 rounded-3xl bg-[#D97706]/10 flex items-center justify-center text-[#D97706] text-3xl font-bold shadow-inner">
+                {displayProfile.name?.charAt(0)}
+              </div>
+
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                  {displayProfile.name}
+                </h1>
+                <p className="text-sm font-medium text-gray-400 mt-1 uppercase tracking-widest">
+                  Member since {displayProfile.joinDate || "—"}
+                </p>
+              </div>
             </div>
-          )}
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  disabled={!borrower}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#D97706] text-white rounded-2xl hover:bg-orange-600 transition-all duration-300 shadow-md hover:shadow-orange-200 font-bold text-sm uppercase tracking-wider disabled:opacity-50"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Edit Profile
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-all duration-300 shadow-md hover:shadow-emerald-200 font-bold text-sm uppercase tracking-wider"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-all duration-300 font-bold text-sm uppercase tracking-wider"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
+            {/* Profile Info Card */}
             {borrower ? (
-              <ProfileCard customer={displayProfile} />
+              <div className="bg-white rounded-3xl shadow-sm ring-1 ring-gray-200/70 p-8">
+                <h3 className="text-lg font-bold text-gray-900 mb-8 tracking-tight">
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0">
+                      <Mail className="w-5 h-5 text-[#D97706]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Email Address</p>
+                      <p className="font-bold text-gray-900 break-all">{displayProfile.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0">
+                      <Phone className="w-5 h-5 text-[#D97706]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Contact Number</p>
+                      <p className="font-bold text-gray-900">{displayProfile.contact}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4 sm:col-span-2">
+                    <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0">
+                      <MapPin className="w-5 h-5 text-[#D97706]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Residential Address</p>
+                      <p className="font-bold text-gray-900 leading-relaxed">{displayProfile.address}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : (
               <NoLoansPlaceholder message="You don't have a borrower profile yet. Please apply for a loan to create one." />
             )}
 
             {/* Profile Edit Form */}
             {isEditing && borrower && (
-              <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Profile Information</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <div className="bg-white rounded-3xl shadow-sm ring-1 ring-gray-200/70 p-8 border-t-4 border-emerald-500">
+                <h3 className="text-lg font-bold text-gray-900 mb-8 tracking-tight">
+                  Edit Profile Information
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
                     <input
                       type="text"
                       value={editedProfile.name}
                       onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email</label>
                     <input
                       type="email"
                       value={editedProfile.email}
                       onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number</label>
                     <input
                       type="tel"
                       value={editedProfile.contact}
                       onChange={(e) => setEditedProfile({...editedProfile, contact: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">City</label>
+                    <input
+                      type="text"
+                      value={editedProfile.city}
+                      onChange={(e) => setEditedProfile({...editedProfile, city: e.target.value})}
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Address</label>
                     <textarea
                       value={editedProfile.address}
                       onChange={(e) => setEditedProfile({...editedProfile, address: e.target.value})}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900 resize-none"
                     />
                   </div>
-                  <div>
-
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Zip Code</label>
+                    <input
+                      type="text"
+                      value={editedProfile.zipcode}
+                      onChange={(e) => setEditedProfile({...editedProfile, zipcode: e.target.value})}
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
+                    />
                   </div>
-                  
-                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                  <input
-                    type="text"
-                    value={editedProfile.city}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, city: e.target.value })
-                    }
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D97706]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
-                  <input
-                    type="text"
-                    value={editedProfile.zipcode}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, zipcode: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D97706]"
-                  />
-                </div>
-
                 </div>
               </div>
             )}
