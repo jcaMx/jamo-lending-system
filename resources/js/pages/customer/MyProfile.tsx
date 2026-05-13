@@ -1,10 +1,10 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileCard } from "@/components/dashboard/ProfileCard";
 import NoLoansPlaceholder from "@/components/dashboard/NoLoansPlaceholder";
 import { useEffect, useMemo, useState } from 'react';
 import { Mail, Phone, MapPin, Calendar, User, Edit2, Save, X } from 'lucide-react';
-import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 
 
@@ -91,6 +91,8 @@ export default function CustomerProfile() {
     });
   }, [displayProfile]);
 
+
+
   const handleSave = () => {
     router.put(route('customer.profile.update'), {
       first_name: editedProfile.name.split(' ')[0],
@@ -100,6 +102,14 @@ export default function CustomerProfile() {
       address: editedProfile.address,
       city: editedProfile.city,
       zipcode: editedProfile.zipcode,
+    }, {
+      onSuccess: () => {
+        setIsEditing(false);
+        toast.success('Profile updated successfully!');
+      },
+      onError: () => {
+        toast.error('Failed to update profile. Please check the inputs.');
+      }
     });
   };
 
