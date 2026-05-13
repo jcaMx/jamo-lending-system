@@ -382,6 +382,11 @@ class LoanController extends Controller
 
     public function show(Loan $loan)
     {
+        if ($loan->status === 'Active') {
+            $this->loanService->calculatePenalties($loan);
+            $loan->refresh();
+        }
+
         $loan->load([
             'borrower',
             'borrower.files.documentType',

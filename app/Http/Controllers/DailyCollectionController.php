@@ -84,10 +84,10 @@ class DailyCollectionController extends Controller
                 'id' => $schedule->ID,
                 'name' => $schedule->loan->borrower->first_name.' '.$schedule->loan->borrower->last_name,
                 'loanNo' => $schedule->loan->ID,
-                'principal' => $schedule->installment_amount,
+                'principal' => max(0, $schedule->installment_amount - $schedule->interest_amount),
                 'interest' => $schedule->interest_amount,
                 'penalty' => $schedule->penalty_amount,
-                'total_due' => $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount - $schedule->amount_paid,
+                'total_due' => $schedule->installment_amount + $schedule->penalty_amount - $schedule->amount_paid - $schedule->rebate_amount,
                 'collector' => $schedule->loan->approver->name ?? '',
                 'collection_date' => $schedule->due_date->toDateString(),
             ];

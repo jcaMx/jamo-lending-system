@@ -329,12 +329,12 @@ const handleSubmit = (e: React.FormEvent) => {
                           <tr>
                             <th className="px-4 py-3 text-left font-semibold">#</th>
                             <th className="px-4 py-3 text-left font-semibold">Due Date</th>
-                            <th className="px-4 py-3 text-left font-semibold">Installment</th>
+                            <th className="px-4 py-3 text-left font-semibold">Scheduled Payment</th>
                             <th className="px-4 py-3 text-left font-semibold">Interest</th>
                             <th className="px-4 py-3 text-left font-semibold">Penalty</th>
                             <th className="px-4 py-3 text-left font-semibold">Rebate</th>
                             <th className="px-4 py-3 text-left font-semibold">Paid</th>
-                            <th className="px-4 py-3 text-left font-semibold">Total Due</th>
+                            <th className="px-4 py-3 text-left font-semibold">Amount Due</th>
                             <th className="px-4 py-3 text-left font-semibold">Status</th>
                             <th className="px-4 py-3 text-center font-semibold">Action</th>
                           </tr>

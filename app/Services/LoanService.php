@@ -85,7 +85,8 @@ class LoanService
             $loan->released_amount = $releasedAmount;
             $loan->released_date = $releasedDate ? Carbon::parse($releasedDate) : Carbon::now();
 
-            // Set start_date to disbursement date (first installment due starts from this baseline)
+            // Keep start_date as the release baseline. Calculators derive the first due date
+            // by adding one repayment interval from this date.
             $loan->start_date = $loan->released_date->copy();
 
             // Calculate end_date based on term and repayment frequency
@@ -98,10 +99,10 @@ class LoanService
 
             $endDate = $loan->start_date->copy();
             $endDate = match ($loan->repayment_frequency) {
-                'Weekly' => $endDate->addWeeks($totalInstallments - 1),
-                'Monthly' => $endDate->addMonthsNoOverflow($totalInstallments - 1),
-                'Yearly' => $endDate->addYears($totalInstallments - 1),
-                default => $endDate->addMonthsNoOverflow($totalInstallments - 1)
+                'Weekly' => $endDate->addWeeks($totalInstallments),
+                'Monthly' => $endDate->addMonthsNoOverflow($totalInstallments),
+                'Yearly' => $endDate->addYears($totalInstallments),
+                default => $endDate->addMonthsNoOverflow($totalInstallments)
             };
 
             if ((int) $endDate->format('Y') > 9999) {
@@ -181,8 +182,12 @@ class LoanService
             // Use provided baseAmount, or released_amount, or fallback to principal_amount
             $amount = $baseAmount ?? $loan->released_amount ?? $loan->principal_amount;
 
+            if ($baseAmount !== null) {
+                $loan->released_amount = $amount;
+            }
+
             // Generate new schedules
-            $schedules = $calculator->generate($loan, $amount);
+            $schedules = $calculator->generate($loan);
 
             foreach ($schedules as $item) {
                 $loan->amortizationSchedules()->create([

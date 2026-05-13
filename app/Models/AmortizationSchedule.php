@@ -80,7 +80,6 @@ class AmortizationSchedule extends Model
     {
         return max(0, (
             $this->installment_amount +
-            $this->interest_amount +
             $this->penalty_amount -
             $this->amount_paid -
             $this->rebate_amount

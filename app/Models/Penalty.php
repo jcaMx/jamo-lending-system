@@ -26,6 +26,8 @@ class Penalty extends Model
 
     protected $primaryKey = 'ID';
 
+    const GRACE_PERIOD_DAYS = 3;
+
     const PENALTY_RATE = 0.06;
 
     protected $fillable = [

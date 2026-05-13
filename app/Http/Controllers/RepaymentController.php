@@ -56,7 +56,6 @@ class RepaymentController extends Controller
                             'status' => $schedule->status?->value ?? 'Unpaid',
                             'total_due' => round(max(0, (float)(
                                 $schedule->installment_amount +
-                                $schedule->interest_amount +
                                 $schedule->penalty_amount -
                                 $schedule->amount_paid -
                                 $schedule->rebate_amount

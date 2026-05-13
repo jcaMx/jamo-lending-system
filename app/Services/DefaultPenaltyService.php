@@ -33,6 +33,7 @@ class DefaultPenaltyService implements IPenaltyCalculator
      * Calculate penalties for overdue loan schedules.
      *
      * Business rules:
+     * - Penalty is applied only after a 3-day grace period from the due date.
      * - 6% penalty on overdue amounts.
      * - If both capital and interest are unpaid, penalty applies to total balance.
      * - If interest has already been paid, penalty applies only to the capital of the current term.
@@ -42,8 +43,11 @@ class DefaultPenaltyService implements IPenaltyCalculator
     public function calculate(Loan $loan): void
     {
         DB::transaction(function () use ($loan) {
+            $penaltyCutoff = Carbon::today()->subDays(Penalty::GRACE_PERIOD_DAYS);
+
             $overdueSchedules = $loan->amortizationSchedules()
                 ->where('status', ScheduleStatus::Overdue->value)
+                ->whereDate('due_date', '<', $penaltyCutoff->toDateString())
                 ->orderBy('due_date')
                 ->get();
 

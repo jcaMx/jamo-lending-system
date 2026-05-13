@@ -585,7 +585,7 @@ export function LoanDetailsView({
         tabs.push({
           key: 'loanSchedule' as TabKey,
           label: 'Loan Schedule',
-          content: <LoanScheduleTab amortizationSchedule={amortizationSchedule} />,
+          content: <LoanScheduleTab amortizationSchedule={amortizationSchedule} loanAmount={loan.principal_amount} />,
         });
       }
 

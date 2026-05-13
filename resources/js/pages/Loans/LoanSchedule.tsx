@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { route } from 'ziggy-js';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import LoanScheduleTab from '@/pages/borrowers/components/Tabs/LoanScheduleTab';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -41,39 +41,47 @@ interface LoanScheduleProps {
   };
 }
 
+const formatCurrency = (value?: number | null) =>
+  new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value ?? 0));
+
 export default function LoanSchedule({ loan }: LoanScheduleProps) {
   const schedules = loan.amortizationSchedules || [];
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Loan Amortization Schedule" />
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-gray-800">Loan Amortization Schedule</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="mt-1 text-gray-600">
               Loan #{loan.ID} - {loan.borrower.first_name} {loan.borrower.last_name}
             </p>
           </div>
           <Button
             onClick={() => router.visit(route('loans.view-approved'))}
-            className="bg-yellow-500 hover:bg-yellow-600"
+            className="bg-[#FABF24] text-black hover:bg-[#f8b80f]"
           >
             Back to Loans
           </Button>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">Loan Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-xl font-semibold text-gray-700">Loan Summary</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm text-gray-600">Principal Amount</p>
-              <p className="font-medium">₱{loan.principal_amount.toLocaleString()}</p>
+              <p className="font-medium">{formatCurrency(loan.principal_amount)}</p>
             </div>
             {loan.released_amount && (
               <div>
                 <p className="text-sm text-gray-600">Released Amount</p>
-                <p className="font-medium">₱{loan.released_amount.toLocaleString()}</p>
+                <p className="font-medium">{formatCurrency(loan.released_amount)}</p>
               </div>
             )}
             <div>
@@ -95,65 +103,9 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
           </div>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">Amortization Schedule</h2>
-          {schedules.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No amortization schedule available for this loan.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className="text-right">Installment Amount</TableHead>
-                    <TableHead className="text-right">Interest Amount</TableHead>
-                    <TableHead className="text-right">Penalty Amount</TableHead>
-                    <TableHead className="text-right">Rebate</TableHead>
-                    <TableHead className="text-right">Amount Paid</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {schedules.map((schedule) => (
-                    <TableRow key={schedule.ID}>
-                      <TableCell>{schedule.installment_no}</TableCell>
-                      <TableCell>
-                        {schedule.due_date ? new Date(schedule.due_date).toLocaleDateString() : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₱{schedule.installment_amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₱{schedule.interest_amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₱{schedule.penalty_amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {schedule.rebate_amount > 0 ? `₱${schedule.rebate_amount.toLocaleString()}` : '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₱{schedule.amount_paid.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs ${schedule.status === 'Paid'
-                          ? 'bg-green-100 text-green-800'
-                          : schedule.status === 'Overdue'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                          {schedule.status}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-xl font-semibold text-gray-700">Amortization Schedule</h2>
+          <LoanScheduleTab amortizationSchedule={schedules} loanAmount={loan.principal_amount} />
         </div>
       </div>
     </AppLayout>

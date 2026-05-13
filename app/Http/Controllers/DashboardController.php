@@ -75,7 +75,7 @@ class DashboardController extends Controller
                     'borrower_name' => $schedule->loan->borrower->first_name.' '.$schedule->loan->borrower->last_name,
                     'installment_no' => $schedule->installment_no,
                     'due_date' => $schedule->due_date->toDateString(),
-                    'total_due' => (float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount - $schedule->amount_paid),
+                    'total_due' => (float) ($schedule->installment_amount + $schedule->penalty_amount - $schedule->amount_paid - $schedule->rebate_amount),
                     'days_until_due' => Carbon::now()->diffInDays($schedule->due_date, false),
                 ];
             });
