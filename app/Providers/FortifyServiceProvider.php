@@ -33,7 +33,10 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         Fortify::authenticateUsing(function (Request $request) {
-            $user = \App\Models\User::where('email', $request->email)->first();
+            // Check both email and username
+            $user = \App\Models\User::where('email', $request->email)
+                ->orWhere('username', $request->email)
+                ->first();
 
             if (!$user) {
                 return null;
@@ -45,9 +48,9 @@ class FortifyServiceProvider extends ServiceProvider
                     return $user;
                 }
             } catch (\RuntimeException $e) {
-                // If it crashes because the database value isn't a valid Bcrypt hash,
-                // check if it's a plain-text match (legacy import)
-                if ($request->password === $user->password) {
+                // Fallback for legacy plain-text passwords
+                if ($request->password === trim($user->password)) {
+                    // Auto-hash for future security
                     $user->password = \Hash::make($request->password);
                     $user->save();
                     return $user;
