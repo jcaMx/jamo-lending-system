@@ -111,11 +111,10 @@ class LoanService
 
             $loan->end_date = $endDate;
 
-            // Use released amount as basis of schedule
-            $loan->balance_remaining = $releasedAmount;
+            $loan->balance_remaining = (float) $loan->principal_amount;
             $loan->save();
 
-            $schedules = $this->generateAmortization($loan, $releasedAmount);
+            $schedules = $this->generateAmortization($loan);
             $loan->balance_remaining = $schedules->sum('installment_amount');
             $loan->save();
         });
@@ -178,13 +177,6 @@ class LoanService
         return DB::transaction(function () use ($loan, $calculator, $baseAmount) {
             // Delete old schedules if exist
             $loan->amortizationSchedules()->delete();
-
-            // Use provided baseAmount, or released_amount, or fallback to principal_amount
-            $amount = $baseAmount ?? $loan->released_amount ?? $loan->principal_amount;
-
-            if ($baseAmount !== null) {
-                $loan->released_amount = $amount;
-            }
 
             // Generate new schedules
             $schedules = $calculator->generate($loan);

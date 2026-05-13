@@ -17,7 +17,7 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
 
-        $principal = (float) $loan->released_amount ?: (float) $loan->principal_amount;
+        $principal = (float) $loan->principal_amount;
 
         return $this->calculateSchedules($loan, $formula, $principal);
     }

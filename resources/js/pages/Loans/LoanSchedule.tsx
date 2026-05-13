@@ -30,6 +30,7 @@ interface LoanScheduleProps {
     principal_amount: number;
     released_amount?: number;
     interest_rate: number;
+    interest_type: string;
     term_months: number;
     repayment_frequency: string;
     borrower: {
@@ -105,7 +106,11 @@ export default function LoanSchedule({ loan }: LoanScheduleProps) {
 
         <div className="rounded-lg bg-white p-6 shadow-md">
           <h2 className="mb-4 text-xl font-semibold text-gray-700">Amortization Schedule</h2>
-          <LoanScheduleTab amortizationSchedule={schedules} loanAmount={loan.principal_amount} />
+          <LoanScheduleTab
+            amortizationSchedule={schedules}
+            loanAmount={loan.principal_amount}
+            interestType={loan.interest_type}
+          />
         </div>
       </div>
     </AppLayout>

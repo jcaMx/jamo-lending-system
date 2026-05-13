@@ -12,6 +12,7 @@ type ScheduleRow = {
 interface LoanScheduleTabProps {
   amortizationSchedule: ScheduleRow[];
   loanAmount?: number | string | null;
+  interestType?: string | null;
 }
 
 const toNumber = (value?: number | string | null) => {
@@ -40,7 +41,17 @@ const dateLabel = (value?: string | null) => {
       });
 };
 
-export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: LoanScheduleTabProps) {
+const statusClass = (status?: string | null) => {
+  const normalized = (status ?? '').trim().toLowerCase();
+
+  if (normalized === 'paid') return 'bg-green-100 text-green-800';
+  if (normalized === 'overdue') return 'bg-red-100 text-red-800';
+  if (normalized === 'unpaid') return 'bg-yellow-100 text-yellow-800';
+
+  return 'bg-gray-100 text-gray-700';
+};
+
+export default function LoanScheduleTab({ amortizationSchedule, loanAmount, interestType }: LoanScheduleTabProps) {
   if (!amortizationSchedule.length) {
     return (
       <div className="rounded bg-gray-50 p-6 text-center text-gray-500">
@@ -97,6 +108,10 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: Lo
   const scheduledTotal = rows.reduce((sum, row) => sum + row.scheduledPayment, 0);
   const totalAmountDue = rows.reduce((sum, row) => sum + row.amountDue, 0);
   const scheduledPayment = rows[0]?.scheduledPayment ?? 0;
+  const normalizedInterestType = (interestType ?? '').trim().toLowerCase();
+  const isDiminishing = normalizedInterestType === 'diminishing';
+  const fixedPaymentLabel = isDiminishing ? 'Fixed principal/mo' : 'Monthly payment';
+  const fixedPaymentValue = isDiminishing ? rows[0]?.principalAmount ?? 0 : scheduledPayment;
   const showPenalty = rows.some((row) => toNumber(row.penalty_amount) > 0);
   const showRebate = rows.some((row) => toNumber(row.rebate_amount) > 0);
 
@@ -105,7 +120,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: Lo
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ['Loan amount', totalPrincipal],
-          ['Scheduled payment', scheduledPayment],
+          [fixedPaymentLabel, fixedPaymentValue],
           ['Total interest', totalInterest],
           ['Total amount to be paid', scheduledTotal],
         ].map(([label, value]) => (
@@ -117,7 +132,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: Lo
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse bg-white text-sm">
+        <table className="w-full min-w-[980px] border-collapse bg-white text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs font-semibold text-gray-600">
               <th className="px-3 py-3">Term</th>
@@ -134,6 +149,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: Lo
               {showRebate && <th className="px-3 py-3 text-right">Rebate</th>}
               <th className="px-3 py-3 text-right">Amount Due</th>
               <th className="px-3 py-3 text-right">Ending Balance</th>
+              <th className="px-3 py-3 text-center">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -153,6 +169,11 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: Lo
                 )}
                 <td className="px-3 py-3 text-right font-semibold text-gray-950">{money(row.amountDue)}</td>
                 <td className="px-3 py-3 text-right text-gray-950">{money(row.endingBalance)}</td>
+                <td className="px-3 py-3 text-center">
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(row.status)}`}>
+                    {row.status || 'Unpaid'}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -167,6 +188,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount }: Lo
               {showPenalty && <td className="px-3 py-3 text-right text-red-700">{money(totalPenalty)}</td>}
               {showRebate && <td className="px-3 py-3 text-right text-green-700">{money(totalRebate)}</td>}
               <td className="px-3 py-3 text-right">{money(totalAmountDue)}</td>
+              <td className="px-3 py-3" />
               <td className="px-3 py-3" />
             </tr>
           </tfoot>

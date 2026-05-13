@@ -17,7 +17,7 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        $principal = (float) $loan->released_amount ?: (float) $loan->principal_amount;
+        $principal = (float) $loan->principal_amount;
 
         return $this->calculateSchedules($loan, $formula, $principal);
     }
