@@ -299,6 +299,33 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
             }
         }
 
+    // Customer Routes
+    Route::middleware(['role:customer'])->prefix('customer')->name('customer.')->group(function () {
+        Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/my-loan', [MyLoanController::class, 'index'])->name('loan.index');
+        Route::get('/repayments', [MyRepaymentsController::class, 'index'])->name('repayments.index');
+        Route::get('/profile', [MyProfileController::class, 'index'])->name('profile.index');
+        Route::put('/profile', [MyProfileController::class, 'update'])->name('profile.update');
+    });
+
+    Route::get('/my-loan', fn () => redirect()->route('customer.loan.index'));
+    Route::get('/my-repayments', fn () => redirect()->route('customer.repayments.index'));
+
+    Route::get('/apply', function () {
+        $documentTypesByCategory = DocumentType::all()->groupBy('category');
+        $borrower = Auth::user()?->borrower;
+        $monthlyIncome = $borrower?->borrowerEmployment?->monthly_income;
+        $borrowerDocumentCounts = [];
+        if ($borrower) {
+            foreach ($documentTypesByCategory as $category => $types) {
+                foreach ($types as $type) {
+                    $borrowerDocumentCounts[$type->id] = $borrower->files()
+                        ->where('document_type_id', $type->id)
+                        ->count();
+                }
+            }
+        }
+
         return Inertia::render('BorrowerApplication', [
             'documentTypesByCategory' => $documentTypesByCategory,
             'borrowerDocumentCounts' => $borrowerDocumentCounts,
@@ -308,6 +335,7 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
             ],
         ]);
     })->name('apply');
+
     Route::post('/api/evaluate-loan-rules', [ApplicationController::class, 'evaluateRules'])
         ->name('api.evaluate-rules');
 
