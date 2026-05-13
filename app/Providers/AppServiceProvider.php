@@ -66,18 +66,39 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
+        // Register Custom Resend Mailer
+        \Illuminate\Support\Facades\Mail::extend('resend', function (array $config) {
+            return new class extends \Symfony\Component\Mailer\Transport\AbstractTransport {
+                protected function doSend(\Symfony\Component\Mailer\SentMessage $message): void
+                {
+                    $email = \Symfony\Component\Mime\MessageConverter::toEmail($message->getOriginalMessage());
+                    
+                    \Illuminate\Support\Facades\Http::withHeaders([
+                        'Authorization' => 'Bearer ' . config('mail.mailers.resend.key'),
+                        'Content-Type' => 'application/json',
+                    ])->post('https://api.resend.com/emails', [
+                        'from' => config('mail.from.address'),
+                        'to' => array_map(fn($t) => $t->getAddress(), $email->getTo()),
+                        'subject' => $email->getSubject(),
+                        'html' => $email->getHtmlBody() ?: $email->getTextBody(),
+                    ]);
+                }
+                public function __toString(): string { return 'resend'; }
+            };
+        });
+
         Inertia::share([
-        'auth' => fn () => auth()->check()
-            ? [
-                'user' => [
-                    'id'    => auth()->user()->id,
-                    'name'  => auth()->user()->name,
-                    'email' => auth()->user()->email,
-                ],
-                'roles' => auth()->user()->getRoleNames()->toArray(), // 👈 Spatie-correct
-            ]
-            : null,
+            'auth' => fn () => auth()->check()
+                ? [
+                    'user' => [
+                        'id'    => auth()->user()->id,
+                        'name'  => auth()->user()->name,
+                        'email' => auth()->user()->email,
+                    ],
+                    'roles' => auth()->user()->getRoleNames()->toArray(), // 👈 Spatie-correct
+                ]
+                : null,
         ]);
-        
     }
 }
