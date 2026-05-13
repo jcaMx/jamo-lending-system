@@ -18,6 +18,8 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  penalty: number;
+  rebate: number;
   releasing_fees?: {
     gross_amount: number;
     charges: Record<
@@ -135,6 +137,8 @@ export default function MyLoan({
     due: 0,
     balance: 0,
     status: 'N/A',
+    penalty: 0,
+    rebate: 0,
     releasing_fees: undefined,
   };
 
@@ -195,7 +199,7 @@ export default function MyLoan({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-3 lg:gap-8 lg:p-8">
+          <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-5 lg:gap-8 lg:p-8">
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Principal Amount</p>
               <p className="text-xl font-bold text-gray-900">{formatCurrency(safeLoan.principal)}</p>
@@ -209,6 +213,14 @@ export default function MyLoan({
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Current Balance</p>
               <p className="text-xl font-bold text-orange-600">{formatCurrency(safeLoan.balance)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-500">Accrued Penalty</p>
+              <p className="text-xl font-bold text-rose-600">{formatCurrency(safeLoan.penalty)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">Total Rebates</p>
+              <p className="text-xl font-bold text-emerald-600">{formatCurrency(safeLoan.rebate)}</p>
             </div>
           </div>
         </div>
