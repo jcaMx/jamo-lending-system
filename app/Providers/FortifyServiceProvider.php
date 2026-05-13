@@ -42,6 +42,12 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
+            // DEBUG: Check if the database is truncating the hash on the hosting server
+            \Log::info('[AUTH DEBUG] User: ' . $user->email);
+            \Log::info('[AUTH DEBUG] Input Password Length: ' . strlen($request->password));
+            \Log::info('[AUTH DEBUG] DB Password Length: ' . strlen($user->password));
+            \Log::info('[AUTH DEBUG] Hash starts with $2y$: ' . (str_starts_with($user->password, '$2y$') ? 'Yes' : 'No'));
+
             // 1. Try standard Bcrypt check
             try {
                 if (\Hash::check($request->password, $user->password)) {
