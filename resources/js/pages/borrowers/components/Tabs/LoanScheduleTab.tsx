@@ -178,9 +178,10 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
           </tbody>
           <tfoot>
             <tr className="border-t border-gray-300 bg-[#F7F5F3] font-semibold">
-              <td className="px-3 py-3" colSpan={3}>
+              <td className="px-3 py-3" colSpan={2}>
                 Total
               </td>
+              <td className="px-3 py-3" />
               <td className="px-3 py-3 text-right text-[#A47B06]">{money(totalPrincipal)}</td>
               <td className="px-3 py-3 text-right text-amber-800">{money(totalInterest)}</td>
               {showPenalty && <td className="px-3 py-3 text-right text-red-700">{money(totalPenalty)}</td>}
