@@ -88,6 +88,48 @@ class MyLoanController extends Controller
         ]);
     }
 
+    /**
+     * Display the authenticated user's loan history (fully paid loans).
+     */
+    public function history()
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Please log in to access your loan history.',
+            ]);
+        }
+
+        $borrower = Borrower::query()
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $borrower) {
+            return Inertia::render('customer/LoanHistory', [
+                'loans' => [],
+            ]);
+        }
+
+        $paidLoans = $borrower->loans()
+            ->where('status', 'Fully_Paid')
+            ->with(['amortizationSchedules.penalties'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $formattedLoans = $paidLoans->map(function (Loan $loan) {
+            return [
+                ...$this->formatLoan($loan),
+                'amortizationSchedule' => $this->formatAmortizationSchedule($loan),
+                'totalPaid' => (float) $loan->amortizationSchedules->sum('amount_paid'),
+            ];
+        })->values()->all();
+
+        return Inertia::render('customer/LoanHistory', [
+            'loans' => $formattedLoans,
+        ]);
+    }
+
     public function update(Request $request)
     {
         $user = Auth::user();

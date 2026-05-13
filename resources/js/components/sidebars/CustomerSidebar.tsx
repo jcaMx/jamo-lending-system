@@ -8,7 +8,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Link, usePage } from "@inertiajs/react";
-import { LayoutGrid, Banknote, Coins, User, Folder } from "lucide-react";
+import { LayoutGrid, Banknote, Coins, User, Folder, History } from "lucide-react";
 import AppLogoIcon from "@/components/app-logo-icon";
 import { LinkNavItem } from "@/types/shared";
 
@@ -33,6 +33,11 @@ const customerNavItems: NavItem[] = [
     title: "Repayments",
     icon: Coins,
     href: "/my-repayments",
+  },
+  {
+    title: "Loan History",
+    icon: History,
+    href: "/my-loan-history",
   },
   {
     title: "Profile",

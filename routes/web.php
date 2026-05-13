@@ -247,6 +247,9 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::put('/my-loan', [MyLoanController::class, 'update'])
         ->name('customer.MyLoan.update');
 
+    Route::get('/my-loan-history', [MyLoanController::class, 'history'])
+        ->name('customer.loan.history');
+
     Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
 
     Route::get('/my-profile', [MyProfileController::class, 'index'])
