@@ -181,7 +181,6 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
               <td className="px-3 py-3" colSpan={3}>
                 Total
               </td>
-              <td className="px-3 py-3 text-right">{money(scheduledTotal)}</td>
               <td className="px-3 py-3 text-right text-[#A47B06]">{money(totalPrincipal)}</td>
               <td className="px-3 py-3 text-right text-amber-800">{money(totalInterest)}</td>
               {showPenalty && <td className="px-3 py-3 text-right text-red-700">{money(totalPenalty)}</td>}
