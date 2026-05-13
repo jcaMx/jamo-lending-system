@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Borrower;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\ScheduleStatus;
 use App\Models\User;
 use App\Models\JamoUser;
 use App\Services\RepaymentService;
@@ -15,25 +16,40 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\NotifyUser;
 use Illuminate\Validation\Rule;
+use App\Services\LoanService;
+use Carbon\Carbon;
 
 
 class RepaymentController extends Controller
 {
     protected RepaymentService $repaymentService;
+    protected LoanService $loanService;
 
-    public function __construct(RepaymentService $repaymentService)
+    public function __construct(RepaymentService $repaymentService, LoanService $loanService)
     {
         $this->repaymentService = $repaymentService;
+        $this->loanService = $loanService;
     }
 
     public function add()
     {
-        $borrowers = Borrower::with(['loans.amortizationSchedules'])->get()
+        $borrowers = Borrower::with(['loans.amortizationSchedules.penalties'])->get()
             ->map(function ($b) {
                 $activeLoan = $b->loans->first(fn($loan) => $loan->status === 'Active');
                 if (!$activeLoan) return null;
 
+                $this->loanService->calculatePenalties($activeLoan);
+                $activeLoan->refresh()->load('amortizationSchedules.penalties');
+
                 $schedules = $activeLoan->amortizationSchedules
+                    ->filter(function ($schedule) {
+                        $status = $schedule->status?->value ?? (string) $schedule->status;
+
+                        return in_array($status, [
+                            ScheduleStatus::Unpaid->value,
+                            ScheduleStatus::Overdue->value,
+                        ], true);
+                    })
                     ->sortBy('due_date')
                     ->map(function ($schedule) {
                         return [
@@ -48,7 +64,6 @@ class RepaymentController extends Controller
                             'status' => $schedule->status?->value ?? 'Unpaid',
                             'total_due' => round(max(0, (float)(
                                 $schedule->installment_amount +
-                                $schedule->interest_amount +
                                 $schedule->penalty_amount -
                                 $schedule->amount_paid -
                                 $schedule->rebate_amount
@@ -240,18 +255,31 @@ class RepaymentController extends Controller
         ]);
 
         try {
-            $updatedRows = Payment::query()
-                ->where('ID', $payment->ID)
-                ->whereRaw('LOWER(status) = ?', ['pending'])
-                ->update([
+            DB::transaction(function () use ($payment, $validated) {
+                $lockedPayment = Payment::query()
+                    ->with('amortizationSchedule')
+                    ->lockForUpdate()
+                    ->findOrFail($payment->ID);
+
+                if (strtolower((string) $lockedPayment->status) !== 'pending') {
+                    throw new \RuntimeException('Only pending repayments can be rejected.');
+                }
+
+                $lockedPayment->update([
                     'status' => 'rejected',
                     'remarks' => $validated['remarks'] ?? null,
                     'verified_date' => now(),
                 ]);
 
-            if ($updatedRows === 0) {
-                return redirect()->back()->withErrors(['error' => 'Only pending repayments can be rejected.']);
-            }
+                $schedule = $lockedPayment->amortizationSchedule;
+
+                if ($schedule) {
+                    $schedule->status = Carbon::parse($schedule->due_date)->startOfDay()->lt(now()->startOfDay())
+                        ? ScheduleStatus::Overdue
+                        : ScheduleStatus::Unpaid;
+                    $schedule->save();
+                }
+            });
 
             return redirect()->route('repayments.index')->with('success', 'Pending repayment rejected successfully.');
         } catch (\Throwable $e) {
@@ -302,32 +330,7 @@ class RepaymentController extends Controller
 
     public function pending()
     {
-        $pendingPayments = Payment::where('status', 'pending')
-            ->whereNotIn('payment_method', [
-                PaymentMethod::Cash->value,
-                PaymentMethod::CashVoucher->value
-            ])
-            ->with(['loan.borrower', 'jamoUser'])
-            ->orderBy('payment_date', 'desc')
-            ->get()
-            ->map(fn($p) => [
-                'id' => $p->ID,
-                'borrowerName' => $p->loan?->borrower
-                    ? $p->loan->borrower->first_name.' '.$p->loan->borrower->last_name
-                    : 'N/A',
-                'loanNo' => $p->loan?->ID ?? 'N/A',
-                'amount' => $p->amount,
-                'method' => $p->payment_method,
-                'referenceNo' => $p->reference_no,
-                'collectedBy' => $p->jamoUser?->first_name
-                    ? $p->jamoUser->first_name.' '.$p->jamoUser->last_name
-                    : 'N/A',
-                'collectionDate' => $p->payment_date?->toDateString() ?? null,
-            ]);
-
-        return Inertia::render('repayments/pending', [
-            'pendingPayments' => $pendingPayments,
-        ]);
+        return redirect()->route('repayments.index', ['tab' => 'pending']);
     }
 
     public function verify(Payment $payment)
@@ -367,6 +370,3 @@ class RepaymentController extends Controller
         ]);
     }
 }
-
-
-

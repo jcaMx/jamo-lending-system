@@ -1,6 +1,7 @@
 <?php
   namespace App\Models;
   use Illuminate\Database\Eloquent\Model;
+  use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
   class Files extends Model {
 
@@ -15,6 +16,7 @@
       'file_path',
       'uploaded_at',
       'description',
+      'document_type_id',
       'borrower_id',
       'collateral_id'
 
@@ -32,6 +34,10 @@
 
     public function borrower() {
       return $this->belongsTo(Borrower::class, 'borrower_id', 'ID');
+    }
+
+    public function documentType(): BelongsTo {
+      return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 
   }

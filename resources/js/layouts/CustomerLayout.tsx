@@ -1,13 +1,18 @@
 import { PropsWithChildren } from 'react';
-import  CustomerSidebar from '@/components/sidebars/CustomerSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import CustomerSidebar from '@/components/sidebars/CustomerSidebar';
+import { TopBar } from '@/components/dashboard/TopBar';
 
 export default function CustomerLayout({ children }: PropsWithChildren) {
   return (
-    <div className="flex h-screen">
+    <SidebarProvider>
       <CustomerSidebar />
-      <main className="flex-1 p-6 bg-gray-100">
-        {children}
-      </main>
-    </div>
+      <SidebarInset className="flex flex-col min-h-screen overflow-x-hidden bg-gray-50">
+        <TopBar />
+        <div className="flex-1 p-4 lg:p-8 w-full max-w-7xl mx-auto">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

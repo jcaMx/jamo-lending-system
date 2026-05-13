@@ -61,6 +61,11 @@ class AmortizationSchedule extends Model
         return $this->hasMany(Penalty::class, 'schedule_id', 'ID');
     }
 
+    public function penalties()
+    {
+        return $this->hasMany(Penalty::class, 'schedule_id', 'ID');
+    }
+
     public function holidays()
     {
         return $this->belongsTo(Holidays::class, 'holiday_id', 'ID');
@@ -75,7 +80,6 @@ class AmortizationSchedule extends Model
     {
         return max(0, (
             $this->installment_amount +
-            $this->interest_amount +
             $this->penalty_amount -
             $this->amount_paid -
             $this->rebate_amount

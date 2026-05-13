@@ -1,4 +1,3 @@
-import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
@@ -25,6 +24,32 @@ export default function AppLayout({ children, breadcrumbs }: AppLayoutProps) {
   const SidebarComponent = matchedRole
     ? SidebarRegistry[matchedRole]
     : CustomerSidebar;
+
+  if (matchedRole === 'customer') {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen w-screen bg-gray-50 overflow-x-hidden">
+          <SidebarComponent />
+          <div className="ml-64 min-h-screen w-[calc(100vw-16rem)]">
+            <main className="p-4 lg:p-6 w-full max-w-none">
+              {breadcrumbs && (
+                <div className="mb-4 px-1 text-sm text-gray-500">
+                  {breadcrumbs.map((b, i) => (
+                    <span key={i}>
+                      {b.title}
+                      {i < breadcrumbs.length - 1 && ' / '}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {children}
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider className="h-screen w-screen overflow-hidden">

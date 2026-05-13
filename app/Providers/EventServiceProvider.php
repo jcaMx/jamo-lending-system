@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Providers;
+
+use App\Events\LoanApproved;
+use App\Events\LoanRejected;
+use App\Listeners\SendLoanDecisionNotification;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+
+class EventServiceProvider extends ServiceProvider
+{
+    protected $listen = [
+        LoanApproved::class => [
+            SendLoanDecisionNotification::class,
+        ],
+        LoanRejected::class => [
+            SendLoanDecisionNotification::class,
+        ],
+    ];
+}

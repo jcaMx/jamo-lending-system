@@ -170,6 +170,8 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             Route::get('/add', [RepaymentController::class, 'add'])->name('repayments.add');
             Route::post('/store', [RepaymentController::class, 'store'])->name('repayments.store');
             Route::get('/pending', [RepaymentController::class, 'pending'])->name('repayments.pending');
+            Route::post('/{payment}/confirm', [RepaymentController::class, 'confirm'])->name('repayments.confirm');
+            Route::post('/{payment}/reject', [RepaymentController::class, 'reject'])->name('repayments.reject');
             Route::post('/verify/{payment}', [RepaymentController::class, 'verify'])->name('repayments.verify');
         });
 
@@ -216,14 +218,11 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
             ->name('api.staff.evaluate-rules');
     });
 
-    Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])
-        ->name('loans.comments.store');
-
 });
 
 Route::middleware(['auth', 'role:admin|cashier'])->group(function () {
-    Route::post('/loans/{loan}/comments', [LoanController::class, 'addComment'])->name('loans.comments.add');
-    Route::delete('/loans/comments/{comment}', [LoanController::class, 'deleteComment'])->name('loans.comments.delete');
+    Route::post('/loans/{loan}/comments', [LoanCommentController::class, 'store'])->name('loans.comments.store');
+    Route::delete('/loans/comments/{comment}', [LoanCommentController::class, 'destroy'])->name('loans.comments.destroy');
 });
 
 /*
@@ -244,6 +243,9 @@ Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
 
     Route::get('/my-loan', [MyLoanController::class, 'index'])
         ->name('customer.MyLoan');
+
+    Route::put('/my-loan', [MyLoanController::class, 'update'])
+        ->name('customer.MyLoan.update');
 
     Route::get('/my-repayments', [MyRepaymentsController::class, 'index'])->name('customer.repayments');
 

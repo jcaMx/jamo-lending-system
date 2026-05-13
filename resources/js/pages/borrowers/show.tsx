@@ -33,6 +33,12 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  loanComments?: Array<{
+    ID: number;
+    comment_text: string;
+    commented_by: string;
+    comment_date: string;
+  }>;
   releasing_fees?: {
     gross_amount: number;
     charges: Record<string, {
@@ -54,6 +60,7 @@ type FileItem = {
   file_path?: string;
   uploaded_at?: string;
   description?: string;
+  document_type_name?: string;
   source?: string;
 };
 
@@ -168,7 +175,13 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
       {
         key: 'loanSchedule' as TabKey,
         label: 'Loan Schedule',
-        content: <LoanScheduleTab amortizationSchedule={amortizationSchedule} />,
+        content: (
+          <LoanScheduleTab
+            amortizationSchedule={amortizationSchedule}
+            loanAmount={safeLoan.principal}
+            interestType={safeLoan.interest_type || safeLoan.interestType}
+          />
+        ),
       },
       {
         key: 'loanCollateral' as TabKey,
@@ -206,7 +219,7 @@ export default function Show({ borrower, collaterals = [], activeLoan = null, re
         key: 'loanComments' as TabKey,
         label: 'Loan Comments',
         content: <LoanCommentsTab
-          comments={borrower.comments ?? []}
+          comments={safeLoan.loanComments ?? borrower.comments ?? []}
           loanId={safeLoan.ID}
           canDelete={true}
         />,

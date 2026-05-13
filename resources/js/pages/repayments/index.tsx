@@ -27,7 +27,10 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
   const now = new Date();
   const todayDatetime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'history'>('all');
+  const initialTab = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'pending'
+    ? 'pending'
+    : 'all';
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'history'>(initialTab);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [confirmCollectedBy, setConfirmCollectedBy] = useState<string>(collectors[0] ? String(collectors[0].id) : '');
   const [confirmCollectionDate, setConfirmCollectionDate] = useState<string>(todayDatetime);
@@ -120,10 +123,15 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
       title: 'Confirm Payment',
       description: 'Mark this payment as confirmed?',
       onConfirm: () => {
-        router.post(`/repayments/verify/${paymentId}`, {}, {
+        router.post(`/repayments/${paymentId}/confirm`, {
+          collectedBy: confirmCollectedBy,
+          collectionDate: confirmCollectionDate,
+        }, {
           onSuccess: () => {
             setConfirmDialog({ ...confirmDialog, open: false });
-            router.get('/repayments', {}, { preserveState: true, preserveScroll: true });
+            setConfirmingId(null);
+            setConfirmRemarksDefaults();
+            router.get('/repayments?tab=pending', {}, { preserveState: true, preserveScroll: true });
           },
         });
       },
@@ -150,6 +158,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
         onSuccess: () => {
           setRejectingId(null);
           setRejectRemarks('');
+          router.get('/repayments?tab=pending', {}, { preserveState: true, preserveScroll: true });
         },
       }
     );
@@ -292,7 +301,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
 
                   {activeTab === 'pending' && confirmingId === r.id && (
                     <tr className="bg-gray-50">
-                      <td colSpan={6} className="px-4 py-4">
+                      <td colSpan={7} className="px-4 py-4">
                         <div className="grid gap-3 md:grid-cols-3">
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-gray-700">Collected By</label>
@@ -348,7 +357,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
 
                   {activeTab === 'pending' && rejectingId === r.id && (
                     <tr className="bg-red-50">
-                      <td colSpan={6} className="px-4 py-4">
+                      <td colSpan={7} className="px-4 py-4">
                         <div className="grid gap-3 md:grid-cols-3">
                           <div className="md:col-span-2">
                             <label className="mb-1 block text-xs font-semibold text-gray-700">Remarks (Optional)</label>
@@ -389,7 +398,7 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
               ))
             ) : (
               <tr>
-                <td colSpan={activeTab === 'pending' ? 6 : 9} className="text-center py-6 text-gray-500 text-sm italic">
+                <td colSpan={activeTab === 'pending' ? 7 : 9} className="text-center py-6 text-gray-500 text-sm italic">
                   No repayments found matching your search.
                 </td>
               </tr>
@@ -411,4 +420,3 @@ export default function RepaymentsIndex({ repayments, collectors }: Props) {
     </AppLayout>
   );
 }
-

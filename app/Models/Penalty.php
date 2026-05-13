@@ -26,6 +26,8 @@ class Penalty extends Model
 
     protected $primaryKey = 'ID';
 
+    const GRACE_PERIOD_DAYS = 3;
+
     const PENALTY_RATE = 0.06;
 
     protected $fillable = [
@@ -35,6 +37,7 @@ class Penalty extends Model
         'date_applied',
         'status',
         'schedule_id',
+        'loan_id',
 
     ];
 
@@ -53,5 +56,10 @@ class Penalty extends Model
     public function amortizationSchedules()
     {
         return $this->belongsTo(AmortizationSchedule::class, 'schedule_id', 'ID');
+    }
+
+    public function loan()
+    {
+        return $this->belongsTo(Loan::class, 'loan_id', 'ID');
     }
 }

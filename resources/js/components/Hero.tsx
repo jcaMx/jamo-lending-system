@@ -48,7 +48,7 @@ const Hero = () => {
 
           <div className="flex gap-4">
             {/* ✅ Inertia navigation */}
-            <Link href="/applynow">
+            <Link href="/login">
               <Button className="bg-[#FABF24] hover:bg-[#f8b80f] text-white px-8">
                 Apply Now
               </Button>

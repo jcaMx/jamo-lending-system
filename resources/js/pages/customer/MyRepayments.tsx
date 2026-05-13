@@ -4,6 +4,7 @@ import { RecentPaymentsCard } from "@/components/dashboard/RecentPaymentsCard";
 import NoLoansPlaceholder from "@/components/dashboard/NoLoansPlaceholder";
 import PendingLoanPlaceholder from "@/components/dashboard/PendingLoanPlaceholder";
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { CheckCircle, Clock, XCircle } from 'lucide-react';
 
 type RawPayment = {
   id?: string | number;
@@ -107,7 +108,7 @@ export default function CustomerRepayments() {
       </DashboardLayout>
     );
   }
-  
+
 
   const computedTotalPaid = normalizedPayments
     .filter((payment) => payment.status === "Completed")
@@ -138,9 +139,9 @@ export default function CustomerRepayments() {
 
 
   const nextDueDisplay =
-  nextDueDate && !Number.isNaN(new Date(nextDueDate).getTime())
-    ? formatDate(nextDueDate)
-    : "-";
+    nextDueDate && !Number.isNaN(new Date(nextDueDate).getTime())
+      ? formatDate(nextDueDate)
+      : "-";
 
 
   const preferredMethod = (() => {
@@ -164,29 +165,35 @@ export default function CustomerRepayments() {
     <DashboardLayout>
       <Head title="Repayments" />
 
-      <div className="space-y-8">
-        <div className="space-y-1.5">
+      <div className="space-y-6">
+        <div className="space-y-1">
           <p className="text-xl md:text-2xl font-semibold text-gray-900">Repayments</p>
           <p className="text-sm text-gray-600 max-w-xl">
             Track your payment history and get a clearer view of how your loan is progressing.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] transition">
-            <p className="text-sm font-medium text-gray-500">Total paid</p>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">{formatCurrency(totalPaid)}</p>
-            <p className="text-xs text-gray-500 mt-1">Completed payments</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-3xl border-2 border-transparent bg-white p-6 shadow-sm ring-1 ring-gray-200/70 transition-all duration-300 hover:border-[#D97706] sm:p-8">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Total paid</p>
+            <p className="text-3xl font-bold text-gray-900 tracking-tight">{formatCurrency(totalPaid)}</p>
+            <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" /> Completed payments
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] transition">
-            <p className="text-sm font-medium text-gray-500">Pending</p>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">{formatCurrency(totalPending)}</p>
-            <p className="text-xs text-gray-500 mt-1">Awaiting confirmation</p>
+          <div className="rounded-3xl border-2 border-transparent bg-white p-6 shadow-sm ring-1 ring-gray-200/70 transition-all duration-300 hover:border-[#D97706] sm:p-8">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Pending</p>
+            <p className="text-3xl font-bold text-gray-900 tracking-tight">{formatCurrency(totalPending)}</p>
+            <p className="text-xs text-amber-600 mt-2 font-medium flex items-center gap-1">
+              <Clock className="w-3 h-3" /> Awaiting confirmation
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] transition">
-            <p className="text-sm font-medium text-gray-500">Failed attempts</p>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">{failedCount}</p>
-            <p className="text-xs text-gray-500 mt-1">Needs attention</p>
+          <div className="rounded-3xl border-2 border-transparent bg-white p-6 shadow-sm ring-1 ring-gray-200/70 transition-all duration-300 hover:border-[#D97706] sm:p-8">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Failed attempts</p>
+            <p className="text-3xl font-bold text-gray-900 tracking-tight">{failedCount}</p>
+            <p className="text-xs text-rose-600 mt-2 font-medium flex items-center gap-1">
+              <XCircle className="w-3 h-3" /> Needs attention
+            </p>
           </div>
         </div>
 
@@ -194,31 +201,27 @@ export default function CustomerRepayments() {
           <div className="lg:col-span-2">
             <RecentPaymentsCard payments={normalizedPayments} />
           </div>
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200/70">
-            <h2 className="text-lg font-semibold text-gray-900">Payment Snapshot</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              A quick look at your repayment activity.
+          <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-200/70 sm:p-8">
+            <h2 className="text-lg font-bold text-gray-900 tracking-tight">Payment Snapshot</h2>
+            <p className="mt-1 text-xs text-gray-400 font-medium uppercase tracking-wider">
+              Repayment activity summary
             </p>
-            <div className="mt-6 space-y-4">
-              <div className="rounded-xl bg-emerald-50 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-emerald-700">On-time streak</p>
-                <p className="mt-2 text-xl font-semibold text-emerald-900">
+            <div className="mt-8 space-y-6">
+              <div className="rounded-2xl bg-emerald-50/50 p-6 border border-emerald-100/50">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-600 font-bold">On-time streak</p>
+                <p className="mt-2 text-2xl font-bold text-emerald-900 tracking-tight">
                   {onTimeStreak} payment{onTimeStreak === 1 ? "" : "s"}
                 </p>
               </div>
-              <div className="rounded-xl bg-amber-50 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-amber-700">Next due</p>
-                {/* <p className="mt-2 text-xl font-semibold text-amber-900">
-                  {nextDuePayment?.date ? formatDate(nextDuePayment.date) : "-"}
-                </p> */}
-                <p className="mt-2 text-xl font-semibold text-amber-900">
+              <div className="rounded-2xl bg-amber-50/50 p-6 border border-amber-100/50">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-amber-600 font-bold">Next due</p>
+                <p className="mt-2 text-2xl font-bold text-amber-900 tracking-tight">
                   {nextDueDisplay}
                 </p>
-
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.15em] text-slate-600">Preferred method</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">{preferredMethod}</p>
+              <div className="rounded-2xl bg-slate-50/50 p-6 border border-slate-100/50">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Preferred method</p>
+                <p className="mt-2 text-2xl font-bold text-slate-900 tracking-tight">{preferredMethod}</p>
               </div>
             </div>
           </div>

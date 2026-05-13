@@ -48,7 +48,10 @@ export default function LoanCommentsTab({ comments, loanId, canDelete = false }:
     };
     setLocalComments((prev) => [tempComment, ...prev]);
     setData('comment_text', trimmed);
-    post(route('loans.comments.add', { loan: loanId }), {
+    setSuccessMessage(null);
+    setDeleteError(null);
+    post(route('loans.comments.store', { loan: loanId }), {
+      preserveScroll: true,
       onSuccess: () => {
         reset();
         clearErrors();
@@ -56,6 +59,7 @@ export default function LoanCommentsTab({ comments, loanId, canDelete = false }:
       },
       onError: () => {
         setLocalComments((prev) => prev.filter((c) => c.ID !== tempId));
+        setDeleteError('Failed to add comment. Please try again.');
       },
     });
   };
@@ -64,7 +68,7 @@ export default function LoanCommentsTab({ comments, loanId, canDelete = false }:
     if (confirm('Are you sure you want to delete this comment?')) {
       setDeleteError(null);
       setDeletingId(commentId);
-      deleteForm.delete(route('loans.comments.delete', { comment: commentId }), {
+      deleteForm.delete(route('loans.comments.destroy', { comment: commentId }), {
         onSuccess: () => {
           setLocalComments((prev) => prev.filter((c) => c.ID !== commentId));
           setDeletingId(null);

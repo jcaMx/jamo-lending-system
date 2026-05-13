@@ -19,6 +19,8 @@ type FileItem = {
   file_name?: string;
   file_path?: string;
   description?: string | null;
+  document_type_name?: string | null;
+  uploaded_at?: string | null;
 };
 
 const toArray = <T,>(value: T[] | T | null | undefined): T[] => {
@@ -262,6 +264,7 @@ export function LoanDetailsView({
       file_path: string;
       uploaded_at: string;
       description?: string;
+      document_type_name?: string | null;
       source?: string;
     }>();
 
@@ -271,8 +274,9 @@ export function LoanDetailsView({
         file_name: file.file_name || `Borrower File ${index + 1}`,
         file_type: inferFileType(file.file_name, file.file_path),
         file_path: file.file_path || '',
-        uploaded_at: '',
+        uploaded_at: file.uploaded_at || '',
         description: file.description,
+        document_type_name: file.document_type_name,
         source: 'Borrower',
       })),
       ...collateralFiles.map((file, index) => ({
@@ -280,8 +284,9 @@ export function LoanDetailsView({
         file_name: file.file_name || `Collateral File ${index + 1}`,
         file_type: inferFileType(file.file_name, file.file_path),
         file_path: file.file_path || '',
-        uploaded_at: '',
+        uploaded_at: file.uploaded_at || '',
         description: file.description,
+        document_type_name: file.document_type_name,
         source: 'Collateral',
       })),
     ];
@@ -290,7 +295,7 @@ export function LoanDetailsView({
       const key = file.ID ? `id:${file.ID}` : `path:${file.file_path}`;
       const existing = fileMap.get(key);
 
-      if (!existing || (existing.ssource === 'Borrower' && file.source === 'Collateral')) {
+      if (!existing || (existing.source === 'Borrower' && file.source === 'Collateral')) {
         fileMap.set(key, file);
       }
     }
@@ -580,7 +585,13 @@ export function LoanDetailsView({
         tabs.push({
           key: 'loanSchedule' as TabKey,
           label: 'Loan Schedule',
-          content: <LoanScheduleTab amortizationSchedule={amortizationSchedule} />,
+          content: (
+            <LoanScheduleTab
+              amortizationSchedule={amortizationSchedule}
+              loanAmount={loan.principal_amount}
+              interestType={loan.interest_type}
+            />
+          ),
         });
       }
 

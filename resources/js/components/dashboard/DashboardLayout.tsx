@@ -1,8 +1,9 @@
-import CustomerSidebar from '../../../js/components/sidebars/CustomerSidebar'
-import { SidebarProvider } from '@/components/ui/sidebar'
+import CustomerSidebar from '@/components/sidebars/CustomerSidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { TopBar } from './TopBar'
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -15,5 +16,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
       </div>
     </SidebarProvider>
-  );
+  )
 }

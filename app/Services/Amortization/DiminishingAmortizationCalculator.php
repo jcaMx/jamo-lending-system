@@ -15,22 +15,29 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
 
     public function generate(Loan $loan): array
     {
-        // Fetch formula from DB
-        $formula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
+        $interestFormula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
+        $paymentFormula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        $principal = $principalAmount ?? $loan->principal_amount;
+        $principal = (float) $loan->principal_amount;
 
-        return $this->calculateSchedules($loan, $formula, $principal);
+        return $this->calculateSchedules($loan, $interestFormula, $paymentFormula, $principal);
     }
 
     public function recalculate(Loan $loan): array
     {
-        $formula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
+        $interestFormula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
+        $paymentFormula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loan, $formula, $loan->principal_amount, false);
+        return $this->calculateSchedules($loan, $interestFormula, $paymentFormula, $loan->principal_amount, false);
     }
 
-    protected function calculateSchedules(Loan $loan, Formula $formula, float $principal, bool $isNewLoan = true): array
+    protected function calculateSchedules(
+        Loan $loan,
+        Formula $interestFormula,
+        Formula $paymentFormula,
+        float $principal,
+        bool $isNewLoan = true
+    ): array
     {
         $remaining = $principal;
         $frequency = $loan->repayment_frequency;
@@ -44,41 +51,41 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
             default => $loan->term_months
         };
 
-        $principalPerInstallment = $remaining / $totalInstallments;
+        $periodRate = match ($frequency) {
+            'Weekly' => $rate / 52,
+            'Monthly' => $rate / 12,
+            'Yearly' => $rate,
+            default => $rate / 12
+        };
+
         $startDate = $loan->start_date->copy();
         $endDate = $loan->end_date ? $loan->end_date->copy() : null;
         $results = [];
+        $installmentAmount = $this->formulaService->evaluate($paymentFormula, [
+            'principal' => $principal,
+            'rate' => $periodRate,
+            'term' => $totalInstallments,
+        ]);
 
         for ($i = 1; $i <= $totalInstallments; $i++) {
-
-            // FormulaService Calculates interest or total installment
-            $interest = $this->formulaService->evaluate($formula, [
-                'principal' => $principal,
+            $interest = $this->formulaService->evaluate($interestFormula, [
                 'remaining_principal' => $remaining,
-                'rate' => $rate,
-                'total_terms' => $totalInstallments,
+                'rate' => $periodRate,
             ]);
 
-            $principalPayment = $principalPerInstallment;
+            $principalPayment = $i === $totalInstallments
+                ? $remaining
+                : $installmentAmount - $interest;
+
+            $currentInstallmentAmount = $principalPayment + $interest;
 
             $remaining -= $principalPayment;
             $remaining = max(0, $remaining);
 
-            // First installment uses start_date, last uses end_date, others are calculated
-            if ($i === 1) {
-                $dueDate = $startDate->copy();
-            } elseif ($i === $totalInstallments && $endDate) {
+            if ($i === $totalInstallments && $endDate) {
                 $dueDate = $endDate->copy();
             } else {
-                // Calculate based on frequency from start_date
-                $dueDate = $startDate->copy();
-                $periodsToAdd = $i - 1;
-                $dueDate = match ($frequency) {
-                    'Weekly' => $dueDate->addWeeks($periodsToAdd),
-                    'Monthly' => $dueDate->addMonthsNoOverflow($periodsToAdd),
-                    'Yearly' => $dueDate->addYears($periodsToAdd),
-                    default => $dueDate->addMonthsNoOverflow($periodsToAdd)
-                };
+                $dueDate = $this->calculateDueDate($startDate, $frequency, $i);
             }
 
             $adjustedDueDate = $this->holidayService->adjustDate($dueDate);
@@ -86,7 +93,7 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
 
             $results[] = [
                 'installment_no' => $i,
-                'installment_amount' => round($principalPayment + $interest, 2),
+                'installment_amount' => round($currentInstallmentAmount, 2),
                 'interest_amount' => round($interest, 2),
                 'due_date' => $adjustedDueDate,
                 'holiday_id' => $holiday?->ID,
@@ -94,5 +101,15 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
         }
 
         return $results;
+    }
+
+    protected function calculateDueDate($startDate, string $frequency, int $installmentNumber)
+    {
+        return match ($frequency) {
+            'Weekly' => $startDate->copy()->addWeeks($installmentNumber),
+            'Monthly' => $startDate->copy()->addMonthsNoOverflow($installmentNumber),
+            'Yearly' => $startDate->copy()->addYears($installmentNumber),
+            default => $startDate->copy()->addMonthsNoOverflow($installmentNumber),
+        };
     }
 }

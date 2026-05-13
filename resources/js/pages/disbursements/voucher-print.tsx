@@ -361,7 +361,7 @@ export default function VoucherPrint({ voucher, disbursement, loan, borrower }: 
                   <div className="flex flex-col justify-between p-4">
                     <div className="text-right text-xl font-bold text-gray-900">{formatMoney(voucher.gross_amount)}</div>
                     <div className="border-t border-dashed border-gray-400 pt-3 text-right text-xs uppercase tracking-[0.14em] text-gray-500">
-                      Gross Release Amount
+                      Net Disbursed Amount
                     </div>
                   </div>
                 </div>

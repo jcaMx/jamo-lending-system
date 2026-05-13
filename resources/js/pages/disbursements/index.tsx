@@ -44,6 +44,7 @@ type DisbursementRow = {
     cheque?: {
       bank_account_id?: number | null;
       bank_name: string;
+      branch?: string | null;
       account_name?: string | null;
       account_number?: string | null;
       cheque_no: string;

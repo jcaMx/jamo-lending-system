@@ -37,16 +37,17 @@ class DashboardController extends Controller
     }
 
     public function loans()
-{
-        $loans = Loan::selectRaw('MONTHNAME(updated_at) as month, COALESCE(SUM(released_amount), 0) as value')
+    {
+        $loans = Loan::selectRaw('MONTHNAME(released_date) as month, COALESCE(SUM(released_amount), 0) as value')
+            ->whereNotNull('released_date')
             ->whereNotNull('released_amount')
-            ->where('status', 'Active')
-        ->groupBy('month')
-            ->orderByRaw('MIN(updated_at)')
-        ->get();
+            ->where('released_amount', '>', 0)
+            ->groupBy('month')
+            ->orderByRaw('MIN(released_date)')
+            ->get();
 
-    return response()->json($loans);
-}
+        return response()->json($loans);
+    }
 
     public function collections()
 {
@@ -74,7 +75,7 @@ class DashboardController extends Controller
                     'borrower_name' => $schedule->loan->borrower->first_name.' '.$schedule->loan->borrower->last_name,
                     'installment_no' => $schedule->installment_no,
                     'due_date' => $schedule->due_date->toDateString(),
-                    'total_due' => (float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount - $schedule->amount_paid),
+                    'total_due' => (float) ($schedule->installment_amount + $schedule->penalty_amount - $schedule->amount_paid - $schedule->rebate_amount),
                     'days_until_due' => Carbon::now()->diffInDays($schedule->due_date, false),
                 ];
             });

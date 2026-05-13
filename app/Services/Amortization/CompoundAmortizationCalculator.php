@@ -17,7 +17,7 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        $principal = $principalAmount ?? $loan->principal_amount;
+        $principal = (float) $loan->principal_amount;
 
         return $this->calculateSchedules($loan, $formula, $principal);
     }
@@ -26,7 +26,7 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
     {
         $formula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loann, $formula, $loan->principal_amount, false);
+        return $this->calculateSchedules($loan, $formula, (float) $loan->principal_amount, false);
     }
 
     protected function calculateSchedules(Loan $loan, Formula $formula, float $principal, bool $isNewLoan = true)
@@ -53,35 +53,27 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
         $startDate = $loan->start_date->copy();
         $endDate = $loan->end_date ? $loan->end_date->copy() : null;
         $results = [];
+        $installmentAmount = $this->formulaService->evaluate($formula, [
+            'principal' => $principal,
+            'rate' => $periodRate,
+            'term' => $totalInstallments,
+        ]);
 
         for ($i = 1; $i <= $totalInstallments; $i++) {
-            $installmentAmount = $this->formulaService->evaluate($formula, [
-                'principal' => $principal,
-                'rate' => $periodRate,
-                'term' => $totalInstallments,
-            ]);
-
             $interest = $remaining * $periodRate;
-            $principalPayment = $installmentAmount - $interest;
+            $principalPayment = $i === $totalInstallments
+                ? $remaining
+                : $installmentAmount - $interest;
+
+            $currentInstallmentAmount = $principalPayment + $interest;
 
             $remaining -= $principalPayment;
             $remaining = max(0, $remaining);
 
-            // First installment uses start_date, last uses end_date, others are calculated
-            if ($i === 1) {
-                $dueDate = $startDate->copy();
-            } elseif ($i === $totalInstallments && $endDate) {
+            if ($i === $totalInstallments && $endDate) {
                 $dueDate = $endDate->copy();
             } else {
-                // Calculate based on frequency from start_date
-                $dueDate = $startDate->copy();
-                $periodsToAdd = $i - 1;
-                $dueDate = match ($frequency) {
-                    'Weekly' => $dueDate->addWeeks($periodsToAdd),
-                    'Monthly' => $dueDate->addMonthsNoOverflow($periodsToAdd),
-                    'Yearly' => $dueDate->addYears($periodsToAdd),
-                    default => $dueDate->addMonthsNoOverflow($periodsToAdd)
-                };
+                $dueDate = $this->calculateDueDate($startDate, $frequency, $i);
             }
 
             $adjustedDueDate = $this->holidayService->adjustDate($dueDate);
@@ -89,7 +81,7 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
 
             $results[] = [
                 'installment_no' => $i,
-                'installment_amount' => round($installmentAmount, 2),
+                'installment_amount' => round($currentInstallmentAmount, 2),
                 'interest_amount' => round($interest, 2),
                 'due_date' => $adjustedDueDate,
                 'holiday_id' => $holiday?->ID,
@@ -97,5 +89,15 @@ class CompoundAmortizationCalculator implements IAmortizationCalculator
         }
 
         return $results;
+    }
+
+    protected function calculateDueDate($startDate, string $frequency, int $installmentNumber)
+    {
+        return match ($frequency) {
+            'Weekly' => $startDate->copy()->addWeeks($installmentNumber),
+            'Monthly' => $startDate->copy()->addMonthsNoOverflow($installmentNumber),
+            'Yearly' => $startDate->copy()->addYears($installmentNumber),
+            default => $startDate->copy()->addMonthsNoOverflow($installmentNumber),
+        };
     }
 }

@@ -43,6 +43,8 @@ const inputClass =
 
 const ONLINE_METHODS = ["Bank", "GCash", "Cebuana"];
 
+const isPayableSchedule = (schedule: Schedule) => schedule.status?.toLowerCase() !== "paid";
+
 export default function Add({ borrowers: initialBorrowers = [], collectors: initialCollectors = [] }: Props) {
   const defaultCollectionDate = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
@@ -104,7 +106,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     update("search", b.name);
 
     const nextDueSchedule = b.schedules
-      .filter((s) => s.status !== "Paid")
+      .filter(isPayableSchedule)
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0] || null;
 
     if (nextDueSchedule) {
@@ -128,7 +130,7 @@ export default function Add({ borrowers: initialBorrowers = [], collectors: init
     });
 
   const handleToggleSchedule = (schedule: Schedule) => {
-    if (schedule.status === "Paid") return;
+    if (!isPayableSchedule(schedule)) return;
 
     const exists = form.selectedSchedules.some((s) => s.ID === schedule.ID);
     const nextSelected = exists
@@ -235,7 +237,7 @@ const handleSubmit = (e: React.FormEvent) => {
     onSuccess: () => {
       // ✅ ONLY pending methods redirect
       if (ONLINE_METHODS.includes(method) || method === "Cheque Voucher") {
-        router.visit(`/repayments/pending?ref=${form.referenceNumber}`);
+        router.visit("/repayments?tab=pending");
       } else {
         setSuccessMessage("Payment verified successfully!");
       }
@@ -319,7 +321,7 @@ const handleSubmit = (e: React.FormEvent) => {
               </div>
 
               {/* Schedules Table */}
-              {form.selectedBorrower && form.selectedBorrower.schedules?.length > 0 && (
+              {form.selectedBorrower && form.selectedBorrower.schedules?.filter(isPayableSchedule).length > 0 && (
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1">Amortization Schedule</label>
                   <div className="border rounded-lg overflow-hidden">
@@ -329,18 +331,18 @@ const handleSubmit = (e: React.FormEvent) => {
                           <tr>
                             <th className="px-4 py-3 text-left font-semibold">#</th>
                             <th className="px-4 py-3 text-left font-semibold">Due Date</th>
-                            <th className="px-4 py-3 text-left font-semibold">Installment</th>
+                            <th className="px-4 py-3 text-left font-semibold">Scheduled Payment</th>
                             <th className="px-4 py-3 text-left font-semibold">Interest</th>
                             <th className="px-4 py-3 text-left font-semibold">Penalty</th>
                             <th className="px-4 py-3 text-left font-semibold">Rebate</th>
                             <th className="px-4 py-3 text-left font-semibold">Paid</th>
-                            <th className="px-4 py-3 text-left font-semibold">Total Due</th>
+                            <th className="px-4 py-3 text-left font-semibold">Amount Due</th>
                             <th className="px-4 py-3 text-left font-semibold">Status</th>
                             <th className="px-4 py-3 text-center font-semibold">Action</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {form.selectedBorrower.schedules.map((schedule) => (
+                          {form.selectedBorrower.schedules.filter(isPayableSchedule).map((schedule) => (
                             <tr
                               key={schedule.ID}
                               className={`border-t hover:bg-gray-50 ${
@@ -373,13 +375,10 @@ const handleSubmit = (e: React.FormEvent) => {
                                   type="button"
                                   onClick={() => handleToggleSchedule(schedule)}
                                   className={`px-3 py-1 rounded text-xs font-medium ${
-                                    schedule.status === 'Paid'
-                                      ? 'cursor-not-allowed bg-gray-300 text-gray-600'
-                                      : form.selectedSchedules.some((s) => s.ID === schedule.ID)
+                                    form.selectedSchedules.some((s) => s.ID === schedule.ID)
                                       ? 'bg-yellow-500 text-white'
                                       : 'bg-blue-500 text-white hover:bg-blue-600'
                                   }`}
-                                  disabled={schedule.status === 'Paid'}
                                 >
                                   {form.selectedSchedules.some((s) => s.ID === schedule.ID) ? 'Selected' : 'Select'}
                                 </button>

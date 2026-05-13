@@ -120,7 +120,7 @@ export default function CustomerProfile() {
       email: displayProfile.email === "-" ? "" : displayProfile.email,
       contact: displayProfile.contact === "-" ? "" : displayProfile.contact,
       address: displayProfile.address === "-" ? "" : displayProfile.address,
-            city: displayProfile.city === "-" ? "" : displayProfile.city,
+      city: displayProfile.city === "-" ? "" : displayProfile.city,
       zipcode: displayProfile.zipcode === "-" ? "" : displayProfile.zipcode,
     });
     setIsEditing(false);
@@ -133,50 +133,52 @@ export default function CustomerProfile() {
       <div className="space-y-8">
 
         {/* ===== Header Section ===== */}
-        <div className="bg-gradient-to-r from-orange-50 to-white rounded-3xl p-6 md:p-8 shadow-sm ring-1 ring-gray-200/60">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="bg-white rounded-3xl p-8 shadow-sm ring-1 ring-gray-200/60 border-l-4 border-[#D97706]">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
 
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-[#D97706]/10 flex items-center justify-center text-[#D97706] text-xl font-semibold">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+              <div className="h-20 w-20 rounded-3xl bg-[#D97706]/10 flex items-center justify-center text-[#D97706] text-3xl font-bold shadow-inner">
                 {displayProfile.name?.charAt(0)}
               </div>
 
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                   {displayProfile.name}
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-medium text-gray-400 mt-1 uppercase tracking-widest">
                   Member since {displayProfile.joinDate || "—"}
                 </p>
               </div>
             </div>
 
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D97706] text-white rounded-xl hover:bg-orange-600 transition shadow-sm"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit Profile
-              </button>
-            ) : (
-              <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {!isEditing ? (
                 <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition shadow-sm"
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#D97706] text-white rounded-2xl hover:bg-orange-600 transition-all duration-300 shadow-md hover:shadow-orange-200 font-bold text-sm uppercase tracking-wider"
                 >
-                  <Save className="w-4 h-4" />
-                  Save Changes
+                  <Edit2 className="w-4 h-4" />
+                  Edit Profile
                 </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
-              </div>
-            )}
+              ) : (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-all duration-300 shadow-md hover:shadow-emerald-200 font-bold text-sm uppercase tracking-wider"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-all duration-300 font-bold text-sm uppercase tracking-wider"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -187,31 +189,37 @@ export default function CustomerProfile() {
           <div className="space-y-8 lg:col-span-2">
 
             {/* Profile Info Card */}
-            <div className="bg-white rounded-3xl shadow-sm ring-1 ring-gray-200/70 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">
+            <div className="bg-white rounded-3xl shadow-sm ring-1 ring-gray-200/70 p-8">
+              <h3 className="text-lg font-bold text-gray-900 mb-8 tracking-tight">
                 Personal Information
               </h3>
 
-              <div className="grid md:grid-cols-2 gap-6 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm">
 
-                <div className="flex items-start gap-3">
-                  <Mail className="w-4 h-4 text-[#D97706] mt-1" />
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-[#D97706]" />
+                  </div>
                   <div>
-                    <p className="text-gray-500">Email</p>
-                    <p className="font-medium text-gray-900">{displayProfile.email}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Email Address</p>
+                    <p className="font-bold text-gray-900 break-all">{displayProfile.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Phone className="w-4 h-4 text-[#D97706] mt-1" />
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5 text-[#D97706]" />
+                  </div>
                   <div>
-                    <p className="text-gray-500">Contact</p>
-                    <p className="font-medium text-gray-900">{displayProfile.contact}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Contact Number</p>
+                    <p className="font-bold text-gray-900">{displayProfile.contact}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 md:col-span-2">
-                  <MapPin className="w-4 h-4 text-[#D97706] mt-1" />
+                <div className="flex items-start gap-4 sm:col-span-2">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-[#D97706]" />
+                  </div>
                   <div>
                     <p className="text-gray-500">Address</p>
                     <p className="font-medium text-gray-900">
@@ -227,82 +235,82 @@ export default function CustomerProfile() {
 
             {/* ===== Edit Form ===== */}
             {isEditing && borrower && (
-              <div className="bg-white rounded-3xl shadow-sm ring-1 ring-gray-200/70 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  Edit Profile
+              <div className="bg-white rounded-3xl shadow-sm ring-1 ring-gray-200/70 p-8 border-t-4 border-emerald-500">
+                <h3 className="text-lg font-bold text-gray-900 mb-8 tracking-tight">
+                  Edit Personal Details
                 </h3>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
 
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Full Name</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
                     <input
                       type="text"
                       value={editedProfile.name}
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, name: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Email</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
                     <input
                       type="email"
                       value={editedProfile.email}
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, email: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D97706]"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Contact</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number</label>
                     <input
                       type="tel"
                       value={editedProfile.contact}
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, contact: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D97706]"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">City</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">City</label>
                     <input
                       type="text"
                       value={editedProfile.city}
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, city: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D97706]"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
 
-                  <div className="md:col-span-2 space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Address</label>
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Residential Address</label>
                     <textarea
                       rows={3}
                       value={editedProfile.address}
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, address: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D97706]"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900 resize-none"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Zip Code</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Zip Code</label>
                     <input
                       type="text"
                       value={editedProfile.zipcode}
                       onChange={(e) =>
                         setEditedProfile({ ...editedProfile, zipcode: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D97706]"
+                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#D97706] transition-all font-medium text-gray-900"
                     />
                   </div>
 

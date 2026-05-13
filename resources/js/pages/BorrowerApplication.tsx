@@ -4,6 +4,10 @@ import Collateral from "./borrower-application/Collateral";
 import LoanDetails from "./borrower-application/LoanDetails";
 import Confirmation from "./borrower-application/Confirmation";
 import type { SharedFormData } from "./borrower-application/sharedFormData";
+import {
+  emptyRuleRequirements,
+  parseRuleRequirements,
+} from "./borrower-application/ruleRequirements";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import type { BorrowerDocumentTypeOption } from "./borrowers/components/RenderDocumentUploader";
 import type { LoanProductDocumentRequirement } from "./borrower-application/sharedFormData";
@@ -44,10 +48,7 @@ const BorrowerApplication = ({
   borrowerRuleContext,
 }: BorrowerApplicationProps) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [ruleRequirements, setRuleRequirements] = useState<{ collateral: boolean; coborrower: boolean }>({
-    collateral: false,
-    coborrower: false,
-  });
+  const [ruleRequirements, setRuleRequirements] = useState(emptyRuleRequirements);
   const [loanProductRequirements, setLoanProductRequirements] = useState<LoanProductDocumentRequirement[]>([]);
 
   const [formData, setFormData] = useState<SharedFormData>({
@@ -135,7 +136,7 @@ const BorrowerApplication = ({
     const hasRuleInput = loanProductId > 0 || loanType !== "";
 
     if (!hasRuleInput) {
-      setRuleRequirements({ collateral: false, coborrower: false });
+      setRuleRequirements(emptyRuleRequirements());
       return;
     }
 
@@ -167,16 +168,20 @@ const BorrowerApplication = ({
           throw new Error(`Rule evaluation failed (${response.status})`);
         }
 
-        const payload = (await response.json()) as Partial<{ collateral: boolean; coborrower: boolean }>;
-        setRuleRequirements({
-          collateral: !!payload.collateral,
-          coborrower: !!payload.coborrower,
-        });
+        const payload = (await response.json()) as
+          | Partial<{
+              collateral: boolean;
+              coborrower: boolean;
+              requires_collateral: boolean;
+              requires_coborrower: boolean;
+            }>
+          | null;
+        setRuleRequirements(parseRuleRequirements(payload));
       } catch (error) {
         if ((error as { name?: string })?.name === "AbortError") {
           return;
         }
-        setRuleRequirements({ collateral: false, coborrower: false });
+        setRuleRequirements(emptyRuleRequirements());
       }
     };
 
@@ -229,10 +234,18 @@ const BorrowerApplication = ({
         const payload = (await response.json()) as { data?: LoanProductDocumentRequirement[] };
         const requirements = Array.isArray(payload.data) ? payload.data : [];
         setLoanProductRequirements(requirements);
-        setFormData((prev) => ({
-          ...prev,
-          loan_product_requirements: requirements,
-        }));
+        setFormData((prev) => {
+          const isBusinessLoan = String(prev.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+          return {
+            ...prev,
+            loan_product_requirements: requirements,
+            documents: {
+              ...(prev.documents ?? { collateral: [], loan_product: [] }),
+              loan_product: isBusinessLoan ? prev.documents?.loan_product ?? [] : [],
+            },
+          };
+        });
       } catch (error) {
         if ((error as { name?: string })?.name === "AbortError") {
           return;
@@ -245,6 +258,22 @@ const BorrowerApplication = ({
 
     return () => controller.abort();
   }, [formData.loan_product_id, setFormData]);
+
+  useEffect(() => {
+    const isBusinessLoan = String(formData.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+    if (isBusinessLoan || !(formData.documents?.loan_product?.length)) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...(prev.documents ?? { collateral: [], loan_product: [] }),
+        loan_product: [],
+      },
+    }));
+  }, [formData.documents?.loan_product?.length, formData.loan_type, setFormData]);
 
   const needsCollateral = ruleRequirements.collateral;
   const needsCoBorrower = ruleRequirements.coborrower;

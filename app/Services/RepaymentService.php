@@ -16,6 +16,16 @@ class RepaymentService
 {
     private const MONEY_EPSILON = 0.01;
 
+    private function scheduleOutstandingAmount(AmortizationSchedule $schedule): float
+    {
+        return round(max(0, (float) (
+            $schedule->installment_amount
+            + $schedule->penalty_amount
+            - $schedule->amount_paid
+            - $schedule->rebate_amount
+        )), 2);
+    }
+
     public function fetchBorrowersForRepayment()
     {
         $borrowers = Borrower::with(['loans.amortizationSchedules'])->get();
@@ -44,7 +54,6 @@ class RepaymentService
             $schedules = $unpaid->map(function ($s) {
                 $totalDue = round(max(0, (
                     $s->installment_amount +
-                    $s->interest_amount +
                     $s->penalty_amount -
                     $s->amount_paid -
                     $s->rebate_amount
@@ -180,7 +189,7 @@ class RepaymentService
         Carbon $paymentDate
     ): float {
         $schedule->refresh();
-        $totalDue = round((float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount), 2);
+        $totalDue = round((float) ($schedule->installment_amount + $schedule->penalty_amount), 2);
         $currentPaid = round((float) $schedule->amount_paid, 2);
         $rebateApplied = round((float) $schedule->rebate_amount, 2);
         $outstanding = round(max(0, $totalDue - $currentPaid - $rebateApplied), 2);
@@ -238,7 +247,8 @@ class RepaymentService
         if ($outstanding - $applied <= self::MONEY_EPSILON) {
             $schedule->status = ScheduleStatus::Paid;
         }
-        $principalRatio = $totalDue > 0 ? ((float) $schedule->installment_amount / $totalDue) : 0;
+        $principalAmount = max(0, (float) $schedule->installment_amount - (float) $schedule->interest_amount);
+        $principalRatio = $totalDue > 0 ? ($principalAmount / $totalDue) : 0;
         $interestRatio = $totalDue > 0 ? ((float) $schedule->interest_amount / $totalDue) : 0;
         $penaltyRatio = $totalDue > 0 ? ((float) $schedule->penalty_amount / $totalDue) : 0;
 
@@ -293,9 +303,7 @@ class RepaymentService
             ->get();
 
         foreach ($unpaidSchedules as $schedule) {
-            $totalDue = round((float) ($schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount), 2);
-            $amountPaid = round((float) $schedule->amount_paid, 2);
-            if (($totalDue - $amountPaid) > self::MONEY_EPSILON) {
+            if ($this->scheduleOutstandingAmount($schedule) > self::MONEY_EPSILON) {
                 return false;
             }
         }
@@ -316,8 +324,7 @@ class RepaymentService
 
         foreach ($unpaidSchedules as $schedule) {
             // Only void interest if schedule hasn't been fully paid yet
-            $totalDue = $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
-            if ($schedule->amount_paid < $totalDue) {
+            if ($this->scheduleOutstandingAmount($schedule) > self::MONEY_EPSILON) {
                 // Void the interest - reduce total due by interest amount
                 $schedule->interest_amount = 0;
                 $schedule->save();
@@ -333,15 +340,12 @@ class RepaymentService
      */
     private function updateLoanBalance(Loan $loan): void
     {
-        $totalPaid = $loan->amortizationSchedules()->sum('amount_paid');
-        
-        // Calculate total due across all schedules
-        $totalDue = 0;
+        $balanceRemaining = 0;
         foreach ($loan->amortizationSchedules()->get() as $schedule) {
-            $totalDue += $schedule->installment_amount + $schedule->interest_amount + $schedule->penalty_amount;
+            $balanceRemaining += $this->scheduleOutstandingAmount($schedule);
         }
 
-        $loan->balance_remaining = max(0, $totalDue - $totalPaid);
+        $loan->balance_remaining = round(max(0, $balanceRemaining), 2);
         $loan->save();
     }
 
@@ -350,10 +354,10 @@ class RepaymentService
         return $loan->amortizationSchedules
             ->whereIn('status', ['Unpaid', 'Overdue'])
             ->sum(function ($s) {
-                return ($s->installment_amount ?? 0)
-                    + ($s->interest_amount ?? 0)
+                return max(0, ($s->installment_amount ?? 0)
                     + ($s->penalty_amount ?? 0)
-                    - ($s->amount_paid ?? 0);
+                    - ($s->amount_paid ?? 0)
+                    - ($s->rebate_amount ?? 0));
             });
     }
 
@@ -372,7 +376,7 @@ class RepaymentService
         // r = Interest rate per period
         // t = Remaining periods in the loan
         
-        $principalAmount = round((float) $currentSchedule->installment_amount, 2);
+        $principalAmount = round(max(0, (float) $currentSchedule->installment_amount - (float) $currentSchedule->interest_amount), 2);
         
         $ratePerPeriod = match ($loan->repayment_frequency) {
             'Weekly' => ($loan->interest_rate / 100) / 52,

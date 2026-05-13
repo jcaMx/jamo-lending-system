@@ -23,6 +23,7 @@ type ChequePackagePrintProps = {
       bank_account_id?: number | null;
       bank_name: string;
       account_number?: string | null;
+      branch?: string | null; // ← added
       cheque_no: string;
       cheque_date?: string | null;
     };
@@ -183,7 +184,6 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
           border: 1px solid #2f2a22;
         }
 
-        /* ── Cheque face ── */
         .cheque-face {
           position: relative;
           overflow: hidden;
@@ -299,6 +299,7 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
             </div>
           </div>
 
+          {/* Payee Profile + Control Details */}
           <div className="grid grid-cols-[1.2fr_0.8fr] gap-5">
             <div className="block-card">
               <div className="section-title">Payee Profile</div>
@@ -345,6 +346,26 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
             </div>
           </div>
 
+          {/* ── BANK DETAILS (voucher only) ── */}
+          <div className="block-card">
+            <div className="section-title">Bank Details</div>
+            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-x-6 gap-y-2 text-base">
+              <div className="flex items-end gap-2">
+                <span className="shrink-0 font-semibold">Bank:</span>
+                <span className="line-fill">{voucher.cheque.bank_name}</span>
+              </div>
+              <div className="flex items-end gap-2">
+                <span className="shrink-0 font-semibold">Branch:</span>
+                <span className="line-fill">{voucher.cheque.branch || ''}</span>
+              </div>
+              <div className="flex items-end gap-2">
+                <span className="shrink-0 font-semibold">Account No.:</span>
+                <span className="line-fill">{voucher.cheque.account_number || ''}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Particulars + Amount */}
           <div>
             <div className="amount-head text-center">
               <div className="border-r border-black py-3">Particulars</div>
@@ -358,6 +379,7 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
             </div>
           </div>
 
+          {/* Signatures */}
           <div className="grid grid-cols-3 gap-4 rounded-xl border border-[#3f3422] bg-[#fffdf7] p-4">
             <SignatureBlock label="Prepared By:" value={voucher.prepared_by} />
             <SignatureBlock label="Approved By:" value={voucher.approved_by} />
@@ -369,13 +391,10 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
         <section className="sheet space-y-4 mt-6">
           <div className="cheque-face" style={{ background: '#ffffff', border: 'none', padding: '40px 28px' }}>
 
-            {/* Row 1: Cheque No. + Date (Top Right) */}
             <div className="flex justify-end gap-16 mb-20">
-              {/* Cheque No. */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold">{voucher.cheque.cheque_no}</span>
               </div>
-              {/* Date MM / DD / YYYY */}
               <div className="flex items-end gap-1">
                 <div className="text-sm font-bold w-6 text-center">{mm}</div>
                 <span className="text-sm">/</span>
@@ -385,7 +404,6 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
               </div>
             </div>
 
-            {/* Row 2: Pay To The Order Of | Payee Name */}
             <div className="mb-16">
               <div className="text-center">
                 <span className="text-lg font-bold underline">
@@ -394,7 +412,6 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
               </div>
             </div>
 
-            {/* Row 3: Amount in numbers (Right aligned) */}
             <div className="flex justify-end mb-3">
               <span className="text-lg font-bold">
                 {Number(voucher.gross_amount || 0).toLocaleString('en-PH', {
@@ -404,12 +421,10 @@ export default function ChequePackagePrint({ voucher, disbursement, loan, borrow
               </span>
             </div>
 
-            {/* Row 4: Amount in words */}
             <div className="mb-16">
               <span className="text-sm font-bold">{amountWords}</span>
             </div>
 
-            {/* Row 5: Account No. (Bottom Left) */}
             <div>
               <span className="text-sm font-bold">{voucher.cheque.account_number || ''}</span>
             </div>

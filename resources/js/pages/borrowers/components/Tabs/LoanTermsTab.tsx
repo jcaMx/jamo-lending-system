@@ -345,11 +345,11 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
         <!-- Penalty -->
         <div class="section">
           <div class="section-header">System Generated Penalty</div>
-          <div class="penalty-sub">Late Repayment Penalty — 6% penalty is charged on overdue amounts.</div>
+          <div class="penalty-sub">Late Repayment Penalty - 6% penalty is charged on overdue amounts after a 3-day grace period.</div>
           <table>
             <tr>
-              <td>Penalty Fixed Amount</td>
-              <td class="value">₱60.00</td>
+              <td>Penalty Rate</td>
+              <td class="value">6%</td>
             </tr>
             <tr>
               <td>Grace Period</td>
@@ -465,12 +465,12 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
         </div>
         <div className="bg-yellow-200 border-l-4 border-yellow-300 px-4 py-2 rounded-sm mb-4">
           <h3 className="font-medium text-yellow-800">
-            Late Repayment Penalty (6% penalty is charged on overdue amounts.)
+            Late Repayment Penalty (6% penalty is charged on overdue amounts after a 3-day grace period.)
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
-          <DetailRow label="Penalty Fixed Amount" value={`₱${(60.0).toLocaleString()}`} />
+          <DetailRow label="Penalty Rate" value="6%" />
           <DetailRow label="Grace Period" value={"3 days"} />
         </div>
       </section>
@@ -486,3 +486,5 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+

@@ -60,12 +60,12 @@ class CustomerDashboardController extends Controller
         // 4. Compute stats from active loans
         $activeLoans = $loans->whereIn('status', ['Active', 'Overdue']);
 
-        $firstActiveLoan = $activeLoans->first(); // Get the first active loan
-
         $stats = [
             'totalBalance' => $activeLoans->sum('balance_remaining'),
-            'totalDue' => $firstActiveLoan ? $this->repaymentService->getNextDueAmount($firstActiveLoan) : 0,
-            'totalPaid' => $firstActiveLoan ? $this->repaymentService->getTotalPaid($firstActiveLoan) : 0,
+            'totalDue' => (float) $mappedLoans
+                ->whereIn('status', ['Active', 'Overdue'])
+                ->sum('due'),
+            'totalPaid' => $activeLoans->sum(fn ($loan) => $this->repaymentService->getTotalPaid($loan)),
             'totalPenalty' => $activeLoans->sum(function ($loan) {
                 return $loan->amortizationSchedules->sum('penalty_amount')
                     + $loan->amortizationSchedules->flatMap->penalty->sum('amount');
@@ -111,6 +111,14 @@ class CustomerDashboardController extends Controller
             ->whereIn('status', ['Unpaid', 'Overdue'])
             ->orderBy('due_date')
             ->first();
+
+        $displayDue = (float) (
+            $nextSchedule?->installment_amount
+            ?? $loan->amortizationSchedules()
+                ->orderBy('due_date')
+                ->value('installment_amount')
+            ?? 0
+        );
         
         $totalPenalty = $loan->amortizationSchedules->sum('penalty_amount')
             + $loan->amortizationSchedules->flatMap->penalty->sum('amount');
@@ -129,8 +137,9 @@ class CustomerDashboardController extends Controller
             'principal' => (float) $loan->principal_amount,
             'interest' => (string) $loan->interest_rate,
             'interestType' => $loan->interest_type ?? '',
-            'penalty' => 0.0,
-            'due' => (float) $this->repaymentService->getNextDueAmount($loan),
+            'penalty' => (float) $totalPenalty,
+            'due' => $displayDue,
+            'amount_due' => $displayDue,
             'balance' => (float) ($loan->balance_remaining ?? 0),
             'status' => $status,
         ];

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\LoanApproved;
+use App\Events\LoanRejected;
 use App\Models\Loan;
 use App\Models\ScheduleStatus;
 use App\Models\AmortizationSchedule;
@@ -12,8 +14,8 @@ use App\Repositories\Interfaces\IPenaltyCalculator;
 use App\Services\Amortization\CompoundAmortizationCalculator;
 use App\Services\Amortization\DiminishingAmortizationCalculator;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\NotifyUser;
 
 
 class LoanService
@@ -58,40 +60,23 @@ class LoanService
 
     public function approveLoan(Loan $loan, int $approvedByUser): Loan
     {
-        DB::transaction(function () use ($loan, $approvedByUser) {
+        $updatedLoan = DB::transaction(function () use ($loan, $approvedByUser) {
             if ($loan->term_months < 1 || $loan->term_months > 840) {
                 throw new \InvalidArgumentException('Loan term is invalid. Allowed range is 1 to 840 months.');
             }
 
             $loan->approved_by = $approvedByUser;
             $loan->status = 'Active';
-
-            // Set borrower status to Active
-            $loan->borrower->status = 'Active';
-            $loan->borrower->save();
             $loan->save();
+
+            $loan->borrower()->update(['status' => 'Active']);
+
+            return $loan->fresh();
         });
 
-        $loan->refresh();
-        $loan->load('borrower');
-        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
-                    Your loan application has been approved.\n\n
-                    Loan Details:\n
-                    - Loan Number: {$loan->ID}\n
-                    - Borrower: {$loan->borrower->first_name} {$loan->borrower->last_name}\n
-                    -Loan Amount: PHP {$loan->principal_amount}\n
-                    
-                    For more information, please log in your account in JAMO Lending System";
+        LoanApproved::dispatch($updatedLoan);
 
-        $borrower = $loan->borrower;
-        $borrower->notify(new NotifyUser(
-            subject: 'Your Loan Application is Approved',
-            message: $message,
-            email: $borrower->email,
-            // sms: $borrower->$user->profile->phone ?? null
-        ));
-
-        return $loan->fresh();
+        return $updatedLoan;
     }
 
     public function finalizeLoanDisbursement(Loan $loan, float $releasedAmount, ?string $releasedDate = null): Loan
@@ -100,7 +85,8 @@ class LoanService
             $loan->released_amount = $releasedAmount;
             $loan->released_date = $releasedDate ? Carbon::parse($releasedDate) : Carbon::now();
 
-            // Set start_date to disbursement date (first installment due starts from this baseline)
+            // Keep start_date as the release baseline. Calculators derive the first due date
+            // by adding one repayment interval from this date.
             $loan->start_date = $loan->released_date->copy();
 
             // Calculate end_date based on term and repayment frequency
@@ -113,10 +99,10 @@ class LoanService
 
             $endDate = $loan->start_date->copy();
             $endDate = match ($loan->repayment_frequency) {
-                'Weekly' => $endDate->addWeeks($totalInstallments - 1),
-                'Monthly' => $endDate->addMonthsNoOverflow($totalInstallments - 1),
-                'Yearly' => $endDate->addYears($totalInstallments - 1),
-                default => $endDate->addMonthsNoOverflow($totalInstallments - 1)
+                'Weekly' => $endDate->addWeeks($totalInstallments),
+                'Monthly' => $endDate->addMonthsNoOverflow($totalInstallments),
+                'Yearly' => $endDate->addYears($totalInstallments),
+                default => $endDate->addMonthsNoOverflow($totalInstallments)
             };
 
             if ((int) $endDate->format('Y') > 9999) {
@@ -125,11 +111,10 @@ class LoanService
 
             $loan->end_date = $endDate;
 
-            // Use released amount as basis of schedule
-            $loan->balance_remaining = $releasedAmount;
+            $loan->balance_remaining = (float) $loan->principal_amount;
             $loan->save();
 
-            $schedules = $this->generateAmortization($loan, $releasedAmount);
+            $schedules = $this->generateAmortization($loan);
             $loan->balance_remaining = $schedules->sum('installment_amount');
             $loan->save();
         });
@@ -139,26 +124,16 @@ class LoanService
 
     public function rejectLoan(Loan $loan): Loan
     {
-        $loan->status = 'Rejected';
-        $loan->save();
+        $updatedLoan = DB::transaction(function () use ($loan) {
+            $loan->status = 'Rejected';
+            $loan->save();
 
-        $loan->load('borrower');
+            return $loan->fresh();
+        });
 
-        $message = "Dear {$loan->borrower->first_name} {$loan->borrower->last_name},\n\n
-                    We regrettably inform you that your loan application has been rejected.\n\n
-                    
-                    Please log in your account in JAMO Lending System and try again. Or contact us for further assistance.
-                    \n Thank you!";
+        LoanRejected::dispatch($updatedLoan);
 
-        $borrower = $loan->borrower;
-        $borrower->notify(new NotifyUser(
-            message: $message,
-            subject: 'Your Loan Application has been Rejected',
-            email: $borrower->email,
-            // sms: $borrower->$user->profile->phone ?? null
-        ));
-
-        return $loan->fresh();
+        return $updatedLoan;
     }
 
     public function editLoan(Loan $loan, array $data): Loan
@@ -203,11 +178,8 @@ class LoanService
             // Delete old schedules if exist
             $loan->amortizationSchedules()->delete();
 
-            // Use provided baseAmount, or released_amount, or fallback to principal_amount
-            $amount = $baseAmount ?? $loan->released_amount ?? $loan->principal_amount;
-
             // Generate new schedules
-            $schedules = $calculator->generate($loan, $amount);
+            $schedules = $calculator->generate($loan);
 
             foreach ($schedules as $item) {
                 $loan->amortizationSchedules()->create([
@@ -228,11 +200,35 @@ class LoanService
 
     public function calculatePenalties(Loan $loan): void
     {
+        $this->markOverdueSchedules($loan);
+
         $this->penaltyCalculator->calculate($loan);
+    }
+
+    public function markOverdueSchedules(?Loan $loan = null, ?CarbonInterface $asOf = null): int
+    {
+        $asOf ??= Carbon::now();
+
+        return DB::transaction(function () use ($loan, $asOf) {
+            $query = AmortizationSchedule::query()
+                ->where('status', ScheduleStatus::Unpaid->value)
+                ->whereDate('due_date', '<', $asOf->toDateString())
+                ->whereHas('loan', function ($query) use ($loan) {
+                    $query->where('status', 'Active');
+
+                    if ($loan) {
+                        $query->whereKey($loan->getKey());
+                    }
+                });
+
+            return $query->update(['status' => ScheduleStatus::Overdue->value]);
+        });
     }
 
     public function getThreeMonthLateLoans()
     {
+        $this->markOverdueSchedules();
+
         $cutoff = Carbon::now()->subDays(90);
 
         return Loan::with(['borrower', 'collateral.landDetails', 'collateral.vehicleDetails', 'collateral.atmDetails', 'amortizationSchedules'])
@@ -245,11 +241,14 @@ class LoanService
             })
             ->orWhere('status', 'Bad_Debt')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(fn (Loan $loan) => $this->appendLateRuleMetadata($loan, '3MLL'));
     }
 
     public function getOneMonthLateLoans()
     {
+        $this->markOverdueSchedules();
+
         $cutoff = Carbon::now()->subDays(30);
 
         return Loan::with(['borrower', 'collateral.landDetails', 'collateral.vehicleDetails', 'collateral.atmDetails', 'amortizationSchedules'])
@@ -260,7 +259,8 @@ class LoanService
                     ->where('due_date', '>', Carbon::now()->subDays(90));
             })
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(fn (Loan $loan) => $this->appendLateRuleMetadata($loan, '1MLL'));
     }
 
     public function getPastMaturityDateLoans()
@@ -273,7 +273,8 @@ class LoanService
             ->where('end_date', '<', $today)
             ->where('balance_remaining', '>', 0)
             ->orderBy('end_date', 'asc')
-            ->get();
+            ->get()
+            ->map(fn (Loan $loan) => $this->appendLateRuleMetadata($loan, 'PMD'));
     }
 
     public function getApprovedLoans()
@@ -300,6 +301,28 @@ class LoanService
                 ));
             });
 
+    }
+
+    private function appendLateRuleMetadata(Loan $loan, string $bucket): Loan
+    {
+        $overdueSchedule = $loan->amortizationSchedules
+            ->filter(fn ($schedule) => $schedule->status === ScheduleStatus::Overdue)
+            ->sortBy('due_date')
+            ->first();
+
+        $loan->setAttribute('past_due_date', match ($bucket) {
+            'PMD' => optional($loan->end_date)?->toDateString(),
+            default => optional($overdueSchedule?->due_date)?->toDateString(),
+        });
+
+        $loan->setAttribute('past_due_rule', match ($bucket) {
+            'PMD' => 'End date is earlier than today and the loan still has remaining balance.',
+            '1MLL' => 'Has an overdue amortization schedule that is at least 30 days late but less than 90 days late.',
+            '3MLL' => 'Has an overdue amortization schedule that is at least 90 days late, or the loan is already marked as Bad Debt.',
+            default => null,
+        });
+
+        return $loan;
     }
 
 }

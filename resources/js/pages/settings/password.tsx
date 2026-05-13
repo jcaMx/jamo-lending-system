@@ -117,7 +117,7 @@ export default function Password() {
                                 </div>
 
                                 <div className="flex items-center gap-4">
-                                    <Button
+                                    <Button className=' bg-amber-400 hover:bg-amber-500'
                                         disabled={processing}
                                         data-test="update-password-button"
                                     >

@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
-use App\Notifications\NotifyUser;
 
 
 class LoanController extends Controller
@@ -383,9 +382,14 @@ class LoanController extends Controller
 
     public function show(Loan $loan)
     {
+        if ($loan->status === 'Active') {
+            $this->loanService->calculatePenalties($loan);
+            $loan->refresh();
+        }
+
         $loan->load([
             'borrower',
-            'borrower.files',
+            'borrower.files.documentType',
             'borrower.coBorrowers',
             'borrower.spouse',
             'borrower.borrowerEmployment',
@@ -394,8 +398,8 @@ class LoanController extends Controller
             'collateral.landDetails',
             'collateral.vehicleDetails',
             'collateral.atmDetails',
-            'collateral.files',
-            'amortizationSchedules',
+            'collateral.files.documentType',
+            'amortizationSchedules.penalties',
             'formula',
             'loanComments' => function ($query) {
                 $query->orderBy('comment_date', 'desc');
@@ -417,6 +421,25 @@ class LoanController extends Controller
         }
 
         $loanData = $loan->toArray();
+        $loanData['amortizationSchedules'] = $loan->amortizationSchedules
+            ->sortBy('installment_no')
+            ->map(fn ($schedule) => [
+                'ID' => $schedule->ID,
+                'installment_no' => $schedule->installment_no,
+                'installment_amount' => (float) $schedule->installment_amount,
+                'interest_amount' => (float) $schedule->interest_amount,
+                'penalty_amount' => (float) $schedule->penalty_amount,
+                'amount_paid' => (float) $schedule->amount_paid,
+                'rebate_amount' => (float) $schedule->rebate_amount,
+                'due_date' => $schedule->due_date?->toDateString(),
+                'status' => $schedule->status?->value ?? $schedule->status ?? 'Unpaid',
+            ])
+            ->values()
+            ->all();
+        unset($loanData['amortization_schedules']);
+        $loanData['loanComments'] = $loan->relationLoaded('loanComments')
+            ? $loan->loanComments->values()->all()
+            : [];
         $loanData['has_completed_disbursement'] = $loan->disbursements()
             ->where('status', 'Completed')
             ->exists();
@@ -442,8 +465,12 @@ class LoanController extends Controller
                 'spouse' => $loan->borrower->spouse?->toArray(),
                 'borrowerEmployment' => $loan->borrower->borrowerEmployment?->toArray(),
                 'borrowerAddress' => $loan->borrower->borrowerAddress?->toArray(),
-                'files' => $loan->borrower->files?->values()->all() ?? [],
+                'files' => $this->formatDocumentFiles($loan->borrower->files),
             ];
+        }
+
+        if ($loan->collateral) {
+            $loanData['collateral']['files'] = $this->formatDocumentFiles($loan->collateral->files);
         }
 
         return Inertia::render('Loans/ShowLoan', [
@@ -573,7 +600,12 @@ class LoanController extends Controller
 
     public function showSchedule(Loan $loan)
     {
-        $loan->load(['amortizationSchedules', 'borrower.borrowerAddress']);
+        if ($loan->status === 'Active') {
+            $this->loanService->calculatePenalties($loan);
+            $loan->refresh();
+        }
+
+        $loan->load(['amortizationSchedules.penalties', 'borrower.borrowerAddress']);
 
         // Format the loan data to ensure schedules are properly serialized
         $loanData = [
@@ -617,23 +649,6 @@ class LoanController extends Controller
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Failed to close loan: '.$e->getMessage()]);
         }
-    }
-
-    public function addComment(Loan $loan, Request $request)
-    {
-        // Validation
-        $request->validate([
-            'comment_text' => 'required|string|max:1000',
-        ]);
-
-        // Use the relationship to create comment
-        $comment = $loan->loanComments()->create([
-            'comment_text' => $request->input('comment_text'),
-            'commented_by' => Auth::id(),
-            'comment_date' => now(),
-        ]);
-
-        return back()->with('success', 'Comment added successfully.');
     }
 
     public function updateBorrowerDetails(Loan $loan, Request $request)
@@ -855,19 +870,6 @@ class LoanController extends Controller
             return back()->withErrors(['error' => 'Failed to delete collateral file: '.$e->getMessage()]);
         }
     }
-
-
-    public function deleteComment(LoanComment $comment)
-    {
-        try {
-            $comment->delete();
-
-            return back()->with('success', 'Comment deleted successfully!');
-        } catch (\Throwable $e) {
-            return back()->withErrors(['error' => 'Failed to delete comment: '.$e->getMessage()]);
-        }
-    }
-
     private function resolveLoanProduct(?int $loanProductId, ?string $loanType): ?LoanProduct
     {
         if ($loanProductId) {
@@ -904,5 +906,74 @@ class LoanController extends Controller
             ->pluck('document_type_id')
             ->map(fn ($id) => (int) $id)
             ->values();
+    }
+
+    private function formatDocumentFiles($files): array
+    {
+        $files = collect($files);
+
+        $fallbackDocumentTypeNames = DocumentType::query()
+            ->whereIn(
+                'id',
+                $files
+                    ->map(fn ($file) => $this->extractDocumentTypeIdFromDescription($file->description))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->pluck('name', 'id');
+
+        return $files
+            ->map(fn ($file) => [
+                'ID' => $file->ID ?? $file->id ?? null,
+                'id' => $file->ID ?? $file->id ?? null,
+                'file_name' => $file->file_name,
+                'file_path' => $file->file_path,
+                'description' => $this->normalizeFileDescription($file->description),
+                'document_type_name' => $file->documentType?->name
+                    ?? $fallbackDocumentTypeNames->get($this->extractDocumentTypeIdFromDescription($file->description)),
+                'uploaded_at' => $file->uploaded_at
+                    ? (is_object($file->uploaded_at) && method_exists($file->uploaded_at, 'toISOString')
+                        ? $file->uploaded_at->toISOString()
+                        : (string) $file->uploaded_at)
+                    : null,
+            ])
+            ->filter(fn ($file) => ! empty($file['file_path']))
+            ->values()
+            ->all();
+    }
+
+    private function extractDocumentTypeIdFromDescription(?string $description): ?int
+    {
+        if (! $description) {
+            return null;
+        }
+
+        if (preg_match('/type_id\s*:\s*(\d+)/i', $description, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function normalizeFileDescription(?string $description): ?string
+    {
+        if (! $description) {
+            return null;
+        }
+
+        $cleaned = preg_replace('/\s*\(type_id\s*:\s*\d+\)\s*/i', '', $description) ?? $description;
+        $cleaned = trim($cleaned);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        return str($cleaned)
+            ->replace(['_', ':'], ' ')
+            ->squish()
+            ->title()
+            ->toString();
     }
 }

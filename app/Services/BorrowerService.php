@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Borrower;
 use App\Models\BorrowerId;
 use App\Models\Collateral;
+use App\Models\DocumentType;
 use App\Models\Files;
 use App\Models\Loan;
 use App\Models\LoanComment;
@@ -54,14 +55,15 @@ class BorrowerService
             ->with([
                 'borrowerEmployment',
                 'borrowerAddress',
-                'files',
+                'files.documentType',
                 'coBorrowers',
                 'spouse',
                 'loans.borrower',
+                'loans.loanComments.user',
                 'loans.collateral.landDetails',
                 'loans.collateral.vehicleDetails',
                 'loans.collateral.atmDetails',
-                'loans.collateral.files',
+                'loans.collateral.files.documentType',
                 'loans.amortizationSchedules',
                 'loans.disbursements.events',
             ])
@@ -76,7 +78,8 @@ class BorrowerService
                     : (string) ($loan->status ?? '');
 
                 return [
-                    'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
+                    'ID' => $loan->ID,
+                    'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->ID),
                     'released' => optional($loan->start_date)?->toDateString() ?? '',
                     'maturity' => optional($loan->end_date)?->toDateString() ?? '',
                     'repayment' => self::stringOrEnumValue($loan->repayment_frequency),
@@ -90,6 +93,16 @@ class BorrowerService
                     'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
                     'balance' => (float) $loan->balance_remaining,
                     'status' => $status,
+                    'loanComments' => $loan->loanComments
+                        ->sortByDesc('comment_date')
+                        ->values()
+                        ->map(fn (LoanComment $comment) => [
+                            'ID' => $comment->ID,
+                            'comment_text' => $comment->comment_text,
+                            'commented_by' => $comment->user?->name ?? 'Unknown',
+                            'comment_date' => optional($comment->comment_date)?->toISOString(),
+                        ])
+                        ->all(),
                     'collateral' => $loan->collateral ? [
                         'id' => $loan->collateral->id,
                         'type' => $loan->collateral->type,
@@ -111,15 +124,21 @@ class BorrowerService
 
         // Ensure schedules are loaded for the active loan
         if ($activeLoanModel) {
-            $activeLoanModel->load('amortizationSchedules');
+            $activeLoanModel->load(['amortizationSchedules.penalties', 'loanComments.user']);
         }
 
         $activeLoan = $this->formatLoan($activeLoanModel);      // formatted array for frontend
 
         $comments = $activeLoanModel
-            ? LoanComment::where('loan_id', $activeLoanModel->id)
-                ->orderByDesc('comment_date')
-                ->get()
+            ? $activeLoanModel->loanComments
+                ->sortByDesc('comment_date')
+                ->values()
+                ->map(fn (LoanComment $comment) => [
+                    'ID' => $comment->ID,
+                    'comment_text' => $comment->comment_text,
+                    'commented_by' => $comment->user?->name ?? 'Unknown',
+                    'comment_date' => optional($comment->comment_date)?->toISOString(),
+                ])
             : collect();
 
         return [
@@ -139,7 +158,7 @@ class BorrowerService
                 'email' => $borrower->email,
                 'mobile' => $borrower->contact_no,
                 'landline' => $borrower->land_line,
-                'files' => $borrower->files->values()->all(),
+                'files' => $this->formatFiles($borrower->files),
                 'spouse' => $borrower->spouse,
                 'coBorrowers' => $borrower->coBorrowers->values()->all(),
                 'comments' => $comments->values()->all(),
@@ -157,10 +176,20 @@ class BorrowerService
 
     private function resolveActiveLoan(Borrower $borrower): ?Loan
     {
-        // Pick first active loan or first loan
-        return $borrower->loans
-            ->first(fn (Loan $loan) => $loan->status === 'Active')
-            ?? $borrower->loans->first();
+        $statusPrioritySql = "CASE
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'pending' THEN 0
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'active' THEN 1
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'approved' THEN 2
+            WHEN LOWER(TRIM(COALESCE(status, ''))) = 'released' THEN 3
+            ELSE 4
+        END";
+
+        return Loan::query()
+            ->where('borrower_id', $borrower->ID)
+            ->orderByRaw($statusPrioritySql)
+            ->orderByDesc('created_at')
+            ->orderByDesc('ID')
+            ->first();
     }
 
     private function formatCollaterals(Collection $collaterals): array
@@ -176,7 +205,7 @@ class BorrowerService
             'land_details' => $collateral->landDetails,
             'vehicle_details' => $collateral->vehicleDetails,
             'atm_details' => $collateral->atmDetails,
-            'files' => $collateral->files ? [$collateral->files] : [],
+            'files' => $this->formatFiles($collateral->files),
         ])
             ->values()
             ->all();
@@ -198,7 +227,7 @@ class BorrowerService
 
         return [
             'ID' => $loan->ID,
-            'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->id),
+            'loanNo' => $loan->loan_no ?? sprintf('LN-%06d', $loan->ID),
             'released' => optional($loan->start_date)?->toDateString() ?? '',
             'maturity' => optional($loan->end_date)?->toDateString() ?? '',
             'repayment' => self::stringOrEnumValue($loan->repayment_frequency),
@@ -213,6 +242,18 @@ class BorrowerService
             'due' => (float) $loan->amortizationSchedules->first()?->installment_amount ?? 0,
             'balance' => (float) $loan->balance_remaining,
             'status' => $status,
+            'loanComments' => $loan->relationLoaded('loanComments')
+                ? $loan->loanComments
+                    ->sortByDesc('comment_date')
+                    ->values()
+                    ->map(fn (LoanComment $comment) => [
+                        'ID' => $comment->ID,
+                        'comment_text' => $comment->comment_text,
+                        'commented_by' => $comment->user?->name ?? 'Unknown',
+                        'comment_date' => optional($comment->comment_date)?->toISOString(),
+                    ])
+                    ->all()
+                : [],
         ];
     }
 
@@ -276,6 +317,8 @@ class BorrowerService
             return [];
         }
 
+        $loan->loadMissing('amortizationSchedules.penalties');
+
         return $loan->amortizationSchedules
             ->map(fn ($schedule) => [
                 'installment_no' => $schedule->installment_no,
@@ -293,15 +336,73 @@ class BorrowerService
 
     private function formatFiles($files)
     {
-        return $files->map(function ($f) {
-            return [
-                'id' => $f->ID,
-                'fileName' => $f->file_name,
-                'filePath' => asset($f->file_path),
-                'description' => $f->description,
-                'uploadedAt' => $f->uploaded_at,
-            ];
-        })->toArray();
+        $files = collect($files);
+
+        $fallbackDocumentTypeNames = DocumentType::query()
+            ->whereIn(
+                'id',
+                $files
+                    ->map(fn ($file) => $this->extractDocumentTypeIdFromDescription($file->description))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->pluck('name', 'id');
+
+        return $files
+            ->map(function ($f) use ($fallbackDocumentTypeNames) {
+                return [
+                    'ID' => $f->ID ?? null,
+                    'id' => $f->ID ?? null,
+                    'file_name' => $f->file_name,
+                    'file_type' => $f->file_type,
+                    'file_path' => $f->file_path,
+                    'description' => $this->normalizeFileDescription($f->description),
+                    'document_type_name' => $f->documentType?->name
+                        ?? $fallbackDocumentTypeNames->get($this->extractDocumentTypeIdFromDescription($f->description)),
+                    'uploaded_at' => $f->uploaded_at
+                        ? (is_object($f->uploaded_at) && method_exists($f->uploaded_at, 'toISOString')
+                            ? $f->uploaded_at->toISOString()
+                            : (string) $f->uploaded_at)
+                        : null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function extractDocumentTypeIdFromDescription(?string $description): ?int
+    {
+        if (! $description) {
+            return null;
+        }
+
+        if (preg_match('/type_id\s*:\s*(\d+)/i', $description, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function normalizeFileDescription(?string $description): ?string
+    {
+        if (! $description) {
+            return null;
+        }
+
+        $cleaned = preg_replace('/\s*\(type_id\s*:\s*\d+\)\s*/i', '', $description) ?? $description;
+        $cleaned = trim($cleaned);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        return str($cleaned)
+            ->replace(['_', ':'], ' ')
+            ->squish()
+            ->title()
+            ->toString();
     }
 
     public function createBorrower(array $data): Borrower
