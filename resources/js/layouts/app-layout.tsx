@@ -28,28 +28,25 @@ export default function AppLayout({ children, breadcrumbs }: AppLayoutProps) {
 
   if (matchedRole === 'customer') {
     return (
-      <SidebarProvider>
+      <div className="flex h-screen w-screen overflow-hidden">
         <CustomerSidebar />
-        <SidebarInset>
-          <div className="min-h-screen w-full bg-gray-50 overflow-x-hidden">
-            <TopBar />
-            <main className="p-4 lg:p-6 w-full max-w-none">
-              {breadcrumbs && (
-                <div className="mb-4 px-1 text-sm text-gray-500">
-                  {breadcrumbs.map((b, i) => (
-                    <span key={i}>
-                      {b.title}
-                      {i < breadcrumbs.length - 1 && ' / '}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {children}
-            </main>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+        <div className="flex flex-1 flex-col overflow-hidden bg-gray-50">
+          <TopBar />
+          <main className="flex-1 overflow-auto p-4 lg:p-6">
+            {breadcrumbs && (
+              <div className="mb-4 px-1 text-sm text-gray-500">
+                {breadcrumbs.map((b, i) => (
+                  <span key={i}>
+                    {b.title}
+                    {i < breadcrumbs.length - 1 && ' / '}
+                  </span>
+                ))}
+              </div>
+            )}
+            {children}
+          </main>
+        </div>
+      </div>
     );
   }
 
