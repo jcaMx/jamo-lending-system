@@ -51,20 +51,19 @@ export default function CustomerSidebar() {
 
   return (
     <Sidebar
-      collapsible="none"
-      variant="floating"
-      className="bg-[#192132] text-white w-64 h-screen flex flex-col fixed left-0 top-0 z-40"
+      collapsible="offcanvas"
+      className="bg-[#192132] w-64 text-white flex flex-col border-none shrink-0 "
     >
       {/* HEADER */}
-      <SidebarHeader className="bg-[#192132]">
-        <Link href="/customer/dashboard">
-          <AppLogoIcon className="m-3" />
+      <SidebarHeader className="bg-[#192132] p-4">
+        <Link href="/customer/dashboard" className="flex items-center gap-2">
+          <AppLogoIcon className="h-10 w-auto" />
         </Link>
       </SidebarHeader>
 
       {/* CONTENT */}
-      <SidebarContent className="px-2 flex-1 overflow-y-auto">
-        <div className="space-y-2">
+      <SidebarContent className="px-4 py-6 flex-1 overflow-y-auto">
+        <div className="space-y-1.5">
           {customerNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = url === item.href;
@@ -73,14 +72,13 @@ export default function CustomerSidebar() {
               <Link
                 key={item.title}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition
-                  ${
-                    isActive
-                      ? "bg-linear-to-r from-[#3c4a6a] to-[#192132]"
-                      : "hover:bg-linear-to-r hover:from-[#2f3b57] hover:to-[#192132]"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                  ${isActive
+                    ? "bg-linear-to-r from-[#3c4a6a] to-[#192132]"
+                    : "hover:bg-linear-to-r hover:from-[#2f3b57] hover:to-[#192132]" 
                   }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className={`w-5 h-5 ${isActive ? "text-[#FABF24]" : "text-gray-400"}`} />
                 <span>{item.title}</span>
               </Link>
             );
@@ -93,7 +91,7 @@ export default function CustomerSidebar() {
         <NavFooter items={footerNavItems} className="mt-auto" />
         <NavUser />
       </SidebarFooter>
-      </Sidebar>
+    </Sidebar>
 
   );
 }

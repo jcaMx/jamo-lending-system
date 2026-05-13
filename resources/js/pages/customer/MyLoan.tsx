@@ -1,18 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { type BreadcrumbItem } from '@/types';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import NoLoansPlaceholder from '@/components/dashboard/NoLoansPlaceholder';
-import BorrowerInfoCard from '@/pages/borrowers/BorrowerInfoCard'; 
-// import RepaymentsTab from '@/pages/borrowers/components/Tabs/RepaymentsTab';
 import LoanScheduleTab from '@/pages/borrowers/components/Tabs/LoanScheduleTab';
 import LoanCollateralTab from '@/pages/borrowers/components/Tabs/LoanCollateralTab';
 import LoanTermsTab from '@/pages/borrowers/components/Tabs/LoanTermsTab';
 
-// Customer side usually doesn't see internal admin comments, 
-// so we've removed LoanCommentsTab for privacy.
-
-// type Repayment = { id: number; name: string; loanNo: string; method: string; collectedBy: string; collectionDate: string; paidAmount: number };
 type Loan = {
   loanNo: string;
   released: string;
@@ -27,12 +20,15 @@ type Loan = {
   status: string;
   releasing_fees?: {
     gross_amount: number;
-    charges: Record<string, {
-      charge_id?: number;
-      name?: string;
-      rate: number;
-      amount: number;
-    }>;
+    charges: Record<
+      string,
+      {
+        charge_id?: number;
+        name?: string;
+        rate: number;
+        amount: number;
+      }
+    >;
     total_fees: number;
     net_disbursed_amount: number;
   };
@@ -75,7 +71,24 @@ const toArray = <T,>(value: T[] | Record<string, T> | null | undefined): T[] => 
   return [];
 };
 
-export default function MyLoan({ authUser, collaterals = [], activeLoan = null, hasLoan = true }: { authUser: any; collaterals: Collateral[]; activeLoan: Loan | null; hasLoan?: boolean }) {
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    minimumFractionDigits: 2,
+  }).format(amount);
+
+export default function MyLoan({
+  authUser,
+  collaterals = [],
+  activeLoan = null,
+  hasLoan = true,
+}: {
+  authUser: any;
+  collaterals: Collateral[];
+  activeLoan: Loan | null;
+  hasLoan?: boolean;
+}) {
   type TabKey = 'loanTerms' | 'loanSchedule' | 'loanCollateral';
   const [activeTab, setActiveTab] = useState<TabKey>('loanSchedule');
 
@@ -101,46 +114,50 @@ export default function MyLoan({ authUser, collaterals = [], activeLoan = null, 
     );
   }
 
-  // Logic to handle user data
-  const normalizedData = useMemo(() => ({
-    ...authUser,
-    loans: toArray<Loan>(authUser.loans),
-    amortizationSchedule: toArray(authUser.amortizationSchedule),
-  }), [authUser]);
+  const normalizedData = useMemo(
+    () => ({
+      ...authUser,
+      loans: toArray<Loan>(authUser.loans),
+      amortizationSchedule: toArray(authUser.amortizationSchedule),
+    }),
+    [authUser],
+  );
 
   const safeLoan: Loan = activeLoan ?? normalizedData.loans[0] ?? {
-    loanNo: '-', released: '-', maturity: '-', repayment: '-', principal: 0,
-    interest: '-', interestType: '-', loan_type: '-', penalty: 0, due: 0, balance: 0, status: 'N/A',
+    loanNo: '-',
+    released: '-',
+    maturity: '-',
+    repayment_frequency: '-',
+    principal: 0,
+    interest: '-',
+    interestType: '-',
+    loan_type: '-',
+    due: 0,
+    balance: 0,
+    status: 'N/A',
     releasing_fees: undefined,
   };
 
-  const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'My Loan Details', href: '/my-loan' },
-  ];
-
-  const tabItems = useMemo(() => [
-    // {
-    //   key: 'repayments' as TabKey,
-    //   label: 'My Payments',
-    //   content: <RepaymentsTab repayments={toArray(authUser.repayments)} />,
-    // },
-    {
-      key: 'loanSchedule' as TabKey,
-      label: 'Payment Schedule',
-      content: <LoanScheduleTab amortizationSchedule={normalizedData.amortizationSchedule} />,
-    },
-    {
-      key: 'loanTerms' as TabKey,
-      label: 'Loan Terms',
-      content: <LoanTermsTab loan={safeLoan} releasingFees={safeLoan?.releasing_fees} />,
-    },
-    {
-      key: 'loanCollateral' as TabKey,
-      label: 'Collateral',
-      content: <LoanCollateralTab collaterals={toArray(collaterals)} />,
-    },
-  ], [authUser, safeLoan, normalizedData, collaterals]);
+  const tabItems = useMemo(
+    () => [
+      {
+        key: 'loanSchedule' as TabKey,
+        label: 'Payment Schedule',
+        content: <LoanScheduleTab amortizationSchedule={normalizedData.amortizationSchedule} />,
+      },
+      {
+        key: 'loanTerms' as TabKey,
+        label: 'Loan Terms',
+        content: <LoanTermsTab loan={safeLoan} releasingFees={safeLoan.releasing_fees} />,
+      },
+      {
+        key: 'loanCollateral' as TabKey,
+        label: 'Collateral',
+        content: <LoanCollateralTab collaterals={toArray(collaterals)} />,
+      },
+    ],
+    [collaterals, normalizedData.amortizationSchedule, safeLoan],
+  );
 
   const currentTab = tabItems.find((tab) => tab.key === activeTab);
 
@@ -148,64 +165,67 @@ export default function MyLoan({ authUser, collaterals = [], activeLoan = null, 
     <DashboardLayout>
       <Head title="My Loan Details" />
 
-      {/* User profile summary */}
-      {/* <BorrowerInfoCard borrower={authUser} /> */}
-      <div className="space-y-1.5 m-3">
-        <p className="text-xl md:text-2xl font-semibold text-gray-900">My Loan</p>
-        <p className="text-sm text-gray-600 max-w-xl">
-           Get detailed information about your loan terms, payment schedule, and collateral.
-        </p>
-      </div>
-      {/* Main Loan Overview */}
-      <div className="m-4 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <h2 className='text-xl font-bold text-gray-800 mb-4'>Current Loan Overview</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b text-gray-500 text-sm">
-                <th className="px-3 py-3 text-left">Loan No.</th>
-                <th className="px-3 py-3 text-left">Principal</th>
-                <th className="px-3 py-3 text-left">Interest</th>
-                <th className="px-3 py-3 text-left">Balance</th>
-                <th className="px-3 py-3 text-left">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              <tr>
-                <td className="px-3 py-4 font-medium">{safeLoan.loanNo}</td>
-                <td className="px-3 py-4 text-gray-600">₱{safeLoan.principal.toLocaleString()}</td>
-                <td className="px-3 py-4 text-gray-600">{safeLoan.interest}%</td>
-                <td className="px-3 py-4 font-bold text-[#D97706]">₱{safeLoan.balance.toLocaleString()}</td>
-                <td className="px-3 py-4">
-                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 uppercase">
-                    {safeLoan.status}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Detailed Tabs */}
-      <div className="m-4 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex bg-gray-50 border-b">
-          {tabItems.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-6 py-3 text-sm font-semibold transition-all ${
-                activeTab === tab.key
-                  ? 'bg-white text-[#D97706] border-t-2 border-[#D97706]'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="space-y-6">
+        <div className="space-y-1.5">
+          <p className="text-xl font-semibold text-gray-900 md:text-2xl">My Loan</p>
+          <p className="max-w-xl text-sm text-gray-600">
+            Get detailed information about your loan terms, payment schedule, and collateral.
+          </p>
         </div>
 
-        <div className="p-4">{currentTab?.content}</div>
+        <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 bg-navy p-5 text-white sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Loan Number</p>
+              <h2 className="text-lg font-bold text-white sm:hidden">Current Loan Overview</h2>
+              <h3 className="text-2xl font-bold sm:text-3xl">#{safeLoan.loanNo}</h3>
+            </div>
+            <div className="sm:text-right">
+              <p className="hidden text-lg font-bold text-white sm:block">Current Loan Overview</p>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Status</p>
+              <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                {safeLoan.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-3 lg:gap-8 lg:p-8">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Principal Amount</p>
+              <p className="text-xl font-bold text-gray-900">{formatCurrency(safeLoan.principal)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Interest Rate</p>
+              <p className="text-xl font-bold text-gray-900">
+                {safeLoan.interest}% <span className="ml-1 text-xs font-normal text-gray-500">({safeLoan.interestType})</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Current Balance</p>
+              <p className="text-xl font-bold text-orange-600">{formatCurrency(safeLoan.balance)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          <div className="flex overflow-x-auto border-b bg-gray-50/50 no-scrollbar">
+            {tabItems.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`border-b-2 px-4 py-4 text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all sm:px-6 ${
+                  activeTab === tab.key
+                    ? 'border-orange-600 bg-white text-orange-600'
+                    : 'border-transparent text-gray-400 hover:bg-gray-100/50 hover:text-gray-600'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-4 sm:p-5">{currentTab?.content}</div>
+        </div>
       </div>
     </DashboardLayout>
   );

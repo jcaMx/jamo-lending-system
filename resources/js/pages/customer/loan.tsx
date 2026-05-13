@@ -30,34 +30,36 @@ export default function CustomerLoan() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {summaryCards.map((stat) => (
             <div
               key={stat.title}
-              className="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] transition"
+              className="bg-white p-8 rounded-3xl shadow-sm ring-1 ring-gray-200/70 border-2 border-transparent hover:border-[#D97706] transition-all duration-300 group"
             >
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.title}</p>
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm"
                   style={{ backgroundColor: `${stat.color}15` }}
                 >
-                  <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+                  <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
+              <p className="text-3xl font-bold text-gray-900 tracking-tight">{stat.value}</p>
+              <p className="text-xs text-gray-400 mt-2 font-medium">{stat.description}</p>
             </div>
           ))}
         </div>
 
         {/* Active Loans */}
         {activeLoans.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">Active Loans</h2>
-            <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-6">
+            <h2 className="text-lg font-bold text-gray-900 tracking-tight px-1">Active Loans</h2>
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
               {activeLoans.map((loan) => (
-                <LoanCard key={loan.id} loan={loan} />
+                <div key={loan.id} className="hover:-translate-y-1 transition-transform duration-300">
+                  <LoanCard loan={loan} />
+                </div>
               ))}
             </div>
           </div>

@@ -177,6 +177,28 @@ const Collateral = ({
   const indicatorLabels = stepLabels && stepLabels.length > 0 ? stepLabels : defaultStepLabels;
   const indicatorIndex = stepIndex ?? 3;
 
+  const syncParentFormData = (
+    nextFields: Partial<typeof data> = {},
+    nextCollateralRows?: BorrowerDocumentUploadItem[],
+  ) => {
+    setFormData((prev) => {
+      const mergedFields = {
+        ...data,
+        ...nextFields,
+      };
+
+      return {
+        ...prev,
+        ...mergedFields,
+        documents: {
+          ...(prev.documents ?? { collateral: [], loan_product: [] }),
+          ...(mergedFields.documents ?? { collateral: [] }),
+          collateral: nextCollateralRows ?? mergedFields.documents?.collateral ?? [],
+        },
+      };
+    });
+  };
+
   const focusField = (fieldName: string) => {
     if (typeof document === "undefined") return;
 
@@ -191,15 +213,8 @@ const Collateral = ({
   };
 
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      ...data,
-      documents: {
-        ...(prev.documents ?? { collateral: [], loan_product: [] }),
-        ...(data.documents ?? { collateral: [] }),
-      },
-    }));
-  }, [data, setFormData]);
+    syncParentFormData();
+  }, [data]);
 
   const areCollateralRowsEqual = (
     left: BorrowerDocumentUploadItem[],
@@ -336,6 +351,15 @@ const Collateral = ({
       ...data.documents,
       collateral: nextRows,
     });
+    syncParentFormData(
+      {
+        documents: {
+          ...data.documents,
+          collateral: nextRows,
+        },
+      },
+      nextRows,
+    );
   };
 
   const hasMeaningfulCollateralPayload = () => {
@@ -369,14 +393,7 @@ const Collateral = ({
 
   const clearCollateralState = () => {
     setData(() => emptyCollateralState);
-    setFormData((prev) => ({
-      ...prev,
-      ...emptyCollateralState,
-      documents: {
-        ...(prev.documents ?? {}),
-        collateral: [],
-      },
-    }));
+    syncParentFormData(emptyCollateralState, []);
   };
 
   const submit = () => {
@@ -468,6 +485,7 @@ const Collateral = ({
     }
 
     setStepError("");
+    syncParentFormData();
     onNext();
   };
 
