@@ -102,6 +102,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
     return items;
   }, []);
 
+  const totalBeginningBalance = rows.reduce((sum, row) => sum + row.beginningBalance, 0);
   const totalInterest = rows.reduce((sum, row) => sum + toNumber(row.interest_amount), 0);
   const totalPenalty = rows.reduce((sum, row) => sum + toNumber(row.penalty_amount), 0);
   const totalRebate = rows.reduce((sum, row) => sum + toNumber(row.rebate_amount), 0);
@@ -181,7 +182,7 @@ export default function LoanScheduleTab({ amortizationSchedule, loanAmount, inte
               <td className="px-3 py-3" colSpan={2}>
                 Total
               </td>
-              <td className="px-3 py-3" />
+              <td className="px-3 py-3 text-right">{money(totalBeginningBalance)}</td>
               <td className="px-3 py-3 text-right text-[#A47B06]">{money(totalPrincipal)}</td>
               <td className="px-3 py-3 text-right text-amber-800">{money(totalInterest)}</td>
               {showPenalty && <td className="px-3 py-3 text-right text-red-700">{money(totalPenalty)}</td>}
