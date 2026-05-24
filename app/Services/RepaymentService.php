@@ -45,7 +45,9 @@ class RepaymentService
             // Filter unpaid and overdue schedules
             $unpaid = $activeLoan->amortizationSchedules
                 ->filter(function ($s) {
-                    return $s->status && in_array($s->status->value, ['Unpaid', 'Overdue'], true);
+                    return $s->due_date
+                        && $s->status
+                        && in_array($s->status->value, ['Unpaid', 'Overdue'], true);
                 })
                 ->sortBy('due_date')
                 ->values();
@@ -119,6 +121,7 @@ class RepaymentService
             $selectedSchedules = $loan->amortizationSchedules()
                 ->whereIn('ID', $preferredScheduleIds)
                 ->whereIn('status', [ScheduleStatus::Unpaid->value, ScheduleStatus::Overdue->value])
+                ->whereNotNull('due_date')
                 ->orderBy('due_date', 'asc')
                 ->get();
         }
@@ -126,6 +129,7 @@ class RepaymentService
         if ($selectedSchedules->isEmpty()) {
             $selectedSchedules = $loan->amortizationSchedules()
                 ->whereIn('status', [ScheduleStatus::Unpaid->value, ScheduleStatus::Overdue->value])
+                ->whereNotNull('due_date')
                 ->orderBy('due_date', 'asc')
                 ->get();
         }
@@ -164,6 +168,7 @@ class RepaymentService
     {
         $futureSchedules = $loan->amortizationSchedules()
             ->whereIn('status', [ScheduleStatus::Unpaid->value, ScheduleStatus::Overdue->value])
+            ->whereNotNull('due_date')
             ->when(! empty($excludedScheduleIds), function ($query) use ($excludedScheduleIds) {
                 $query->whereNotIn('ID', $excludedScheduleIds);
             })

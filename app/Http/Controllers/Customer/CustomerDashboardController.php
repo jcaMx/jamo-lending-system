@@ -109,12 +109,14 @@ class CustomerDashboardController extends Controller
 
         $nextSchedule = $loan->amortizationSchedules()
             ->whereIn('status', ['Unpaid', 'Overdue'])
+            ->whereNotNull('due_date')
             ->orderBy('due_date')
             ->first();
 
         $displayDue = (float) (
             $nextSchedule?->installment_amount
             ?? $loan->amortizationSchedules()
+                ->whereNotNull('due_date')
                 ->orderBy('due_date')
                 ->value('installment_amount')
             ?? 0

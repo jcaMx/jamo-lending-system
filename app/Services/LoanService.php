@@ -69,6 +69,10 @@ class LoanService
             $loan->status = 'Active';
             $loan->save();
 
+            $schedules = $this->generateAmortization($loan);
+            $loan->balance_remaining = $schedules->sum('installment_amount');
+            $loan->save();
+
             $loan->borrower()->update(['status' => 'Active']);
 
             return $loan->fresh();
@@ -212,6 +216,7 @@ class LoanService
         return DB::transaction(function () use ($loan, $asOf) {
             $query = AmortizationSchedule::query()
                 ->where('status', ScheduleStatus::Unpaid->value)
+                ->whereNotNull('due_date')
                 ->whereDate('due_date', '<', $asOf->toDateString())
                 ->whereHas('loan', function ($query) use ($loan) {
                     $query->where('status', 'Active');
@@ -290,6 +295,7 @@ class LoanService
         
         AmortizationSchedule::with('loan.borrower')
             ->where('status', ScheduleStatus::Unpaid->value)
+            ->whereNotNull('due_date')
             ->whereDate('due_date', $threeDaysFromNow)
             ->get()
             ->each(function ($schedule) {

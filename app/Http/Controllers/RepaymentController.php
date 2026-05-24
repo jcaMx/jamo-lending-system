@@ -45,7 +45,7 @@ class RepaymentController extends Controller
                     ->filter(function ($schedule) {
                         $status = $schedule->status?->value ?? (string) $schedule->status;
 
-                        return in_array($status, [
+                        return $schedule->due_date && in_array($status, [
                             ScheduleStatus::Unpaid->value,
                             ScheduleStatus::Overdue->value,
                         ], true);
@@ -162,6 +162,7 @@ class RepaymentController extends Controller
                             \App\Models\ScheduleStatus::Unpaid,
                             \App\Models\ScheduleStatus::Overdue
                         ])
+                        ->whereNotNull('due_date')
                         ->orderBy('due_date', 'asc')
                         ->first();
 

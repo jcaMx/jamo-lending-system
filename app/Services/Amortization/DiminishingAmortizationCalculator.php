@@ -58,7 +58,7 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
             default => $rate / 12
         };
 
-        $startDate = $loan->start_date->copy();
+        $startDate = $loan->start_date ? $loan->start_date->copy() : null;
         $endDate = $loan->end_date ? $loan->end_date->copy() : null;
         $results = [];
         $installmentAmount = $this->formulaService->evaluate($paymentFormula, [
@@ -84,14 +84,18 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
 
             $remaining = round(max(0, $remaining - $principalPayment), 2);
 
-            if ($i === $totalInstallments && $endDate) {
+            if (! $startDate) {
+                $adjustedDueDate = null;
+                $holiday = null;
+            } elseif ($i === $totalInstallments && $endDate) {
                 $dueDate = $endDate->copy();
+                $adjustedDueDate = $this->holidayService->adjustDate($dueDate);
+                $holiday = $this->holidayService->getHoliday($adjustedDueDate);
             } else {
                 $dueDate = $this->calculateDueDate($startDate, $frequency, $i);
+                $adjustedDueDate = $this->holidayService->adjustDate($dueDate);
+                $holiday = $this->holidayService->getHoliday($adjustedDueDate);
             }
-
-            $adjustedDueDate = $this->holidayService->adjustDate($dueDate);
-            $holiday = $this->holidayService->getHoliday($adjustedDueDate);
 
             $results[] = [
                 'installment_no' => $i,

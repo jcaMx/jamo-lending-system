@@ -50,6 +50,7 @@ class MyRepaymentsController extends Controller
         $nextDueDate = $activeLoan
             ? optional($activeLoan->amortizationSchedules()
                 ->whereIn('status', ['Unpaid', 'Overdue'])
+                ->whereNotNull('due_date')
                 ->orderBy('due_date', 'asc')
                 ->first()
             )?->due_date?->toDateString()

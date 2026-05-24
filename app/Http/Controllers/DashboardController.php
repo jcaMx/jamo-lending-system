@@ -65,6 +65,7 @@ class DashboardController extends Controller
 
         $schedules = AmortizationSchedule::with(['loan.borrower'])
             ->whereIn('status', [ScheduleStatus::Unpaid, ScheduleStatus::Overdue])
+            ->whereNotNull('due_date')
             ->whereBetween('due_date', [Carbon::now(), $threeDaysFromNow])
             ->orderBy('due_date', 'asc')
             ->get()

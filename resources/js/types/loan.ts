@@ -100,7 +100,7 @@ export interface AmortizationSchedule {
   installment_no: number;
   installment_amount: number;
   interest_amount: number;
-  due_date: string;
+  due_date?: string | null;
   amount_paid: number;
   penalty_amount: number;
   status: string;

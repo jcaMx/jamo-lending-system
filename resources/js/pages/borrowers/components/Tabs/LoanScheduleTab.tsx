@@ -1,6 +1,6 @@
 type ScheduleRow = {
   installment_no: number;
-  due_date: string;
+  due_date?: string | null;
   interest_amount?: number | string;
   penalty_amount?: number | string;
   installment_amount?: number | string;
@@ -29,7 +29,7 @@ const money = (value?: number | string | null) =>
   }).format(toNumber(value));
 
 const dateLabel = (value?: string | null) => {
-  if (!value) return 'N/A';
+  if (!value) return 'Pending release';
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime())
