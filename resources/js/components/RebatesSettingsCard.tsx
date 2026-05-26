@@ -23,7 +23,7 @@ export default function RebatesSettingsCard({ settings }: RebatesSettingsProps) 
   const { data, setData, post, processing, errors } = useForm({
     enable_rebates: settings.enable_rebates,
     rebate_percentage: settings.rebate_percentage,
-    rebate_basis: settings.rebate_basis,
+    rebate_basis: 'interest',
     rebate_min_days_early: settings.rebate_min_days_early,
     rebate_apply_to_full_payoff: settings.rebate_apply_to_full_payoff,
     rebate_require_good_standing: settings.rebate_require_good_standing,
@@ -110,21 +110,10 @@ export default function RebatesSettingsCard({ settings }: RebatesSettingsProps) 
 
               <div className="space-y-3">
                 <Label htmlFor="rebate_basis" className="font-semibold">Calculation Basis</Label>
-                <Select
-                  value={data.rebate_basis}
-                  onValueChange={(value) => setData('rebate_basis', value)}
-                >
-                  <SelectTrigger id="rebate_basis">
-                    <SelectValue placeholder="Select basis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="interest">Interest Amount Only</SelectItem>
-                    <SelectItem value="principal">Principal Amount Only</SelectItem>
-                    <SelectItem value="total">Total Installment Amount</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">Which part of the payment the % is applied to.</p>
-                {errors.rebate_basis && <p className="text-xs text-red-500 font-medium">{errors.rebate_basis}</p>}
+                <div className="flex items-center h-10 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-md text-gray-500 font-medium select-none">
+                  Interest Amount Only
+                </div>
+                <p className="text-xs text-gray-500">Locked to interest amount for financial soundness.</p>
               </div>
 
               <div className="space-y-3">
@@ -178,7 +167,7 @@ export default function RebatesSettingsCard({ settings }: RebatesSettingsProps) 
                 <p>
                   <strong>How it works:</strong> If a borrower pays an installment early, a rebate of 
                   <span className="font-bold"> {data.rebate_percentage}% </span> of the 
-                  <span className="font-bold"> {data.rebate_basis} </span> will be calculated and automatically added to their 
+                  <span className="font-bold"> interest amount </span> will be calculated and automatically added to their 
                   <span className="font-bold"> next </span> scheduled payment as a credit.
                 </p>
               </div>

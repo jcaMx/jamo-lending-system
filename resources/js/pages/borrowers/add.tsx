@@ -568,7 +568,7 @@ export default function BorrowerAdd({ documentTypesByCategory }: BorrowerAddProp
               </div>
               <div>
                 <Label>Landline Number</Label>
-                <input type="text" value={data.landline_number} onChange={(e) => setData('landline_number', e.target.value)} className={inputClass} />
+                <input type="text" value={data.landline_number} onChange={(e) => setData('landline_number', e.target.value.replace(/\D/g, ''))} className={inputClass} />
               </div>
               <div>
                 <Label required>Email</Label>

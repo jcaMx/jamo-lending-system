@@ -10,7 +10,7 @@ import {
     CheckSquare,
     ClipboardList,
     Database,
-    DollarSign,
+    Banknote,
     FileText,
     FileWarning,
     TrendingUp,
@@ -173,7 +173,7 @@ export default function Dashboard() {
                             ? formatCurrency(data.total_collections)
                             : 'PHP 0',
                         color: '#2563EB',
-                        icon: <DollarSign className="h-6 w-6" />,
+                        icon: <Banknote className="h-6 w-6" />,
                         description: 'Collected payments',
                     },
                     {

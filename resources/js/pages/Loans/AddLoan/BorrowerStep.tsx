@@ -65,10 +65,10 @@ const BorrowerStep = ({
   const getEligibilityFromBorrower = useCallback(
     (borrower: Borrower) => {
       if (borrower.has_active_or_pending_loan !== undefined && borrower.has_active_or_pending_loan !== null) {
-        return !Boolean(borrower.has_active_or_pending_loan);
+        return !borrower.has_active_or_pending_loan;
       }
       if (borrower.has_active_loan !== undefined && borrower.has_active_loan !== null) {
-        return !Boolean(borrower.has_active_loan);
+        return !borrower.has_active_loan;
       }
       if (borrower.loan_status) {
         return !isActiveOrPendingStatus(borrower.loan_status);
@@ -219,19 +219,22 @@ const BorrowerStep = ({
     };
   }, [matchingBorrowers, eligibilityById, checkBorrowerEligibility]);
 
+  const getBorrowerEligibilityStatus = useCallback(
+    (b: Borrower) => {
+      const inferred = getEligibilityFromBorrower(b);
+      if (inferred === false) return false;
+
+      const resolved = eligibilityById[b.id];
+      if (resolved === false) return false;
+
+      return true;
+    },
+    [eligibilityById, getEligibilityFromBorrower]
+  );
+
   const filteredBorrowers = useMemo(() => {
-    return matchingBorrowers.filter((b) => {
-      const inferredEligibility = getEligibilityFromBorrower(b);
-      if (inferredEligibility === false) return false;
-
-      const resolvedEligibility = eligibilityById[b.id];
-      if (resolvedEligibility === false) return false;
-
-      if (inferredEligibility === true) return true;
-
-      return resolvedEligibility === true;
-    });
-  }, [matchingBorrowers, eligibilityById, getEligibilityFromBorrower]);
+    return matchingBorrowers;
+  }, [matchingBorrowers]);
 
 
   const handleSelectBorrower = async (borrower: Borrower) => {
@@ -245,8 +248,15 @@ const BorrowerStep = ({
       const inferredEligibility = getEligibilityFromBorrower(borrower);
 
       if (inferredEligibility === false) {
-        setBorrowerError("This borrower has an active or pending loan.");
+        setBorrowerError("This borrower has an active or pending loan. Existing loans must be fully paid before re-loaning.");
         setEligibilityById((prev) => ({ ...prev, [borrower.id]: false }));
+        setSelectedBorrower(null);
+        setFormData((prev) => ({
+          ...prev,
+          borrower_id: "",
+          borrower_name: "",
+          monthly_income: "",
+        }));
         return;
       }
 
@@ -267,15 +277,29 @@ const BorrowerStep = ({
       const knownEligibility = eligibilityById[borrower.id];
 
       if (knownEligibility === false) {
-        setBorrowerError("This borrower has an active or pending loan.");
+        setBorrowerError("This borrower has an active or pending loan. Existing loans must be fully paid before re-loaning.");
+        setSelectedBorrower(null);
+        setFormData((prev) => ({
+          ...prev,
+          borrower_id: "",
+          borrower_name: "",
+          monthly_income: "",
+        }));
         return;
       }
 
       if (knownEligibility === undefined) {
         const eligible = await checkBorrowerEligibility(borrower.id);
         if (eligible === false) {
-          setBorrowerError("This borrower has an active or pending loan.");
+          setBorrowerError("This borrower has an active or pending loan. Existing loans must be fully paid before re-loaning.");
           setEligibilityById((prev) => ({ ...prev, [borrower.id]: false }));
+          setSelectedBorrower(null);
+          setFormData((prev) => ({
+            ...prev,
+            borrower_id: "",
+            borrower_name: "",
+            monthly_income: "",
+          }));
           return;
         }
 
@@ -309,7 +333,7 @@ const BorrowerStep = ({
     try {
       const inferredEligibility = getEligibilityFromBorrower(selectedBorrower);
       if (inferredEligibility === false) {
-        setBorrowerError("This borrower has an active or pending loan.");
+        setBorrowerError("This borrower has an active or pending loan. Existing loans must be fully paid before re-loaning.");
         setEligibilityById((prev) => ({ ...prev, [selectedBorrower.id]: false }));
         return;
       }
@@ -322,14 +346,14 @@ const BorrowerStep = ({
 
       const eligible = eligibilityById[selectedBorrower.id];
       if (eligible === false) {
-        setBorrowerError("This borrower has an active or pending loan.");
+        setBorrowerError("This borrower has an active or pending loan. Existing loans must be fully paid before re-loaning.");
         return;
       }
 
       if (eligible === undefined) {
         const verified = await checkBorrowerEligibility(selectedBorrower.id);
         if (verified === false) {
-          setBorrowerError("This borrower has an active or pending loan.");
+          setBorrowerError("This borrower has an active or pending loan. Existing loans must be fully paid before re-loaning.");
           return;
         }
       }
@@ -381,15 +405,27 @@ const BorrowerStep = ({
               />
               {borrowerSearch.length > 0 && filteredBorrowers.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                  {filteredBorrowers.map((b) => (
-                    <div
-                      key={b.id}
-                      onClick={() => void handleSelectBorrower(b)}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    >
-                      {b.name}
-                    </div>
-                  ))}
+                  {filteredBorrowers.map((b) => {
+                    const isEligible = getBorrowerEligibilityStatus(b);
+                    return (
+                      <div
+                        key={b.id}
+                        onClick={() => void handleSelectBorrower(b)}
+                        className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center ${
+                          !isEligible ? "opacity-80 bg-red-50/40" : ""
+                        }`}
+                      >
+                        <span className={!isEligible ? "text-gray-700 font-medium" : "text-gray-900"}>
+                          {b.name}
+                        </span>
+                        {!isEligible && (
+                          <span className="text-[10px] bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
+                            Has Existing Loan
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -404,7 +440,7 @@ const BorrowerStep = ({
               <p className="text-red-500 text-sm mt-1">{submitError}</p>
             )}
             {!borrowerError && borrowerSearch && filteredBorrowers.length === 0 && (
-              <p className="text-sm text-gray-500 mt-1">No eligible borrowers found.</p>
+              <p className="text-sm text-gray-500 mt-1">No borrowers found.</p>
             )}
             {isCheckingEligibility && (
               <p className="text-xs text-gray-500 mt-1">Checking loan status...</p>

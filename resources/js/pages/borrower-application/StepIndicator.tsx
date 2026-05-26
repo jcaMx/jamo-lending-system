@@ -1,4 +1,4 @@
-import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
+import { User, Users, Home, Banknote, CreditCard } from "lucide-react";
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -12,9 +12,9 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
     if (normalized.includes("loan")) return CreditCard;
     if (normalized.includes("collateral")) return Home;
     if (normalized.includes("payment") || normalized.includes("review") || normalized.includes("confirmation")) {
-      return DollarSign;
+      return Banknote;
     }
-    return [User, CreditCard, Home, Users, DollarSign][index] ?? User;
+    return [User, CreditCard, Home, Users, Banknote][index] ?? User;
   };
 
   return (

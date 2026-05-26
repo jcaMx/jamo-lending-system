@@ -88,22 +88,22 @@ class ApplicationService
                 ]);
             }
 
-            $coBorrowerIds = [];
             if (! empty($data['coBorrowers'])) {
                 foreach ($data['coBorrowers'] as $co) {
+                    $coBirthDate = !empty($co['birth_date']) ? $co['birth_date'] : '1990-01-01';
                     $coBorrower = CoBorrower::create([
                         'borrower_id' => $borrower->ID,
                         'first_name' => $co['first_name'],
                         'last_name' => $co['last_name'],
-                        'birth_date' => $co['birth_date'],
+                        'birth_date' => $coBirthDate,
                         'marital_status' => $co['marital_status'] ?? null,
-                        'contact_no' => $co['mobile'] ?? '',
-                        'address' => $co['address'],
+                        'contact_no' => !empty($co['mobile']) ? $co['mobile'] : '09000000000',
+                        'address' => !empty($co['address']) ? $co['address'] : 'N/A',
                         'occupation' => $co['occupation'] ?? null,
                         'position' => $co['position'] ?? null,
                         'agency_address' => $co['employer_address'] ?? null,
                         'email' => $user?->email ?? '',
-                        'age' => $this->calculateAge($co['birth_date']),
+                        'age' => $this->calculateAge($coBirthDate),
                     ]);
                     $coBorrowerIds[] = $coBorrower->ID;
                 }

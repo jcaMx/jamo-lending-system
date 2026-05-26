@@ -75,7 +75,6 @@ const normalizeRepaymentFrequency = (value: string) => {
   const normalized = value.trim().toLowerCase();
   if (normalized === "weekly") return "Weekly";
   if (normalized === "monthly") return "Monthly";
-  if (normalized === "yearly") return "Yearly";
   return value.trim();
 };
 const FIELD_STEP_MAP: Array<{ pattern: RegExp; step: StepKey; focus?: string }> = [
@@ -110,11 +109,109 @@ const FIELD_STEP_MAP: Array<{ pattern: RegExp; step: StepKey; focus?: string }> 
   { pattern: /^error$/, step: "review" },
 ];
 
+const formatCurrency = (value: unknown) => {
+  const num = Number(value ?? 0);
+  if (isNaN(num)) return "₱0.00";
+  return `₱${num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const generateAmortizationSchedule = (
+  amount: number,
+  ratePercent: number,
+  termMonths: number,
+  frequency: string
+) => {
+  const principal = Number(amount);
+  const rate = Number(ratePercent) / 100;
+  const term = Number(termMonths);
+
+  if (!principal || !term) return [];
+
+  const freq = (frequency ?? "Monthly").trim().toLowerCase();
+
+  // Determine total installments
+  let totalInstallments = term;
+  let periodRate = rate / 12;
+
+  if (freq === "weekly") {
+    totalInstallments = Math.ceil(term * 4.345);
+    periodRate = rate / 52;
+  } else if (freq === "monthly") {
+    totalInstallments = term;
+    periodRate = rate / 12;
+  }
+
+  // PMT formula: P * (r * (1 + r)^n) / ((1 + r)^n - 1)
+  let installmentAmount = 0;
+  if (periodRate > 0) {
+    installmentAmount =
+      (principal * (periodRate * Math.pow(1 + periodRate, totalInstallments))) /
+      (Math.pow(1 + periodRate, totalInstallments) - 1);
+  } else {
+    installmentAmount = principal / totalInstallments;
+  }
+
+  const roundedInstallmentAmount = Math.round(installmentAmount * 100) / 100;
+
+  const schedules = [];
+  let remaining = principal;
+  const startDate = new Date();
+
+  for (let i = 1; i <= totalInstallments; i++) {
+    const interest = Math.round(remaining * periodRate * 100) / 100;
+    const principalPayment =
+      i === totalInstallments
+        ? remaining
+        : Math.round((roundedInstallmentAmount - interest) * 100) / 100;
+
+    const currentInstallmentAmount =
+      i === totalInstallments
+        ? Math.round((principalPayment + interest) * 100) / 100
+        : roundedInstallmentAmount;
+
+    const beginningBalance = remaining;
+    remaining = Math.round(Math.max(0, remaining - principalPayment) * 100) / 100;
+
+    // calculate due date
+    const dueDate = new Date(startDate);
+    if (freq === "weekly") {
+      dueDate.setDate(startDate.getDate() + i * 7);
+    } else {
+      dueDate.setMonth(startDate.getMonth() + i);
+    }
+
+    schedules.push({
+      installment_no: i,
+      due_date: dueDate.toISOString().split("T")[0],
+      beginningBalance,
+      scheduledPayment: currentInstallmentAmount,
+      principalAmount: principalPayment,
+      interest_amount: interest,
+      endingBalance: remaining,
+    });
+  }
+
+  return schedules;
+};
+
 const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps) => {
   const coBorrowers = Array.isArray(formData.coBorrowers) ? formData.coBorrowers : [];
   const loanProductDocuments = Array.isArray(formData.documents?.loan_product)
     ? formData.documents.loan_product.filter((row) => row.document_type_id || row.file)
     : [];
+
+  const schedule = generateAmortizationSchedule(
+    Number(formData.loan_amount ?? 0),
+    Number(formData.interest_rate ?? 0),
+    Number(formData.term ?? 0),
+    String(formData.repayment_frequency ?? "monthly"),
+  );
+  const totalInterest = schedule.reduce((sum, row) => sum + row.interest_amount, 0);
+  const scheduledTotal = schedule.reduce((sum, row) => sum + row.scheduledPayment, 0);
+  const periodicalPayment = schedule[0]?.scheduledPayment ?? 0;
 
   return (
     <section className="py-8 md:py-16 px-6 md:px-12 bg-[#F7F5F3]">
@@ -138,14 +235,14 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-700">Loan Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
               <div>
                 <span className="font-medium">Loan Type:</span> {formData.loan_type || "-"}
               </div>
               <div>
-                <span className="font-medium">Loan Amount:</span> {formData.loan_amount || "-"}
+                <span className="font-medium">Loan Amount:</span> {formatCurrency(formData.loan_amount)}
               </div>
               <div>
                 <span className="font-medium">Interest Type:</span> {formData.interest_type || "-"}
@@ -163,6 +260,61 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
                 <span className="font-medium">Term:</span> {formData.term || "-"}
               </div>
             </div>
+
+            {schedule && schedule.length > 0 && (
+              <div className="mt-6 space-y-4">
+                <h3 className="text-md font-semibold text-gray-700">Loan Schedule Preview</h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-lg bg-[#F7F5F3] px-4 py-3 border">
+                    <p className="text-xs font-medium text-gray-500">Loan amount</p>
+                    <p className="mt-1 text-sm font-bold text-gray-900">{formatCurrency(formData.loan_amount)}</p>
+                  </div>
+                  <div className="rounded-lg bg-[#F7F5F3] px-4 py-3 border">
+                    <p className="text-xs font-medium text-gray-500">Periodical payment</p>
+                    <p className="mt-1 text-sm font-bold text-gray-900">{formatCurrency(periodicalPayment)}</p>
+                  </div>
+                  <div className="rounded-lg bg-[#F7F5F3] px-4 py-3 border">
+                    <p className="text-xs font-medium text-gray-500">Total interest</p>
+                    <p className="mt-1 text-sm font-bold text-gray-900">{formatCurrency(totalInterest)}</p>
+                  </div>
+                  <div className="rounded-lg bg-[#F7F5F3] px-4 py-3 border">
+                    <p className="text-xs font-medium text-gray-500">Total amount to be paid</p>
+                    <p className="mt-1 text-sm font-bold text-gray-900">{formatCurrency(scheduledTotal)}</p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border border-gray-250 bg-white">
+                  <table className="w-full min-w-[700px] border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-250 bg-gray-50 text-left text-xs font-semibold text-gray-600">
+                        <th className="px-4 py-2.5">Term</th>
+                        <th className="px-4 py-2.5">Date</th>
+                        <th className="px-4 py-2.5 text-right">Beginning Balance</th>
+                        <th className="px-4 py-2.5 text-right">Scheduled Payment</th>
+                        <th className="px-4 py-2.5 text-right text-[#A47B06]">Principal</th>
+                        <th className="px-4 py-2.5 text-right text-amber-800">Interest</th>
+                        <th className="px-4 py-2.5 text-right">Ending Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {schedule.map((row) => (
+                        <tr key={row.installment_no} className="border-b border-gray-150 hover:bg-[#FFF8E6]/40 last:border-0 transition-colors">
+                          <td className="px-4 py-2.5 text-gray-700 font-medium">{row.installment_no}</td>
+                          <td className="px-4 py-2.5 text-gray-900 font-medium">
+                            {new Date(row.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.beginningBalance)}</td>
+                          <td className="px-4 py-2.5 text-right text-gray-900 font-semibold">{formatCurrency(row.scheduledPayment)}</td>
+                          <td className="px-4 py-2.5 text-right text-[#A47B06] font-medium">{formatCurrency(row.principalAmount)}</td>
+                          <td className="px-4 py-2.5 text-right text-amber-800 font-medium">{formatCurrency(row.interest_amount)}</td>
+                          <td className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.endingBalance)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
 
           {String(formData.loan_type ?? "").trim().toLowerCase() === "business loan" && (

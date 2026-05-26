@@ -183,9 +183,15 @@ class LoanController extends Controller
                 'term_months' => (int) $request->input('term'),
                 'status' => 'Pending',
                 'formula_id' => $formula->ID,
+                'prepared_by' => auth()->id(),
             ];
             $loan = $this->loanService->createLoan($loanData);
 
+            if ($request->has('monthly_income')) {
+                $borrower->update([
+                    'monthly_income' => $request->input('monthly_income')
+                ]);
+            }
             $collateral = null;
             if ($collateralTypeInput) {
                 // Create Collateral using CollateralFactory
@@ -330,10 +336,10 @@ class LoanController extends Controller
                     $borrower->coBorrowers()->create([
                         'first_name' => $coBorrowerData['first_name'] ?? '',
                         'last_name' => $coBorrowerData['last_name'] ?? '',
-                        'address' => $coBorrowerData['address'] ?? '',
+                        'address' => !empty($coBorrowerData['address']) ? $coBorrowerData['address'] : 'N/A',
                         'email' => $coBorrowerData['email'] ?? '',
-                        'contact_no' => $coBorrowerData['contact'] ?? '',
-                        'birth_date' => $coBorrowerData['birth_date'] ?? null,
+                        'contact_no' => !empty($coBorrowerData['contact']) ? $coBorrowerData['contact'] : (!empty($coBorrowerData['mobile']) ? $coBorrowerData['mobile'] : '09000000000'),
+                        'birth_date' => !empty($coBorrowerData['birth_date']) ? $coBorrowerData['birth_date'] : '1990-01-01',
                         'marital_status' => $coBorrowerData['marital_status'] ?? '',
                         'occupation' => $coBorrowerData['occupation'] ?? '',
                     ]);
@@ -401,6 +407,7 @@ class LoanController extends Controller
             'collateral.files.documentType',
             'amortizationSchedules.penalties',
             'formula',
+            'preparer',
             'loanComments' => function ($query) {
                 $query->orderBy('comment_date', 'desc');
             },
@@ -444,6 +451,7 @@ class LoanController extends Controller
             ->where('status', 'Completed')
             ->exists();
         $loanData['releasing_fees'] = $this->disbursementService->getHistoricalOrCurrentFeeBreakdown($loan);
+        $loanData['prepared_by_name'] = $loan->preparer?->name ?? 'System';
 
         if ($loan->borrower) {
             $loanData['borrower'] = [

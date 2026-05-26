@@ -114,6 +114,7 @@ export interface LoanDetailsProps {
       net_disbursed_amount: number;
     };
     has_completed_disbursement?: boolean;
+    prepared_by_name?: string;
     borrower: {
       ID: number;
       first_name: string;
@@ -248,13 +249,14 @@ export function LoanDetailsView({
     maturity: formatDateValue(loan.end_date),
     repayment_frequency: loan.repayment_frequency || '',
     principal: loan.principal_amount ?? 0,
-    interest: loan.interest_rate !== undefined && loan.interest_rate !== null ? `${loan.interest_rate}%` : '',
+    interest: loan.interest_rate !== undefined && loan.interest_rate !== null ? `${Math.round(Number(loan.interest_rate))}%` : '',
     interestType: loan.interest_type || '',
     loan_type: loan.loan_type || '',
     releasing_fees: loan.releasing_fees,
     due: 0,
     balance: loan.balance_remaining ?? 0,
     status: loan.status || '',
+    preparedBy: loan.prepared_by_name || 'System',
   };
   const allFiles = (() => {
     const fileMap = new Map<string, {
@@ -275,7 +277,7 @@ export function LoanDetailsView({
         file_type: inferFileType(file.file_name, file.file_path),
         file_path: file.file_path || '',
         uploaded_at: file.uploaded_at || '',
-        description: file.description,
+        description: file.description ?? undefined,
         document_type_name: file.document_type_name,
         source: 'Borrower',
       })),
@@ -285,7 +287,7 @@ export function LoanDetailsView({
         file_type: inferFileType(file.file_name, file.file_path),
         file_path: file.file_path || '',
         uploaded_at: file.uploaded_at || '',
-        description: file.description,
+        description: file.description ?? undefined,
         document_type_name: file.document_type_name,
         source: 'Collateral',
       })),
@@ -305,7 +307,7 @@ export function LoanDetailsView({
   const collaterals = loan.collateral
     ? [
         {
-          id: loan.collateral.ID ?? loan.collateral.id ?? 0,
+          id: loan.collateral.ID ?? 0,
           type: loan.collateral.type as 'Land' | 'Vehicle' | 'ATM',
           estimated_value: loan.collateral.estimated_value ?? 0,
           appraisal_date: (loan.collateral as { appraisal_date?: string }).appraisal_date,

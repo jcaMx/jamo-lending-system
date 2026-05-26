@@ -35,6 +35,7 @@ class Loan extends Model
             'updated_at',
             'borrower_id',
             'formula_id',
+            'prepared_by',
         ];
 
     protected $casts =
@@ -111,6 +112,11 @@ class Loan extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by', 'id');
+    }
+
+    public function preparer()
+    {
+        return $this->belongsTo(User::class, 'prepared_by', 'id');
     }
 
     public function formula()

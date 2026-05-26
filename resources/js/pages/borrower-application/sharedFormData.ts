@@ -9,6 +9,7 @@ export interface CoBorrower {
   occupation: string;
   position: string;
   employer_address: string;
+  is_existing?: boolean;
 }
 
 export interface LoanProductRule {
