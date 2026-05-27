@@ -1,12 +1,12 @@
-import { User, Users, Home, DollarSign, CreditCard } from "lucide-react";
+import { User, Users, Home, Banknote, CreditCard } from "lucide-react";
 
-interface StepIndicatorProps {
+interface LoanStepIndicatorProps {
   currentStep: number;
   steps: string[];
 }
 
-const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
-  const icons = [ DollarSign, Users, Home, CreditCard];
+const LoanStepIndicator = ({ currentStep, steps }: LoanStepIndicatorProps) => {
+  const icons = [ Banknote, Users, Home, CreditCard];
 
   return (
     <div className="flex items-center justify-center gap-2 md:gap-4 mb-12">
@@ -44,4 +44,4 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
   );
 };
 
-export default StepIndicator;
+export default LoanStepIndicator;

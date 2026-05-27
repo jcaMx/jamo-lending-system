@@ -6,13 +6,6 @@ import { useForm } from "@inertiajs/react";
 import { FormField } from "@/components/FormField";
 import type { CoBorrower, SharedFormData } from "./sharedFormData";
 
-const maritalStatusOptions = [
-  { value: "Single", label: "Single" },
-  { value: "Married", label: "Married" },
-  { value: "Widowed", label: "Widowed" },
-  { value: "Divorced", label: "Divorced" },
-];
-
 interface CoBorrowerInfoProps {
   onNext: () => void;
   onPrev: () => void;
@@ -28,19 +21,19 @@ interface CoBorrowerInfoProps {
 const emptyCoBorrower: CoBorrower = {
   first_name: "",
   last_name: "",
-  birth_date: "",
+  birth_date: "1990-01-01",
   marital_status: "",
-  mobile: "",
+  mobile: "09000000000",
   dependents: "",
-  address: "",
+  address: "N/A",
   occupation: "",
   position: "",
   employer_address: "",
+  is_existing: false,
 };
 
 const sanitize = {
   name: (v: string) => v.replace(/[^a-zA-Z\s]/g, ""),
-  number: (v: string) => v.replace(/\D/g, ""),
   trim: (v: string) => v.trim(),
 };
 
@@ -101,7 +94,7 @@ const CoBorrowerInfo = ({
       setLoading(true);
 
       const borrowerParam = formData?.borrower_id ? `&borrower_id=${formData.borrower_id}` : '';
-      const res = await fetch(`/co-borrowers?search=${query}${borrowerParam}`)
+      const res = await fetch(`/co-borrowers?search=${query}${borrowerParam}`);
       const data = await res.json();
 
       setResults(data);
@@ -116,69 +109,72 @@ const CoBorrowerInfo = ({
   const selectCoBorrower = (item: any) => {
     const updated = [...data.coBorrowers];
 
-    updated[0] = {
+    // Find first empty one or append if none
+    const indexToUpdate = updated.findIndex((co) => !co.first_name && !co.last_name);
+    const targetIndex = indexToUpdate !== -1 ? indexToUpdate : updated.length;
+
+    if (targetIndex >= 2) {
+      setStepError("Maximum limit of 2 co-makers reached.");
+      return;
+    }
+
+    updated[targetIndex] = {
       first_name: item.first_name || "",
       last_name: item.last_name || "",
-      birth_date: item.birth_date || "",
+      birth_date: item.birth_date || "1990-01-01",
       marital_status: item.marital_status || "",
-      mobile: item.mobile || "",
+      mobile: item.mobile || "09000000000",
       dependents: item.dependents || "",
-      address: item.address || "",
+      address: item.address || "N/A",
       occupation: item.occupation || "",
       position: item.position || "",
       employer_address: item.employer_address || "",
+      is_existing: true, // mark as existing to make non-editable
     };
 
     setData("coBorrowers", updated);
-    setFormData((prev) => ({ ...prev, coBorrowers: updated }));
+    setFormData?.((prev) => ({ ...prev, coBorrowers: updated }));
 
     setResults([]);
     setSearch("");
+    setStepError("");
   };
 
   const handleChange = (index: number, field: keyof CoBorrower, value: string) => {
     const updated = [...data.coBorrowers];
 
-    if (["first_name", "last_name"].includes(field))
+    if (["first_name", "last_name"].includes(field)) {
       value = sanitize.name(value);
+    }
 
-    if (["mobile", "dependents"].includes(field))
-      value = sanitize.number(value);
-
-    updated[index][field] = sanitize.trim(value);
+    (updated[index] as Record<string, any>)[field] = sanitize.trim(value);
     setData("coBorrowers", updated);
-    setFormData((prev) => ({ ...prev, coBorrowers: updated }));
+    setFormData?.((prev) => ({ ...prev, coBorrowers: updated }));
   };
 
   const addCoBorrower = () => {
+    if (data.coBorrowers.length >= 2) {
+      setStepError("Maximum limit of 2 co-makers reached.");
+      return;
+    }
     const updated = [...data.coBorrowers, emptyCoBorrower];
     setData("coBorrowers", updated);
-    setFormData((prev) => ({ ...prev, coBorrowers: updated }));
+    setFormData?.((prev) => ({ ...prev, coBorrowers: updated }));
+    setStepError("");
   };
 
   const removeCoBorrower = (index: number) => {
     const updated = data.coBorrowers.filter((_, i) => i !== index);
     setData("coBorrowers", updated);
-    setFormData((prev) => ({ ...prev, coBorrowers: updated }));
+    setFormData?.((prev) => ({ ...prev, coBorrowers: updated }));
+    setStepError("");
   };
 
   const isCoBorrowerEmpty = (co: CoBorrower) =>
-    Object.values(co).every((value) => !String(value ?? "").trim());
+    !String(co.first_name ?? "").trim() && !String(co.last_name ?? "").trim();
 
-  const hasMissingRequired = (co: CoBorrower) => {
-    const requiredFields: Array<keyof CoBorrower> = [
-      "first_name",
-      "last_name",
-      "birth_date",
-      "marital_status",
-      "mobile",
-      "dependents",
-      "address",
-      "occupation",
-    ];
-
-    return requiredFields.some((field) => !String(co[field] ?? "").trim());
-  };
+  const hasMissingRequired = (co: CoBorrower) =>
+    !String(co.first_name ?? "").trim() || !String(co.last_name ?? "").trim();
 
   const submit = () => {
     const nonEmptyBorrowers = data.coBorrowers.filter((co) => !isCoBorrowerEmpty(co));
@@ -194,8 +190,13 @@ const CoBorrowerInfo = ({
       return;
     }
 
+    if (nonEmptyBorrowers.length > 2) {
+      setStepError("Maximum of 2 co-makers are allowed.");
+      return;
+    }
+
     if (nonEmptyBorrowers.some(hasMissingRequired)) {
-      setStepError("Complete all required fields or remove entry.");
+      setStepError("Please provide both First Name and Last Name.");
       const firstIncompleteIndex = data.coBorrowers.findIndex(
         (co) => !isCoBorrowerEmpty(co) && hasMissingRequired(co),
       );
@@ -203,21 +204,7 @@ const CoBorrowerInfo = ({
       if (firstIncompleteIndex >= 0) {
         const targetCo = data.coBorrowers[firstIncompleteIndex];
         const firstMissingField =
-          !String(targetCo.first_name ?? "").trim()
-            ? "first_name"
-            : !String(targetCo.last_name ?? "").trim()
-              ? "last_name"
-              : !String(targetCo.birth_date ?? "").trim()
-                ? "birth_date"
-                : !String(targetCo.marital_status ?? "").trim()
-                  ? "marital_status"
-                  : !String(targetCo.mobile ?? "").trim()
-                    ? "mobile"
-                    : !String(targetCo.dependents ?? "").trim()
-                      ? "dependents"
-                      : !String(targetCo.address ?? "").trim()
-                        ? "address"
-                        : "occupation";
+          !String(targetCo.first_name ?? "").trim() ? "first_name" : "last_name";
 
         focusField(`coBorrowers.${firstIncompleteIndex}.${firstMissingField}`);
       }
@@ -235,7 +222,7 @@ const CoBorrowerInfo = ({
           <div className="flex justify-center items-center gap-2 mb-2">
             <Users className="w-6 h-6 text-golden" />
             <h1 className="text-2xl md:text-3xl font-bold">
-              Co-Borrower Information
+              Co-Maker / Co-Borrower Information
             </h1>
           </div>
         </div>
@@ -249,32 +236,33 @@ const CoBorrowerInfo = ({
           }}
           className="bg-white rounded-lg p-6 md:p-8 space-y-6"
         >
-          {stepError && <p className="text-red-600 text-sm">{stepError}</p>}
+          {stepError && <p className="text-red-600 text-sm font-medium">{stepError}</p>}
           {/* Requirement hint for optional vs required behavior */}
           <p className={`text-sm ${required ? "text-red-600" : "text-green-700"}`}>
-            {required ? "Co-borower required for this loan product." : "Optional — you may skip this step."}
+            {required ? "Co-maker / Co-borrower required for this loan product." : "Optional — you may skip this step."}
           </p>
+
           {/* 🔍 SEARCH UI */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Search Existing Co-Borrower
+              Search Existing Borrower to Add as Co-Maker
             </label>
             <input
               type="text"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-golden"
               placeholder="Search by name..."
             />
 
-            {loading && <p className="text-sm">Searching...</p>}
+            {loading && <p className="text-sm text-gray-500">Searching...</p>}
 
             {results.length > 0 && (
-              <div className="border rounded bg-white max-h-40 overflow-y-auto">
+              <div className="border rounded bg-white max-h-40 overflow-y-auto shadow-sm">
                 {results.map((item, index) => (
                   <div
                     key={index}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                     onClick={() => selectCoBorrower(item)}
                   >
                     {item.first_name} {item.last_name} {item.type ? `(${item.type})` : ''}
@@ -286,15 +274,24 @@ const CoBorrowerInfo = ({
 
           {/* FORM */}
           {data.coBorrowers.map((co, i) => (
-            <div key={i} className="relative border p-4 rounded-lg space-y-4">
-              {data.coBorrowers.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeCoBorrower(i)}
-                  className="absolute top-2 right-2 text-red-500"
-                >
-                  <Trash2 size={16} />
-                </button>
+            <div key={i} className="relative border p-5 rounded-lg bg-gray-50 space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-sm font-semibold text-gray-700">Co-Maker #{i + 1}</span>
+                {data.coBorrowers.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeCoBorrower(i)}
+                    className="text-red-500 hover:text-red-700 transition"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+
+              {co.is_existing && (
+                <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                  Existing Borrower details selected (Read-Only)
+                </div>
               )}
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -305,6 +302,7 @@ const CoBorrowerInfo = ({
                   onChange={(v) => handleChange(i, "first_name", v)}
                   required={true}
                   htmlRequired={required}
+                  disabled={co.is_existing}
                   error={fieldErrors[`coBorrowers.${i}.first_name`]}
                 />
 
@@ -315,90 +313,10 @@ const CoBorrowerInfo = ({
                   onChange={(v) => handleChange(i, "last_name", v)}
                   required={true}
                   htmlRequired={required}
+                  disabled={co.is_existing}
                   error={fieldErrors[`coBorrowers.${i}.last_name`]}
                 />
               </div>
-
-              <FormField
-                label="Birth Date"
-                name={`coBorrowers.${i}.birth_date`}
-                type="date"
-                value={co.birth_date}
-                onChange={(v) => handleChange(i, "birth_date", v)}
-                required={true}
-                htmlRequired={required}
-                error={fieldErrors[`coBorrowers.${i}.birth_date`]}
-              />
-
-              <FormField
-                label="Marital Status"
-                name={`coBorrowers.${i}.marital_status`}
-                type="select"
-                value={co.marital_status}
-                onChange={(v) => handleChange(i, "marital_status", v)}
-                options={maritalStatusOptions}
-                required={true}
-                htmlRequired={required}
-                error={fieldErrors[`coBorrowers.${i}.marital_status`]}
-              />
-
-              <FormField
-                label="Mobile Number"
-                name={`coBorrowers.${i}.mobile`}
-                value={co.mobile}
-                onChange={(v) => handleChange(i, "mobile", v)}
-                maxLength={11}
-                required={true}
-                htmlRequired={required}
-                error={fieldErrors[`coBorrowers.${i}.mobile`] || fieldErrors[`coBorrowers.${i}.contact`]}
-              />
-
-              <FormField
-                label="No. of Dependents"
-                name={`coBorrowers.${i}.dependents`}
-                type="number"
-                value={co.dependents}
-                onChange={(v) => handleChange(i, "dependents", v)}
-                required={true}
-                htmlRequired={required}
-                error={fieldErrors[`coBorrowers.${i}.dependents`]}
-              />
-
-              <FormField
-                label="Home Address"
-                name={`coBorrowers.${i}.address`}
-                value={co.address}
-                onChange={(v) => handleChange(i, "address", v)}
-                required={true}
-                htmlRequired={required}
-                error={fieldErrors[`coBorrowers.${i}.address`]}
-              />
-
-              <FormField
-                label="Occupation"
-                name={`coBorrowers.${i}.occupation`}
-                value={co.occupation}
-                onChange={(v) => handleChange(i, "occupation", v)}
-                required={true}
-                htmlRequired={required}
-                error={fieldErrors[`coBorrowers.${i}.occupation`]}
-              />
-
-              <FormField
-                label="Position"
-                name={`coBorrowers.${i}.position`}
-                value={co.position}
-                onChange={(v) => handleChange(i, "position", v)}
-                error={fieldErrors[`coBorrowers.${i}.position`]}
-              />
-
-              <FormField
-                label="Employer Address"
-                name={`coBorrowers.${i}.employer_address`}
-                value={co.employer_address}
-                onChange={(v) => handleChange(i, "employer_address", v)}
-                error={fieldErrors[`coBorrowers.${i}.employer_address`]}
-              />
             </div>
           ))}
 
@@ -407,11 +325,13 @@ const CoBorrowerInfo = ({
               Previous
             </Button>
 
-            <Button type="button" onClick={addCoBorrower}>
-              <Plus size={14} /> Add Co-Borrower
-            </Button>
+            {data.coBorrowers.length < 2 && (
+              <Button type="button" onClick={addCoBorrower} variant="outline" className="border-golden text-golden hover:bg-golden/10">
+                <Plus size={14} className="mr-1" /> Add Co-Borrower
+              </Button>
+            )}
 
-            <Button type="submit" className="bg-golden text-black">
+            <Button type="submit" className="bg-golden text-black hover:bg-yellow-600">
               Next
             </Button>
           </div>

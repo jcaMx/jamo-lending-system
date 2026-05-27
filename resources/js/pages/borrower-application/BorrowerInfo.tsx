@@ -188,9 +188,8 @@ const BorrowerInfo = ({ onNext, formData: parentData, setFormData }: BorrowerInf
                 label="Landline Number"
                 name="landline_number"
                 value={data.landline_number}
-                onChange={(val) => setData("landline_number", val)}
-                placeholder="02-XXXXXXX (optional)"
-                pattern="0\d{1,2}-\d{7,8}"
+                onChange={(val) => setData("landline_number", val.replace(/\D/g, ''))}
+                placeholder="Landline number (optional)"
                 error={errors.landline_number}
               />
 

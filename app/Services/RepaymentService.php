@@ -376,24 +376,14 @@ class RepaymentService
 
     private function applyRebate(Loan $loan, AmortizationSchedule $currentSchedule): void
     {
-        // R = P * r * t
-        // P = Principal being paid early
-        // r = Interest rate per period
-        // t = Remaining periods in the loan
-        
-        $principalAmount = round(max(0, (float) $currentSchedule->installment_amount - (float) $currentSchedule->interest_amount), 2);
-        
-        $ratePerPeriod = match ($loan->repayment_frequency) {
-            'Weekly' => ($loan->interest_rate / 100) / 52,
-            'Monthly' => ($loan->interest_rate / 100) / 12,
-            'Yearly' => ($loan->interest_rate / 100),
-            default => ($loan->interest_rate / 100) / 12,
-        };
-        
-        $totalInstallments = $loan->amortizationSchedules()->count();
-        $remainingPeriods = max(0, $totalInstallments - $currentSchedule->installment_no);
-        
-        $rebateAmount = round($principalAmount * $ratePerPeriod * $remainingPeriods, 2);
+        $rebatePercentage = (float) SystemSetting::getValue('rebate_percentage', 0);
+
+        if ($rebatePercentage <= 0) {
+            return;
+        }
+
+        $baseAmount = (float) $currentSchedule->interest_amount;
+        $rebateAmount = round(($rebatePercentage / 100) * $baseAmount, 2);
 
         if ($rebateAmount <= 0) {
             return;

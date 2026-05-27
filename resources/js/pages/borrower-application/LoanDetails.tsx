@@ -175,6 +175,7 @@ const LoanDetails = ({
     interest_rate: normalizeInterestRate(initial.interest_rate),
     repayment_frequency: initial.repayment_frequency ?? "",
     term: String(initial.term ?? ""),
+    monthly_income: String(initial.monthly_income ?? ""),
     documents: {
       loan_product: initial.documents?.loan_product?.length ? initial.documents.loan_product : [],
     },
@@ -203,6 +204,7 @@ const LoanDetails = ({
         Number(prev.interest_rate ?? 0) === Number(data.interest_rate ?? 0) &&
         prev.repayment_frequency === data.repayment_frequency &&
         String(prev.term ?? "") === String(data.term ?? "") &&
+        String(prev.monthly_income ?? "") === String(data.monthly_income ?? "") &&
         areLoanProductRowsEqual(prevLoanProductRows, nextLoanProductRows);
 
       if (hasSameFields) {
@@ -217,6 +219,7 @@ const LoanDetails = ({
         interest_rate: data.interest_rate,
         repayment_frequency: data.repayment_frequency,
         term: data.term,
+        monthly_income: data.monthly_income,
         documents: {
           ...(prev.documents ?? { collateral: [], loan_product: [] }),
           loan_product: nextLoanProductRows,
@@ -231,6 +234,7 @@ const LoanDetails = ({
     data.loan_type,
     data.repayment_frequency,
     data.term,
+    data.monthly_income,
     setFormData,
   ]);
 
@@ -325,7 +329,6 @@ const LoanDetails = ({
   const repaymentFrequencyOptions = [
     { value: "weekly", label: "Weekly" },
     { value: "monthly", label: "Monthly" },
-    { value: "yearly", label: "Yearly" },
   ];
 
   const handleLoanTypeChange = (loanType: string) => {
@@ -340,6 +343,25 @@ const LoanDetails = ({
     coborrower: false,
   };
   const isBusinessLoan = String(data.loan_type ?? "").trim().toLowerCase() === "business loan";
+
+  const monthlyIncomeValue = useMemo(() => {
+    const parsed = Number(data.monthly_income ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, [data.monthly_income]);
+
+  const loanAmountValue = useMemo(() => {
+    const parsed = Number(data.loan_amount ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, [data.loan_amount]);
+
+  const multiplier = useMemo(() => {
+    if (!selectedProduct?.rules?.dynamic_rules) return 5;
+    const rule = selectedProduct.rules.dynamic_rules.find(
+      (r) => r.condition_key === "monthly_income" && r.rule_type === "collateral"
+    );
+    return rule && rule.condition_value !== null ? rule.condition_value : 5;
+  }, [selectedProduct]);
+
 
   const requiredLoanProductRequirements = useMemo(
     () =>
@@ -585,11 +607,27 @@ const LoanDetails = ({
           <FormField
             label="Monthly Income (PHP)"
             name="monthly_income"
-            value={String(formData.monthly_income ?? "")}
-            onChange={() => { }}
-            placeholder="Auto-filled from borrower"
-            disabled
+            value={data.monthly_income}
+            onChange={(value) => setData("monthly_income", sanitize.number(value))}
+            required
+            error={fieldErrors.monthly_income || errors.monthly_income}
           />
+
+          {monthlyIncomeValue > 0 && (
+            <div className="rounded-lg border border-gray-150 bg-[#faf9f8] p-4 text-sm space-y-1.5 shadow-sm transition-all duration-200 hover:shadow-md">
+              <div className="flex items-center gap-2 text-gray-700 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-golden"></span>
+                <span>Maximum Loanable Amount (Without Collateral)</span>
+              </div>
+              <p className="text-lg font-bold text-gray-900">
+                PHP {(monthlyIncomeValue * multiplier).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 italic">
+                Based on Monthly Income (PHP {monthlyIncomeValue.toLocaleString()}) × {multiplier}x multiplier for {data.loan_type || "selected product"}.
+              </p>
+            </div>
+          )}
+
 
           <FormField
             label="Interest Type"
@@ -633,13 +671,29 @@ const LoanDetails = ({
           />
 
           <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
-            <p className={needsCollateral ? "text-red-600" : "text-green-700"}>
+            <p className={needsCollateral ? "text-red-600 font-medium" : "text-green-700"}>
               {needsCollateral ? "Collateral required" : "No collateral required"}
             </p>
-            <p className={needsCoBorrower ? "text-red-600" : "text-green-700"}>
+            <p className={needsCoBorrower ? "text-red-600 font-medium" : "text-green-700"}>
               {needsCoBorrower ? "Co-borrower required" : "No co-borrower required"}
             </p>
           </div>
+
+          {needsCollateral && !formData.collateral_type && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 text-sm space-y-2 shadow-sm">
+              <div className="flex items-center gap-2 font-bold text-amber-800">
+                <span className="text-base">⚠️</span>
+                <span>Collateral Required Alert</span>
+              </div>
+              <p>
+                The requested loan amount (<strong>PHP {loanAmountValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>) exceeds the uncollateralized limit of <strong>PHP {(monthlyIncomeValue * multiplier).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>.
+              </p>
+              <p className="text-xs text-amber-700 font-medium leading-relaxed">
+                Since no collateral details have been configured yet, you must select and complete the collateral specifications on the Collateral step to proceed with this application.
+              </p>
+            </div>
+          )}
+
 
           {isBusinessLoan && (
             <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-4">

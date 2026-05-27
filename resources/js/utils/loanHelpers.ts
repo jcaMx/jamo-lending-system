@@ -41,7 +41,7 @@ export const isActiveLoan = (loan: Loan | null | undefined): boolean => {
  * Formats currency value
  */
 export const formatCurrency = (value: number): string => {
-  return `₱${value.toLocaleString('en-US', {
+  return `PHP ${value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

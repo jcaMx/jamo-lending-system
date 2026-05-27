@@ -12,6 +12,7 @@ type Loan = {
   due: number;
   balance: number;
   status: string;
+  preparedBy?: string;
 };
 
 interface LoanTermsTabProps {
@@ -50,14 +51,14 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
                 ([chargeName, chargeData]) => `
               <tr>
                 <td>${chargeName} (${(chargeData.rate * 100).toFixed(2)}%)</td>
-                <td class="value">₱${chargeData.amount.toLocaleString()}</td>
+                <td class="value">PHP ${chargeData.amount.toLocaleString()}</td>
               </tr>
             `
               )
               .join("")}
             <tr class="total-row">
               <td><strong>Total Releasing Fees</strong></td>
-              <td class="value"><strong>₱${releasingFees.total_fees.toLocaleString()}</strong></td>
+              <td class="value"><strong>PHP ${releasingFees.total_fees.toLocaleString()}</strong></td>
             </tr>
           </table>
         </div>
@@ -306,7 +307,7 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
           <table>
             <tr>
               <td>Principal Amount</td>
-              <td class="value">₱${loan.principal.toLocaleString()}</td>
+              <td class="value">PHP ${loan.principal.toLocaleString()}</td>
             </tr>
             <tr>
               <td>Loan Release Date</td>
@@ -328,14 +329,16 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
               <td>Repayment Frequency</td>
               <td class="value">${loan.repayment_frequency || "—"}</td>
             </tr>
+            ${loan.status !== 'Pending' ? `
             <tr>
               <td>Installment Due</td>
-              <td class="value">₱${loan.due.toLocaleString()}</td>
+              <td class="value">PHP ${loan.due.toLocaleString()}</td>
             </tr>
             <tr>
               <td>Balance Remaining</td>
-              <td class="value">₱${loan.balance.toLocaleString()}</td>
+              <td class="value">PHP ${loan.balance.toLocaleString()}</td>
             </tr>
+            ` : ''}
           </table>
         </div>
 
@@ -363,7 +366,7 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
           <div>
             <div class="label">Outstanding Balance</div>
           </div>
-          <div class="amount">₱${loan.balance.toLocaleString()}</div>
+          <div class="amount">PHP ${loan.balance.toLocaleString()}</div>
         </div>
 
         <!-- Footer -->
@@ -414,9 +417,10 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
         </div>
       )}
 
-      <div className="m-6 gap-y-3 gap-x-8">
+      <div className="m-6 grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
         <DetailRow label="Loan Status" value={loan.status || "—"} />
         <DetailRow label="Loan Type" value={loan.loan_type || "—"} />
+        <DetailRow label="Prepared By" value={loan.preparedBy || "System"} />
       </div>
 
       <section className="px-6 py-5">
@@ -425,14 +429,18 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
-          <DetailRow label="Principal Amount" value={`₱${loan.principal.toLocaleString()}`} />
+          <DetailRow label="Principal Amount" value={`PHP ${loan.principal.toLocaleString()}`} />
           <DetailRow label="Loan Release Date" value={loan.released || "—"} />
           <DetailRow label="Maturity Date" value={loan.maturity || "—"} />
           <DetailRow label="Interest Rate" value={loan.interest || "—"} />
           <DetailRow label="Interest Type" value={loan.interestType || "—"} />
           <DetailRow label="Repayment Frequency" value={loan.repayment_frequency || "—"} />
-          <DetailRow label="Installment Due" value={`₱${loan.due.toLocaleString()}`} />
-          <DetailRow label="Balance Remaining" value={`₱${loan.balance.toLocaleString()}`} />
+          {loan.status !== 'Pending' && (
+            <>
+              <DetailRow label="Installment Due" value={`PHP ${loan.due.toLocaleString()}`} />
+              <DetailRow label="Balance Remaining" value={`PHP ${loan.balance.toLocaleString()}`} />
+            </>
+          )}
         </div>
       </section>
 
@@ -447,13 +455,13 @@ export default function LoanTermsTab({ loan, releasingFees }: LoanTermsTabProps)
               <DetailRow
                 key={chargeName}
                 label={`${chargeName} (${(chargeData.rate * 100).toFixed(2)}%)`}
-                value={`₱${chargeData.amount.toLocaleString()}`}
+                value={`PHP ${chargeData.amount.toLocaleString()}`}
               />
             ))}
           </div>
           <DetailRow
             label="Total Releasing Fees"
-            value={`₱${releasingFees.total_fees.toLocaleString()}`}
+            value={`PHP ${releasingFees.total_fees.toLocaleString()}`}
           />
         </section>
       )}
