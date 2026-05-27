@@ -566,6 +566,7 @@ export function LoanDetailsView({
   const resolvedHeadTitle = headTitle ?? 'Loan Details';
   const resolvedPageTitle = pageTitle ?? 'Loan Details';
   const isActiveDisbursed = loan.status === 'Active' && !!loan.has_completed_disbursement;
+  const hasScheduleTab = loan.status === 'Active' && amortizationSchedule.length > 0;
   const tabItems = useMemo(
     () => {
       const tabs = [
@@ -582,6 +583,9 @@ export function LoanDetailsView({
           label: 'Repayments',
           content: <RepaymentsTab repayments={safeRepayments} />,
         });
+      }
+
+      if (hasScheduleTab) {
         tabs.push({
           key: 'loanSchedule' as TabKey,
           label: 'Loan Schedule',
@@ -635,7 +639,7 @@ export function LoanDetailsView({
 
       return tabs;
     },
-    [amortizationSchedule, collaterals, allFiles, isActiveDisbursed, loan, mappedLoan, openCollateralModal, safeRepayments],
+    [amortizationSchedule, collaterals, allFiles, hasScheduleTab, isActiveDisbursed, loan, mappedLoan, openCollateralModal, safeRepayments],
   );
 
   return (
