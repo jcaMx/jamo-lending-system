@@ -6,6 +6,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import type { ReactNode } from 'react';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -16,6 +17,8 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   isLoading?: boolean;
+  children?: ReactNode;
+  confirmDisabled?: boolean;
 }
 
 export function ConfirmDialog({
@@ -27,6 +30,8 @@ export function ConfirmDialog({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   isLoading = false,
+  children,
+  confirmDisabled = false,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog
@@ -42,6 +47,7 @@ export function ConfirmDialog({
           <AlertDialogTitle className="text-lg font-semibold text-gray-800">{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <div className="flex justify-end gap-3">
           <Button
             type="button"
@@ -55,7 +61,7 @@ export function ConfirmDialog({
           <Button
             type="button"
             onClick={onConfirm}
-            disabled={isLoading}
+            disabled={isLoading || confirmDisabled}
             className="bg-yellow-500  hover:bg-yellow-600 disabled:bg-gray-400"
           >
             {isLoading ? 'Processing...' : confirmText}

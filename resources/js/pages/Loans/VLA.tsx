@@ -31,8 +31,16 @@ export function PendingLoanDetails({ loan }: LoanDetailsProps) {
     open: boolean;
     title: string;
     description: string;
-    onConfirm: () => void;
-  }>({ open: false, title: '', description: '', onConfirm: () => {} });
+    mode: 'approve' | 'reject' | null;
+  }>({ open: false, title: '', description: '', mode: null });
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionError, setRejectionError] = useState('');
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false, mode: null }));
+    setRejectionReason('');
+    setRejectionError('');
+  };
 
   const handleApprove = () => {
     setConfirmDialog({
@@ -40,39 +48,56 @@ export function PendingLoanDetails({ loan }: LoanDetailsProps) {
       title: 'Approve Loan',
       description:
         'Are you sure you want to approve this loan? Disbursement and schedule generation will be handled in the Disbursements module.',
-      onConfirm: () => {
-        router.post(route('loans.approve', loan.ID), {}, {
-          onSuccess: () => {
-            setConfirmDialog({ ...confirmDialog, open: false });
-            router.visit(route('loans.view-approved'));
-          },
-          onError: (errors) => {
-            console.error('Approval failed:', errors);
-            setConfirmDialog({ ...confirmDialog, open: false });
-          },
-        });
-      },
+      mode: 'approve',
     });
   };
 
   const handleReject = () => {
+    setRejectionReason('');
+    setRejectionError('');
+
     setConfirmDialog({
       open: true,
       title: 'Reject Loan',
-      description: 'Are you sure you want to reject this loan?',
-      onConfirm: () => {
-        router.post(route('loans.reject', loan.ID), {}, {
-          onSuccess: () => {
-            setConfirmDialog({ ...confirmDialog, open: false });
-            router.visit(route('loans.view-rejected'));
-          },
-          onError: (errors) => {
-            console.error('Rejection failed:', errors);
-            setConfirmDialog({ ...confirmDialog, open: false });
-          },
-        });
-      },
+      description: 'Enter the reason for rejection before confirming.',
+      mode: 'reject',
     });
+  };
+
+  const handleConfirm = () => {
+    if (confirmDialog.mode === 'approve') {
+      router.post(route('loans.approve', loan.ID), {}, {
+        onSuccess: () => {
+          closeConfirmDialog();
+          router.visit(route('loans.view-approved'));
+        },
+        onError: (errors) => {
+          console.error('Approval failed:', errors);
+          closeConfirmDialog();
+        },
+      });
+
+      return;
+    }
+
+    if (confirmDialog.mode === 'reject') {
+      const trimmedReason = rejectionReason.trim();
+
+      if (!trimmedReason) {
+        setRejectionError('Reason for rejection is required.');
+        return;
+      }
+
+      router.post(route('loans.reject', loan.ID), { rejection_reason: trimmedReason }, {
+        onSuccess: () => {
+          closeConfirmDialog();
+          router.visit(route('loans.view-rejected'));
+        },
+        onError: (errors) => {
+          console.error('Rejection failed:', errors);
+        },
+      });
+    }
   };
 
   return (
@@ -97,11 +122,36 @@ export function PendingLoanDetails({ loan }: LoanDetailsProps) {
           open={confirmDialog.open}
           title={confirmDialog.title}
           description={confirmDialog.description}
-          onConfirm={confirmDialog.onConfirm}
-          onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+          onConfirm={handleConfirm}
+          onCancel={closeConfirmDialog}
           confirmText="Confirm"
           cancelText="Cancel"
-        />
+          confirmDisabled={confirmDialog.mode === 'reject' && !rejectionReason.trim()}
+        >
+          {confirmDialog.mode === 'reject' && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700" htmlFor="rejection_reason">
+                Reason for rejection <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                id="rejection_reason"
+                value={rejectionReason}
+                onChange={(e) => {
+                  setRejectionReason(e.target.value);
+                  if (rejectionError) {
+                    setRejectionError('');
+                  }
+                }}
+                rows={4}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                placeholder="Enter the reason for rejection"
+              />
+              {rejectionError && (
+                <p className="text-xs text-red-600">{rejectionError}</p>
+              )}
+            </div>
+          )}
+        </ConfirmDialog>
       }
     />
   );

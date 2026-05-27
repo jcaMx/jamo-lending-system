@@ -189,6 +189,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
 
   useEffect(() => {
     if (!['Cash', 'Cheque Voucher'].includes(method)) {
+      setReferenceNo('');
       return;
     }
 
@@ -198,6 +199,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
 
     if (method === 'Cheque Voucher') {
       setChequeDate((current) => current || today);
+      setReferenceNo('');
     }
   }, [method]);
 
@@ -588,6 +590,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
     });
   };
 
+  const showReleaseDate = false; // Set to true to show
   return (
     <AppLayout>
       <Head title="Disbursements" />
@@ -665,19 +668,21 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
               </select>
               {formErrors.method && <p className="mt-1 text-xs text-red-600">{formErrors.method}</p>}
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Reference No.
-              </label>
-              <input
-                value={referenceNo}
-                onChange={(e) => setReferenceNo(e.target.value)}
-                data-field="reference_no"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder="Optional"
-              />
-              {formErrors.reference_no && <p className="mt-1 text-xs text-red-600">{formErrors.reference_no}</p>}
-            </div>
+            {method === 'Cash' && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Reference No.
+                </label>
+                <input
+                  value={referenceNo}
+                  onChange={(e) => setReferenceNo(e.target.value)}
+                  data-field="reference_no"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  placeholder="Optional"
+                />
+                {formErrors.reference_no && <p className="mt-1 text-xs text-red-600">{formErrors.reference_no}</p>}
+              </div>
+            )}
             {['Cash', 'Cheque Voucher'].includes(method) && (
               <>
                 <div>
@@ -1049,7 +1054,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   {actionErrors.error}
                 </div>
               )}
-              <div>
+              {/* <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Reference No.</label>
                 <input
                   value={modalReferenceNo}
@@ -1058,19 +1063,21 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
                   placeholder="Optional external reference"
                 />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Release Date</label>
-                <input
-                  type="date"
-                  value={modalReleaseDate}
-                  onChange={(e) => setModalReleaseDate(e.target.value)}
-                  data-field="action.disbursed_at"
-                  className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
-                />
-                <p className="mt-1 text-xs text-gray-500">Blank uses the current date and time.</p>
-                {actionErrors.disbursed_at && <p className="mt-1 text-xs text-red-600">{actionErrors.disbursed_at}</p>}
-              </div>
+              </div> */}
+              {showReleaseDate && (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Release Date</label>
+                  <input
+                    type="date"
+                    value={modalReleaseDate}
+                    onChange={(e) => setModalReleaseDate(e.target.value)}
+                    data-field="action.disbursed_at"
+                    className="w-full rounded-lg border border-[#BFD3E8] bg-white px-3 py-2 text-sm"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Blank uses the current date and time.</p>
+                  {actionErrors.disbursed_at && <p className="mt-1 text-xs text-red-600">{actionErrors.disbursed_at}</p>}
+                </div>
+              )}
               {(actionModal.row.method === 'Cash' || actionModal.row.method === 'Cheque Voucher') && (
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-sm font-medium text-gray-700">Received By / Signatory</label>
@@ -1165,7 +1172,7 @@ export default function DisbursementsIndex({ disbursements, eligibleLoans, bankA
                   ? 'bg-red-600 text-white hover:bg-red-700'
                   : actionModal?.mode === 'release'
                     ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-yellow-500 hover:bg-yellow-600'
               }
             >
               {actionModal?.mode === 'approve' && 'Confirm Approve & Release'}
