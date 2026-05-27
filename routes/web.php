@@ -105,6 +105,7 @@ Route::get('/co-borrowers', [CoBorrowerController::class, 'coBorrowers']);
         Route::get('/VLA', [LoanController::class, 'index'])->name('loans.view');
         Route::get('/VAL', [LoanController::class, 'viewApproved'])->name('loans.view-all');
         Route::get('/ViewLoans', [LoanController::class, 'viewApproved'])->name('loans.view-approved');
+        Route::post('/preview-schedule', [LoanController::class, 'previewSchedule'])->name('loans.preview-schedule');
         Route::get('/{loan}/schedule', [LoanController::class, 'showSchedule'])->name('loans.schedule');
         Route::post('/', [LoanController::class, 'store'])->name('loans.store');
         Route::put('/{loan}/borrower', [LoanController::class, 'updateBorrowerDetails'])->name('loans.borrower.update');

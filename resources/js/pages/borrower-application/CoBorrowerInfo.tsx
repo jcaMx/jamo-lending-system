@@ -21,9 +21,9 @@ interface CoBorrowerInfoProps {
 const emptyCoBorrower: CoBorrower = {
   first_name: "",
   last_name: "",
-  birth_date: "1990-01-01",
+  birth_date: "",
   marital_status: "",
-  mobile: "09000000000",
+  mobile: "",
   dependents: "",
   address: "N/A",
   occupation: "",
@@ -121,9 +121,9 @@ const CoBorrowerInfo = ({
     updated[targetIndex] = {
       first_name: item.first_name || "",
       last_name: item.last_name || "",
-      birth_date: item.birth_date || "1990-01-01",
+      birth_date: item.birth_date || "",
       marital_status: item.marital_status || "",
-      mobile: item.mobile || "09000000000",
+      mobile: item.mobile || "",
       dependents: item.dependents || "",
       address: item.address || "N/A",
       occupation: item.occupation || "",
@@ -245,7 +245,7 @@ const CoBorrowerInfo = ({
           {/* 🔍 SEARCH UI */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Search Existing Borrower to Add as Co-Maker
+              Search Existing Borrower to Add as Co-Borrower (Auto-fills details, read-only)
             </label>
             <input
               type="text"

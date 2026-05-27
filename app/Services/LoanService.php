@@ -16,7 +16,7 @@ use App\Services\Amortization\DiminishingAmortizationCalculator;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
-
+use App\Notifications\NotifyUser;
 
 class LoanService
 {

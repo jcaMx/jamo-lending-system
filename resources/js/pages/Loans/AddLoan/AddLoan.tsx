@@ -53,6 +53,22 @@ interface ReviewStepProps {
   processing: boolean;
 }
 
+interface SchedulePreviewRow {
+  installment_no: number;
+  due_date: string | null;
+  beginningBalance: number;
+  scheduledPayment: number;
+  principalAmount: number;
+  interest_amount: number;
+  endingBalance: number;
+}
+
+interface SchedulePreviewSummary {
+  periodical_payment: number;
+  total_interest: number;
+  total_amount: number;
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Dashboard", href: "/dashboard" },
   { title: "Loans", href: "/Loans" },
@@ -118,100 +134,105 @@ const formatCurrency = (value: unknown) => {
   })}`;
 };
 
-const generateAmortizationSchedule = (
-  amount: number,
-  ratePercent: number,
-  termMonths: number,
-  frequency: string
-) => {
-  const principal = Number(amount);
-  const rate = Number(ratePercent) / 100;
-  const term = Number(termMonths);
-
-  if (!principal || !term) return [];
-
-  const freq = (frequency ?? "Monthly").trim().toLowerCase();
-
-  // Determine total installments
-  let totalInstallments = term;
-  let periodRate = rate / 12;
-
-  if (freq === "weekly") {
-    totalInstallments = Math.ceil(term * 4.345);
-    periodRate = rate / 52;
-  } else if (freq === "monthly") {
-    totalInstallments = term;
-    periodRate = rate / 12;
-  }
-
-  // PMT formula: P * (r * (1 + r)^n) / ((1 + r)^n - 1)
-  let installmentAmount = 0;
-  if (periodRate > 0) {
-    installmentAmount =
-      (principal * (periodRate * Math.pow(1 + periodRate, totalInstallments))) /
-      (Math.pow(1 + periodRate, totalInstallments) - 1);
-  } else {
-    installmentAmount = principal / totalInstallments;
-  }
-
-  const roundedInstallmentAmount = Math.round(installmentAmount * 100) / 100;
-
-  const schedules = [];
-  let remaining = principal;
-  const startDate = new Date();
-
-  for (let i = 1; i <= totalInstallments; i++) {
-    const interest = Math.round(remaining * periodRate * 100) / 100;
-    const principalPayment =
-      i === totalInstallments
-        ? remaining
-        : Math.round((roundedInstallmentAmount - interest) * 100) / 100;
-
-    const currentInstallmentAmount =
-      i === totalInstallments
-        ? Math.round((principalPayment + interest) * 100) / 100
-        : roundedInstallmentAmount;
-
-    const beginningBalance = remaining;
-    remaining = Math.round(Math.max(0, remaining - principalPayment) * 100) / 100;
-
-    // calculate due date
-    const dueDate = new Date(startDate);
-    if (freq === "weekly") {
-      dueDate.setDate(startDate.getDate() + i * 7);
-    } else {
-      dueDate.setMonth(startDate.getMonth() + i);
-    }
-
-    schedules.push({
-      installment_no: i,
-      due_date: dueDate.toISOString().split("T")[0],
-      beginningBalance,
-      scheduledPayment: currentInstallmentAmount,
-      principalAmount: principalPayment,
-      interest_amount: interest,
-      endingBalance: remaining,
-    });
-  }
-
-  return schedules;
-};
-
 const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps) => {
   const coBorrowers = Array.isArray(formData.coBorrowers) ? formData.coBorrowers : [];
   const loanProductDocuments = Array.isArray(formData.documents?.loan_product)
     ? formData.documents.loan_product.filter((row) => row.document_type_id || row.file)
     : [];
+  const [schedule, setSchedule] = useState<SchedulePreviewRow[]>([]);
+  const [scheduleSummary, setScheduleSummary] = useState<SchedulePreviewSummary>({
+    periodical_payment: 0,
+    total_interest: 0,
+    total_amount: 0,
+  });
+  const [scheduleError, setScheduleError] = useState("");
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
 
-  const schedule = generateAmortizationSchedule(
-    Number(formData.loan_amount ?? 0),
-    Number(formData.interest_rate ?? 0),
-    Number(formData.term ?? 0),
-    String(formData.repayment_frequency ?? "monthly"),
+  const normalizedInterestType = normalizeInterestType(String(formData.interest_type ?? ""));
+  const normalizedRepaymentFrequency = normalizeRepaymentFrequency(
+    String(formData.repayment_frequency ?? ""),
   );
-  const totalInterest = schedule.reduce((sum, row) => sum + row.interest_amount, 0);
-  const scheduledTotal = schedule.reduce((sum, row) => sum + row.scheduledPayment, 0);
-  const periodicalPayment = schedule[0]?.scheduledPayment ?? 0;
+  const loanAmount = Number(formData.loan_amount ?? 0);
+  const interestRate = Number(formData.interest_rate ?? 0);
+  const term = Number(formData.term ?? 0);
+
+  useEffect(() => {
+    if (!loanAmount || !term || !normalizedInterestType || !normalizedRepaymentFrequency) {
+      setSchedule([]);
+      setScheduleSummary({
+        periodical_payment: 0,
+        total_interest: 0,
+        total_amount: 0,
+      });
+      setScheduleError("");
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadPreview = async () => {
+      setIsLoadingSchedule(true);
+      setScheduleError("");
+
+      try {
+        const response = await fetch(route("loans.preview-schedule"), {
+          method: "POST",
+          headers: buildRuleEvaluationHeaders(),
+          credentials: "same-origin",
+          signal: controller.signal,
+          body: JSON.stringify({
+            loan_amount: loanAmount,
+            interest_type: normalizedInterestType,
+            interest_rate: interestRate,
+            repayment_frequency: normalizedRepaymentFrequency,
+            term,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to load schedule preview (${response.status})`);
+        }
+
+        const payload = (await response.json()) as {
+          data?: {
+            schedule?: SchedulePreviewRow[];
+            summary?: SchedulePreviewSummary;
+          };
+        };
+
+        setSchedule(Array.isArray(payload.data?.schedule) ? payload.data.schedule : []);
+        setScheduleSummary(
+          payload.data?.summary ?? {
+            periodical_payment: 0,
+            total_interest: 0,
+            total_amount: 0,
+          },
+        );
+      } catch (error) {
+        if ((error as { name?: string }).name === "AbortError") {
+          return;
+        }
+
+        setSchedule([]);
+        setScheduleSummary({
+          periodical_payment: 0,
+          total_interest: 0,
+          total_amount: 0,
+        });
+        setScheduleError("Unable to load the schedule preview.");
+      } finally {
+        setIsLoadingSchedule(false);
+      }
+    };
+
+    void loadPreview();
+
+    return () => controller.abort();
+  }, [interestRate, loanAmount, normalizedInterestType, normalizedRepaymentFrequency, term]);
+
+  const totalInterest = scheduleSummary.total_interest;
+  const scheduledTotal = scheduleSummary.total_amount;
+  const periodicalPayment = scheduleSummary.periodical_payment;
 
   return (
     <section className="py-8 md:py-16 px-6 md:px-12 bg-[#F7F5F3]">
@@ -261,7 +282,19 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
               </div>
             </div>
 
-            {schedule && schedule.length > 0 && (
+            {isLoadingSchedule && (
+              <div className="mt-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                Loading loan schedule preview...
+              </div>
+            )}
+
+            {!isLoadingSchedule && scheduleError && (
+              <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {scheduleError}
+              </div>
+            )}
+
+            {!isLoadingSchedule && schedule.length > 0 && (
               <div className="mt-6 space-y-4">
                 <h3 className="text-md font-semibold text-gray-700">Loan Schedule Preview</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -301,7 +334,13 @@ const ReviewStep = ({ formData, onPrev, onSubmit, processing }: ReviewStepProps)
                         <tr key={row.installment_no} className="border-b border-gray-150 hover:bg-[#FFF8E6]/40 last:border-0 transition-colors">
                           <td className="px-4 py-2.5 text-gray-700 font-medium">{row.installment_no}</td>
                           <td className="px-4 py-2.5 text-gray-900 font-medium">
-                            {new Date(row.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {row.due_date
+                              ? new Date(row.due_date).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
+                              : "-"}
                           </td>
                           <td className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.beginningBalance)}</td>
                           <td className="px-4 py-2.5 text-right text-gray-900 font-semibold">{formatCurrency(row.scheduledPayment)}</td>

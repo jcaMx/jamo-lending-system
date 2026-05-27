@@ -61,11 +61,13 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
         $startDate = $loan->start_date ? $loan->start_date->copy() : null;
         $endDate = $loan->end_date ? $loan->end_date->copy() : null;
         $results = [];
-        $installmentAmount = $this->formulaService->evaluate($paymentFormula, [
-            'principal' => $principal,
-            'rate' => $periodRate,
-            'term' => $totalInstallments,
-        ]);
+        $installmentAmount = abs($periodRate) < 0.0000001
+            ? ($totalInstallments > 0 ? $principal / $totalInstallments : 0)
+            : $this->formulaService->evaluate($paymentFormula, [
+                'principal' => $principal,
+                'rate' => $periodRate,
+                'term' => $totalInstallments,
+            ]);
         $roundedInstallmentAmount = round($installmentAmount, 2);
 
         for ($i = 1; $i <= $totalInstallments; $i++) {

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 
 class LoanController extends Controller
@@ -183,7 +184,7 @@ class LoanController extends Controller
                 'term_months' => (int) $request->input('term'),
                 'status' => 'Pending',
                 'formula_id' => $formula->ID,
-                'prepared_by' => auth()->id(),
+                'prepared_by' => Auth::id(),
             ];
             $loan = $this->loanService->createLoan($loanData);
 
@@ -339,7 +340,7 @@ class LoanController extends Controller
                         'address' => !empty($coBorrowerData['address']) ? $coBorrowerData['address'] : 'N/A',
                         'email' => $coBorrowerData['email'] ?? '',
                         'contact_no' => !empty($coBorrowerData['contact']) ? $coBorrowerData['contact'] : (!empty($coBorrowerData['mobile']) ? $coBorrowerData['mobile'] : '09000000000'),
-                        'birth_date' => !empty($coBorrowerData['birth_date']) ? $coBorrowerData['birth_date'] : '1990-01-01',
+                        'birth_date' => !empty($coBorrowerData['birth_date']) ? $coBorrowerData['birth_date'] : 'null',
                         'marital_status' => $coBorrowerData['marital_status'] ?? '',
                         'occupation' => $coBorrowerData['occupation'] ?? '',
                     ]);
@@ -648,6 +649,81 @@ class LoanController extends Controller
         ]);
     }
 
+    public function previewSchedule(Request $request)
+    {
+        $validated = $request->validate([
+            'loan_amount' => 'required|numeric|min:0',
+            'interest_type' => 'required|string|in:Compound,Diminishing',
+            'interest_rate' => 'required|numeric|min:0|max:100',
+            'repayment_frequency' => 'required|string|in:Weekly,Monthly,Yearly',
+            'term' => 'required|integer|min:1|max:840',
+            'start_date' => 'nullable|date',
+        ]);
+
+        $startDate = isset($validated['start_date'])
+            ? Carbon::parse($validated['start_date'])->startOfDay()
+            : Carbon::now()->startOfDay();
+
+        $loan = new Loan([
+            'principal_amount' => (float) $validated['loan_amount'],
+            'interest_type' => $validated['interest_type'],
+            'interest_rate' => (float) $validated['interest_rate'],
+            'repayment_frequency' => $validated['repayment_frequency'],
+            'term_months' => (int) $validated['term'],
+            'start_date' => $startDate,
+            'end_date' => $this->calculatePreviewEndDate($startDate, $validated['repayment_frequency'], (int) $validated['term']),
+        ]);
+
+        $schedule = $this->loanService->selectCalculator($loan)->generate($loan);
+        $remaining = round((float) $loan->principal_amount, 2);
+
+        $formattedSchedule = collect($schedule)->map(function (array $item) use (&$remaining) {
+            $installmentAmount = round((float) ($item['installment_amount'] ?? 0), 2);
+            $interestAmount = round((float) ($item['interest_amount'] ?? 0), 2);
+            $beginningBalance = $remaining;
+            $principalAmount = round(max(0, $installmentAmount - $interestAmount), 2);
+            $remaining = round(max(0, $remaining - $principalAmount), 2);
+
+            return [
+                'installment_no' => (int) ($item['installment_no'] ?? 0),
+                'due_date' => $item['due_date']?->toDateString(),
+                'beginningBalance' => $beginningBalance,
+                'scheduledPayment' => $installmentAmount,
+                'principalAmount' => $principalAmount,
+                'interest_amount' => $interestAmount,
+                'endingBalance' => $remaining,
+            ];
+        })->values();
+
+        return response()->json([
+            'data' => [
+                'schedule' => $formattedSchedule,
+                'summary' => [
+                    'periodical_payment' => (float) ($formattedSchedule->first()['scheduledPayment'] ?? 0),
+                    'total_interest' => (float) round($formattedSchedule->sum('interest_amount'), 2),
+                    'total_amount' => (float) round($formattedSchedule->sum('scheduledPayment'), 2),
+                ],
+            ],
+        ]);
+    }
+
+    private function calculatePreviewEndDate(Carbon $startDate, string $repaymentFrequency, int $termMonths): Carbon
+    {
+        $totalInstallments = match ($repaymentFrequency) {
+            'Weekly' => (int) ceil($termMonths * 4.345),
+            'Monthly' => $termMonths,
+            'Yearly' => (int) ceil($termMonths / 12),
+            default => $termMonths,
+        };
+
+        return match ($repaymentFrequency) {
+            'Weekly' => $startDate->copy()->addWeeks($totalInstallments),
+            'Monthly' => $startDate->copy()->addMonthsNoOverflow($totalInstallments),
+            'Yearly' => $startDate->copy()->addYears($totalInstallments),
+            default => $startDate->copy()->addMonthsNoOverflow($totalInstallments),
+        };
+    }
+
     public function close(Loan $loan)
     {
         try {
@@ -903,7 +979,7 @@ class LoanController extends Controller
         }
 
         return DB::table('loan_product_document_requirements')
-            ->where('loan_product_id', $loanProduct->id)
+            ->where('loan_product_id', $loanProduct->ID)
             ->where('requirement_type', 'document_type')
             ->where('subject_type', 'collateral')
             ->where('collateral_type', strtolower((string) $collateralType))
