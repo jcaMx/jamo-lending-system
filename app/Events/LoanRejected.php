@@ -10,5 +10,8 @@ class LoanRejected
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public Loan $loan) {}
+    public function __construct(
+        public Loan $loan,
+        public string $rejectionReason,
+    ) {}
 }

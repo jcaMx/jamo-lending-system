@@ -126,16 +126,22 @@ class LoanService
         return $loan->fresh();
     }
 
-    public function rejectLoan(Loan $loan): Loan
+    public function rejectLoan(Loan $loan, string $rejectionReason, ?int $commentedBy = null): Loan
     {
-        $updatedLoan = DB::transaction(function () use ($loan) {
+        $updatedLoan = DB::transaction(function () use ($loan, $rejectionReason, $commentedBy) {
             $loan->status = 'Rejected';
             $loan->save();
+
+            $loan->loanComments()->create([
+                'comment_text' => 'Reason for rejection: '.$rejectionReason,
+                'commented_by' => $commentedBy,
+                'comment_date' => now(),
+            ]);
 
             return $loan->fresh();
         });
 
-        LoanRejected::dispatch($updatedLoan);
+        LoanRejected::dispatch($updatedLoan, $rejectionReason);
 
         return $updatedLoan;
     }

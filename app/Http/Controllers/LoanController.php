@@ -510,13 +510,11 @@ class LoanController extends Controller
                 'rejection_reason' => 'required|string|max:2000',
             ]);
 
-            $this->loanService->rejectLoan($loan);
-
-            $loan->loanComments()->create([
-                'comment_text' => 'Reason for rejection: '.$validated['rejection_reason'],
-                'commented_by' => Auth::id(),
-                'comment_date' => now(),
-            ]);
+            $this->loanService->rejectLoan(
+                $loan,
+                $validated['rejection_reason'],
+                Auth::id(),
+            );
 
             return redirect()->route('loans.view')->with('success', 'Loan rejected successfully!');
         } catch (\Throwable $e) {

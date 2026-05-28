@@ -32,7 +32,7 @@ class SendLoanDecisionNotification implements ShouldQueue
 
         $message = $isApproved
             ? "Dear {$borrowerName},\n\nYour loan application has been approved.\n\nLoan Details:\n- Loan Number: {$loan->ID}\n- Borrower: {$borrowerName}\n- Loan Amount: PHP {$loan->principal_amount}\n\nFor more information, please log in to your account in JAMO Lending System."
-            : "Dear {$borrowerName},\n\nWe regrettably inform you that your loan application has been rejected.\n\nPlease log in to your account in JAMO Lending System and try again, or contact us for further assistance.\n\nThank you!";
+            : "Dear {$borrowerName},\n\nWe regrettably inform you that your loan application has been rejected.\n\nReason for rejection: {$event->rejectionReason}\n\nPlease log in to your account in JAMO Lending System and try again, or contact us for further assistance.\n\nThank you!";
 
         $borrower->notify(new NotifyUser(
             message: $message,
