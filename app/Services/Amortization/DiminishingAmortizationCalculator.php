@@ -16,25 +16,22 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
     public function generate(Loan $loan): array
     {
         $interestFormula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
-        $paymentFormula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
         $principal = (float) $loan->principal_amount;
 
-        return $this->calculateSchedules($loan, $interestFormula, $paymentFormula, $principal);
+        return $this->calculateSchedules($loan, $interestFormula, $principal);
     }
 
     public function recalculate(Loan $loan): array
     {
         $interestFormula = Formula::where('name', 'Diminishing Balance Loan')->firstOrFail();
-        $paymentFormula = Formula::where('name', 'Compound Interest Loan')->firstOrFail();
 
-        return $this->calculateSchedules($loan, $interestFormula, $paymentFormula, $loan->principal_amount, false);
+        return $this->calculateSchedules($loan, $interestFormula, (float) $loan->principal_amount, false);
     }
 
     protected function calculateSchedules(
         Loan $loan,
         Formula $interestFormula,
-        Formula $paymentFormula,
         float $principal,
         bool $isNewLoan = true
     ): array
@@ -61,14 +58,9 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
         $startDate = $loan->start_date ? $loan->start_date->copy() : null;
         $endDate = $loan->end_date ? $loan->end_date->copy() : null;
         $results = [];
-        $installmentAmount = abs($periodRate) < 0.0000001
-            ? ($totalInstallments > 0 ? $principal / $totalInstallments : 0)
-            : $this->formulaService->evaluate($paymentFormula, [
-                'principal' => $principal,
-                'rate' => $periodRate,
-                'term' => $totalInstallments,
-            ]);
-        $roundedInstallmentAmount = round($installmentAmount, 2);
+        $fixedPrincipalPayment = $totalInstallments > 0
+            ? round($principal / $totalInstallments, 2)
+            : 0;
 
         for ($i = 1; $i <= $totalInstallments; $i++) {
             $interest = round($this->formulaService->evaluate($interestFormula, [
@@ -78,11 +70,9 @@ class DiminishingAmortizationCalculator implements IAmortizationCalculator
 
             $principalPayment = $i === $totalInstallments
                 ? $remaining
-                : round($roundedInstallmentAmount - $interest, 2);
+                : min($fixedPrincipalPayment, $remaining);
 
-            $currentInstallmentAmount = $i === $totalInstallments
-                ? round($principalPayment + $interest, 2)
-                : $roundedInstallmentAmount;
+            $currentInstallmentAmount = round($principalPayment + $interest, 2);
 
             $remaining = round(max(0, $remaining - $principalPayment), 2);
 
